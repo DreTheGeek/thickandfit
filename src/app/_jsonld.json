@@ -1,0 +1,113 @@
+{
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "name": "Thick & Fit Fitness",
+  "description": "Fitness coaching for women who want lasting results. Get custom workout programming, personalized meal plans, daily accountability, and a supportive fitness community designed to help you fall in love with the journey, not just the goal.",
+  "url": "https://thick-and-fit-fitness.com",
+  "image": {
+    "@type": "ImageObject",
+    "url": "https://cdn.prod.website-files.com/690cbb3a200946ac998a67f7/690cd30aace9185c1cc5ff30_thick_and_fitness_wrap.avif",
+    "caption": "Thick & Fit Fitness Coach Stephanie"
+  },
+  "provider": {
+    "@type": "Person",
+    "name": "Stephanie",
+    "jobTitle": "Fitness Coach",
+    "image": {
+      "@type": "ImageObject",
+      "url": "https://cdn.prod.website-files.com/690cbb3a200946ac998a67f7/690d067d2f1301cc095118c1_thick_and_fit_about_photo.avif",
+      "caption": "Thick & Fit Fitness head coach posing in a gym"
+    }
+  },
+  "serviceType": "Online Fitness Coaching",
+  "areaServed": "Worldwide",
+  "audience": {
+    "@type": "PeopleAudience",
+    "audienceType": "Women"
+  },
+  "offers": {
+    "@type": "Offer",
+    "description": "Custom workout programming, personalized meal plans, daily accountability, and community support",
+    "availability": "https://schema.org/InStock"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "reviewCount": "3"
+  },
+  "review": [
+    {
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": "Guadalupe U."
+      },
+      "reviewBody": "Everything is grate about this program I got out of my comfort zone I have changed myself and I have done exercises I thought i would struggle with everything is well explained love it",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5"
+      }
+    },
+    {
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": "Rowena L."
+      },
+      "reviewBody": "Love the workouts and energy vibes with community groups.Coach Steph is a trainer who engage with her clients daily. The support and commitment to healthy lifestyle especially from a meal perspective has been awesome. I'm down 5 Ibs and keeping focus towards my goal.",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5"
+      }
+    },
+    {
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": "Minta T."
+      },
+      "reviewBody": "This program really pushed me. I worked out on a regular basis before, but felt like I was just going through the motions. After starting this program I'm excited about fitness again and feel stronger than I have ever felt. I'll be doing the 8 week challenge next. Thanks Stephanie for helping me love my workouts and my curves.",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5"
+      }
+    }
+  ],
+  "mainEntityOfPage": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What's included in your online coaching program?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You'll receive a customized workout program with video demonstrations and thorough coaches' notes for every exercise, so you never feel confused about what to do. Your plan also includes tailored macros, nutrition guidance and recipes designed to match your exact calorie and macro targets, plus bi-weekly in-app check-ins to keep you accountable and progressing. You'll also have direct communication with me and my team through the app (text, voice notes and video messages), along with access to the private women's community for extra support."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What if my schedule is unpredictable?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your plan is built for your life. You work out at the time that works best for you, there are no virtual meet-ups or scheduled calls. Your workouts, macros and recipes are always ready for you inside the app. And if your routine shifts, we adjust your programming so you can stay consistent without feeling stressed or behind."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How are payments handled?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Once you accept your offer email, you'll be prompted to review and sign your coaching agreement. After that, you'll be directed to securely enter your card information to lock in your spot. Your card will stay on file for future billing—just like any other subscription—making your monthly payments automatic, simple, and stress-free."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What's the time commitment?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "I offer a variety of commitment options: 4, 8 and 12 months so you can choose what fits your goals and lifestyle best. Once you complete your initial term, you automatically roll over to a month-to-month plan. If you ever need to cancel, you simply provide a 30-day notice."
+        }
+      }
+    ]
+  }
+}
