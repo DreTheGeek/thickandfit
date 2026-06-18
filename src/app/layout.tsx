@@ -4,6 +4,9 @@ import localFont from "next/font/local";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import "./globals.css";
+import { SwRegister } from "@/components/pwa/sw-register";
+import { IOSInstallBanner } from "@/components/pwa/ios-install-banner";
+import { AndroidInstallButton } from "@/components/pwa/android-install-button";
 
 const gulamsCondensed = localFont({
   src: "../../public/assets/fonts/a0274ead7b73.woff2",
@@ -34,6 +37,12 @@ export const metadata: Metadata = {
   icons: {
     icon: "/assets/images/favicon.jpg",
     apple: "/assets/images/apple-touch-icon.jpg",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Thick & Fit",
   },
 };
 
@@ -96,6 +105,9 @@ export default function RootLayout({
           }
           return null;
         })}
+        <SwRegister />
+        <IOSInstallBanner />
+        <AndroidInstallButton />
       </body>
     </html>
   );

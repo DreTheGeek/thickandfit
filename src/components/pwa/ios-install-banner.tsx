@@ -1,0 +1,40 @@
+'use client';
+import { useEffect, useState } from 'react';
+
+const DISMISS_KEY = 'tf-ios-install-dismissed';
+
+export function IOSInstallBanner() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const isIos = /iphone|ipad|ipod/i.test(ua);
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    if (isIos && !isStandalone && localStorage.getItem(DISMISS_KEY) !== '1') {
+      setShow(true);
+    }
+  }, []);
+
+  if (!show) return null;
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-3 bg-black px-4 py-3 text-white">
+      <p className="text-sm">
+        Install Thick &amp; Fit: tap <span className="font-semibold">Share</span>, then{' '}
+        <span className="font-semibold">Add to Home Screen</span>.
+      </p>
+      <button
+        type="button"
+        onClick={() => {
+          localStorage.setItem(DISMISS_KEY, '1');
+          setShow(false);
+        }}
+        className="shrink-0 text-sm underline"
+      >
+        Dismiss
+      </button>
+    </div>
+  );
+}
