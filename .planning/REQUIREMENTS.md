@@ -19,6 +19,10 @@ trust into a retained subscriber base.
 - [ ] **FND-04**: Shared infra (lib/supabase client/server/service, 4 UI state components, run-ai-eval, resend-webhook, _shared/api.ts)
 - [ ] **FND-05**: `is_legacy_client` firewall column + enforcement scaffolding (deployment-blocking gate)
 
+### API (PRD-47)
+
+- [ ] **API-01**: Internal REST API surface (Build Profile D — no public API Settings UI) on the foundation's `api_keys`/`api_usage_log` infra, with MCP server scaffolded; `GET /api/v1/ping` → 200, auth + company scoping enforced
+
 ### Migration (PRD-00)
 
 - [ ] **MIG-01**: Lenus importer brings in 256 clients + 11 datasets (measurements, check-ins, workout history, habits, chat, meal plans, tags), stamps `is_legacy_client`/`legacy_source`/`lenus_profile_id`, preserves grandfathered per-client pricing; deploy blocked if any record misses the flag
@@ -75,24 +79,25 @@ trust into a retained subscriber base.
 | Requirement | Phase | PRD | Status |
 |-------------|-------|-----|--------|
 | FND-01..05 | Phase 1 | PRD-01 | Pending |
-| MIG-01 | Phase 2 | PRD-00 | Pending (data blocker) |
+| API-01 | Phase 2 | PRD-47 | Pending |
 | I18N-01 | Phase 3 | PRD-02 | Pending |
 | MKT-01 | Phase 4 | PRD-03 | Pending |
 | AUTH-01, AUTH-02 | Phase 5 | PRD-04 | Pending |
 | AUTH-03 | Phase 6 | PRD-04b | Pending |
 | AUTH-04 | Phase 7 | PRD-04c | Pending |
-| BILL-01 | Phase 8 | PRD-05 | Pending |
-| BILL-02 | Phase 9 | PRD-06 | Pending |
-| SUB-01 | Phase 10 | PRD-07 | Pending |
-| WKT-01 | Phase 11 | PRD-08 | Pending |
-| WKT-02 | Phase 12 | PRD-09 | Pending |
-| WKT-03 | Phase 13 | PRD-10 | Pending |
-| WKT-04 | Phase 14 | PRD-11 | Pending |
-| WKT-05 | Phase 15 | PRD-12 | Pending |
+| SUB-01 | Phase 8 | PRD-07 | Pending |
+| WKT-01 | Phase 9 | PRD-08 | Pending |
+| WKT-02 | Phase 10 | PRD-09 | Pending |
+| WKT-03 | Phase 11 | PRD-10 | Pending |
+| WKT-04 | Phase 12 | PRD-11 | Pending |
+| WKT-05 | Phase 13 | PRD-12 | Pending |
+| BILL-01 | Phase 14 | PRD-05 | Pending (money gate) |
+| BILL-02 | Phase 15 | PRD-06 | Pending (money gate) |
+| MIG-01 | Phase 16 | PRD-00 | Pending (data blocker) |
 
 **Coverage:**
-- v1 requirements: 21 total (across 15 phases / 15 PRDs)
-- Mapped to phases: 21
+- v1 requirements: 22 total (across 16 phases / 16 PRDs)
+- Mapped to phases: 22
 - Unmapped: 0 ✓
 
 ---

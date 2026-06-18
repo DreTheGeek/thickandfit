@@ -7,7 +7,8 @@ History of shipped milestones and phase numbering. Newest at top.
 **Goal:** Stand up the owned platform far enough to open for business — foundation, auth/RBAC,
 billing, the 256-client Lenus migration, and the core workout system — on `main`.
 
-**Scope:** PRD-00 through PRD-12. Phases 1-15 of the GSD roadmap.
+**Scope:** PRD-00-12 (incl. 04b/04c) + PRD-47. Phases 1-16 of the GSD roadmap.
+**Build order:** foundation → API → platform → money (Stripe/pricing) → Lenus migration last.
 **Branch:** `main`
 **Started:** 2026-06-18
 

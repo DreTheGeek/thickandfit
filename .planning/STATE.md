@@ -10,10 +10,10 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Not started (defining requirements / roadmap)
+Phase: Phase 1 — Foundation (PRD-01), not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-18 — Milestone v1.0 started (GSD bootstrapped over Kaldr kit)
+Status: Roadmap approved (16 phases). Ready to plan/execute Phase 1.
+Last activity: 2026-06-18 — Milestone v1.0 roadmap approved with owner reorder (API forward; money + migration last)
 
 ## Accumulated Context
 

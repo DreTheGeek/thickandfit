@@ -28,7 +28,7 @@ nutrition tracking in the user's language must work.
 <!-- Current milestone: v1.0 Phase 1 (MVP, PRD-00 through PRD-12 on main). -->
 
 - [ ] **PRD-01** Foundation: scaffold, Supabase migrations 0001-0007, 5-role RBAC, RLS, security suite, PWA, shared state/AI-eval/email tables, hooks + ledger
-- [ ] **PRD-00** Lenus Migration Importer: 256 clients + 11 datasets, `is_legacy_client` firewall, grandfathered pricing (runs before any client login)
+- [ ] **PRD-47** API / MCP Surface: internal REST API + MCP server on PRD-01 api infra (pulled forward from Phase 3 onto `main`)
 - [ ] **PRD-02** Bilingual Infrastructure: independent UI/DB language toggle (Fitia pattern)
 - [ ] **PRD-03** Marketing Shell + Pre-Registration Waitlist (GHL drip, legal pillar)
 - [ ] **PRD-04** Auth Flows + 5-Role RBAC (email/password + Google + Apple + Magic Link)
