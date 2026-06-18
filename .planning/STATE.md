@@ -10,10 +10,14 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 12 (Workout Player, PRD-11) complete and runtime-verified. Advancing to Phase 13 (PRD-12 Workout Logging + History) — LAST buildable phase before the gate.
-Plan: Phase 13 (PRD-12, workout logging + history; feeds the overload engine's history input)
-Status: PRD-01,47,02,03,04,04b,04c,07,08,09,10,11 built and verified. 12 of 16 phases done (1 buildable left: 13; 14-16 gated). 33 tables.
-Last activity: 2026-06-18, PRD-11: deterministic progressive overload unit-proven 6/6, Web Audio timer + Wake Lock player + inline substitution, AI-explain scaffold.
+Phase: Phase 13 (Workout Logging, PRD-12) complete. ALL 13 BUILDABLE PHASES DONE + verified. AT THE GATE: phases 14-16 await human plan-review.
+Plan: GATE. Phases 14 (PRD-05 Stripe), 15 (PRD-06 pricing/firewall), 16 (PRD-00 migration) planned, awaiting human approval before code.
+Status: PRD-01,47,02,03,04,04b,04c,07,08,09,10,11,12 built and verified. 13 of 16 phases done. 36 tables. ~40 commits.
+Last activity: 2026-06-18, PRD-12: workout_logs/set_logs/completion_history, full loop proven (log->coach history->overload recommends 'increase_reps' from real data), client-vs-other 403.
+
+## PRD-12 result (commit 01e4482)
+- 3 tables: workout_logs (completion_pct/enjoyment/effort), set_logs (per-set reps/weight/difficulty, indexed for overload), workout_completion_history. RLS tenant.
+- saveWorkoutLog, fetchHistory (own + coach ?profile_id w/ 403 guard), recommendForExercise (getExerciseHistory -> recommendNext). Full loop proven on real data. /history page.
 
 ## PRD-11 result (commit 2ab86fe)
 - No new tables. lib/overload/recommend.ts: deterministic double-progression (no-history->hold, easy->+rep/+weight, failed->deload, 2-hard->hold). Unit-verified 6/6. AC-3 proven.
