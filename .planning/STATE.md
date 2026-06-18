@@ -10,10 +10,15 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 6 (Form Builder, PRD-04b) complete and runtime-verified. Advancing to Phase 7 (PRD-04c Onboarding Questionnaire).
-Plan: Phase 7 (PRD-04c, onboarding questionnaire + live weight-prediction chart + plan preview)
-Status: PRD-01,47,02,03,04,04b built and verified. 6 of 16 phases done. 27 commits.
-Last activity: 2026-06-18, PRD-04b: 4 form tables, full lifecycle proven end-to-end (build/reorder/403/publish/assign/submit/read), builder UI + guards.
+Phase: Phase 7 (Onboarding, PRD-04c) complete and runtime-verified. Advancing to Phase 8 (PRD-07 Subscriber Dashboard).
+Plan: Phase 8 (PRD-07, logged-in client home surface)
+Status: PRD-01,47,02,03,04,04b,04c built and verified. 7 of 16 phases done. 31 commits. 24 tables live.
+Last activity: 2026-06-18, PRD-04c: onboarding_responses + defensible Mifflin-St Jeor prediction (proven 90->84.6kg @ -0.45/wk), live recharts chart UI, /onboarding guarded.
+
+## PRD-04c result (commits 2b9b305, 491eceb)
+- onboarding_responses table (RLS). Prediction engine (lib/onboarding/prediction.ts): BMR/TDEE/calories/macros/weekly-delta/12wk curve, pure + reusable client+server.
+- /api/onboarding/submit computes + stores per profile. Math proven via API (sane numbers).
+- UI: OnboardingFlow with live recharts chart (recomputes on input, AC-1), plan preview + /checkout CTA (AC-3, paywall lands in PRD-05/06). Guard 307 verified. recharts builds with React 19.
 
 ## PRD-04b result (commits 1901f4c, d34d613)
 - 4 tables: forms, form_fields, form_responses, form_assignments (all RLS). 23 tables total live.
