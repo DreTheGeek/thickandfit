@@ -1,0 +1,98 @@
+{
+  "product": "thickandfit",
+  "created": "2026-06-18",
+  "spec_version": "1.0",
+  "_note": "Starter ledger. Full population of all 48 PRD entries happens when each PRD is planned. Entries start failing. Only the evaluator (KALDR_ROLE=evaluator) flips to passing.",
+  "entries": [
+    {
+      "id": "table-companies",
+      "type": "table",
+      "prd": "PRD-01",
+      "assertion": "companies table exists with RLS",
+      "criticality": "critical",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "id": "table-profiles",
+      "type": "table",
+      "prd": "PRD-01",
+      "assertion": "profiles table exists with company_id, RLS, 5-role enum, is_legacy_client column",
+      "criticality": "critical",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "id": "table-audit-log",
+      "type": "table",
+      "prd": "PRD-01",
+      "assertion": "audit_log exists (KALDR:GLOBAL) with entity_type, entity_id, previous_state, new_state",
+      "criticality": "critical",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "id": "table-api-keys",
+      "type": "table",
+      "prd": "PRD-01",
+      "assertion": "api_keys exists with SHA-256 hash + key_prefix, RLS",
+      "criticality": "critical",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "id": "feat-pwa-install",
+      "type": "feature",
+      "prd": "PRD-01",
+      "assertion": "App installs on iOS and Android home screen, launches standalone",
+      "criticality": "standard",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "id": "feat-rls-isolation",
+      "type": "feature",
+      "prd": "PRD-01",
+      "assertion": "Company B cannot read Company A rows on any table",
+      "criticality": "critical",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "id": "feat-legacy-firewall",
+      "type": "feature",
+      "prd": "PRD-00",
+      "assertion": "All 256 migrated clients have is_legacy_client=true; deploy blocked if any missing",
+      "criticality": "critical",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "id": "feat-migration-history",
+      "type": "feature",
+      "prd": "PRD-00",
+      "assertion": "Migrated client sees prior measurements, check-ins, workout history, chat",
+      "criticality": "critical",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    },
+    {
+      "id": "feat-grandfathered-price",
+      "type": "feature",
+      "prd": "PRD-00",
+      "assertion": "Each migrated client retains exact Lenus per-client price in BIGINT cents",
+      "criticality": "critical",
+      "status": "failing",
+      "verified_by": null,
+      "verified_at": null
+    }
+  ]
+}

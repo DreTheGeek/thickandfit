@@ -1,0 +1,297 @@
+{
+  "product": "thickandfit",
+  "version": "1.0",
+  "branches": {
+    "main": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "phase-2": [
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "phase-3": [
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ]
+  },
+  "nodes": [
+    "PRD-00",
+    "PRD-01",
+    "PRD-02",
+    "PRD-03",
+    "PRD-04",
+    "PRD-05",
+    "PRD-06",
+    "PRD-07",
+    "PRD-08",
+    "PRD-09",
+    "PRD-10",
+    "PRD-11",
+    "PRD-12",
+    "PRD-13",
+    "PRD-14",
+    "PRD-15",
+    "PRD-16",
+    "PRD-17",
+    "PRD-18",
+    "PRD-19",
+    "PRD-20",
+    "PRD-21",
+    "PRD-22",
+    "PRD-23",
+    "PRD-24",
+    "PRD-25",
+    "PRD-26",
+    "PRD-27",
+    "PRD-28",
+    "PRD-29",
+    "PRD-30",
+    "PRD-31",
+    "PRD-32",
+    "PRD-33",
+    "PRD-34",
+    "PRD-35",
+    "PRD-36",
+    "PRD-37",
+    "PRD-38",
+    "PRD-39",
+    "PRD-40",
+    "PRD-41",
+    "PRD-42",
+    "PRD-43",
+    "PRD-44",
+    "PRD-45",
+    "PRD-46",
+    "PRD-47"
+  ],
+  "edges": [
+    {
+      "from": "PRD-01",
+      "to": "PRD-00",
+      "reason": "schema must exist before import"
+    },
+    {
+      "from": "PRD-01",
+      "to": "PRD-02"
+    },
+    {
+      "from": "PRD-01",
+      "to": "PRD-04"
+    },
+    {
+      "from": "PRD-01",
+      "to": "PRD-03"
+    },
+    {
+      "from": "PRD-02",
+      "to": "PRD-03"
+    },
+    {
+      "from": "PRD-04",
+      "to": "PRD-04b"
+    },
+    {
+      "from": "PRD-04b",
+      "to": "PRD-04c"
+    },
+    {
+      "from": "PRD-04b",
+      "to": "PRD-23"
+    },
+    {
+      "from": "PRD-04",
+      "to": "PRD-05"
+    },
+    {
+      "from": "PRD-05",
+      "to": "PRD-06"
+    },
+    {
+      "from": "PRD-00",
+      "to": "PRD-06",
+      "reason": "legacy flag must be stamped before firewall enforcement"
+    },
+    {
+      "from": "PRD-06",
+      "to": "PRD-28"
+    },
+    {
+      "from": "PRD-06",
+      "to": "PRD-35"
+    },
+    {
+      "from": "PRD-06",
+      "to": "PRD-36"
+    },
+    {
+      "from": "PRD-06",
+      "to": "PRD-46"
+    },
+    {
+      "from": "PRD-04",
+      "to": "PRD-07"
+    },
+    {
+      "from": "PRD-01",
+      "to": "PRD-08"
+    },
+    {
+      "from": "PRD-08",
+      "to": "PRD-09"
+    },
+    {
+      "from": "PRD-08",
+      "to": "PRD-10"
+    },
+    {
+      "from": "PRD-09",
+      "to": "PRD-10"
+    },
+    {
+      "from": "PRD-10",
+      "to": "PRD-11"
+    },
+    {
+      "from": "PRD-11",
+      "to": "PRD-12"
+    },
+    {
+      "from": "PRD-11",
+      "to": "PRD-45"
+    },
+    {
+      "from": "PRD-36",
+      "to": "PRD-45"
+    },
+    {
+      "from": "PRD-13",
+      "to": "PRD-14"
+    },
+    {
+      "from": "PRD-14",
+      "to": "PRD-15"
+    },
+    {
+      "from": "PRD-15",
+      "to": "PRD-16"
+    },
+    {
+      "from": "PRD-15",
+      "to": "PRD-17"
+    },
+    {
+      "from": "PRD-14",
+      "to": "PRD-18"
+    },
+    {
+      "from": "PRD-14",
+      "to": "PRD-19"
+    },
+    {
+      "from": "PRD-17",
+      "to": "PRD-19",
+      "reason": "recipe engine reuses photo-macro vision pipeline"
+    },
+    {
+      "from": "PRD-19",
+      "to": "PRD-20"
+    },
+    {
+      "from": "PRD-15",
+      "to": "PRD-21"
+    },
+    {
+      "from": "PRD-26",
+      "to": "PRD-27"
+    },
+    {
+      "from": "PRD-26",
+      "to": "PRD-29"
+    },
+    {
+      "from": "PRD-27",
+      "to": "PRD-30"
+    },
+    {
+      "from": "PRD-27",
+      "to": "PRD-31"
+    },
+    {
+      "from": "PRD-31",
+      "to": "PRD-32"
+    },
+    {
+      "from": "PRD-33",
+      "to": "PRD-34"
+    },
+    {
+      "from": "PRD-12",
+      "to": "PRD-38"
+    },
+    {
+      "from": "PRD-26",
+      "to": "PRD-38"
+    },
+    {
+      "from": "PRD-05",
+      "to": "PRD-41"
+    },
+    {
+      "from": "PRD-12",
+      "to": "PRD-41"
+    },
+    {
+      "from": "PRD-03",
+      "to": "PRD-43"
+    }
+  ],
+  "blocked": [
+    {
+      "prd": "PRD-31",
+      "blocker": "Shakira AI Knowledge Base questionnaire"
+    }
+  ]
+}

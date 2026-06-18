@@ -45,3 +45,6 @@ next-env.d.ts
 
 # local browser comparison snapshots
 /.claude-browser/
+
+# Claude Code local (machine-specific perms)
+.claude/settings.local.json
