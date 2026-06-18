@@ -10,10 +10,14 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 7 (Onboarding, PRD-04c) complete and runtime-verified. Advancing to Phase 8 (PRD-07 Subscriber Dashboard).
-Plan: Phase 8 (PRD-07, logged-in client home surface)
-Status: PRD-01,47,02,03,04,04b,04c built and verified. 7 of 16 phases done. 31 commits. 24 tables live.
-Last activity: 2026-06-18, PRD-04c: onboarding_responses + defensible Mifflin-St Jeor prediction (proven 90->84.6kg @ -0.45/wk), live recharts chart UI, /onboarding guarded.
+Phase: Phase 8 (Subscriber Dashboard, PRD-07) complete and runtime-verified. Advancing to Phase 9 (PRD-08 Exercise Library).
+Plan: Phase 9 (PRD-08, exercise library: 2619 seed + filmed demos, search/filter, Mux playback)
+Status: PRD-01,47,02,03,04,04b,04c,07 built and verified. 8 of 16 phases done (8 of the 13 buildable; 14-16 gated). 34 commits. 24 tables.
+Last activity: 2026-06-18, PRD-07: dashboard summary aggregator + 4 UI states, first-run->content data path proven, guard 307.
+
+## PRD-07 result (commit 1318aef)
+- No new tables. lib/dashboard/summary.ts aggregates onboarding targets now; workout/streak/activity null until PRD-10/11/12 + community.
+- /api/dashboard/summary (authed). DashboardWidgets: loading/error(retry)/first-run/content. Proven: new user hasOnboarded:false -> first-run; after onboarding -> macros content. Guard 307.
 
 ## PRD-04c result (commits 2b9b305, 491eceb)
 - onboarding_responses table (RLS). Prediction engine (lib/onboarding/prediction.ts): BMR/TDEE/calories/macros/weekly-delta/12wk curve, pure + reusable client+server.
