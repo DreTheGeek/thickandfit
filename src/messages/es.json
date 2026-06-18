@@ -29,5 +29,21 @@
     "error": "Algo salió mal. Inténtalo de nuevo.",
     "successTitle": "Estás en la lista",
     "successBody": "Revisa tu correo para tu guía gratuita."
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "email": "Correo",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿Aún no tienes cuenta?",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "continueGoogle": "Continuar con Google",
+    "continueApple": "Continuar con Apple",
+    "resetTitle": "Restablece tu contraseña",
+    "resetCta": "Enviar enlace",
+    "resetSent": "Si ese correo existe, te enviaremos un enlace.",
+    "checkEmail": "Revisa tu correo para confirmar tu cuenta.",
+    "or": "o"
   }
 }

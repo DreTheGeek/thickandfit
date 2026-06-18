@@ -29,5 +29,21 @@
     "error": "Something went wrong. Please try again.",
     "successTitle": "You're on the list",
     "successBody": "Check your inbox for your free starter guide."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?",
+    "continueGoogle": "Continue with Google",
+    "continueApple": "Continue with Apple",
+    "resetTitle": "Reset your password",
+    "resetCta": "Send reset link",
+    "resetSent": "If that email exists, a reset link is on its way.",
+    "checkEmail": "Check your email to confirm your account.",
+    "or": "or"
   }
 }
