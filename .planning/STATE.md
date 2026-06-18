@@ -10,10 +10,17 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 1 — Foundation (PRD-01), not started
-Plan: —
-Status: Roadmap approved (16 phases). Ready to plan/execute Phase 1.
-Last activity: 2026-06-18 — Milestone v1.0 roadmap approved with owner reorder (API forward; money + migration last)
+Phase: Phase 1 (Foundation, PRD-01), substantially complete and verified
+Plan: advancing to Phase 2 (PRD-47, API surface)
+Status: PRD-01 built and verified on live Supabase (project cpwesaeyhklmjbqppeah).
+Last activity: 2026-06-18, PRD-01: 18/18 tables live with RLS, cross-tenant isolation proven, clients/api/UI/PWA built, pnpm build green.
+
+## PRD-01 result (commits 9e8bf35 .. 5df6ccb)
+
+- DB: migrations 0001+0002 applied via Management API. 18/18 tables, RLS on all, 15+ policies. Cross-tenant proof: company A JWT sees only company-a, company B sees only company-b.
+- 5-role RBAC seeded, is_legacy_client firewall + deployment-blocking comment, money columns bigint cents.
+- Code: lib/supabase (client/server/service), _shared/api.ts (SHA-256 key validation), run-ai-eval + resend-webhook edge fns, 4 UI states, PWA shell (manifest + sw.js + install components + layout meta). pnpm build green.
+- Open gaps (environmental / deferred): (1) blocking hooks are installed in .claude/hooks and one verified exit-2, but NOT wired into .claude/settings.json yet (that write was declined), so they do not block live during the build. (2) PWA real-device install on iPhone/Android not testable in this environment. (3) no endpoints deployed yet to curl the 401/no-stack-trace check. (4) PWA icons point at the Webflow jpgs as placeholders, real 192/512 maskable PNGs needed.
 
 ## Accumulated Context
 
