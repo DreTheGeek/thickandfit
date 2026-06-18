@@ -1,0 +1,38 @@
+{
+  "mode": "yolo",
+  "granularity": "standard",
+  "parallelization": true,
+  "commit_docs": true,
+  "model_profile": "quality",
+  "project_code": "thickandfit",
+  "phase_naming": "sequential",
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": true,
+    "auto_advance": true,
+    "code_review": true,
+    "code_review_depth": "standard",
+    "security_enforcement": true,
+    "security_asvs_level": 2,
+    "security_block_on": "high",
+    "blocking_hooks": true,
+    "feature_ledger": true,
+    "delta_spec": true,
+    "plan_review": true
+  },
+  "git": {
+    "branching_strategy": "phase",
+    "phase_branch_template": "main|phase-2|phase-3"
+  },
+  "high_risk_gate": {
+    "_note": "ralph-loop runs autonomously EXCEPT these PRDs require human plan-review before code (money / auth / migration / PII). Final autonomy policy to be confirmed before execute-phase.",
+    "prds": ["PRD-00", "PRD-04", "PRD-05", "PRD-06"]
+  },
+  "_kit": {
+    "source_of_truth": "Build/02-prds + Build/03-planning-scaffold/.planning/spec",
+    "kaldr_skill_installed": false,
+    "_note": "kaldr-build-system skill absent; GSD runs stock over PRDs. Blocking hooks (Build/03-planning-scaffold/.claude/hooks) still enforce. Evaluator/ledger machinery needs that skill installed."
+  }
+}
