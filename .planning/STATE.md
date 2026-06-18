@@ -10,10 +10,15 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 11 (Program Builder, PRD-10) complete and runtime-verified. Advancing to Phase 12 (PRD-11 Workout Player).
-Plan: Phase 12 (PRD-11, workout player: audible timer, Wake Lock, progressive overload, follow-along, client substitution picker)
-Status: PRD-01,47,02,03,04,04b,04c,07,08,09,10 built and verified. 11 of 16 phases done (2 buildable left: 12/13; 14-16 gated). 33 tables.
-Last activity: 2026-06-18, PRD-10: plans/sessions/session_exercises/assignments, nested build->reload->template->assign proven (2 sessions, formats/sets/reps/rest/notes, 2 clients, client sees plan).
+Phase: Phase 12 (Workout Player, PRD-11) complete and runtime-verified. Advancing to Phase 13 (PRD-12 Workout Logging + History) — LAST buildable phase before the gate.
+Plan: Phase 13 (PRD-12, workout logging + history; feeds the overload engine's history input)
+Status: PRD-01,47,02,03,04,04b,04c,07,08,09,10,11 built and verified. 12 of 16 phases done (1 buildable left: 13; 14-16 gated). 33 tables.
+Last activity: 2026-06-18, PRD-11: deterministic progressive overload unit-proven 6/6, Web Audio timer + Wake Lock player + inline substitution, AI-explain scaffold.
+
+## PRD-11 result (commit 2ab86fe)
+- No new tables. lib/overload/recommend.ts: deterministic double-progression (no-history->hold, easy->+rep/+weight, failed->deload, 2-hard->hold). Unit-verified 6/6. AC-3 proven.
+- lib/overload/explain.ts: lazy OpenRouter AI explanation (falls back to deterministic rationale w/o key; never invents the number).
+- components/workout/workout-player.tsx: Web Audio beep timer, Wake Lock (+ visibility re-acquire), set flow, inline substitution (calls PRD-09). /workout/[planId] guarded 307. AC-1/2/5 (timer/wakelock/Mux/follow-along) browser-verifiable; follow-along add-on gate is PRD-36.
 
 ## PRD-10 result (commit 79e161c)
 - 4 tables: plans, sessions, session_exercises (format enum straight/circuit/superset, sets/reps/time/weight/rest/rounds/notes/config), plan_assignments. RLS tenant.
