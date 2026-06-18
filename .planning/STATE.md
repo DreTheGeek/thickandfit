@@ -10,10 +10,16 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 4 (Marketing/Waitlist, PRD-03) complete and runtime-verified. Advancing to Phase 5 (PRD-04 Auth + 5-Role RBAC).
-Plan: Phase 5 (PRD-04, email/password + Google + Apple + Magic Link, 5-role RBAC)
-Status: PRD-01 + PRD-47 + PRD-02 + PRD-03 built and verified. 4 of 16 phases done.
-Last activity: 2026-06-18, PRD-03: waitlist_leads + tenant seed (19 tables), /api/waitlist 201/422 proven, /join bilingual + Googlebot 200.
+Phase: Phase 5 (Auth + RBAC, PRD-04) substantially complete and runtime-verified. Advancing to Phase 6 (PRD-04b Form Builder).
+Plan: Phase 6 (PRD-04b, multi-form builder engine)
+Status: PRD-01 + PRD-47 + PRD-02 + PRD-03 + PRD-04 built and verified. 5 of 16 phases done.
+Last activity: 2026-06-18, PRD-04: profile-on-signup trigger + JWT access-token hook (company_id+role), role guards proven 403/200/401, bilingual auth pages.
+
+## PRD-04 result (commits 011ceb6, def41a7)
+- Migration 0004: handle_new_user trigger (profile on signup, tenant + subscriber), custom_access_token_hook (injects company_id + user_role into JWT), enabled in Supabase Auth config.
+- Role guard layer (resolveAuth/hasRole), coach-only route proven: subscriber 403, coach 200, no auth 401.
+- Auth UI: bilingual sign-in/sign-up/forgot pages, OAuth buttons, /auth/callback (exchangeCodeForSession). Pages + callback runtime-verified.
+- Pending external config (scaffolded, inactive until keyed): Google/Apple OAuth provider config, Resend for email verification + password reset. Magic Link is a logged deviation (kept).
 
 ## PRD-03 result (commits d88fa37, fbb6b97)
 - Table waitlist_leads (RLS) + real Thick & Fit tenant seeded (slug thick-and-fit).
