@@ -10,10 +10,16 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 1 (Foundation, PRD-01), substantially complete and verified
-Plan: advancing to Phase 2 (PRD-47, API surface)
-Status: PRD-01 built and verified on live Supabase (project cpwesaeyhklmjbqppeah).
-Last activity: 2026-06-18, PRD-01: 18/18 tables live with RLS, cross-tenant isolation proven, clients/api/UI/PWA built, pnpm build green.
+Phase: Phase 2 (API surface, PRD-47) complete and runtime-verified. Advancing to Phase 3 (PRD-02 Bilingual).
+Plan: Phase 3 (PRD-02, independent EN/ES UI/DB toggle)
+Status: PRD-01 + PRD-47 built and verified on live Supabase (project cpwesaeyhklmjbqppeah).
+Last activity: 2026-06-18, PRD-47: REST API (ping/me) + MCP server runtime-verified, cross-tenant key isolation proven (key A to company-a, key B to company-b).
+
+## PRD-47 result (commits b506754, fcfbca6)
+- REST: lib/api/auth.ts (Node SHA-256 key validation), /api/v1/ping (200), /api/v1/me (401 on bad key). Runtime curl verified.
+- MCP: /api/mcp JSON-RPC (initialize/tools/list/tools/call), tools scoped to the calling key company. Proven: key A sees only company-a, key B only company-b, no key -> Unauthorized.
+- Docs: /api-docs (noindex; role-gating deferred to PRD-04).
+- No new tables (uses PRD-01 api_keys + api_usage_log).
 
 ## PRD-01 result (commits 9e8bf35 .. 5df6ccb)
 
