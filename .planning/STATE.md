@@ -10,10 +10,16 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 2 (API surface, PRD-47) complete and runtime-verified. Advancing to Phase 3 (PRD-02 Bilingual).
-Plan: Phase 3 (PRD-02, independent EN/ES UI/DB toggle)
-Status: PRD-01 + PRD-47 built and verified on live Supabase (project cpwesaeyhklmjbqppeah).
-Last activity: 2026-06-18, PRD-47: REST API (ping/me) + MCP server runtime-verified, cross-tenant key isolation proven (key A to company-a, key B to company-b).
+Phase: Phase 3 (Bilingual, PRD-02) complete and runtime-verified. Advancing to Phase 4 (PRD-03 Marketing Shell + Waitlist).
+Plan: Phase 4 (PRD-03, marketing shell + pre-registration waitlist + GHL drip + legal pillar)
+Status: PRD-01 + PRD-47 + PRD-02 built and verified. 3 of 16 phases done.
+Last activity: 2026-06-18, PRD-02: next-intl en/es, independent ui_locale vs content_locale proven (ui=en+content=es keeps UI English), LATAM IP default middleware.
+
+## PRD-02 result (commit 0b44b2e)
+- next-intl (cookie-driven, no URL routing). Catalogs src/messages/en.json + es.json.
+- Independent locales: ui_locale (interface) vs content_locale (content), both cookie + profile backed. Proven independent at runtime.
+- LATAM/ES IP default via middleware (x-vercel-ip-country), user-overridable. LanguageToggle component.
+- Note: root layout now dynamic (reads locale cookie); marketing static-prerender can be re-optimized in PRD-03.
 
 ## PRD-47 result (commits b506754, fcfbca6)
 - REST: lib/api/auth.ts (Node SHA-256 key validation), /api/v1/ping (200), /api/v1/me (401 on bad key). Runtime curl verified.
