@@ -19,5 +19,15 @@
     "nutrition": "Nutrition",
     "community": "Community",
     "profile": "Profile"
+  },
+  "waitlist": {
+    "headline": "Get curves. Keep them.",
+    "subhead": "Coaching, workouts, and macro-friendly nutrition in your language. Join the waitlist for early access and a free starter guide.",
+    "emailPlaceholder": "Your email",
+    "cta": "Join the waitlist",
+    "submitting": "Joining",
+    "error": "Something went wrong. Please try again.",
+    "successTitle": "You're on the list",
+    "successBody": "Check your inbox for your free starter guide."
   }
 }

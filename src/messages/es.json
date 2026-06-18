@@ -19,5 +19,15 @@
     "nutrition": "Nutrición",
     "community": "Comunidad",
     "profile": "Perfil"
+  },
+  "waitlist": {
+    "headline": "Consigue curvas. Mantenlas.",
+    "subhead": "Coaching, entrenamientos y nutrición flexible en tu idioma. Únete a la lista para acceso anticipado y una guía gratuita.",
+    "emailPlaceholder": "Tu correo",
+    "cta": "Unirme a la lista",
+    "submitting": "Uniéndote",
+    "error": "Algo salió mal. Inténtalo de nuevo.",
+    "successTitle": "Estás en la lista",
+    "successBody": "Revisa tu correo para tu guía gratuita."
   }
 }
