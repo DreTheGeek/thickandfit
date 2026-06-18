@@ -7,6 +7,8 @@ import "./globals.css";
 import { SwRegister } from "@/components/pwa/sw-register";
 import { IOSInstallBanner } from "@/components/pwa/ios-install-banner";
 import { AndroidInstallButton } from "@/components/pwa/android-install-button";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 const gulamsCondensed = localFont({
   src: "../../public/assets/fonts/a0274ead7b73.woff2",
@@ -63,13 +65,15 @@ const isWModDetector = (s: ExtractedScript): boolean =>
 
 const bodyScripts = scriptsManifest.body.filter((s) => !isVwoInline(s) && !isWModDetector(s));
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
   return (
-    <html lang="en-US" className={`w-mod-js ${gulamsCondensed.variable}`}>
+    <html lang={locale} className={`w-mod-js ${gulamsCondensed.variable}`}>
       <head>
         <link rel="stylesheet" href="/assets/css/webflow.css" />
         {jsonLd != null && (
@@ -80,7 +84,9 @@ export default function RootLayout({
         )}
       </head>
       <body>
-        {children}
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+        </NextIntlClientProvider>
         {bodyScripts.map((s, idx) => {
           if (s.src != null) {
             return (

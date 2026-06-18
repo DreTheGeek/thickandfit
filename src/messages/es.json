@@ -1,0 +1,23 @@
+{
+  "common": {
+    "appName": "Thick & Fit",
+    "signIn": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "loading": "Cargando",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "tryAgain": "Intentar de nuevo",
+    "language": "Idioma",
+    "uiLanguage": "Idioma de la interfaz",
+    "contentLanguage": "Idioma del contenido",
+    "english": "Inglés",
+    "spanish": "Español"
+  },
+  "nav": {
+    "home": "Inicio",
+    "workouts": "Entrenamientos",
+    "nutrition": "Nutrición",
+    "community": "Comunidad",
+    "profile": "Perfil"
+  }
+}
