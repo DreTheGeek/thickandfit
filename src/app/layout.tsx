@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import localFont from "next/font/local";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -57,14 +56,6 @@ const scriptsManifest: ScriptsManifest = JSON.parse(
 
 const jsonLd = scriptsManifest.head.find((s) => s.type === "application/ld+json")?.inline;
 
-const isVwoInline = (s: ExtractedScript): boolean =>
-  s.inline != null && s.inline.includes("_vwo_code");
-
-const isWModDetector = (s: ExtractedScript): boolean =>
-  s.inline != null && s.inline.includes("w-mod-") && s.inline.includes("documentElement");
-
-const bodyScripts = scriptsManifest.body.filter((s) => !isVwoInline(s) && !isWModDetector(s));
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -87,30 +78,6 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
         </NextIntlClientProvider>
-        {bodyScripts.map((s, idx) => {
-          if (s.src != null) {
-            return (
-              <Script
-                key={`s-${idx}`}
-                src={s.src}
-                strategy="afterInteractive"
-                type={s.type ?? undefined}
-              />
-            );
-          }
-          if (s.inline != null) {
-            return (
-              <Script
-                key={`s-${idx}`}
-                id={`inline-script-${idx}`}
-                strategy="afterInteractive"
-                type={s.type ?? undefined}
-                dangerouslySetInnerHTML={{ __html: s.inline }}
-              />
-            );
-          }
-          return null;
-        })}
         <SwRegister />
         <IOSInstallBanner />
         <AndroidInstallButton />
