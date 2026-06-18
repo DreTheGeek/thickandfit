@@ -10,10 +10,15 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 9 (Exercise Library, PRD-08) complete and runtime-verified. Advancing to Phase 10 (PRD-09 Substitution Engine).
-Plan: Phase 10 (PRD-09, 5-context equipment substitution engine)
-Status: PRD-01,47,02,03,04,04b,04c,07,08 built and verified. 9 of 16 phases done. 37 commits. 27 tables, 873 exercises.
-Last activity: 2026-06-18, PRD-08: exercises + lookups, 873 seeded (free-exercise-db), search/filter proven (glutes=22, +barbell=4, squat=56), browser UI.
+Phase: Phase 10 (Substitution Engine, PRD-09) complete and runtime-verified. Advancing to Phase 11 (PRD-10 Program Builder).
+Plan: Phase 11 (PRD-10, coach-side program builder; substitution chain-builder UI surfaces here)
+Status: PRD-01,47,02,03,04,04b,04c,07,08,09 built and verified. 10 of 16 phases done (3 buildable left: 11/12/13; 14-16 gated). 29 tables.
+Last activity: 2026-06-18, PRD-09: exercise_substitutions + reason tags, save/resolve proven (ordered chain+tags, client resolve count:2, machines->fallback).
+
+## PRD-09 result (commit f4004a4)
+- 2 tables: exercise_substitutions (5-context enum gym/bodyweight/bands/freeweights/machines), substitution_reason_tags (KALDR:GLOBAL, bilingual). RLS tenant.
+- Engine: saveChain (replace-by-context, sort_order=index), resolveSubstitutions (ordered + reason tags, or fallback to original w/ note). AC-1/2/3 proven end-to-end with coach+client.
+- UI deferred to PRD-10 (coach chain builder in program builder) + PRD-11 (client picker in player), per the PRD.
 
 ## PRD-08 result (commit 9819df9)
 - 3 tables: exercises (company_id NULL = shared seed), muscle_groups + exercise_equipment_types (KALDR:GLOBAL, bilingual labels). RLS: read system seed + own company.
