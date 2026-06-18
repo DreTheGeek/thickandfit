@@ -1,0 +1,16 @@
+{
+  "name": "Thick & Fit",
+  "short_name": "Thick & Fit",
+  "description": "Creator-led bilingual fitness coaching: workouts, nutrition, and community in your language.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "en-US",
+  "icons": [
+    { "src": "/assets/images/apple-touch-icon.jpg", "sizes": "180x180", "type": "image/jpeg", "purpose": "any" },
+    { "src": "/assets/images/favicon.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+  ]
+}
