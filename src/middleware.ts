@@ -1,10 +1,36 @@
-// On first visit (no ui_locale cookie), default the interface language from the visitor's country.
-// LATAM/ES -> Spanish, else English. User-overridable via the LanguageToggle.
+// Two jobs per request:
+// 1. Refresh the Supabase session so rotated auth cookies are persisted (Server Components
+//    cannot write cookies, so this middleware must — without it sessions break after the
+//    first token rotation and users get bounced back to sign-in).
+// 2. On first visit (no ui_locale cookie), default the interface language from the
+//    visitor's country: LATAM/ES -> Spanish, else English. User-overridable later.
 import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import { localeForCountry } from '@/lib/i18n/geo';
 
-export function middleware(req: NextRequest) {
-  const res = NextResponse.next();
+export async function middleware(req: NextRequest) {
+  let res = NextResponse.next({ request: req });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          res = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+        },
+      },
+    },
+  );
+
+  // Touch the session so @supabase/ssr refreshes + re-writes the auth cookies via setAll.
+  await supabase.auth.getUser();
+
   if (!req.cookies.get('ui_locale')) {
     const country = req.headers.get('x-vercel-ip-country');
     res.cookies.set('ui_locale', localeForCountry(country), {
@@ -13,6 +39,7 @@ export function middleware(req: NextRequest) {
       sameSite: 'lax',
     });
   }
+
   return res;
 }
 
