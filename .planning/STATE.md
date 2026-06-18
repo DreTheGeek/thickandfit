@@ -10,10 +10,15 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 8 (Subscriber Dashboard, PRD-07) complete and runtime-verified. Advancing to Phase 9 (PRD-08 Exercise Library).
-Plan: Phase 9 (PRD-08, exercise library: 2619 seed + filmed demos, search/filter, Mux playback)
-Status: PRD-01,47,02,03,04,04b,04c,07 built and verified. 8 of 16 phases done (8 of the 13 buildable; 14-16 gated). 34 commits. 24 tables.
-Last activity: 2026-06-18, PRD-07: dashboard summary aggregator + 4 UI states, first-run->content data path proven, guard 307.
+Phase: Phase 9 (Exercise Library, PRD-08) complete and runtime-verified. Advancing to Phase 10 (PRD-09 Substitution Engine).
+Plan: Phase 10 (PRD-09, 5-context equipment substitution engine)
+Status: PRD-01,47,02,03,04,04b,04c,07,08 built and verified. 9 of 16 phases done. 37 commits. 27 tables, 873 exercises.
+Last activity: 2026-06-18, PRD-08: exercises + lookups, 873 seeded (free-exercise-db), search/filter proven (glutes=22, +barbell=4, squat=56), browser UI.
+
+## PRD-08 result (commit 9819df9)
+- 3 tables: exercises (company_id NULL = shared seed), muscle_groups + exercise_equipment_types (KALDR:GLOBAL, bilingual labels). RLS: read system seed + own company.
+- 873 exercises imported (free-exercise-db; PRD said 2619 but the canonical dataset is 873). /api/exercises search proven (muscle/equipment/name filters, 401 unauth). Browser UI with 4 states.
+- Gaps: AC-2 Mux demo playback needs Mux key + uploaded demos (video_mux_id column + Demo badge ready). AC-3 Spanish exercise NAMES pending a translation pass (lookup labels are bilingual; name_es null on the English seed).
 
 ## PRD-07 result (commit 1318aef)
 - No new tables. lib/dashboard/summary.ts aggregates onboarding targets now; workout/streak/activity null until PRD-10/11/12 + community.
