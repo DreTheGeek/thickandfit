@@ -3,12 +3,21 @@ import { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
 import { requestResetAction, type AuthState } from '@/lib/auth/actions';
 
+const inputClass =
+  'w-full border border-neutral-200 bg-white px-4 py-3.5 text-base text-ink outline-none transition placeholder:text-neutral-400 focus:border-ink';
+const btnClass =
+  'w-full bg-olive px-6 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-black transition hover:bg-olive-600 disabled:cursor-not-allowed disabled:opacity-60';
+
 export function ForgotForm() {
   const t = useTranslations('auth');
   const [state, formAction, pending] = useActionState<AuthState, FormData>(requestResetAction, {});
 
   if (state.sent) {
-    return <p className="text-sm text-neutral-600">{t('resetSent')}</p>;
+    return (
+      <p className="border-l-2 border-olive bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
+        {t('resetSent')}
+      </p>
+    );
   }
 
   return (
@@ -19,14 +28,10 @@ export function ForgotForm() {
         required
         autoComplete="email"
         placeholder={t('email')}
-        className="rounded-none border border-black bg-white px-4 py-3 text-base"
+        className={inputClass}
       />
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-none bg-black px-6 py-3 text-base font-medium text-white disabled:opacity-60"
-      >
-        {t('resetCta')}
+      <button type="submit" disabled={pending} className={btnClass}>
+        {pending ? '…' : t('resetCta')}
       </button>
     </form>
   );

@@ -4,8 +4,10 @@ import { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
 import { signInAction, signUpAction, type AuthState } from '@/lib/auth/actions';
 
-const inputClass = 'rounded-none border border-black bg-white px-4 py-3 text-base';
-const btnClass = 'rounded-none bg-black px-6 py-3 text-base font-medium text-white disabled:opacity-60';
+const inputClass =
+  'w-full border border-neutral-200 bg-white px-4 py-3.5 text-base text-ink outline-none transition placeholder:text-neutral-400 focus:border-ink';
+const btnClass =
+  'w-full bg-olive px-6 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-black transition hover:bg-olive-600 disabled:cursor-not-allowed disabled:opacity-60';
 
 export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const t = useTranslations('auth');
@@ -13,12 +15,23 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(action, {});
 
   if (mode === 'sign-up' && state.sent) {
-    return <p className="text-sm text-neutral-600">{t('checkEmail')}</p>;
+    return (
+      <p className="border-l-2 border-olive bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
+        {t('checkEmail')}
+      </p>
+    );
   }
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
-      <input name="email" type="email" required autoComplete="email" placeholder={t('email')} className={inputClass} />
+      <input
+        name="email"
+        type="email"
+        required
+        autoComplete="email"
+        placeholder={t('email')}
+        className={inputClass}
+      />
       <input
         name="password"
         type="password"
@@ -29,12 +42,12 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
         className={inputClass}
       />
       {state.error ? (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="border-l-2 border-red-500 bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}
         </p>
       ) : null}
       <button type="submit" disabled={pending} className={btnClass}>
-        {mode === 'sign-in' ? t('signIn') : t('signUp')}
+        {pending ? '…' : mode === 'sign-in' ? t('signIn') : t('signUp')}
       </button>
     </form>
   );

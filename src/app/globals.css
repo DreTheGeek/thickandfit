@@ -2,4 +2,87 @@
 
 @theme inline {
   --font-gulams: var(--font-gulams);
+  --font-display: var(--font-gulams);
+  --color-olive: #5ebe62;
+  --color-olive-600: #4aa550;
+  --color-ink: #050505;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-color: #ffffff;
+    color: #050505;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
+  }
+}
+
+/* ---- Auth "gym wall" backdrop -------------------------------------------- */
+.tf-wall {
+  background-color: #060606;
+  background-image:
+    radial-gradient(120% 75% at 50% -15%, rgba(94, 190, 98, 0.22), transparent 60%),
+    radial-gradient(90% 90% at 85% 115%, rgba(94, 190, 98, 0.08), transparent 55%),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.018) 0 1px,
+      transparent 1px 70px
+    ),
+    linear-gradient(180deg, #0b0b0b, #000000);
+}
+
+/* Film-grain overlay (SVG turbulence) */
+.tf-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Floating quote drift */
+@keyframes tf-float {
+  from {
+    transform: translateY(7px);
+  }
+  to {
+    transform: translateY(-11px);
+  }
+}
+.tf-float {
+  animation-name: tf-float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform;
+}
+
+/* Entrance fade-up */
+@keyframes tf-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tf-fade-up {
+  animation: tf-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-float,
+  .tf-fade-up {
+    animation: none !important;
+  }
 }

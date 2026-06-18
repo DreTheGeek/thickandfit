@@ -1,16 +1,19 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { AuthShell } from '@/components/auth/auth-shell';
 import { ForgotForm } from '@/components/auth/forgot-form';
 
 export default async function ForgotPasswordPage() {
   const t = await getTranslations('auth');
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-6 py-16 text-black">
-      <h1 className="text-3xl font-bold uppercase tracking-tight">{t('resetTitle')}</h1>
+    <AuthShell title={t('resetTitle')}>
       <ForgotForm />
-      <Link href="/auth/sign-in" className="text-sm underline">
-        {t('signIn')}
+      <Link
+        href="/auth/sign-in"
+        className="mt-6 inline-block text-sm text-neutral-500 underline-offset-4 transition hover:text-ink hover:underline"
+      >
+        ← {t('signIn')}
       </Link>
-    </main>
+    </AuthShell>
   );
 }
