@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { homePathForUser, type Role } from '@/lib/auth/session';
 
 export type AuthState = { error?: string; sent?: boolean };
 
@@ -17,7 +18,20 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
-  redirect('/');
+  // Route by role + onboarding state, reusing the just-authenticated client.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let dest = '/dashboard';
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+    dest = await homePathForUser(user.id, (profile?.role as Role) ?? 'subscriber');
+  }
+  redirect(dest);
 }
 
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
