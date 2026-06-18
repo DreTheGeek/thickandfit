@@ -10,10 +10,16 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 3 (Bilingual, PRD-02) complete and runtime-verified. Advancing to Phase 4 (PRD-03 Marketing Shell + Waitlist).
-Plan: Phase 4 (PRD-03, marketing shell + pre-registration waitlist + GHL drip + legal pillar)
-Status: PRD-01 + PRD-47 + PRD-02 built and verified. 3 of 16 phases done.
-Last activity: 2026-06-18, PRD-02: next-intl en/es, independent ui_locale vs content_locale proven (ui=en+content=es keeps UI English), LATAM IP default middleware.
+Phase: Phase 4 (Marketing/Waitlist, PRD-03) complete and runtime-verified. Advancing to Phase 5 (PRD-04 Auth + 5-Role RBAC).
+Plan: Phase 5 (PRD-04, email/password + Google + Apple + Magic Link, 5-role RBAC)
+Status: PRD-01 + PRD-47 + PRD-02 + PRD-03 built and verified. 4 of 16 phases done.
+Last activity: 2026-06-18, PRD-03: waitlist_leads + tenant seed (19 tables), /api/waitlist 201/422 proven, /join bilingual + Googlebot 200.
+
+## PRD-03 result (commits d88fa37, fbb6b97)
+- Table waitlist_leads (RLS) + real Thick & Fit tenant seeded (slug thick-and-fit).
+- /api/waitlist: Zod-validated, idempotent upsert, lazy Resend (magnet) + GHL (drip) skip without keys. Lead capture proven (201, DB row; 422 bad email).
+- /join bilingual landing + WaitlistForm (4 states) + thank-you. AC-2 (design) + AC-3 (Googlebot 200) proven.
+- Note: Resend/GHL keys not set, so email + drip are coded-but-inactive until keys added. Google/Apple OAuth (PRD-04) will likewise need provider config.
 
 ## PRD-02 result (commit 0b44b2e)
 - next-intl (cookie-driven, no URL routing). Catalogs src/messages/en.json + es.json.
