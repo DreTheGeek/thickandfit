@@ -25,6 +25,8 @@ const bodyScripts = scriptsManifest.body.filter((s) => !isVwoInline(s) && !isWMo
 export default function Home() {
   return (
     <>
+      {/* Webflow CSS loads ONLY on the landing page so it never restyles the app/auth UI. */}
+      <link rel="stylesheet" href="/assets/css/webflow.css" />
       <div dangerouslySetInnerHTML={{ __html: bodyHtml }} />
       {bodyScripts.map((s, idx) => {
         if (s.src != null) {

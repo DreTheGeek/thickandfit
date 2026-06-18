@@ -1,15 +1,19 @@
 // Onboarding page. Requires auth (a client just signed up). Renders the live-prediction flow.
 import { requireAuth } from '@/lib/auth/guards';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
 export default async function OnboardingPage() {
   await requireAuth();
   return (
-    <main className="mx-auto max-w-xl px-6 py-12 text-black">
-      <h1 className="mb-6 text-3xl font-bold uppercase tracking-tight">Let&apos;s build your plan</h1>
+    <div className="mx-auto w-full max-w-xl px-6 py-10 md:px-10">
+      <PageHeader
+        title="Build your plan"
+        subtitle="Answer a few questions to get your custom macros and a program that fits your life."
+      />
       <OnboardingFlow />
-    </main>
+    </div>
   );
 }

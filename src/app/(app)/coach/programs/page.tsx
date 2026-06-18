@@ -2,6 +2,7 @@
 // the proven /api/programs engine; this is the entry surface.
 import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,22 +18,25 @@ export default async function CoachProgramsPage() {
     : { data: [] };
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12 text-black">
-      <h1 className="mb-6 text-3xl font-bold uppercase tracking-tight">Programs</h1>
+    <div className="mx-auto w-full max-w-3xl px-6 py-10 md:px-10">
+      <PageHeader title="Programs" />
       {!plans || plans.length === 0 ? (
-        <p className="text-sm text-neutral-600">No programs yet. Build one to assign to clients.</p>
+        <p className="text-sm text-neutral-500">No programs yet. Build one to assign to clients.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {plans.map((p) => (
-            <li key={p.id} className="flex items-center justify-between border border-neutral-200 p-4">
-              <span className="font-medium">{p.name_en}</span>
-              <span className="text-xs uppercase tracking-wide text-neutral-500">
+            <li
+              key={p.id}
+              className="flex items-center justify-between border border-neutral-200 p-4 transition-colors hover:border-ink"
+            >
+              <span className="font-medium text-ink">{p.name_en}</span>
+              <span className="text-xs uppercase tracking-wide text-neutral-400">
                 {p.weeks}w{p.is_template ? ' · template' : ''}
               </span>
             </li>
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

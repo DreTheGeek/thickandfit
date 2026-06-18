@@ -66,7 +66,6 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`w-mod-js ${gulamsCondensed.variable}`}>
       <head>
-        <link rel="stylesheet" href="/assets/css/webflow.css" />
         {jsonLd != null && (
           <script
             type="application/ld+json"

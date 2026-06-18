@@ -8,14 +8,15 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 p-12 text-center">
-      <h3 className="text-xl font-semibold text-black">Something went wrong</h3>
-      <p className="max-w-sm text-sm text-neutral-600">{message}</p>
+    <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+      <div className="h-1 w-12 bg-olive" />
+      <h3 className="font-display text-3xl uppercase leading-none text-ink">Something went wrong</h3>
+      <p className="max-w-sm text-sm text-neutral-500">{message}</p>
       {onRetry ? (
         <button
           type="button"
           onClick={onRetry}
-          className="rounded-none bg-black px-5 py-2 text-sm font-medium text-white"
+          className="bg-olive px-6 py-3 text-sm font-bold uppercase tracking-[0.12em] text-black transition hover:bg-olive-600"
         >
           Try again
         </button>

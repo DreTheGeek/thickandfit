@@ -2,6 +2,7 @@
 import { requireAuth } from '@/lib/auth/guards';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
 import { DashboardWidgets } from '@/components/dashboard/dashboard-widgets';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,9 +12,9 @@ export default async function DashboardPage() {
   if (ctx.companyId) summary = await getDashboardSummary(ctx.companyId, ctx.userId);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12 text-black">
-      <h1 className="mb-6 text-3xl font-bold uppercase tracking-tight">Home</h1>
+    <div className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10">
+      <PageHeader title="Home" />
       <DashboardWidgets initial={summary} />
-    </main>
+    </div>
   );
 }
