@@ -1,0 +1,79 @@
+{
+  "repoRoot": ".",
+  "stage": "pre-launch",
+  "priority": "the-works",
+  "safeTarget": "https://thickandfit.vercel.app",
+
+  "surfaces": [
+    {
+      "name": "app",
+      "baseURL": "https://thickandfit.vercel.app",
+      "auth": true,
+      "routes": [
+        "/",
+        "/about",
+        "/join",
+        "/join/thank-you",
+        "/api-docs",
+        "/auth/sign-in",
+        "/auth/sign-up",
+        "/auth/forgot-password",
+        "/onboarding",
+        "/dashboard",
+        "/exercises",
+        "/history",
+        "/forms/[id]",
+        "/coach/forms/[id]",
+        "/coach/programs",
+        "/workout/[planId]",
+        "/i18n-demo"
+      ]
+    }
+  ],
+
+  "roles": [
+    {
+      "name": "subscriber",
+      "surface": "app",
+      "loginUrl": "https://thickandfit.vercel.app/auth/sign-in",
+      "credEnv": {
+        "email": "LP_SUBSCRIBER_EMAIL",
+        "password": "LP_SUBSCRIBER_PASSWORD"
+      }
+    },
+    {
+      "name": "coach",
+      "surface": "app",
+      "loginUrl": "https://thickandfit.vercel.app/auth/sign-in",
+      "credEnv": {
+        "email": "LP_COACH_EMAIL",
+        "password": "LP_COACH_PASSWORD"
+      }
+    },
+    {
+      "name": "free",
+      "surface": "app",
+      "loginUrl": "https://thickandfit.vercel.app/auth/sign-in",
+      "credEnv": {
+        "email": "LP_FREE_EMAIL",
+        "password": "LP_FREE_PASSWORD"
+      }
+    }
+  ],
+
+  "supabase": {
+    "projectRef": "cpwesaeyhklmjbqppeah",
+    "tokenEnv": "LP_SUPABASE_ACCESS_TOKEN"
+  },
+
+  "loginSelectors": {
+    "emailField": "input[type=email]",
+    "passwordField": "input[type=password]",
+    "submitButton": "button[type=submit]"
+  },
+
+  "destructive": false,
+  "sandbox": true,
+
+  "credsFile": ".env.launchproof"
+}
