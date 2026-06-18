@@ -10,10 +10,15 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 5 (Auth + RBAC, PRD-04) substantially complete and runtime-verified. Advancing to Phase 6 (PRD-04b Form Builder).
-Plan: Phase 6 (PRD-04b, multi-form builder engine)
-Status: PRD-01 + PRD-47 + PRD-02 + PRD-03 + PRD-04 built and verified. 5 of 16 phases done.
-Last activity: 2026-06-18, PRD-04: profile-on-signup trigger + JWT access-token hook (company_id+role), role guards proven 403/200/401, bilingual auth pages.
+Phase: Phase 6 (Form Builder, PRD-04b) complete and runtime-verified. Advancing to Phase 7 (PRD-04c Onboarding Questionnaire).
+Plan: Phase 7 (PRD-04c, onboarding questionnaire + live weight-prediction chart + plan preview)
+Status: PRD-01,47,02,03,04,04b built and verified. 6 of 16 phases done. 27 commits.
+Last activity: 2026-06-18, PRD-04b: 4 form tables, full lifecycle proven end-to-end (build/reorder/403/publish/assign/submit/read), builder UI + guards.
+
+## PRD-04b result (commits 1901f4c, d34d613)
+- 4 tables: forms, form_fields, form_responses, form_assignments (all RLS). 23 tables total live.
+- Engine + routes: save (reorder via sort_order), publish, assign, submit (Zod + required validation + assignment check), fetch. Full lifecycle proven (AC-1/2/3) with coach + client users.
+- UI: coach FormBuilder (block palette, up/down reorder, save/publish), client FormRenderer, page guards (requireCoach/requireAuth) verified 307 -> sign-in.
 
 ## PRD-04 result (commits 011ceb6, def41a7)
 - Migration 0004: handle_new_user trigger (profile on signup, tenant + subscriber), custom_access_token_hook (injects company_id + user_role into JWT), enabled in Supabase Auth config.
