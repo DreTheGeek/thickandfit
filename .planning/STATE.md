@@ -10,10 +10,15 @@ trust into a retained subscriber base.
 
 ## Current Position
 
-Phase: Phase 10 (Substitution Engine, PRD-09) complete and runtime-verified. Advancing to Phase 11 (PRD-10 Program Builder).
-Plan: Phase 11 (PRD-10, coach-side program builder; substitution chain-builder UI surfaces here)
-Status: PRD-01,47,02,03,04,04b,04c,07,08,09 built and verified. 10 of 16 phases done (3 buildable left: 11/12/13; 14-16 gated). 29 tables.
-Last activity: 2026-06-18, PRD-09: exercise_substitutions + reason tags, save/resolve proven (ordered chain+tags, client resolve count:2, machines->fallback).
+Phase: Phase 11 (Program Builder, PRD-10) complete and runtime-verified. Advancing to Phase 12 (PRD-11 Workout Player).
+Plan: Phase 12 (PRD-11, workout player: audible timer, Wake Lock, progressive overload, follow-along, client substitution picker)
+Status: PRD-01,47,02,03,04,04b,04c,07,08,09,10 built and verified. 11 of 16 phases done (2 buildable left: 12/13; 14-16 gated). 33 tables.
+Last activity: 2026-06-18, PRD-10: plans/sessions/session_exercises/assignments, nested build->reload->template->assign proven (2 sessions, formats/sets/reps/rest/notes, 2 clients, client sees plan).
+
+## PRD-10 result (commit 79e161c)
+- 4 tables: plans, sessions, session_exercises (format enum straight/circuit/superset, sets/reps/time/weight/rest/rounds/notes/config), plan_assignments. RLS tenant.
+- Engine: saveProgram (nested, sort_order), getProgram (ordered reload), markTemplate, assignProgram, getAssignedPlans. AC-1/2/3 proven end-to-end (coach + 2 clients).
+- UI: minimal /coach/programs list. Full 3-pane interactive builder is the remaining browser-heavy UI polish on the proven engine. Substitution chain-builder also surfaces here (engine from PRD-09 ready).
 
 ## PRD-09 result (commit f4004a4)
 - 2 tables: exercise_substitutions (5-context enum gym/bodyweight/bands/freeweights/machines), substitution_reason_tags (KALDR:GLOBAL, bilingual). RLS tenant.
