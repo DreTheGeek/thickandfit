@@ -1,0 +1,71 @@
+// Subscriber "You" profile hub. Profile + stats + goal (from onboarding) + menu.
+import type { ReactElement } from 'react';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { requireAuth } from '@/lib/auth/guards';
+import { createClient } from '@/lib/supabase/server';
+import { YouScreen, type GoalSummary } from '@/components/profile/you-screen';
+
+export const dynamic = 'force-dynamic';
+
+const KG_TO_LB = 2.20462;
+
+export default async function YouPage(): Promise<ReactElement> {
+  const ctx = await requireAuth();
+  const locale = await getLocale();
+  const t = await getTranslations('app.you');
+  const supabase = await createClient();
+
+  const [{ data: profile }, { data: onb }, { count }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('full_name, role, created_at')
+      .eq('id', ctx.userId)
+      .maybeSingle(),
+    supabase
+      .from('onboarding_responses')
+      .select('answers')
+      .eq('profile_id', ctx.userId)
+      .maybeSingle(),
+    supabase
+      .from('workout_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('profile_id', ctx.userId),
+  ]);
+
+  const name = (profile?.full_name ?? '').trim() || (locale === 'es' ? 'Miembro' : 'Member');
+  const membership = profile?.role === 'free' ? t('freeMember') : t('premiumMember');
+  const memberSince = profile?.created_at
+    ? new Intl.DateTimeFormat(locale, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(new Date(profile.created_at))
+    : null;
+
+  const answers = (onb?.answers ?? null) as {
+    weightKg?: number;
+    goalWeightKg?: number;
+  } | null;
+
+  let goal: GoalSummary | null = null;
+  if (answers?.weightKg && answers?.goalWeightKg) {
+    const startLbs = Math.round(answers.weightKg * KG_TO_LB);
+    const goalLbs = Math.round(answers.goalWeightKg * KG_TO_LB);
+    const currentLbs = startLbs; // live weight tracking lands in Phase 2 (PRD-25)
+    const span = Math.abs(startLbs - goalLbs);
+    const pct = span === 0 ? 100 : Math.round((Math.abs(currentLbs - startLbs) / span) * 100);
+    goal = { startLbs, goalLbs, currentLbs, toGo: Math.abs(goalLbs - currentLbs), pct };
+  }
+
+  return (
+    <YouScreen
+      name={name}
+      membership={membership}
+      memberSince={memberSince}
+      workoutCount={count ?? 0}
+      streakWeeks={0}
+      progressLbs={0}
+      goal={goal}
+    />
+  );
+}

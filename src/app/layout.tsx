@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import "./globals.css";
@@ -15,6 +16,13 @@ const gulamsCondensed = localFont({
   variable: "--font-gulams",
   weight: "600",
   style: "normal",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -64,7 +72,10 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   return (
-    <html lang={locale} className={`w-mod-js ${gulamsCondensed.variable}`}>
+    <html
+      lang={locale}
+      className={`w-mod-js ${gulamsCondensed.variable} ${inter.variable}`}
+    >
       <head>
         {jsonLd != null && (
           <script

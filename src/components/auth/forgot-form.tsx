@@ -1,23 +1,19 @@
 'use client';
 import { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
+import type { ReactElement } from 'react';
 import { requestResetAction, type AuthState } from '@/lib/auth/actions';
+import { Button } from '@/components/ui/button';
 
 const inputClass =
-  'w-full border border-neutral-200 bg-white px-4 py-3.5 text-base text-ink outline-none transition placeholder:text-neutral-400 focus:border-ink';
-const btnClass =
-  'w-full bg-olive px-6 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-black transition hover:bg-olive-600 disabled:cursor-not-allowed disabled:opacity-60';
+  'w-full border border-line bg-surface px-4 py-3.5 text-[15px] text-ink outline-none placeholder:text-faint focus:border-ink';
 
-export function ForgotForm() {
+export function ForgotForm(): ReactElement {
   const t = useTranslations('auth');
   const [state, formAction, pending] = useActionState<AuthState, FormData>(requestResetAction, {});
 
   if (state.sent) {
-    return (
-      <p className="border-l-2 border-olive bg-neutral-50 px-4 py-3 text-sm text-neutral-700">
-        {t('resetSent')}
-      </p>
-    );
+    return <p className="rounded-xl bg-warm px-4 py-3 text-sm text-soft">{t('resetSent')}</p>;
   }
 
   return (
@@ -30,9 +26,9 @@ export function ForgotForm() {
         placeholder={t('email')}
         className={inputClass}
       />
-      <button type="submit" disabled={pending} className={btnClass}>
+      <Button type="submit" size="block" disabled={pending} className="mt-1">
         {pending ? '…' : t('resetCta')}
-      </button>
+      </Button>
     </form>
   );
 }

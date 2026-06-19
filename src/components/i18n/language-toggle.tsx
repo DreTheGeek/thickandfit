@@ -16,7 +16,7 @@ export function LanguageToggle({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const selectClass = 'rounded-none border border-black bg-white px-3 py-2 text-sm';
+  const selectClass = 'border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ink';
 
   return (
     <div className="flex flex-wrap gap-4" data-pending={pending}>

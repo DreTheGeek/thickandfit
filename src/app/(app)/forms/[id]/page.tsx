@@ -1,4 +1,6 @@
 // Client form page. Requires auth; the form must be published and assigned to this client.
+import type { ReactElement } from 'react';
+import { getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { getForm } from '@/lib/forms/engine';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -6,7 +8,11 @@ import { FormRenderer } from '@/components/forms/form-renderer';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ClientFormPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClientFormPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<ReactElement> {
   const ctx = await requireAuth();
   const { id } = await params;
 
@@ -21,17 +27,18 @@ export default async function ClientFormPage({ params }: { params: Promise<{ id:
   const loaded = ctx.companyId ? await getForm(ctx.companyId, id) : null;
 
   if (!assigned || !loaded || loaded.form.status !== 'published') {
+    const t = await getTranslations('app.common');
     return (
-      <main className="mx-auto max-w-lg px-6 py-16 text-black">
-        <p className="text-neutral-700">This form is not available.</p>
-      </main>
+      <div className="flex min-h-[60vh] items-center justify-center px-8 text-center">
+        <p className="text-muted">{t('comingSoonBody')}</p>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-lg px-6 py-12 text-black">
-      <h1 className="mb-6 text-2xl font-bold uppercase tracking-tight">{loaded.form.title_en}</h1>
+    <div className="px-[22px] pb-7 pt-5">
+      <h1 className="tf-display mb-6 text-[30px]">{loaded.form.title_en}</h1>
       <FormRenderer formId={id} fields={loaded.fields} />
-    </main>
+    </div>
   );
 }

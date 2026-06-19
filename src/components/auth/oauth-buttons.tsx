@@ -2,12 +2,13 @@
 // Google + Apple. Server action builds the provider redirect (needs provider config in Supabase).
 import { useTransition } from 'react';
 import { useTranslations } from 'next-intl';
+import type { ReactElement } from 'react';
 import { signInWithOAuthAction } from '@/lib/auth/actions';
 
 const btnClass =
-  'flex w-full items-center justify-center gap-2 border border-neutral-200 bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:border-ink disabled:opacity-60';
+  'tf-press flex w-full items-center justify-center gap-2 border border-line bg-surface px-6 py-3 text-sm font-semibold text-ink transition hover:border-ink disabled:opacity-60';
 
-export function OAuthButtons() {
+export function OAuthButtons(): ReactElement {
   const t = useTranslations('auth');
   const [pending, start] = useTransition();
   return (

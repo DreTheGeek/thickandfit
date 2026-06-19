@@ -1,9 +1,15 @@
 'use client';
-// Exercise library browser: search + muscle/equipment filters, cards, four UI states.
+// Exercise library browser: search + muscle/equipment filters, list rows, four UI states.
+// Re-skinned to the design-handoff prototype (light monochrome list).
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import type { ReactElement } from 'react';
 import { Skeleton } from '@/components/states/skeleton';
 import { ErrorState } from '@/components/states/error-state';
 import { EmptyState } from '@/components/states/empty-state';
+import { ListRow } from '@/components/ui/list-row';
+import { Tag } from '@/components/ui/badge';
+import { Icon, PlayIcon } from '@/components/ui/icons';
 
 type Exercise = {
   id: string;
@@ -16,10 +22,16 @@ type Exercise = {
   is_own_demo: boolean;
 };
 
-const MUSCLES = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quadriceps', 'hamstrings', 'glutes', 'calves', 'abdominals', 'lats'];
-const EQUIPMENT = ['body only', 'barbell', 'dumbbell', 'machine', 'cable', 'kettlebells', 'bands'];
+const MUSCLES = [
+  'chest', 'back', 'shoulders', 'biceps', 'triceps',
+  'quadriceps', 'hamstrings', 'glutes', 'calves', 'abdominals', 'lats',
+];
+const EQUIPMENT = [
+  'body only', 'barbell', 'dumbbell', 'machine', 'cable', 'kettlebells', 'bands',
+];
 
-export function ExerciseBrowser({ locale = 'en' }: { locale?: string }) {
+export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactElement {
+  const t = useTranslations('app.library');
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState('');
   const [equipment, setEquipment] = useState('');
@@ -45,22 +57,42 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }) {
     return () => ctrl.abort();
   }, [q, muscle, equipment]);
 
-  const control = 'rounded-none border border-black bg-white px-3 py-2 text-sm';
+  const select =
+    'border border-line bg-surface px-3 py-2.5 text-[13px] text-ink outline-none focus:border-ink';
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap gap-2">
-        <input className={`${control} flex-1`} placeholder="Search exercises" value={q} onChange={(e) => setQ(e.target.value)} />
-        <select className={control} value={muscle} onChange={(e) => setMuscle(e.target.value)}>
-          <option value="">All muscles</option>
+    <div className="flex flex-col gap-4">
+      {/* Search */}
+      <div className="flex items-center gap-2 border border-line px-3.5 py-3">
+        <Icon name="search" size={18} className="text-faint" />
+        <input
+          className="w-full bg-transparent text-[14px] text-ink placeholder:text-faint outline-none"
+          placeholder={t('searchPlaceholder')}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-2">
+        <select
+          className={`${select} flex-1`}
+          value={muscle}
+          onChange={(e) => setMuscle(e.target.value)}
+        >
+          <option value="">{t('allMuscles')}</option>
           {MUSCLES.map((m) => (
-            <option key={m} value={m}>
+            <option key={m} value={m} className="capitalize">
               {m}
             </option>
           ))}
         </select>
-        <select className={control} value={equipment} onChange={(e) => setEquipment(e.target.value)}>
-          <option value="">All equipment</option>
+        <select
+          className={`${select} flex-1`}
+          value={equipment}
+          onChange={(e) => setEquipment(e.target.value)}
+        >
+          <option value="">{t('allEquipment')}</option>
           {EQUIPMENT.map((eq) => (
             <option key={eq} value={eq}>
               {eq}
@@ -70,29 +102,45 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }) {
       </div>
 
       {state === 'loading' ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-16" />
           ))}
         </div>
       ) : state === 'error' ? (
         <ErrorState onRetry={() => setQ((s) => s)} />
       ) : items.length === 0 ? (
-        <EmptyState title="No exercises" message="Try a different search or filter." />
+        <EmptyState title={t('noResults')} message={t('noResultsBody')} />
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((ex) => (
-            <li key={ex.id} className="border border-neutral-200 p-4">
-              <p className="font-medium">{(locale === 'es' && ex.name_es) || ex.name_en}</p>
-              <p className="mt-1 text-xs uppercase tracking-wide text-neutral-500">
-                {[ex.muscle_group, ex.equipment, ex.difficulty].filter(Boolean).join(' · ')}
-              </p>
-              {ex.video_mux_id ? (
-                <span className="mt-2 inline-block bg-[#5EBE62] px-2 py-0.5 text-xs text-black">Demo</span>
-              ) : null}
-            </li>
+        <div>
+          {items.map((ex, i) => (
+            <ListRow
+              key={ex.id}
+              divider={i < items.length - 1}
+              leading={
+                <div
+                  className="relative flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[10px]"
+                  style={{ background: 'linear-gradient(135deg,#3a3a3a,#111)' }}
+                >
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-bg/90">
+                    <PlayIcon size={9} className="text-ink" />
+                  </div>
+                </div>
+              }
+              title={(locale === 'es' && ex.name_es) || ex.name_en}
+              sub={[ex.muscle_group, ex.equipment, ex.difficulty]
+                .filter(Boolean)
+                .join(' · ')}
+              trailing={
+                ex.video_mux_id ? (
+                  <Tag outlined={false} className="bg-accent text-white">
+                    {t('demo')}
+                  </Tag>
+                ) : undefined
+              }
+            />
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

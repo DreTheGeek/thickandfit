@@ -2,6 +2,10 @@
 // Coach form builder: block palette, up/down reorder, per-field config, save + publish.
 // Calls the proven /api/forms routes with the cookie session.
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import type { ReactElement } from 'react';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icons';
 
 type Field = {
   type: string;
@@ -22,7 +26,11 @@ const BLOCK_TYPES = [
 
 type Initial = { id?: string; title_en: string; title_es?: string; fields: Field[] };
 
-export function FormBuilder({ initial }: { initial?: Initial }) {
+const input =
+  'border border-line bg-surface px-3.5 py-2.5 text-[14px] text-ink outline-none placeholder:text-faint focus:border-ink';
+
+export function FormBuilder({ initial }: { initial?: Initial }): ReactElement {
+  const t = useTranslations('app.coach');
   const [id, setId] = useState<string | undefined>(initial?.id);
   const [titleEn, setTitleEn] = useState(initial?.title_en ?? '');
   const [titleEs, setTitleEs] = useState(initial?.title_es ?? '');
@@ -30,12 +38,12 @@ export function FormBuilder({ initial }: { initial?: Initial }) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
 
-  const addField = (type: string) =>
+  const addField = (type: string): void =>
     setFields((f) => [...f, { type, label_en: '', required: false }]);
-  const remove = (i: number) => setFields((f) => f.filter((_, idx) => idx !== i));
-  const update = (i: number, patch: Partial<Field>) =>
+  const remove = (i: number): void => setFields((f) => f.filter((_, idx) => idx !== i));
+  const update = (i: number, patch: Partial<Field>): void =>
     setFields((f) => f.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
-  const move = (i: number, dir: -1 | 1) =>
+  const move = (i: number, dir: -1 | 1): void =>
     setFields((f) => {
       const next = [...f];
       const j = i + dir;
@@ -44,7 +52,7 @@ export function FormBuilder({ initial }: { initial?: Initial }) {
       return next;
     });
 
-  async function save() {
+  async function save(): Promise<void> {
     setBusy(true);
     setStatus('');
     const res = await fetch('/api/forms', {
@@ -62,7 +70,7 @@ export function FormBuilder({ initial }: { initial?: Initial }) {
     setBusy(false);
   }
 
-  async function publish() {
+  async function publish(): Promise<void> {
     if (!id) {
       setStatus('Save first');
       return;
@@ -70,9 +78,6 @@ export function FormBuilder({ initial }: { initial?: Initial }) {
     const res = await fetch(`/api/forms/${id}/publish`, { method: 'POST' });
     setStatus(res.ok ? 'Published' : 'Publish failed');
   }
-
-  const input = 'rounded-none border border-black bg-white px-3 py-2 text-sm';
-  const btn = 'rounded-none border border-black px-3 py-1 text-sm';
 
   return (
     <div className="flex flex-col gap-6">
@@ -82,42 +87,53 @@ export function FormBuilder({ initial }: { initial?: Initial }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {BLOCK_TYPES.map((t) => (
-          <button key={t} type="button" className={btn} onClick={() => addField(t)}>
-            + {t}
+        {BLOCK_TYPES.map((bt) => (
+          <button
+            key={bt}
+            type="button"
+            className="tf-press border border-line px-3 py-1.5 text-[12px] uppercase tracking-[1px] text-muted hover:border-ink hover:text-ink"
+            onClick={() => addField(bt)}
+          >
+            + {bt}
           </button>
         ))}
       </div>
 
-      <ol className="flex flex-col gap-3">
+      <ol className="flex flex-col gap-2.5">
         {fields.map((f, i) => (
-          <li key={i} className="flex flex-wrap items-center gap-2 border border-neutral-200 p-3">
-            <span className="text-xs uppercase text-neutral-500">{f.type}</span>
+          <li key={i} className="flex flex-wrap items-center gap-2 rounded-xl border border-line p-3">
+            <span className="text-[11px] uppercase tracking-[1px] text-faint">{f.type}</span>
             <input
               className={`${input} flex-1`}
               placeholder="Label (EN)"
               value={f.label_en}
               onChange={(e) => update(i, { label_en: e.target.value })}
             />
-            <label className="flex items-center gap-1 text-xs">
+            <label className="flex items-center gap-1 text-[12px] text-muted">
               <input type="checkbox" checked={f.required} onChange={(e) => update(i, { required: e.target.checked })} />
               required
             </label>
-            <button type="button" className={btn} onClick={() => move(i, -1)} aria-label="up">↑</button>
-            <button type="button" className={btn} onClick={() => move(i, 1)} aria-label="down">↓</button>
-            <button type="button" className={btn} onClick={() => remove(i)} aria-label="remove">✕</button>
+            <button type="button" className="tf-press p-1 text-muted hover:text-ink" onClick={() => move(i, -1)} aria-label="up">
+              <Icon name="chevronLeft" size={16} className="rotate-90" />
+            </button>
+            <button type="button" className="tf-press p-1 text-muted hover:text-ink" onClick={() => move(i, 1)} aria-label="down">
+              <Icon name="chevronRight" size={16} className="rotate-90" />
+            </button>
+            <button type="button" className="tf-press p-1 text-muted hover:text-ink" onClick={() => remove(i)} aria-label="remove">
+              <Icon name="x" size={16} />
+            </button>
           </li>
         ))}
       </ol>
 
       <div className="flex items-center gap-3">
-        <button type="button" disabled={busy} className="rounded-none bg-black px-5 py-2 text-sm font-medium text-white" onClick={save}>
-          Save
-        </button>
-        <button type="button" className="rounded-none border border-black px-5 py-2 text-sm font-medium" onClick={publish}>
-          Publish
-        </button>
-        {status ? <span className="text-sm text-neutral-600">{status}</span> : null}
+        <Button size="sm" disabled={busy} onClick={save}>
+          {t('save')}
+        </Button>
+        <Button variant="outline" size="sm" onClick={publish}>
+          {t('publish')}
+        </Button>
+        {status ? <span className="text-[13px] text-muted">{status}</span> : null}
       </div>
     </div>
   );
