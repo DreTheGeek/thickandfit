@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#e7e5df; }
+  @keyframes tfshim{ 0%{opacity:.5} 50%{opacity:1} 100%{opacity:.5} }
+  .tfh{ font-family:'Gulams Condensed',Impact,sans-serif; text-transform:uppercase; font-weight:600; line-height:0.85; margin:0; }
+  .sc{ width:320px; height:680px; background:#fff; border-radius:32px; box-shadow:0 14px 44px rgba(0,0,0,.13); overflow:hidden; display:flex; flex-direction:column; flex:none; }
+  .scd{ background:#0f0f0f; color:#fafafa; }
+  .sb{ height:42px; display:flex; align-items:center; justify-content:space-between; padding:0 24px; font-size:13px; font-weight:600; flex:none; }
+  .lbl{ font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:#777; margin-bottom:12px; }
+  .row{ display:flex; gap:40px; align-items:flex-start; margin-bottom:52px; }
+  .btn{ text-align:center; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:15px; border-radius:100vw; cursor:pointer; }
+  .btnp{ background:#0f0f0f; color:#fafafa; }
+  .btnw{ background:#fafafa; color:#0f0f0f; }
+  .ic{ width:74px; height:74px; border-radius:100vw; background:#f0f0f0; display:flex; align-items:center; justify-content:center; margin:0 auto 26px; }
+  .icd{ background:#1c1c1c; }
+  .ctr{ flex:1; padding:30px 30px 34px; display:flex; flex-direction:column; align-items:center; text-align:center; justify-content:center; }
+</style>
+</helmet>
+
+<div style="background:#e7e5df; min-width:100%; min-height:100vh; box-sizing:border-box; padding:44px; width:max-content; font-family:'Inter',sans-serif; color:#0f0f0f;">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; width:1100px; max-width:100%;">
+    <div>
+      <a href="Thick & Fit — Design Hub.dc.html" style="text-decoration:none; color:#777; font-size:12px; letter-spacing:2px; text-transform:uppercase;">← Hub</a>
+      <h1 class="tfh" style="font-size:54px; margin-top:10px;">{{ t.title }}</h1>
+      <div style="font-size:15px; color:#5c5c5c; margin-top:8px; max-width:620px;">{{ t.subtitle }}</div>
+    </div>
+    <div style="display:flex; border:1px solid #0f0f0f; border-radius:100vw; overflow:hidden;">
+      <div onClick="{{ setEn }}" style="{{ enSt }}">EN</div>
+      <div onClick="{{ setEs }}" style="{{ esSt }}">ES</div>
+    </div>
+  </div>
+
+  <div class="lbl" style="font-size:14px; color:#0f0f0f; font-weight:700; letter-spacing:3px; border-top:2px solid #0f0f0f; padding-top:12px; margin-bottom:24px; width:1100px; max-width:100%;">{{ t.sec }}</div>
+  <div class="row">
+
+    <!-- 404 -->
+    <div><div class="lbl">{{ t.l404 }}</div>
+      <div class="sc scd"><div class="sb"><span style="color:#fafafa;">9:41</span><span style="font-size:11px; color:#fafafa;">●●● ⌃ ▮</span></div>
+        <div class="ctr">
+          <div class="tfh" style="font-size:96px; letter-spacing:-2px;">404</div>
+          <div style="width:60px; height:3px; background:#767676; margin:14px 0 26px;"></div>
+          <h2 class="tfh" style="font-size:30px;">{{ t.h404 }}</h2>
+          <p style="color:#b7b7b7; font-size:14px; line-height:1.6; margin:14px 0 28px;">{{ t.b404 }}</p>
+          <div class="btn btnw" style="width:100%;">{{ t.backHome }}</div>
+        </div>
+      </div></div>
+
+    <!-- 500 ERROR -->
+    <div><div class="lbl">{{ t.l500 }}</div>
+      <div class="sc"><div class="sb"><span>9:41</span><span style="font-size:11px;">●●● ⌃ ▮</span></div>
+        <div class="ctr">
+          <div class="ic"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><circle cx="12" cy="17" r=".5" fill="#0f0f0f"/></svg></div>
+          <h2 class="tfh" style="font-size:32px;">{{ t.h500 }}</h2>
+          <p style="color:#5c5c5c; font-size:14px; line-height:1.6; margin:14px 0 28px;">{{ t.b500 }}</p>
+          <div class="btn btnp" style="width:100%;">{{ t.tryAgain }}</div>
+          <div style="font-size:12px; color:#999; margin-top:14px;">{{ t.errCode }}</div>
+        </div>
+      </div></div>
+
+    <!-- OFFLINE -->
+    <div><div class="lbl">{{ t.lOff }}</div>
+      <div class="sc"><div class="sb"><span>9:41</span><span style="font-size:11px;">●●● ⌃</span></div>
+        <div class="ctr">
+          <div class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r=".6" fill="#0f0f0f"/><path d="M3 3 21 21"/></svg></div>
+          <h2 class="tfh" style="font-size:32px;">{{ t.hOff }}</h2>
+          <p style="color:#5c5c5c; font-size:14px; line-height:1.6; margin:14px 0 28px;">{{ t.bOff }}</p>
+          <div class="btn btnp" style="width:100%;">{{ t.retry }}</div>
+        </div>
+      </div></div>
+
+    <!-- MAINTENANCE -->
+    <div><div class="lbl">{{ t.lMaint }}</div>
+      <div class="sc scd"><div class="sb"><span style="color:#fafafa;">9:41</span><span style="font-size:11px; color:#fafafa;">●●● ⌃ ▮</span></div>
+        <div class="ctr">
+          <div class="ic icd"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.3 2.3-2-2z"/></svg></div>
+          <h2 class="tfh" style="font-size:32px;">{{ t.hMaint }}</h2>
+          <p style="color:#b7b7b7; font-size:14px; line-height:1.6; margin:14px 0 0;">{{ t.bMaint }}</p>
+        </div>
+      </div></div>
+
+  </div>
+  <div class="row">
+    <!-- EMPTY -->
+    <div><div class="lbl">{{ t.lEmpty }}</div>
+      <div class="sc"><div class="sb"><span>9:41</span><span style="font-size:11px;">●●● ⌃ ▮</span></div>
+        <div class="ctr">
+          <div class="ic"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M12 13v3M10.5 14.5h3"/></svg></div>
+          <h2 class="tfh" style="font-size:32px;">{{ t.hEmpty }}</h2>
+          <p style="color:#5c5c5c; font-size:14px; line-height:1.6; margin:14px 0 28px;">{{ t.bEmpty }}</p>
+          <div class="btn btnp" style="width:100%;">{{ t.emptyCta }}</div>
+        </div>
+      </div></div>
+
+    <!-- LOADING -->
+    <div><div class="lbl">{{ t.lLoad }}</div>
+      <div class="sc"><div class="sb"><span>9:41</span><span style="font-size:11px;">●●● ⌃ ▮</span></div>
+        <div style="flex:1; padding:24px 24px;">
+          <div style="height:30px; width:55%; background:#eee; border-radius:8px; animation:tfshim 1.2s infinite; margin-bottom:20px;"></div>
+          <div style="height:150px; background:#eee; border-radius:16px; animation:tfshim 1.2s infinite; margin-bottom:18px;"></div>
+          <div style="display:flex; gap:12px; margin-bottom:18px;"><div style="flex:1; height:70px; background:#eee; border-radius:12px; animation:tfshim 1.2s infinite;"></div><div style="flex:1; height:70px; background:#eee; border-radius:12px; animation:tfshim 1.2s infinite;"></div><div style="flex:1; height:70px; background:#eee; border-radius:12px; animation:tfshim 1.2s infinite;"></div></div>
+          <div style="height:16px; background:#eee; border-radius:6px; animation:tfshim 1.2s infinite; margin-bottom:10px;"></div>
+          <div style="height:16px; width:70%; background:#eee; border-radius:6px; animation:tfshim 1.2s infinite;"></div>
+          <div style="text-align:center; color:#bbb; font-size:12px; letter-spacing:1px; text-transform:uppercase; margin-top:30px;">{{ t.load }}</div>
+        </div>
+      </div></div>
+
+    <!-- TRIAL ENDED / LOCKED -->
+    <div><div class="lbl">{{ t.lLocked }}</div>
+      <div class="sc scd"><div class="sb"><span style="color:#fafafa;">9:41</span><span style="font-size:11px; color:#fafafa;">●●● ⌃ ▮</span></div>
+        <div class="ctr">
+          <div class="ic icd"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+          <h2 class="tfh" style="font-size:30px;">{{ t.hLocked }}</h2>
+          <p style="color:#b7b7b7; font-size:14px; line-height:1.6; margin:14px 0 28px;">{{ t.bLocked }}</p>
+          <div class="btn btnw" style="width:100%;">{{ t.choosePlan }}</div>
+          <div style="font-size:13px; color:#888; margin-top:16px;">{{ t.restore }}</div>
+        </div>
+      </div></div>
+
+    <!-- ADMIN 404 (desktop) -->
+    <div><div class="lbl">{{ t.lAdmin404 }}</div>
+      <div style="width:560px; background:#fff; border-radius:16px; box-shadow:0 14px 44px rgba(0,0,0,.12); overflow:hidden; border:1px solid #ececec;">
+        <div style="height:40px; background:#f0f0f0; display:flex; align-items:center; gap:7px; padding:0 16px; border-bottom:1px solid #ececec;"><span style="width:11px; height:11px; border-radius:99px; background:#d4d4d4;"></span><span style="width:11px; height:11px; border-radius:99px; background:#d4d4d4;"></span><span style="width:11px; height:11px; border-radius:99px; background:#d4d4d4;"></span><span style="flex:1; text-align:center; font-size:12px; color:#888;">app.teamthickandfit.com/coach</span></div>
+        <div style="display:flex; min-height:300px;">
+          <div style="width:150px; border-right:1px solid #f0f0f0; padding:20px 14px;"><img src="assets/logo-black.svg" style="height:24px; margin-bottom:18px;" /><div style="height:10px; background:#f0f0f0; border-radius:5px; margin-bottom:12px;"></div><div style="height:10px; background:#f0f0f0; border-radius:5px; width:80%; margin-bottom:12px;"></div><div style="height:10px; background:#f0f0f0; border-radius:5px; width:60%;"></div></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px;">
+            <div class="tfh" style="font-size:80px;">404</div>
+            <h2 class="tfh" style="font-size:26px; margin-top:10px;">{{ t.hAdmin404 }}</h2>
+            <p style="color:#5c5c5c; font-size:14px; margin:12px 0 22px;">{{ t.bAdmin404 }}</p>
+            <div class="btn btnp" style="padding:12px 26px;">{{ t.backDash }}</div>
+          </div>
+        </div>
+      </div></div>
+  </div>
+  <!-- EDGE-END -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { lang:'en' };
+  T(){
+    const en = {
+      title:'System & Edge', subtitle:'The pages most apps forget. On brand, bilingual, intentional. Empty, loading, offline, error and locked states all in the same voice.',
+      sec:'Edge States',
+      l404:'404 Not Found', l500:'500 Error', lOff:'Offline', lMaint:'Maintenance', lEmpty:'Empty State', lLoad:'Loading', lLocked:'Trial Ended', lAdmin404:'Coach Console 404',
+      h404:'This page skipped leg day', b404:'We can\u2019t find what you\u2019re looking for. Let\u2019s get you back to the work.', backHome:'Back to home',
+      h500:'Something broke a sweat', b500:'A rep went wrong on our end. Our team is already on it - try again in a moment.', tryAgain:'Try again', errCode:'Error 500 \u00b7 ref 8F2A',
+      hOff:'You\u2019re offline', bOff:'No connection right now. Anything you log will sync the moment you\u2019re back.', retry:'Retry',
+      hMaint:'Quick tune-up', bMaint:'We\u2019re upgrading the app to make it even better. Back in just a few minutes.',
+      hEmpty:'Nothing here yet', bEmpty:'Your feed lights up the moment you and the community start sharing wins.', emptyCta:'Share your first win',
+      load:'Loading your day\u2026',
+      hLocked:'Your free trial ended', bLocked:'Keep your programs, macros and community. Pick a plan to pick up right where you left off.', choosePlan:'Choose your plan', restore:'Restore purchase',
+      hAdmin404:'Page not found', bAdmin404:'That coach console page doesn\u2019t exist or moved.', backDash:'Back to dashboard'
+    };
+    const es = {
+      title:'Sistema y Errores', subtitle:'Las páginas que casi todas las apps olvidan. En marca, bilingües, intencionales. Vacío, carga, sin conexión, error y bloqueo, todo con la misma voz.',
+      sec:'Estados Límite',
+      l404:'404 No Encontrada', l500:'Error 500', lOff:'Sin Conexión', lMaint:'Mantenimiento', lEmpty:'Vacío', lLoad:'Cargando', lLocked:'Prueba Terminada', lAdmin404:'404 Consola Coach',
+      h404:'Esta página se saltó el día de pierna', b404:'No encontramos lo que buscas. Volvamos al trabajo.', backHome:'Volver al inicio',
+      h500:'Algo sudó de más', b500:'Una repetición salió mal de nuestro lado. Ya estamos en ello - intenta de nuevo en un momento.', tryAgain:'Reintentar', errCode:'Error 500 \u00b7 ref 8F2A',
+      hOff:'Estás sin conexión', bOff:'No hay conexión ahora. Todo lo que registres se sincronizará al volver.', retry:'Reintentar',
+      hMaint:'Mantenimiento rápido', bMaint:'Estamos mejorando la app. Volvemos en unos minutos.',
+      hEmpty:'Aún no hay nada aquí', bEmpty:'Tu feed se enciende en cuanto tú y la comunidad empiecen a compartir logros.', emptyCta:'Comparte tu primer logro',
+      load:'Cargando tu día\u2026',
+      hLocked:'Tu prueba gratis terminó', bLocked:'Conserva tus programas, macros y comunidad. Elige un plan para seguir justo donde quedaste.', choosePlan:'Elegir plan', restore:'Restaurar compra',
+      hAdmin404:'Página no encontrada', bAdmin404:'Esa página de la consola no existe o se movió.', backDash:'Volver al panel'
+    };
+    return this.state.lang==='en'?en:es;
+  }
+  renderVals(){
+    const s=this.state, t=this.T();
+    const on={ background:'#0f0f0f', color:'#fafafa', fontSize:'12px', fontWeight:700, letterSpacing:'1px', padding:'7px 15px', cursor:'pointer' };
+    const off={ background:'transparent', color:'#0f0f0f', fontSize:'12px', fontWeight:700, letterSpacing:'1px', padding:'7px 15px', cursor:'pointer' };
+    return { t, setEn:()=>this.setState({lang:'en'}), setEs:()=>this.setState({lang:'es'}), enSt:s.lang==='en'?on:off, esSt:s.lang==='es'?on:off };
+  }
+}
+</script>
+</body>
+</html>

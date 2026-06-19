@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#fafafa; }
+  ::selection{ background:#0f0f0f; color:#fafafa; }
+  .tfh{ font-family:'Gulams Condensed',Impact,sans-serif; text-transform:uppercase; font-weight:600; line-height:0.9; margin:0; }
+  .row{ display:grid; grid-template-columns:1fr 130px 150px; gap:16px; align-items:center; padding:13px 0; border-bottom:1px solid #ededed; }
+  .feat{ font-size:14px; font-weight:500; }
+  .feSub{ font-size:12px; color:#888; margin-top:2px; }
+  .pill{ font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:100vw; width:max-content; }
+  .pDone{ background:#5EBE62; color:#053b07; }
+  .pPart{ background:#f0e0be; color:#6b5200; }
+  .pMiss{ background:#f0d2d2; color:#7a1f1f; }
+  .pNa{ background:#ececec; color:#777; }
+  .where{ font-size:12px; color:#5c5c5c; }
+</style>
+</helmet>
+
+<div style="font-family:'Inter',sans-serif; color:#0f0f0f; background:#fafafa; max-width:1000px; margin:0 auto; padding:56px 40px 80px;">
+
+  <a href="Thick & Fit — Design Hub.dc.html" style="text-decoration:none; color:#888; font-size:12px; letter-spacing:2px; text-transform:uppercase;">← Hub</a>
+  <div style="font-size:13px; letter-spacing:4px; text-transform:uppercase; color:#767676; margin:18px 0 10px;">Agreement v3.0 · coverage audit</div>
+  <h1 class="tfh" style="font-size:clamp(44px,7vw,76px);">Scope Audit</h1>
+  <p style="font-size:16px; line-height:1.6; color:#5c5c5c; max-width:640px; margin:18px 0 0;">Every feature in the $25,000 partnership agreement, mapped to its design status. This is the checklist that confirms the design package covers the contract before Claude Code builds.</p>
+
+  <div style="display:flex; gap:24px; margin:28px 0 8px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:8px;"><span class="pill pDone">Designed</span><span class="tfh" style="font-size:24px;">{{ nDone }}</span></div>
+    <div style="display:flex; align-items:center; gap:8px;"><span class="pill pPart">Partial</span><span class="tfh" style="font-size:24px;">{{ nPart }}</span></div>
+    <div style="display:flex; align-items:center; gap:8px;"><span class="pill pMiss">To design</span><span class="tfh" style="font-size:24px;">{{ nMiss }}</span></div>
+    <div style="display:flex; align-items:center; gap:8px;"><span class="pill pNa">Build-only</span><span class="tfh" style="font-size:24px;">{{ nNa }}</span></div>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div style="margin-top:40px;">
+    <div style="display:flex; align-items:baseline; gap:14px; border-top:2px solid #0f0f0f; padding-top:14px;">
+      <span class="tfh" style="font-size:30px;">Phase 1</span>
+      <span style="font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#767676;">Live in 2-3 weeks · open for business</span>
+    </div>
+    <div style="margin-top:14px;">
+      <sc-for list="{{ p1 }}" as="r" hint-placeholder-count="8">
+      <div class="row"><div><div class="feat">{{ r.f }}</div><div class="feSub">{{ r.s }}</div></div><span class="pill {{ r.cls }}">{{ r.tag }}</span><span class="where">{{ r.where }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div style="margin-top:40px;">
+    <div style="display:flex; align-items:baseline; gap:14px; border-top:2px solid #0f0f0f; padding-top:14px;">
+      <span class="tfh" style="font-size:30px;">Phase 2</span>
+      <span style="font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#767676;">~Day 60 · the app feels done</span>
+    </div>
+    <div style="margin-top:14px;">
+      <sc-for list="{{ p2 }}" as="r" hint-placeholder-count="6">
+      <div class="row"><div><div class="feat">{{ r.f }}</div><div class="feSub">{{ r.s }}</div></div><span class="pill {{ r.cls }}">{{ r.tag }}</span><span class="where">{{ r.where }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div style="margin-top:40px;">
+    <div style="display:flex; align-items:baseline; gap:14px; border-top:2px solid #0f0f0f; padding-top:14px;">
+      <span class="tfh" style="font-size:30px;">Phase 3</span>
+      <span style="font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#767676;">By September · advanced + launch</span>
+    </div>
+    <div style="margin-top:14px;">
+      <sc-for list="{{ p3 }}" as="r" hint-placeholder-count="8">
+      <div class="row"><div><div class="feat">{{ r.f }}</div><div class="feSub">{{ r.s }}</div></div><span class="pill {{ r.cls }}">{{ r.tag }}</span><span class="where">{{ r.where }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- PRIORITY TO DESIGN -->
+  <div style="margin-top:48px; background:#0f0f0f; color:#fafafa; border-radius:16px; padding:34px;">
+    <div style="font-size:12px; letter-spacing:3px; text-transform:uppercase; color:#5EBE62; margin-bottom:8px;">Remaining design work</div>
+    <h2 class="tfh" style="font-size:34px;">What's left to design</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 40px; margin-top:22px;">
+      <sc-for list="{{ todo }}" as="d" hint-placeholder-count="6">
+      <div style="display:flex; gap:12px; align-items:flex-start; border-top:1px solid #2a2a2a; padding-top:12px;"><span class="tfh" style="font-size:18px; color:#5EBE62;">{{ d.n }}</span><div><div style="font-size:14px; font-weight:600;">{{ d.t }}</div><div style="font-size:12px; color:#b7b7b7; margin-top:2px;">{{ d.s }}</div></div></div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="font-size:12px; color:#999; margin-top:24px; line-height:1.6;">Build-only items (PWA install, app-store submission, infra) need no design. Everything marked "To design" is net-new UI; "Partial" means a screen exists but a sub-view or state is still needed. Source: ThickAndFit-Agreement-Final.pdf v3.0 + Answers.</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  D(f,s,where){ return {f,s,where,tag:'Designed',cls:'pDone'}; }
+  P(f,s,where){ return {f,s,where,tag:'Partial',cls:'pPart'}; }
+  M(f,s,where){ return {f,s,where,tag:'To design',cls:'pMiss'}; }
+  N(f,s,where){ return {f,s,where,tag:'Build-only',cls:'pNa'}; }
+  renderVals(){
+    const p1 = [
+      this.D('Auth — sign up / sign in','Email, Google, Apple','Customer Screens'),
+      this.D('English / Spanish toggle','UI + database, every surface','All surfaces'),
+      this.P('Onboarding question editor','Editable, add/remove/reorder questions','Member onboarding + admin Form Builder designed'),
+      this.D('Workout system','Library, programs, logging, video player','Mobile App + Admin'),
+      this.D('Subscriber dashboard','Simple, familiar Lenus-style nav','Mobile App'),
+      this.D('Stripe billing','Subscription + checkout','Customer Screens + Billing'),
+      this.P('Basic coach admin','Dashboard, client list, profiles, branding, settings','Dashboard done; branding/app-experience settings to design'),
+      this.N('Installable PWA','Works like an app, no store','Build-only'),
+    ];
+    const p2 = [
+      this.D('Nutrition module','Macro calc, US food DB, logging, barcode','Mobile App (Add Food / Scan)'),
+      this.D('Meal plans & recipes','Plans, recipes, recipe books, ingredients','Recipe detail + shopping list (Customer Screens)'),
+      this.D('Community feed','Posts, photo/video, reactions, comments, broadcasts','Mobile App + Admin'),
+      this.D('Progress photos & check-ins','Weekly check-in flow','Mobile App'),
+      this.D('Habit & water tracking','Daily habits, water','Mobile App'),
+      this.D('Multi-form builder','Build other intake/form types','Form & Question Builder (Admin Screens)'),
+    ];
+    const p3 = [
+      this.P('Drip automation + AI text','Scheduled videos + AI messaging in her voice','AI Coach chat done; drip scheduler to design'),
+      this.P('Full coach toolbox','Automations, flows, tags, notifications, team','Sidebar exists; automation/flow builder to design'),
+      this.D('Digital store & products','Cookbook, plans, 12-week programs, one-time buys','Customer Screens (Digital Store)'),
+      this.D('Premium tier upsell','$2.99 add-on','Customer Screens (Premium Upsell)'),
+      this.D('Affiliate link store','Affiliate products','Customer Screens (Affiliate Store)'),
+      this.P('Gamification','Streaks, badges, milestones','Streaks + confetti done; badge system to design'),
+      this.D('Push + email automations','Notification + email settings','Admin Screens (Notifications & Email)'),
+      this.P('AI photo food logging','Photo to macros','AI Result designed; live capture polish to refine'),
+      this.D('Live streaming','Live follow-along','Customer Screens (Live Stream)'),
+      this.D('LATAM multi-currency pricing','Local pricing for Spanish markets','Admin Screens (LATAM Pricing)'),
+      this.N('App store submission','iOS + Android + QA','Build-only'),
+    ];
+    const all = [...p1,...p2,...p3];
+    const todo = [
+      {n:'01',t:'Automation / drip builder depth',s:'Flow canvas exists; tag + trigger detail to expand'},
+      {n:'02',t:'AI photo capture polish',s:'Live scanning shimmer + confidence refine'},
+      {n:'03',t:'Coach toolbox depth',s:'Team roles, granular permissions'},
+    ];
+    return {
+      p1, p2, p3, todo,
+      nDone: all.filter(r=>r.tag==='Designed').length,
+      nPart: all.filter(r=>r.tag==='Partial').length,
+      nMiss: all.filter(r=>r.tag==='To design').length,
+      nNa: all.filter(r=>r.tag==='Build-only').length,
+    };
+  }
+}
+</script>
+</body>
+</html>

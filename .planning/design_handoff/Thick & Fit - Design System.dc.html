@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#F3F3F1; }
+  ::selection{ background:#767676; color:#000; }
+</style>
+</helmet>
+
+<div style="background:#F3F3F1; min-height:100vh; font-family:'Inter',sans-serif; color:#111111; -webkit-font-smoothing:antialiased;">
+
+  <!-- MASTHEAD -->
+  <div style="position:sticky; top:0; z-index:50; background:#F3F3F1; border-bottom:1px solid #E4E4E4; padding:18px 40px; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:baseline; gap:14px;">
+      <a href="Thick & Fit - Design Hub.dc.html" style="text-decoration:none; color:#111; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase;">← Hub</a>
+      <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:0.5px; white-space:nowrap;"><img src="assets/logo-black.svg" alt="Thick & Fit" style="height:1.4em; width:auto; display:block;" /></div>
+    </div>
+    <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase;">Design System · Reference Kit</div>
+  </div>
+
+  <!-- HERO -->
+  <div style="max-width:1080px; margin:0 auto; padding:64px 40px 32px;">
+    <div style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:5px; color:#767676; text-transform:uppercase; margin-bottom:18px;">The canonical kit</div>
+    <h1 style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:clamp(48px,7vw,92px); line-height:0.9; letter-spacing:-1px; margin:0; text-transform:uppercase;">Design<br>System</h1>
+    <p style="font-size:18px; line-height:1.6; max-width:600px; margin:28px 0 0; color:#333;">Every token, type style, component, and state - the exact building blocks for all three surfaces. Build against these, not against memory.</p>
+  </div>
+
+  <!-- TOKENS -->
+  <div style="max-width:1080px; margin:0 auto; padding:36px 40px;">
+    <div style="border-top:2px solid #111; padding-top:14px; display:flex; align-items:baseline; gap:16px; margin-bottom:36px;">
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">01</span>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; letter-spacing:1px;">Color Tokens</span>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:#E4E4E4; border:1px solid #E4E4E4;">
+      <div style="background:#fff; padding:0;"><div style="height:88px; background:#111111;"></div><div style="padding:14px 16px;"><div style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px;">--ink</div><div style="font-size:12px; color:#999;">#111111 · text, buttons, sidebar</div></div></div>
+      <div style="background:#fff;"><div style="height:88px; background:#000000;"></div><div style="padding:14px 16px;"><div style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px;">--black</div><div style="font-size:12px; color:#999;">#000000 · pure black</div></div></div>
+      <div style="background:#fff;"><div style="height:88px; background:#767676;"></div><div style="padding:14px 16px;"><div style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px;">--accent</div><div style="font-size:12px; color:#999;">#767676 · accent / muted, active, positive</div></div></div>
+      <div style="background:#fff;"><div style="height:88px; background:#F3F3F1; border-bottom:1px solid #E4E4E4;"></div><div style="padding:14px 16px;"><div style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px;">--cream</div><div style="font-size:12px; color:#999;">#F3F3F1 · app background</div></div></div>
+      <div style="background:#fff;"><div style="height:88px; background:#FFFFFF; border-bottom:1px solid #E4E4E4;"></div><div style="padding:14px 16px;"><div style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px;">--surface</div><div style="font-size:12px; color:#999;">#FFFFFF · cards</div></div></div>
+      <div style="background:#fff;"><div style="height:88px; background:#E4E4E4;"></div><div style="padding:14px 16px;"><div style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px;">--line</div><div style="font-size:12px; color:#999;">#E4E4E4 · hairlines, inactive</div></div></div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:14px;">
+      <div style="background:#fff; padding:14px 16px; border:1px solid #E4E4E4;"><div style="height:28px; width:28px; background:#767676; border-radius:999px; margin-bottom:10px;"></div><div style="font-size:12px; color:#999;">Active · #767676</div></div>
+      <div style="background:#fff; padding:14px 16px; border:1px solid #E4E4E4;"><div style="height:28px; width:28px; background:#FBE6A2; border-radius:999px; margin-bottom:10px;"></div><div style="font-size:12px; color:#999;">Pending · #FBE6A2</div></div>
+      <div style="background:#fff; padding:14px 16px; border:1px solid #E4E4E4;"><div style="height:28px; width:28px; background:#F3C0C0; border-radius:999px; margin-bottom:10px;"></div><div style="font-size:12px; color:#999;">Alert · #F3C0C0</div></div>
+      <div style="background:#fff; padding:14px 16px; border:1px solid #E4E4E4;"><div style="height:28px; width:28px; background:#777; border-radius:999px; margin-bottom:10px;"></div><div style="font-size:12px; color:#999;">Muted · #777777</div></div>
+    </div>
+  </div>
+
+  <!-- TYPE -->
+  <div style="max-width:1080px; margin:0 auto; padding:36px 40px;">
+    <div style="border-top:2px solid #111; padding-top:14px; display:flex; align-items:baseline; gap:16px; margin-bottom:36px;">
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">02</span>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; letter-spacing:1px;">Type Scale</span>
+    </div>
+    <div style="background:#fff; padding:36px;">
+      <div style="display:grid; grid-template-columns:1fr 200px; gap:24px; align-items:end; border-bottom:1px solid #E4E4E4; padding-bottom:22px; margin-bottom:22px;">
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:72px; line-height:0.9; text-transform:uppercase;">Display</div>
+        <div style="font-size:13px; color:#777; line-height:1.7;">Gulams Condensed · 40–128px · UPPERCASE · line-height 0.82 · hero numbers &amp; headlines</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 200px; gap:24px; align-items:end; border-bottom:1px solid #E4E4E4; padding-bottom:18px; margin-bottom:18px;">
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:46px; letter-spacing:1px;">Heading Two</div>
+        <div style="font-size:13px; color:#777; line-height:1.7;">Gulams Condensed · 24–46px · section titles, card headers</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 200px; gap:24px; align-items:end; border-bottom:1px solid #E4E4E4; padding-bottom:18px; margin-bottom:18px;">
+        <div style="font-family:'Inter',sans-serif; font-size:18px; font-weight:600; letter-spacing:2px; text-transform:uppercase;">Tagline · Label</div>
+        <div style="font-size:13px; color:#777; line-height:1.7;">Inter · 600 · UPPERCASE + 2px tracking · labels, eyebrows, nav, tabs</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 200px; gap:24px; align-items:end;">
+        <div>
+          <div style="font-size:16px; line-height:24px; margin-bottom:6px;">Body Large 16 / 24 - the easiest part of your day.</div>
+          <div style="font-size:14px; line-height:22px; margin-bottom:6px; color:#333;">Body Regular 14 / 22 - log what you weighed, we convert it.</div>
+          <div style="font-size:12px; line-height:18px; color:#777;">Body Small 12 / 18 - supporting meta and captions.</div>
+        </div>
+        <div style="font-size:13px; color:#777; line-height:1.7;">Inter · 12 / 14 / 16 · 400–700 · all running copy</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUTTONS + INPUTS -->
+  <div style="max-width:1080px; margin:0 auto; padding:36px 40px;">
+    <div style="border-top:2px solid #111; padding-top:14px; display:flex; align-items:baseline; gap:16px; margin-bottom:36px;">
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">03</span>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; letter-spacing:1px;">Buttons &amp; Inputs</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+      <div style="background:#fff; padding:32px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:18px;">Buttons · 0 radius</div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <span style="background:#111; color:#fff; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; padding:14px 28px;">Primary</span>
+            <span style="background:#fff; color:#111; border:1px solid #111; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; padding:14px 28px;">Secondary</span>
+            <span style="background:#0f0f0f; color:#fafafa; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; padding:14px 28px; font-weight:600;">Accent</span>
+          </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <span style="color:#111; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; padding:14px 8px;">Ghost</span>
+            <span style="background:#E4E4E4; color:#999; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; padding:14px 28px;">Disabled</span>
+            <span style="background:#111; color:#fff; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; padding:9px 18px;">Small</span>
+          </div>
+        </div>
+      </div>
+      <div style="background:#fff; padding:32px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:18px;">Inputs</div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <input placeholder="Text field" style="border:1px solid #E4E4E4; background:#fff; padding:12px 14px; font-family:'Inter',sans-serif; font-size:14px; outline:none;" />
+          <div style="display:flex; align-items:center; gap:8px; border:1px solid #E4E4E4; padding:12px 14px;"><span style="color:#999;">⌕</span><span style="color:#999; font-size:14px;">Search a food…</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; border:1px solid #E4E4E4; padding:12px 14px;"><span style="color:#555; font-size:14px;">Dropdown</span><span style="color:#999;">▾</span></div>
+          <div style="display:flex; align-items:center; gap:14px; margin-top:4px;">
+            <div style="width:46px; height:26px; background:#767676; border-radius:999px; position:relative;"><div style="position:absolute; top:3px; right:3px; width:20px; height:20px; background:#fff; border-radius:999px;"></div></div>
+            <div style="flex:1; height:4px; background:#E4E4E4; border-radius:999px; position:relative;"><div style="position:absolute; left:0; top:0; height:4px; width:62%; background:#111; border-radius:999px;"></div><div style="position:absolute; left:62%; top:-5px; width:14px; height:14px; background:#111; border-radius:999px;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BADGES + TABS -->
+  <div style="max-width:1080px; margin:0 auto; padding:36px 40px;">
+    <div style="border-top:2px solid #111; padding-top:14px; display:flex; align-items:baseline; gap:16px; margin-bottom:36px;">
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">04</span>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; letter-spacing:1px;">Badges, Pills &amp; Tabs</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+      <div style="background:#fff; padding:32px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:18px;">Status pills</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
+          <span style="background:#0f0f0f; color:#fafafa; font-size:12px; font-weight:600; padding:5px 14px; border-radius:999px;">Active</span>
+          <span style="background:#E4E4E4; color:#555; font-size:12px; font-weight:600; padding:5px 14px; border-radius:999px;">Inactive</span>
+          <span style="background:#FBE6A2; color:#6b5200; font-size:12px; font-weight:600; padding:5px 14px; border-radius:999px;">Pending</span>
+          <span style="background:#F3C0C0; color:#7a1f1f; font-size:12px; font-weight:600; padding:5px 14px; border-radius:999px;">Cancelled</span>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span style="border:1px solid #111; color:#111; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; padding:4px 12px;">Premium</span>
+          <span style="border:1px solid #E4E4E4; color:#777; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; padding:4px 12px;">Base</span>
+          <span style="background:#111; color:#fff; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; padding:4px 12px;">Legacy</span>
+        </div>
+      </div>
+      <div style="background:#fff; padding:32px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:18px;">Segmented control</div>
+        <div style="display:inline-flex; background:#F3F3F1; padding:4px; margin-bottom:18px;">
+          <span style="background:#111; color:#fff; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:8px 18px;">Program</span>
+          <span style="color:#777; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:8px 18px;">Library</span>
+          <span style="color:#777; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:8px 18px;">History</span>
+        </div>
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:12px;">Underline tabs</div>
+        <div style="display:flex; gap:22px; border-bottom:1px solid #E4E4E4;">
+          <span style="font-size:14px; font-weight:600; padding-bottom:10px; border-bottom:2px solid #111;">Instructions</span>
+          <span style="font-size:14px; color:#999; padding-bottom:10px;">Muscles</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARDS + DATA VIZ -->
+  <div style="max-width:1080px; margin:0 auto; padding:36px 40px;">
+    <div style="border-top:2px solid #111; padding-top:14px; display:flex; align-items:baseline; gap:16px; margin-bottom:36px;">
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">05</span>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; letter-spacing:1px;">Cards &amp; Data Viz</span>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:14px;">
+      <div style="background:#fff; padding:22px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase;">MRR</span><span style="color:#999;">$</span></div>
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px; line-height:1.1; margin-top:6px;">$74,892</div>
+        <div style="color:#767676; font-size:13px; font-weight:600;">+9.2% this month</div>
+      </div>
+      <div style="background:#111; color:#fff; padding:22px; display:flex; flex-direction:column; justify-content:space-between;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#767676; text-transform:uppercase;">Macro Compliance</div>
+        <div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px; line-height:1.1;">68%</div><div style="color:#999; font-size:13px;">+8% this week</div></div>
+      </div>
+      <div style="background:#fff; padding:22px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:8px;">Macro ring</div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="width:62px; height:62px; border-radius:999px; background:conic-gradient(#111 0% 77%, #E4E4E4 77% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:42px; height:42px; background:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; font-weight:600; font-size:14px;">77%</div></div>
+          <div style="font-size:12px; color:#777; line-height:1.6;">Conic ring,<br>2px inner gap,<br>ink on line</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div style="background:#fff; padding:24px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:14px;">Line chart</div>
+        <svg viewBox="0 0 320 110" style="width:100%; height:110px;">
+          <polyline points="0,90 45,80 90,84 135,58 180,62 225,40 270,30 320,14" fill="none" stroke="#111" stroke-width="2"/>
+          <circle cx="320" cy="14" r="3.5" fill="#767676"/>
+        </svg>
+      </div>
+      <div style="background:#fff; padding:24px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:14px;">Bar chart</div>
+        <svg viewBox="0 0 320 110" style="width:100%; height:110px;">
+          <rect x="6" y="62" width="30" height="48" fill="#111"/>
+          <rect x="50" y="44" width="30" height="66" fill="#111"/>
+          <rect x="94" y="70" width="30" height="40" fill="#111"/>
+          <rect x="138" y="30" width="30" height="80" fill="#111"/>
+          <rect x="182" y="50" width="30" height="60" fill="#111"/>
+          <rect x="226" y="20" width="30" height="90" fill="#767676"/>
+          <rect x="270" y="56" width="30" height="54" fill="#111"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV + STATES -->
+  <div style="max-width:1080px; margin:0 auto; padding:36px 40px 60px;">
+    <div style="border-top:2px solid #111; padding-top:14px; display:flex; align-items:baseline; gap:16px; margin-bottom:36px;">
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">06</span>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; letter-spacing:1px;">Navigation &amp; States</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:14px;">
+      <div style="background:#fff; padding:28px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase; margin-bottom:16px;">Mobile tab bar</div>
+        <div style="display:flex; justify-content:space-between; border-top:1px solid #E4E4E4; padding-top:14px;">
+          <div style="text-align:center;"><div style="width:22px; height:22px; background:#111; margin:0 auto 6px;"></div><div style="font-size:10px; font-weight:600;">Today</div></div>
+          <div style="text-align:center; opacity:.45;"><div style="width:22px; height:22px; border:2px solid #111; border-radius:999px; margin:0 auto 6px;"></div><div style="font-size:10px;">Community</div></div>
+          <div style="text-align:center; opacity:.45;"><div style="width:22px; height:22px; border:2px solid #111; margin:0 auto 6px; transform:rotate(45deg);"></div><div style="font-size:10px;">Workouts</div></div>
+          <div style="text-align:center; opacity:.45;"><div style="width:22px; height:22px; border:2px solid #111; border-radius:4px; margin:0 auto 6px;"></div><div style="font-size:10px;">Nutrition</div></div>
+          <div style="text-align:center; opacity:.45;"><div style="width:22px; height:22px; border:2px solid #111; border-radius:999px 999px 4px 4px; margin:0 auto 6px;"></div><div style="font-size:10px;">You</div></div>
+        </div>
+      </div>
+      <div style="background:#111; color:#fff; padding:28px;">
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#777; text-transform:uppercase; margin-bottom:16px;">Sidebar items</div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 14px; background:#fff; color:#111;"><span style="width:7px; height:7px; background:#767676;"></span><span style="font-size:14px; font-weight:600;">Overview</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 14px; color:#bbb;"><span style="width:7px; height:7px; border:1px solid #777;"></span><span style="font-size:14px;">Subscribers</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 14px; color:#bbb;"><span style="width:7px; height:7px; border:1px solid #777;"></span><span style="font-size:14px;">Programs</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+      <div style="background:#fff; padding:24px; text-align:center;"><div style="width:34px; height:34px; border:2px dashed #ccc; margin:0 auto 12px;"></div><div style="font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase;">Empty</div><div style="font-size:12px; color:#999; margin-top:4px;">No data yet</div></div>
+      <div style="background:#fff; padding:24px; text-align:center;"><div style="width:34px; height:34px; border-radius:999px; background:#F3C0C0; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; color:#7a1f1f; font-weight:700;">!</div><div style="font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase;">Error</div><div style="font-size:12px; color:#999; margin-top:4px;">Try again</div></div>
+      <div style="background:#fff; padding:24px;"><div style="height:10px; background:#EDEDEB; margin-bottom:8px;"></div><div style="height:10px; background:#EDEDEB; width:70%; margin-bottom:8px;"></div><div style="height:10px; background:#EDEDEB; width:40%;"></div><div style="font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; margin-top:14px;">Loading</div></div>
+      <div style="background:#fff; padding:24px; text-align:center;"><div style="width:34px; height:34px; background:#767676; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; color:#053b07; font-weight:700;">✦</div><div style="font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase;">First Run</div><div style="font-size:12px; color:#999; margin-top:4px;">Get started</div></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="border-top:1px solid #E4E4E4; padding:34px 40px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+    <a href="Thick & Fit - Design Hub.dc.html" style="text-decoration:none; color:#111; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase;">← Back to Hub</a>
+    <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; color:#999; text-transform:uppercase;">Build against the kit</div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

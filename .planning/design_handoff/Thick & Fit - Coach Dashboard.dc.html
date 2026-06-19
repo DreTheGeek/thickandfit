@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#f0f0f0; }
+  ::selection{ background:#767676; color:#000; }
+  .tf-sc{ overflow-y:auto; }
+  [style*="cursor:pointer"]{ transition:transform .08s ease, opacity .08s ease; }
+  [style*="cursor:pointer"]:active{ transform:scale(.98); opacity:.85; }
+</style>
+</helmet>
+
+<div style="display:flex; min-height:100vh; font-family:'Inter',sans-serif; color:#111; background:#f0f0f0; -webkit-font-smoothing:antialiased;">
+
+  <!-- SIDEBAR -->
+  <div style="width:236px; flex:none; background:#fff; border-right:1px solid #E4E4E4; min-height:100vh; padding:24px 0; display:flex; flex-direction:column;">
+    <div style="padding:0 24px 22px;">
+      <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; white-space:nowrap;"><img src="assets/logo-black.svg" alt="Thick & Fit" style="height:1.4em; width:auto; display:block;" /></div>
+      <div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:3px; color:#999; text-transform:uppercase; margin-top:2px;">Coach Steph</div>
+    </div>
+    <div style="display:flex; flex-direction:column; padding:0 12px;">
+      <div onClick="{{ goOverview }}" style="{{ sbOverview }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg></span>{{ t.overview }}</div>
+      <div onClick="{{ goSubscribers }}" style="{{ sbSubs }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.2a3 3 0 0 1 0 5.6"/><path d="M16.5 13.5a5 5 0 0 1 4 5.5"/></svg></span>{{ t.subscribers }}</div>
+      <div style="{{ sbItem }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg></span>{{ t.community }}</div>
+      <div onClick="{{ goBuilder }}" style="{{ sbPrograms }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M9 10h6M9 14h6"/></svg></span>{{ t.programs }}</div>
+      <div style="{{ sbItem }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></span>{{ t.exercises }}</div>
+      <div style="{{ sbItem }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></span>{{ t.nutrition }}</div>
+      <div style="{{ sbItem }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.9L12 17l-5.2 2.7 1-5.9-4.3-4.1 5.9-.9z"/></svg></span>{{ t.challenges }}</div>
+      <div onClick="{{ goBroadcast }}" style="{{ sbBroadcasts }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l9 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M18 8.5a4 4 0 0 1 0 7"/></svg></span>{{ t.broadcasts }}</div>
+      <div style="{{ sbItem }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 13h6l-1 8 8-11h-6z"/></svg></span>{{ t.automation }}</div>
+      <div style="{{ sbItem }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><rect x="5" y="11" width="3" height="7"/><rect x="10.5" y="6" width="3" height="12"/><rect x="16" y="13" width="3" height="5"/></svg></span>{{ t.analytics }}</div>
+      <div style="{{ sbItem }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg></span>{{ t.payments }}</div>
+      <div onClick="{{ goHealth }}" style="{{ sbSupport }}"><span style="font-size:16px; display:inline-flex;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6 9.5 9.5M14.5 14.5 18.4 18.4M18.4 5.6 14.5 9.5M9.5 14.5 5.6 18.4"/></svg></span>{{ t.support }}</div>
+      <div style="{{ sbItem }}"><span style="font-size:15px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.5M12 19v2.5M3 12h2.5M18.5 12H21M5.2 5.2l1.8 1.8M17 17l1.8 1.8M18.8 5.2 17 7M7 17l-1.8 1.8"/></svg></span>{{ t.settings }}</div>
+    </div>
+    <div style="margin-top:auto; padding:18px 24px 0;">
+      <div style="display:flex; border:1px solid #111; height:30px; width:max-content;">
+        <div onClick="{{ setEn }}" style="{{ enSt }}">EN</div>
+        <div onClick="{{ setEs }}" style="{{ esSt }}">ES</div>
+      </div>
+      <a href="Thick & Fit - Design Hub.dc.html" style="display:block; margin-top:14px; text-decoration:none; color:#999; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase;">← Hub</a>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="tf-sc" style="flex:1; min-width:0; height:100vh; padding:30px 36px 60px;">
+
+    <!-- ===== OVERVIEW ===== -->
+    <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:26px;">
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; text-transform:uppercase;">{{ t.overview }}</div>
+        <div style="display:flex; gap:10px;">
+          <div style="border:1px solid #E4E4E4; background:#fff; border-radius:100vw; padding:9px 16px; font-size:13px; display:flex; gap:10px; align-items:center;">May 12 – May 18, 2026 <span style="color:#999;">▾</span></div>
+          <div style="background:#111; color:#fff; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase; border-radius:100vw; padding:9px 20px;">{{ t.export }}</div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:18px;">
+        <div style="background:#fff; border-radius:14px; padding:18px;"><div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:1px; color:#999; text-transform:uppercase;">{{ t.activeMembers }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin-top:6px;">3,892</div><div style="color:#767676; font-size:12px; font-weight:600;">+12% this week</div></div>
+        <div style="background:#fff; border-radius:14px; padding:18px;"><div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:1px; color:#999; text-transform:uppercase;">MRR</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin-top:6px;">$74,892</div><div style="color:#767676; font-size:12px; font-weight:600;">+9.2% this month</div></div>
+        <div style="background:#fff; border-radius:14px; padding:18px;"><div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:1px; color:#999; text-transform:uppercase;">{{ t.workoutCompletion }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin-top:6px;">78%</div><div style="color:#767676; font-size:12px; font-weight:600;">+6% this week</div></div>
+        <div style="background:#111; color:#fff; border-radius:14px; padding:18px;"><div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:1px; color:#767676; text-transform:uppercase;">{{ t.macroCompliance }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin-top:6px;">68%</div><div style="color:#999; font-size:12px; font-weight:600;">+8% this week</div></div>
+        <div style="background:#fff; border-radius:14px; padding:18px;"><div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:1px; color:#999; text-transform:uppercase;">{{ t.engagement }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin-top:6px;">62%</div><div style="color:#767676; font-size:12px; font-weight:600;">+11% this week</div></div>
+        <div style="background:#fff; border-radius:14px; padding:18px;"><div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:1px; color:#999; text-transform:uppercase;">{{ t.churn }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin-top:6px;">2.4%</div><div style="color:#767676; font-size:12px; font-weight:600;">-0.6% this month</div></div>
+      </div>
+      <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:18px; margin-bottom:18px;">
+        <div style="background:#fff; border-radius:14px; padding:22px;">
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:0.5px; margin-bottom:14px;">{{ t.liveActivity }}</div>
+          <div style="display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:30px; height:30px; background:#f0f0f0; border-radius:999px; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="9" cy="8" r="3.2"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M18 8.5v5M15.5 11h5"/></svg></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">New member joined</div><div style="font-size:12px; color:#999;">Sofia M. joined the app</div></div><span style="font-size:12px; color:#bbb;">2m ago</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:30px; height:30px; background:#f0f0f0; border-radius:999px; display:flex; align-items:center; justify-content:center;">✓</div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">Workout completed</div><div style="font-size:12px; color:#999;">Jessica L. completed Glute Day</div></div><span style="font-size:12px; color:#bbb;">5m ago</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:30px; height:30px; background:#f0f0f0; border-radius:999px; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3c.5 3 3.5 4 3.5 8a3.5 3.5 0 0 1-7 0c0-1.5.8-2.5 1.5-3 .2 1.3 1 1.6 1.5 1.3.8-.5.5-2-.5-3 1.3.3 1.5-1.3 1-2.6z"/></svg></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">7 day streak</div><div style="font-size:12px; color:#999;">Maria R. is on a 7 day streak</div></div><span style="font-size:12px; color:#bbb;">12m ago</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:30px; height:30px; background:#f0f0f0; border-radius:999px; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L19 6h0a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">New progress photo</div><div style="font-size:12px; color:#999;">Alexandra M. shared progress photos</div></div><span style="font-size:12px; color:#bbb;">18m ago</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:11px 0;"><div style="width:30px; height:30px; background:#FDEBEB; border-radius:999px; display:flex; align-items:center; justify-content:center; color:#b33;">!</div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">Payment failed</div><div style="font-size:12px; color:#999;">Payment failed for customer #3847</div></div><span style="font-size:12px; color:#bbb;">45m ago</span></div>
+          </div>
+        </div>
+        <div style="background:#fff; border-radius:14px; padding:22px;">
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:0.5px; margin-bottom:14px;">{{ t.upcoming }}</div>
+          <div style="display:flex; align-items:flex-start; gap:12px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:30px; height:30px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;">★</div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">New Challenge Starts</div><div style="font-size:12px; color:#999;">Summer Shred Challenge · May 20</div></div></div>
+          <div style="display:flex; align-items:flex-start; gap:12px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:30px; height:30px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">Broadcast Scheduled</div><div style="font-size:12px; color:#999;">Mindset is everything · May 19, 9:00 AM</div></div></div>
+          <div style="display:flex; align-items:flex-start; gap:12px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:30px; height:30px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">AI Message Queue</div><div style="font-size:12px; color:#999;">142 messages scheduled</div></div></div>
+          <div style="display:flex; align-items:flex-start; gap:12px; padding:11px 0;"><div style="width:30px; height:30px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">Support Alerts</div><div style="font-size:12px; color:#999;">3 members need attention</div></div></div>
+        </div>
+      </div>
+      <div style="background:#fff; border-radius:14px; padding:22px;">
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:0.5px; margin-bottom:16px;">{{ t.analyticsOverview }}</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:24px;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Revenue</span><span style="color:#767676; font-size:12px; font-weight:600;">+9.2%</span></div>
+            <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; margin:4px 0 10px;">$74,892</div>
+            <svg viewBox="0 0 200 70" style="width:100%; height:70px;"><polyline points="0,58 28,50 56,54 84,34 112,40 140,22 168,16 200,8" fill="none" stroke="#111" stroke-width="2"/><circle cx="200" cy="8" r="3.5" fill="#5EBE62"/></svg>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">New Members</span><span style="color:#767676; font-size:12px; font-weight:600;">+15.4%</span></div>
+            <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; margin:4px 0 10px;">243</div>
+            <svg viewBox="0 0 200 70" style="width:100%; height:70px;"><rect x="4" y="44" width="18" height="26" fill="#111"/><rect x="32" y="36" width="18" height="34" fill="#111"/><rect x="60" y="48" width="18" height="22" fill="#111"/><rect x="88" y="26" width="18" height="44" fill="#111"/><rect x="116" y="32" width="18" height="38" fill="#111"/><rect x="144" y="14" width="18" height="56" fill="#5EBE62"/><rect x="172" y="38" width="18" height="32" fill="#111"/></svg>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Retention 30d</span><span style="color:#767676; font-size:12px; font-weight:600;">+4%</span></div>
+            <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; margin:4px 0 10px;">84%</div>
+            <svg viewBox="0 0 200 70" style="width:100%; height:70px;"><polyline points="0,40 28,38 56,30 84,34 112,24 140,26 168,18 200,20" fill="none" stroke="#111" stroke-width="2"/><circle cx="200" cy="20" r="3.5" fill="#5EBE62"/></svg>
+          </div>
+          <div>
+            <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:8px;">Top Programs</div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid #F2F2F0;"><span>Glute Builder</span><span style="font-weight:600;">1,240</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid #F2F2F0;"><span>Booty Sculpt</span><span style="font-weight:600;">980</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid #F2F2F0;"><span>Strong &amp; Lean</span><span style="font-weight:600;">742</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; padding:5px 0;"><span>Lower Body Power</span><span style="font-weight:600;">418</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===== SUBSCRIBERS ===== -->
+    <sc-if value="{{ isSubs }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;">
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; text-transform:uppercase;">{{ t.subscribers }}</div>
+        <div style="background:#111; color:#fff; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase; border-radius:100vw; padding:10px 20px;">+ {{ t.addSubscriber }}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; border:1px solid #E4E4E4; background:#fff; padding:11px 14px; margin-bottom:14px;"><span style="color:#999;">⌕</span><span style="color:#999; font-size:13px;">{{ t.searchSubs }}</span></div>
+      <div style="display:flex; gap:8px; margin-bottom:18px;">
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 14px; font-size:12px;">⚲ Filter</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 14px; font-size:12px;">{{ t.tier }} ▾</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 14px; font-size:12px;">Language ▾</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 14px; font-size:12px;">{{ t.program }} ▾</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 14px; font-size:12px;">More ▾</span>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;">
+        <sc-for list="{{ segChips }}" as="chip" hint-placeholder-count="7"><span onClick="{{ chip.on }}" style="{{ chip.st }}">{{ chip.label }}</span></sc-for>
+      </div>
+      <sc-if value="{{ segChurned }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#0f0f0f; color:#fafafa; border-radius:14px; padding:18px 20px; margin-bottom:14px; display:flex; align-items:center; gap:18px;">
+        <div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px;">176</div><div style="font-size:11px; color:#b7b7b7; letter-spacing:1px; text-transform:uppercase;">{{ t.churnedTitle }}</div></div>
+        <div style="flex:1; font-size:13px; color:#d8d8d8; line-height:1.5;">{{ t.churnedBody }}</div>
+        <span style="background:#fafafa; color:#0f0f0f; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; font-weight:600; padding:11px 20px; border-radius:100vw; cursor:pointer; white-space:nowrap;">{{ t.winBack }}</span>
+      </div>
+      </sc-if>
+      <div style="background:#fff; border-radius:14px; overflow:hidden;">
+        <div style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:14px 20px; border-bottom:1px solid #E4E4E4; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">
+          <span>{{ t.member }}</span><span>{{ t.tier }}</span><span>{{ t.program }}</span><span>{{ t.lastActive }}</span><span>{{ t.compliance }}</span><span>{{ t.status }}</span>
+        </div>
+        <div onClick="{{ goProfile }}" style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:13px 20px; border-bottom:1px solid #F2F2F0; align-items:center; cursor:pointer; font-size:13px;"><span style="display:flex; align-items:center; gap:10px;"><span style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span><span><span style="font-weight:600; display:block;">Jessica Lopez</span><span style="font-size:11px; color:#999;">jessica@email.com</span></span></span><span><span style="border:1px solid #111; padding:2px 8px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">PREMIUM</span></span><span>Glute Builder</span><span style="color:#999;">2h ago</span><span style="font-weight:600;">82%</span><span style="color:#767676;">● Active</span></div>
+        <div onClick="{{ goProfile }}" style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:13px 20px; border-bottom:1px solid #F2F2F0; align-items:center; cursor:pointer; font-size:13px;"><span style="display:flex; align-items:center; gap:10px;"><span style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span><span><span style="font-weight:600; display:block;">Maria Rodriguez</span><span style="font-size:11px; color:#999;">maria@email.com</span></span></span><span><span style="border:1px solid #E4E4E4; color:#777; padding:2px 8px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">BASE</span></span><span>Booty Sculpt</span><span style="color:#999;">5h ago</span><span style="font-weight:600;">74%</span><span style="color:#767676;">● Active</span></div>
+        <div onClick="{{ goProfile }}" style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:13px 20px; border-bottom:1px solid #F2F2F0; align-items:center; cursor:pointer; font-size:13px;"><span style="display:flex; align-items:center; gap:10px;"><span style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span><span><span style="font-weight:600; display:block;">Sofia Martinez</span><span style="font-size:11px; color:#999;">sofia@email.com</span></span></span><span><span style="border:1px solid #111; padding:2px 8px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">PREMIUM</span></span><span>Strong &amp; Lean</span><span style="color:#999;">1d ago</span><span style="font-weight:600;">91%</span><span style="color:#767676;">● Active</span></div>
+        <div onClick="{{ goProfile }}" style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:13px 20px; border-bottom:1px solid #F2F2F0; align-items:center; cursor:pointer; font-size:13px;"><span style="display:flex; align-items:center; gap:10px;"><span style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span><span><span style="font-weight:600; display:block;">Daniela Vargas</span><span style="font-size:11px; color:#999;">daniela@email.com</span></span></span><span><span style="border:1px solid #E4E4E4; color:#777; padding:2px 8px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">BASE</span></span><span>Lower Body Power</span><span style="color:#999;">2d ago</span><span style="font-weight:600;">55%</span><span style="color:#c89a2b;">● Warning</span></div>
+        <div onClick="{{ goProfile }}" style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:13px 20px; border-bottom:1px solid #F2F2F0; align-items:center; cursor:pointer; font-size:13px;"><span style="display:flex; align-items:center; gap:10px;"><span style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span><span><span style="font-weight:600; display:block;">Alexandra Gomez</span><span style="font-size:11px; color:#999;">alex@email.com</span></span></span><span><span style="border:1px solid #111; padding:2px 8px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">PREMIUM</span></span><span>Glute Builder</span><span style="color:#999;">3h ago</span><span style="font-weight:600;">88%</span><span style="color:#767676;">● Active</span></div>
+        <div onClick="{{ goProfile }}" style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:13px 20px; border-bottom:1px solid #F2F2F0; align-items:center; cursor:pointer; font-size:13px;"><span style="display:flex; align-items:center; gap:10px;"><span style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span><span><span style="font-weight:600; display:block;">Camila Ortiz</span><span style="font-size:11px; color:#999;">camila@email.com</span></span></span><span><span style="border:1px solid #E4E4E4; color:#777; padding:2px 8px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">BASE</span></span><span>Booty Sculpt</span><span style="color:#999;">3d ago</span><span style="font-weight:600;">42%</span><span style="color:#c89a2b;">● Warning</span></div>
+        <div onClick="{{ goProfile }}" style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:13px 20px; border-bottom:1px solid #F2F2F0; align-items:center; cursor:pointer; font-size:13px;"><span style="display:flex; align-items:center; gap:10px;"><span style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span><span><span style="font-weight:600; display:block;">Valentina Ramirez</span><span style="font-size:11px; color:#999;">valentina@email.com</span></span></span><span><span style="border:1px solid #E4E4E4; color:#777; padding:2px 8px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">BASE</span></span><span>Strong &amp; Lean</span><span style="color:#999;">4d ago</span><span style="font-weight:600;">38%</span><span style="color:#c0392b;">● At Risk</span></div>
+        <div onClick="{{ goProfile }}" style="display:grid; grid-template-columns:2fr 1fr 1.4fr 1fr 1fr 1fr; padding:13px 20px; align-items:center; cursor:pointer; font-size:13px;"><span style="display:flex; align-items:center; gap:10px;"><span style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></span><span><span style="font-weight:600; display:block;">Isabella Torres</span><span style="font-size:11px; color:#999;">isabella@email.com</span></span></span><span><span style="border:1px solid #111; padding:2px 8px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">PREMIUM</span></span><span>Glute Builder</span><span style="color:#999;">6h ago</span><span style="font-weight:600;">96%</span><span style="color:#767676;">● Active</span></div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:14px; font-size:12px; color:#999;"><span>Showing 1 to 8 of 3,892 results</span><span style="display:flex; gap:6px;"><span style="background:#111; color:#fff; width:26px; height:26px; display:flex; align-items:center; justify-content:center;">1</span><span style="border:1px solid #E4E4E4; width:26px; height:26px; display:flex; align-items:center; justify-content:center;">2</span><span style="border:1px solid #E4E4E4; width:26px; height:26px; display:flex; align-items:center; justify-content:center;">3</span><span style="padding:0 6px; display:flex; align-items:center;">… 487</span><span style="border:1px solid #E4E4E4; width:26px; height:26px; display:flex; align-items:center; justify-content:center;">›</span></span></div>
+    </div>
+    </sc-if>
+
+    <!-- ===== SUBSCRIBER PROFILE ===== -->
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:920px;">
+      <div onClick="{{ goSubscribers }}" style="font-size:13px; color:#999; cursor:pointer; margin-bottom:10px;">← {{ t.backToSubs }}</div>
+      <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; margin-bottom:20px;">{{ t.subscriberProfile }}</div>
+      <div style="background:#fff; border-radius:14px; padding:24px; display:flex; gap:22px; align-items:center; margin-bottom:14px;">
+        <div style="width:80px; height:80px; border-radius:999px; background:#0f0f0f; flex:none; display:flex; align-items:center; justify-content:center; font-family:'Gulams Condensed',Impact,sans-serif; color:#fafafa; font-size:30px;">JL</div>
+        <div style="flex:1;">
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; letter-spacing:0.5px;">Jessica Lopez</div>
+          <div style="font-size:12px; color:#999;">jessica@email.com · Member since Apr 16, 2026</div>
+          <div style="display:flex; gap:8px; margin-top:8px;"><span style="border:1px solid #111; padding:2px 10px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">PREMIUM</span><span style="border:1px solid #E4E4E4; color:#777; padding:2px 10px; font-size:10px; font-family:'Inter',sans-serif; letter-spacing:1px;">ENGLISH</span></div>
+        </div>
+        <div style="display:flex; gap:0; border:1px solid #F0F0EE;">
+          <div style="text-align:center; padding:14px 22px; border-right:1px solid #F0F0EE;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">142</div><div style="font-size:10px; color:#999;">CURRENT LBS</div></div>
+          <div style="text-align:center; padding:14px 22px; border-right:1px solid #F0F0EE;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">12</div><div style="font-size:10px; color:#999;">DAYS</div></div>
+          <div style="text-align:center; padding:14px 22px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; color:#767676;">82%</div><div style="font-size:10px; color:#999;">COMPLIANCE</div></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:22px; border-bottom:1px solid #E4E4E4; margin-bottom:18px; font-size:13px; overflow-x:auto;">
+        <sc-for list="{{ profileTabs }}" as="tab" hint-placeholder-count="8"><span onClick="{{ tab.on }}" style="{{ tab.st }}">{{ tab.name }}</span></sc-for>
+      </div>
+      <sc-if value="{{ pOverview }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:8px;">Program</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">Glute Builder</div><div style="font-size:12px; color:#999; margin:4px 0 10px;">Week 3 of 8</div><div style="height:5px; background:#E4E4E4;"><div style="height:5px; width:38%; background:#767676;"></div></div><div style="background:#f0f0f0; border-radius:100vw; text-align:center; font-size:12px; font-weight:600; padding:9px; margin-top:12px;">View Program</div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:12px;">This Week</div><div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0;"><span style="color:#999;">Workouts</span><span style="font-weight:600;">4/5</span></div><div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0;"><span style="color:#999;">Macros</span><span style="font-weight:600;">6/7</span></div><div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0;"><span style="color:#999;">Water</span><span style="font-weight:600;">6/7</span></div><div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0;"><span style="color:#999;">Steps</span><span style="font-weight:600;">5/7</span></div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:12px;">Progress Photos</div><div style="display:flex; gap:6px;"><div style="flex:1; height:80px; background:linear-gradient(#bbb,#999);"></div><div style="flex:1; height:80px; background:linear-gradient(#aaa,#888);"></div></div><div style="background:#f0f0f0; border-radius:100vw; text-align:center; font-size:12px; font-weight:600; padding:9px; margin-top:12px;">View All</div></div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:12px;">Recent Activity</div><div style="font-size:13px; padding:7px 0; border-bottom:1px solid #F2F2F0;">✓ Completed Glute Day · May 16</div><div style="font-size:13px; padding:7px 0; border-bottom:1px solid #F2F2F0;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg> Logged meal · May 16</div><div style="font-size:13px; padding:7px 0;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L19 6h0a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg> Shared in community · May 17</div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:12px;">Coach Notes</div><div style="font-size:13px; color:#444; line-height:1.6;">Loves glute-focused workouts. Struggles with water intake on weekends. Very consistent and motivated!</div><div style="background:#111; color:#fff; text-align:center; font-size:11px; font-family:'Inter',sans-serif; letter-spacing:2px; text-transform:uppercase; border-radius:100vw; padding:9px; margin-top:14px;">Edit Note</div></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ pNutrition }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:14px;">
+        <div style="background:#fff; border-radius:14px; padding:22px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Macro Targets vs Actual</div><span style="font-size:11px; color:#5EBE62; font-weight:600;">82% compliance</span></div>
+          <div style="display:flex; gap:18px;">
+            <div style="text-align:center; flex:1;"><div style="width:84px; height:84px; margin:0 auto; border-radius:100vw; background:conic-gradient(#0f0f0f 0% 90%, #E4E4E4 90% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:64px; height:64px; background:#fff; border-radius:100vw; display:flex; flex-direction:column; align-items:center; justify-content:center;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px;">148</div><div style="font-size:8px; color:#999;">/165g</div></div></div><div style="font-size:11px; color:#999; margin-top:8px;">Protein</div></div>
+            <div style="text-align:center; flex:1;"><div style="width:84px; height:84px; margin:0 auto; border-radius:100vw; background:conic-gradient(#0f0f0f 0% 72%, #E4E4E4 72% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:64px; height:64px; background:#fff; border-radius:100vw; display:flex; flex-direction:column; align-items:center; justify-content:center;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px;">142</div><div style="font-size:8px; color:#999;">/198g</div></div></div><div style="font-size:11px; color:#999; margin-top:8px;">Carbs</div></div>
+            <div style="text-align:center; flex:1;"><div style="width:84px; height:84px; margin:0 auto; border-radius:100vw; background:conic-gradient(#0f0f0f 0% 85%, #E4E4E4 85% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:64px; height:64px; background:#fff; border-radius:100vw; display:flex; flex-direction:column; align-items:center; justify-content:center;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px;">52</div><div style="font-size:8px; color:#999;">/61g</div></div></div><div style="font-size:11px; color:#999; margin-top:8px;">Fat</div></div>
+          </div>
+          <div style="margin-top:18px; border-top:1px solid #F2F2F0; padding-top:14px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:10px;">7-Day Adherence</div><svg viewBox="0 0 280 50" style="width:100%; height:50px;"><g fill="#0f0f0f"><rect x="4" y="14" width="30" height="36" rx="3"/><rect x="42" y="6" width="30" height="44" rx="3"/><rect x="80" y="20" width="30" height="30" rx="3"/><rect x="118" y="10" width="30" height="40" rx="3"/></g><rect x="156" y="2" width="30" height="48" rx="3" fill="#5EBE62"/><g fill="#0f0f0f"><rect x="194" y="16" width="30" height="34" rx="3"/><rect x="232" y="24" width="30" height="26" rx="3"/></g></svg></div>
+        </div>
+        <div style="background:#fff; border-radius:14px; padding:22px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:12px;">Recent Logs</div><div style="display:flex; justify-content:space-between; font-size:13px; padding:9px 0; border-bottom:1px solid #F2F2F0;"><span>Breakfast - Oats &amp; eggs</span><span style="color:#999;">420</span></div><div style="display:flex; justify-content:space-between; font-size:13px; padding:9px 0; border-bottom:1px solid #F2F2F0;"><span>Lunch - Chicken bowl</span><span style="color:#999;">560</span></div><div style="display:flex; justify-content:space-between; font-size:13px; padding:9px 0; border-bottom:1px solid #F2F2F0;"><span>Snack - Protein shake</span><span style="color:#999;">180</span></div><div style="display:flex; justify-content:space-between; font-size:13px; padding:9px 0;"><span>Dinner - Salmon &amp; rice</span><span style="color:#999;">520</span></div></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ pWorkouts }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff; border-radius:14px; padding:22px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Workout History</div><span style="font-size:11px; color:#5EBE62; font-weight:600;">4 of 5 this week</span></div>
+        <div style="display:flex; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,#2a2a2a,#0c0c0c);"></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">Glute Builder - Day 3</div><div style="font-size:11px; color:#999;">8 exercises - 52 min</div></div><span style="font-size:12px; color:#5EBE62;">Completed - May 16</span></div>
+        <div style="display:flex; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid #F2F2F0;"><div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,#333,#111);"></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">Lower Body Power - Day 2</div><div style="font-size:11px; color:#999;">6 exercises - 47 min</div></div><span style="font-size:12px; color:#5EBE62;">Completed - May 14</span></div>
+        <div style="display:flex; align-items:center; gap:14px; padding:11px 0;"><div style="width:40px; height:40px; border-radius:10px; background:#f0f0f0;"></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">Glute Activation - Day 1</div><div style="font-size:11px; color:#999;">5 exercises - 38 min</div></div><span style="font-size:12px; color:#5EBE62;">Completed - May 12</span></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ pProgress }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:14px;">
+        <div style="background:#fff; border-radius:14px; padding:22px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:14px;">Weight Trend</div><svg viewBox="0 0 320 120" style="width:100%; height:120px;"><polyline points="0,18 53,30 106,28 160,52 213,60 266,84 320,96" fill="none" stroke="#0f0f0f" stroke-width="2"/><circle cx="320" cy="96" r="4" fill="#5EBE62"/></svg><div style="display:flex; justify-content:space-between; font-size:12px; color:#999; margin-top:6px;"><span>Start 159 lb</span><span style="color:#5EBE62; font-weight:600;">Now 141 lb</span></div></div>
+        <div style="background:#fff; border-radius:14px; padding:22px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:12px;">Progress Photos</div><div style="display:flex; gap:6px;"><div style="flex:1; height:120px; border-radius:8px; background:linear-gradient(#bbb,#999);"></div><div style="flex:1; height:120px; border-radius:8px; background:linear-gradient(#aaa,#888);"></div></div></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ pBilling }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff; border-radius:14px; padding:22px; max-width:560px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Subscription</div><span style="background:#5EBE62; color:#053b07; font-size:11px; font-weight:600; padding:4px 12px; border-radius:100vw;">Active</span></div>
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:18px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px;">$369</div><span style="font-size:12px; color:#999;">/ mo - grandfathered price</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; padding:10px 0; border-top:1px solid #F2F2F0;"><span style="color:#999;">Next billing</span><span style="font-weight:600;">Jun 12, 2026</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; padding:10px 0; border-top:1px solid #F2F2F0;"><span style="color:#999;">Payment method</span><span style="font-weight:600;">Visa - 4242</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; padding:10px 0; border-top:1px solid #F2F2F0;"><span style="color:#999;">Lifetime value</span><span style="font-weight:600;">$4,428</span></div>
+        <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin:16px 0 10px;">Payment History</div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span>May 12, 2026</span><span style="color:#5EBE62;">Paid - $369</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span>Apr 12, 2026</span><span style="color:#5EBE62;">Paid - $369</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; padding:8px 0;"><span>Mar 12, 2026</span><span style="color:#5EBE62;">Paid - $369</span></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ pGeneric }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff; border-radius:14px; padding:40px; text-align:center; max-width:560px;">
+        <div style="width:54px; height:54px; border-radius:100vw; background:#f0f0f0; display:flex; align-items:center; justify-content:center; margin:0 auto 14px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg></div>
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px;">{{ pTabName }}</div>
+        <p style="font-size:13px; color:#5c5c5c; margin:8px 0 0;">This panel surfaces the member's {{ pTabLower }} data, pulled from the app in real time.</p>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ===== PROGRAM BUILDER ===== -->
+    <sc-if value="{{ isBuilder }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div onClick="{{ goOverview }}" style="font-size:13px; color:#999; cursor:pointer; margin-bottom:10px;">← Back to Programs</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase;">{{ t.programBuilder }}</div>
+        <div style="display:flex; gap:10px;"><span style="border:1px solid #E4E4E4; background:#fff; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; border-radius:100vw; padding:9px 18px;">Preview</span><span style="background:#111; color:#fff; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; border-radius:100vw; padding:9px 18px;">Save Program</span></div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px;">Glute Builder</span><span style="background:#0f0f0f; color:#fafafa; font-size:11px; font-weight:600; padding:3px 12px; border-radius:999px;">Published</span><span style="font-size:13px; color:#999;">8 Weeks · Intermediate · Glute Focused</span></div>
+      <div style="display:flex; gap:4px; margin-bottom:18px; flex-wrap:wrap;">
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 16px; font-size:12px;">Week 1</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 16px; font-size:12px;">Week 2</span>
+        <span style="background:#111; color:#fff; border-radius:14px; padding:7px 16px; font-size:12px;">Week 3</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 16px; font-size:12px;">Week 4</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 16px; font-size:12px;">Week 5</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 16px; font-size:12px;">Week 6</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 16px; font-size:12px;">Week 7</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:7px 16px; font-size:12px;">Week 8</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+        <div style="background:#fff; border-radius:14px; padding:16px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px;">Day 1</div><div style="font-size:11px; color:#999; margin-bottom:12px;">Glute Activation · 5 exercises</div><div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span style="width:30px; height:30px; background:#222; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Hip Thrust</span>4 x 12</span></div><div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span style="width:30px; height:30px; background:#333; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Banded Glute Bridge</span>3 x 15</span></div><div style="display:flex; align-items:center; gap:8px; padding:8px 0;"><span style="width:30px; height:30px; background:#444; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Donkey Kick</span>3 x 12</span></div><div style="background:#f0f0f0; text-align:center; font-size:11px; padding:8px; margin-top:10px; color:#666;">+ Add Exercise</div></div>
+        <div style="background:#fff; border-radius:14px; padding:16px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px;">Day 2</div><div style="font-size:11px; color:#999; margin-bottom:12px;">Lower Body Power · 6 exercises</div><div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span style="width:30px; height:30px; background:#222; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Barbell Squat</span>4 x 8</span></div><div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span style="width:30px; height:30px; background:#333; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Romanian Deadlift</span>3 x 10</span></div><div style="display:flex; align-items:center; gap:8px; padding:8px 0;"><span style="width:30px; height:30px; background:#444; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Walking Lunge</span>3 x 12</span></div><div style="background:#f0f0f0; text-align:center; font-size:11px; padding:8px; margin-top:10px; color:#666;">+ Add Exercise</div></div>
+        <div style="background:#fff; border-radius:14px; padding:16px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px;">Day 3</div><div style="font-size:11px; color:#999; margin-bottom:12px;">Glute Growth · 5 exercises</div><div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span style="width:30px; height:30px; background:#222; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Hip Thrust (Heavy)</span>4 x 8</span></div><div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span style="width:30px; height:30px; background:#333; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Cable Kickback</span>3 x 15</span></div><div style="display:flex; align-items:center; gap:8px; padding:8px 0;"><span style="width:30px; height:30px; background:#444; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Abduction</span>3 x 20</span></div><div style="background:#f0f0f0; text-align:center; font-size:11px; padding:8px; margin-top:10px; color:#666;">+ Add Exercise</div></div>
+        <div style="background:#fff; border-radius:14px; padding:16px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px;">Day 4</div><div style="font-size:11px; color:#999; margin-bottom:12px;">Active Recovery · 3 exercises</div><div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span style="width:30px; height:30px; background:#222; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Step Ups</span>3 x 12</span></div><div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F2F2F0;"><span style="width:30px; height:30px; background:#333; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Glute Bridge</span>3 x 20</span></div><div style="display:flex; align-items:center; gap:8px; padding:8px 0;"><span style="width:30px; height:30px; background:#444; flex:none;"></span><span style="font-size:12px;"><span style="display:block; font-weight:600;">Standing Calf Raise</span>3 x 20</span></div><div style="background:#f0f0f0; text-align:center; font-size:11px; padding:8px; margin-top:10px; color:#666;">+ Add Exercise</div></div>
+      </div>
+      <div style="background:#fff; border:1px dashed #E4E4E4; text-align:center; font-size:13px; color:#666; padding:14px; margin-top:14px;">+ Add Workout Day</div>
+    </div>
+    </sc-if>
+
+    <!-- ===== CREATE BROADCAST ===== -->
+    <sc-if value="{{ isBroadcast }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:920px;">
+      <div onClick="{{ goOverview }}" style="font-size:13px; color:#999; cursor:pointer; margin-bottom:10px;">← Back to Broadcasts</div>
+      <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; margin-bottom:18px;">{{ t.createBroadcast }}</div>
+      <div style="display:flex; gap:4px; margin-bottom:22px;">
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:9px 18px; font-size:12px;">Push Notification</span>
+        <span style="background:#111; color:#fff; border-radius:14px; padding:9px 18px; font-size:12px;">In-App Message</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:9px 18px; font-size:12px;">Email</span>
+        <span style="border:1px solid #E4E4E4; border-radius:100vw; background:#fff; padding:9px 18px; font-size:12px;">Video Message</span>
+      </div>
+      <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:22px;">
+        <div>
+          <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:10px;">Audience</div>
+          <div style="display:flex; gap:10px; margin-bottom:20px;"><span style="flex:1; border:1px solid #111; background:#fff; text-align:center; padding:11px; font-size:13px; font-weight:600;">◉ All Members</span><span style="flex:1; border:1px solid #E4E4E4; background:#fff; text-align:center; padding:11px; font-size:13px; color:#999;">○ Segment</span></div>
+          <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:10px;">Schedule</div>
+          <div style="display:flex; gap:10px; margin-bottom:20px;"><span style="flex:1; border:1px solid #111; background:#fff; text-align:center; padding:11px; font-size:13px; font-weight:600;">◉ Send Now</span><span style="flex:1; border:1px solid #E4E4E4; background:#fff; text-align:center; padding:11px; font-size:13px; color:#999;">○ Schedule for Later</span></div>
+          <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:10px;">Message</div>
+          <div style="border:1px solid #E4E4E4; background:#fff;">
+            <div style="border-bottom:1px solid #E4E4E4; padding:8px 12px; font-size:13px; color:#999; display:flex; gap:14px;"><b>B</b><i>I</i><span style="display:inline-flex;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9.5 14.5l5-5M10.5 6.5l1-1a3.5 3.5 0 0 1 5 5l-1 1M13.5 17.5l-1 1a3.5 3.5 0 0 1-5-5l1-1"/></svg></span><span style="display:inline-flex;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 14.5a3.5 3.5 0 0 0 6 0" stroke-linecap="round"/><circle cx="9.2" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="14.8" cy="10" r=".7" fill="currentColor" stroke="none"/></svg></span></div>
+            <div style="padding:14px; font-size:14px; line-height:1.6; min-height:130px;">You've got this!<br><br>Remember why you started. Consistency today creates results tomorrow.<br><br>Let's make it a great day!</div>
+          </div>
+          <div style="text-align:right; font-size:11px; color:#bbb; margin-top:6px;">118 / 500</div>
+          <div style="display:flex; justify-content:space-between; margin-top:14px;"><span style="border:1px solid #E4E4E4; background:#fff; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; border-radius:100vw; padding:11px 22px;">Save Draft</span><span style="background:#111; color:#fff; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; border-radius:100vw; padding:11px 28px;">Send Broadcast</span></div>
+        </div>
+        <div>
+          <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase; margin-bottom:10px;">Preview</div>
+          <div style="background:#f0f0f0; padding:24px; display:flex; justify-content:center;">
+            <div style="width:200px; background:#111; border-radius:30px; padding:8px;">
+              <div style="background:#fff; border-radius:24px; padding:20px 16px; text-align:center;">
+                <div style="width:54px; height:54px; border-radius:999px; background:#111; color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 10px; font-family:'Gulams Condensed',Impact,sans-serif;">CS</div>
+                <div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px;">Coach Steph</div>
+                <div style="font-size:12px; line-height:1.5; color:#333; text-align:left;">You've got this! Remember why you started. Consistency today creates results tomorrow. Let's make it a great day!</div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:11px; color:#bbb; text-align:center; margin-top:8px;">In-App Message Delivery Preview</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===== APP HEALTH ===== -->
+    <sc-if value="{{ isHealth }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div onClick="{{ goOverview }}" style="font-size:13px; color:#999; cursor:pointer; margin-bottom:10px;">← Back to Support</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase;">{{ t.appHealth }}</div>
+        <span style="background:#0f0f0f; color:#fafafa; font-size:12px; font-weight:600; padding:6px 16px; border-radius:999px;">● All Systems Operational</span>
+      </div>
+      <div style="font-size:12px; color:#999; margin-bottom:20px;">Last updated: 2 min ago</div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:18px;">
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">API Status</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px; color:#767676; margin:4px 0;">Operational</div><div style="height:5px; background:#E4E4E4; margin-top:8px;"><div style="height:5px; width:100%; background:#767676;"></div></div><div style="font-size:11px; color:#999; margin-top:6px;">100% uptime</div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Push Delivery</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin:4px 0;">98.7%</div><svg viewBox="0 0 160 40" style="width:100%; height:40px;"><polyline points="0,30 30,28 60,32 90,20 120,24 160,12" fill="none" stroke="#5EBE62" stroke-width="2"/></svg><div style="font-size:11px; color:#999;">Last 7 days</div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Crash Reports</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin:4px 0;">2</div><div style="font-size:11px; color:#999;">Last 24h</div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Failed Logins</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin:4px 0;">18</div><svg viewBox="0 0 160 40" style="width:100%; height:40px;"><polyline points="0,20 30,24 60,16 90,28 120,18 160,22" fill="none" stroke="#c0392b" stroke-width="2"/></svg><div style="font-size:11px; color:#999;">Last 24h</div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">Payment Issues</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin:4px 0;">7</div><svg viewBox="0 0 160 40" style="width:100%; height:40px;"><polyline points="0,26 30,22 60,28 90,18 120,24 160,16" fill="none" stroke="#c0392b" stroke-width="2"/></svg><div style="font-size:11px; color:#999;">Last 24h</div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:1px; color:#999; text-transform:uppercase;">AI Moderation</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; margin:4px 0;">3</div><div style="font-size:11px; color:#999;">Pending Review</div></div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; margin-bottom:12px;">Recent Alerts</div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #F2F2F0; font-size:13px;"><span style="color:#c89a2b;">⚠</span><span style="flex:1;">Failed payment · 3 members</span><span style="font-size:11px; color:#bbb;">12m ago</span></div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #F2F2F0; font-size:13px;"><span style="color:#c89a2b;">⚠</span><span style="flex:1;">Push notification delivery delay</span><span style="font-size:11px; color:#bbb;">38m ago</span></div>
+          <div style="display:flex; align-items:center; gap:10px; padding:9px 0; font-size:13px;"><span style="color:#c0392b;">●</span><span style="flex:1;">AI moderation flagged content</span><span style="font-size:11px; color:#bbb;">1h ago</span></div>
+          <div style="background:#f0f0f0; border-radius:100vw; text-align:center; font-size:12px; font-weight:600; padding:9px; margin-top:12px;">View All Alerts</div></div>
+        <div style="background:#fff; border-radius:14px; padding:20px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; margin-bottom:12px;">System Status</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid #F2F2F0; font-size:13px;"><span>Database</span><span style="color:#5EBE62;">● Operational</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid #F2F2F0; font-size:13px;"><span>Storage</span><span style="color:#5EBE62;">● Operational</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid #F2F2F0; font-size:13px;"><span>Video Service</span><span style="color:#5EBE62;">● Operational</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid #F2F2F0; font-size:13px;"><span>Payment Gateway</span><span style="color:#5EBE62;">● Operational</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; font-size:13px;"><span>AI Service</span><span style="color:#5EBE62;">● Operational</span></div></div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- MAIN-END -->
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { lang:'en', screen:'overview', pTab:'Overview', seg:'All' };
+  T(){
+    const en = { overview:'Overview', subscribers:'Subscribers', community:'Community', programs:'Programs', exercises:'Exercises', nutrition:'Nutrition', challenges:'Challenges', broadcasts:'Broadcasts', automation:'Automation', analytics:'Analytics', payments:'Payments', support:'Support', settings:'Settings',
+      export:'Export', activeMembers:'Active Members', workoutCompletion:'Workout Completion', macroCompliance:'Macro Compliance', engagement:'Community Engagement', churn:'Churn Rate', liveActivity:'Live Activity Feed', upcoming:'Upcoming', analyticsOverview:'Analytics Overview',
+      allMembers:'All Members', churnedTitle:'Churned members', churnedBody:'Lapsed in the last 90 days. Send a bilingual win-back offer with their grandfathered price held.', winBack:'Launch win-back', backToSubs:'Back to Subscribers', subscriberProfile:'Subscriber Profile', programBuilder:'Program Builder', createBroadcast:'Create Broadcast', appHealth:'App Health Overview', addSubscriber:'Add Subscriber', searchSubs:'Search subscribers…', member:'Member', tier:'Tier', program:'Program', lastActive:'Last Active', compliance:'Compliance', status:'Status' };
+    const es = { overview:'Resumen', subscribers:'Suscriptoras', community:'Comunidad', programs:'Programas', exercises:'Ejercicios', nutrition:'Nutrición', challenges:'Retos', broadcasts:'Difusiones', automation:'Automatización', analytics:'Analítica', payments:'Pagos', support:'Soporte', settings:'Ajustes',
+      export:'Exportar', activeMembers:'Miembros Activas', workoutCompletion:'Entrenos Completos', macroCompliance:'Cumple Macros', engagement:'Engagement', churn:'Tasa de Baja', liveActivity:'Actividad en Vivo', upcoming:'Próximo', analyticsOverview:'Resumen de Analítica',
+      allMembers:'Todas', churnedTitle:'Miembros perdidas', churnedBody:'Inactivas en los últimos 90 días. Envía una oferta de recuperación bilingüe con su precio heredado.', winBack:'Lanzar recuperación', backToSubs:'Volver a suscriptoras', subscriberProfile:'Perfil de suscriptora', programBuilder:'Constructor de Programa', createBroadcast:'Crear Difusión', appHealth:'Estado de la App', addSubscriber:'Agregar', searchSubs:'Buscar suscriptoras…', member:'Miembro', tier:'Plan', program:'Programa', lastActive:'Última actividad', compliance:'Cumplimiento', status:'Estado' };
+    return this.state.lang==='en'?en:es;
+  }
+  sb(on){ return { display:'flex', alignItems:'center', gap:'12px', padding:'10px 14px', fontSize:'14px', cursor:'pointer', color: on?'#111':'#888', background: on?'#f0f0f0':'transparent', borderRadius:'100vw', fontWeight: on?600:400, marginBottom:'2px' }; }
+  renderVals(){
+    const s=this.state, t=this.T();
+    const onTog={ background:'#111', color:'#fff', fontFamily:"'Inter',sans-serif", fontSize:'11px', letterSpacing:'2px', padding:'0 14px', display:'flex', alignItems:'center', cursor:'pointer' };
+    const offTog={ background:'#fff', color:'#111', fontFamily:"'Inter',sans-serif", fontSize:'11px', letterSpacing:'2px', padding:'0 14px', display:'flex', alignItems:'center', cursor:'pointer' };
+    return { t,
+      profileTabs: ['Overview','Nutrition','Workouts','Community','Progress','Messages','Billing','Notes'].map(n=>({ name:n, on:()=>this.setState({pTab:n}), st:(n===s.pTab?{paddingBottom:'11px',borderBottom:'2px solid #111',fontWeight:600,whiteSpace:'nowrap',cursor:'pointer'}:{paddingBottom:'11px',color:'#999',whiteSpace:'nowrap',cursor:'pointer'}) })),
+      pOverview: s.pTab==='Overview', pNutrition: s.pTab==='Nutrition', pWorkouts: s.pTab==='Workouts', pProgress: s.pTab==='Progress', pBilling: s.pTab==='Billing',
+      pGeneric: ['Community','Messages','Notes'].includes(s.pTab), pTabName: s.pTab, pTabLower: s.pTab.toLowerCase(),
+      segChips: [
+        {key:'All',n:'3,892'},{key:'Spanish',n:'1,204'},{key:'GLP-1',n:'312'},{key:'PCOS',n:'188'},{key:'Bride',n:'47'},{key:'Workout-only',n:'631'},{key:'Churned',n:'176'}
+      ].map(c=>({ label: c.key==='All'? (this.T().allMembers+' · '+c.n) : (c.key+' · '+c.n), on:()=>this.setState({seg:c.key}),
+        st: (c.key===s.seg
+          ? 'border:1px solid #0f0f0f; border-radius:100vw; background:#0f0f0f; color:#fafafa; padding:7px 14px; font-size:12px; cursor:pointer;'
+          : 'border:1px solid #E4E4E4; border-radius:100vw; background:#fff; color:#0f0f0f; padding:7px 14px; font-size:12px; cursor:pointer;') })),
+      segChurned: s.seg==='Churned',
+      setEn:()=>this.setState({lang:'en'}), setEs:()=>this.setState({lang:'es'}),
+      enSt:s.lang==='en'?onTog:offTog, esSt:s.lang==='es'?onTog:offTog,
+      isOverview:s.screen==='overview', isSubs:s.screen==='subscribers', isProfile:s.screen==='profile', isBuilder:s.screen==='builder', isBroadcast:s.screen==='broadcast', isHealth:s.screen==='health',
+      goOverview:()=>this.setState({screen:'overview'}), goSubscribers:()=>this.setState({screen:'subscribers'}), goProfile:()=>this.setState({screen:'profile'}), goBuilder:()=>this.setState({screen:'builder'}), goBroadcast:()=>this.setState({screen:'broadcast'}), goHealth:()=>this.setState({screen:'health'}),
+      sbItem:this.sb(false),
+      sbOverview:this.sb(s.screen==='overview'), sbSubs:this.sb(s.screen==='subscribers'||s.screen==='profile'), sbPrograms:this.sb(s.screen==='builder'), sbBroadcasts:this.sb(s.screen==='broadcast'), sbSupport:this.sb(s.screen==='health'),
+    };
+  }
+}
+</script>
+</body>
+</html>

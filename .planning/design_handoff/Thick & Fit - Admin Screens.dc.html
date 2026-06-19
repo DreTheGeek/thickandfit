@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#e7e5df; }
+  ::selection{ background:#0f0f0f; color:#fafafa; }
+  .tfh{ font-family:'Gulams Condensed',Impact,sans-serif; text-transform:uppercase; font-weight:600; line-height:0.85; margin:0; }
+  .win{ width:580px; background:#fff; border-radius:16px; box-shadow:0 14px 44px rgba(0,0,0,.12); overflow:hidden; flex:none; border:1px solid #ececec; }
+  .winbar{ height:40px; background:#f0f0f0; display:flex; align-items:center; gap:7px; padding:0 16px; border-bottom:1px solid #ececec; }
+  .dot{ width:11px; height:11px; border-radius:99px; background:#d4d4d4; }
+  .lbl{ font-family:'Inter',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:#777; margin-bottom:12px; }
+  .row{ display:flex; gap:40px; align-items:flex-start; }
+  .inp{ border:1px solid #e2e2e2; border-radius:10px; padding:11px 14px; font-size:13px; color:#9a9a9a; }
+  .btn{ text-align:center; font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:12px 22px; border-radius:100vw; cursor:pointer; }
+  .btnp{ background:#0f0f0f; color:#fafafa; }
+  .btno{ border:1px solid #0f0f0f; color:#0f0f0f; }
+  .winttl{ font-size:12px; color:#888; font-weight:600; flex:1; text-align:center; letter-spacing:.5px; }
+</style>
+</helmet>
+
+<div style="background:#e7e5df; min-width:100%; min-height:100vh; box-sizing:border-box; padding:44px; width:max-content; font-family:'Inter',sans-serif; color:#0f0f0f;">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; width:1180px; max-width:100%;">
+    <div>
+      <a href="Thick & Fit - Design Hub.dc.html" style="text-decoration:none; color:#777; font-size:12px; letter-spacing:2px; text-transform:uppercase;">← Hub</a>
+      <h1 class="tfh" style="font-size:54px; margin-top:10px;">{{ t.title }}</h1>
+      <div style="font-size:15px; color:#5c5c5c; margin-top:8px; max-width:600px;">{{ t.subtitle }}</div>
+    </div>
+    <div style="display:flex; border:1px solid #0f0f0f; border-radius:100vw; overflow:hidden;">
+      <div onClick="{{ setEn }}" style="{{ enSt }}">EN</div>
+      <div onClick="{{ setEs }}" style="{{ esSt }}">ES</div>
+    </div>
+  </div>
+
+  <div class="lbl" style="font-size:14px; color:#0f0f0f; font-weight:700; letter-spacing:3px; border-top:2px solid #0f0f0f; padding-top:12px; margin-bottom:24px; width:1180px; max-width:100%;">{{ t.secAdmin }}</div>
+  <div class="row" style="margin-bottom:56px;">
+
+    <!-- LOGIN -->
+    <div><div class="lbl">{{ t.scLogin }}</div>
+      <div class="win"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">app.teamthickandfit.com/coach</span></div>
+        <div style="padding:56px 80px; display:flex; flex-direction:column; align-items:center; text-align:center; min-height:380px; justify-content:center;">
+          <img src="assets/logo-black.svg" alt="Thick & Fit" style="height:38px; margin-bottom:6px;" />
+          <div style="font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#999; margin-bottom:26px;">Coach Console</div>
+          <h2 class="tfh" style="font-size:34px; margin-bottom:22px;">{{ t.loginTitle }}</h2>
+          <div style="width:100%; display:flex; flex-direction:column; gap:11px;">
+            <div class="inp" style="text-align:left;">{{ t.email }}</div>
+            <div class="inp" style="text-align:left; display:flex; justify-content:space-between;">{{ t.password }}<span>•••</span></div>
+            <div class="btn btnp" style="margin-top:6px;">{{ t.signIn }}</div>
+          </div>
+          <div style="font-size:11px; color:#9a9a9a; margin-top:18px;">{{ t.operatorNote }}</div>
+        </div>
+      </div></div>
+
+    <!-- CREATE CHALLENGE -->
+    <div><div class="lbl">{{ t.scChallenge }}</div>
+      <div class="win"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.chTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px; display:flex; flex-direction:column;">
+          <h2 class="tfh" style="font-size:28px; margin-bottom:20px;">{{ t.chTitle }}</h2>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div style="grid-column:1 / 3;"><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.chName }}</div><div class="inp" style="color:#0f0f0f;">{{ t.chNameV }}</div></div>
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.chDates }}</div><div class="inp">{{ t.chDatesV }}</div></div>
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.chType }}</div><div class="inp" style="display:flex; justify-content:space-between;">{{ t.chTypeV }}<span style="color:#ccc;">▾</span></div></div>
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.chPrize }}</div><div class="inp" style="color:#0f0f0f;">{{ t.chPrizeV }}</div></div>
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.chSegment }}</div><div class="inp" style="display:flex; justify-content:space-between;">{{ t.chSegmentV }}<span style="color:#ccc;">▾</span></div></div>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:auto; padding-top:22px;"><div class="btn btno" style="flex:1;">{{ t.chPreview }}</div><div class="btn btnp" style="flex:1;">{{ t.chPublish }}</div></div>
+        </div>
+      </div></div>
+
+    <!-- AUTOMATION -->
+    <div><div class="lbl">{{ t.scAuto }}</div>
+      <div class="win"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.autoTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;"><h2 class="tfh" style="font-size:28px;">{{ t.autoTitle }}</h2><span style="background:#0f0f0f; color:#fafafa; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:4px 12px; border-radius:99px;">{{ t.autoActive }}</span></div>
+          <div style="display:flex; flex-direction:column; gap:0; align-items:center;">
+            <div style="width:100%; border:1px solid #e2e2e2; border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px;"><div style="width:38px; height:38px; border-radius:10px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.8"><path d="M13 3 5 13h6l-1 8 8-11h-6z"/></svg></div><div><div style="font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px;">{{ t.autoTrigger }}</div><div style="font-weight:600; font-size:14px;">{{ t.autoTriggerV }}</div></div></div>
+            <div style="width:2px; height:20px; background:#e2e2e2;"></div>
+            <div style="width:100%; border:1px solid #e2e2e2; border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px;"><div style="width:38px; height:38px; border-radius:10px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg></div><div><div style="font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px;">{{ t.autoWait }}</div><div style="font-weight:600; font-size:14px;">{{ t.autoWaitV }}</div></div></div>
+            <div style="width:2px; height:20px; background:#e2e2e2;"></div>
+            <div style="width:100%; border:1px solid #0f0f0f; border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px;"><div style="width:38px; height:38px; border-radius:10px; background:#0f0f0f; display:flex; align-items:center; justify-content:center; color:#fff;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg></div><div><div style="font-size:10px; color:#888; text-transform:uppercase; letter-spacing:1px;">{{ t.autoAction }}</div><div style="font-weight:600; font-size:14px;">{{ t.autoActionV }}</div></div></div>
+          </div>
+          <div style="border:1px dashed #d4d4d4; border-radius:12px; text-align:center; font-size:12px; color:#888; padding:12px; margin-top:16px;">{{ t.autoAdd }}</div>
+        </div>
+      </div></div>
+
+    <!-- ANALYTICS -->
+    <div><div class="lbl">{{ t.scAnalytics }}</div>
+      <div class="win"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.anTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px;">
+          <h2 class="tfh" style="font-size:28px; margin-bottom:16px;">{{ t.anTitle }}</h2>
+          <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:22px; font-size:12px;"><span style="background:#0f0f0f; color:#fafafa; padding:7px 16px; border-radius:100vw; text-transform:uppercase; letter-spacing:1px;">{{ t.anEngage }}</span><span style="color:#888; padding:7px 16px; text-transform:uppercase; letter-spacing:1px;">{{ t.anFin }}</span><span style="color:#888; padding:7px 16px; text-transform:uppercase; letter-spacing:1px;">{{ t.anRet }}</span></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px;">{{ t.anActiveU }}</div><div class="tfh" style="font-size:30px; margin:4px 0 8px;">3,892</div><svg viewBox="0 0 200 50" style="width:100%; height:50px;"><polyline points="0,40 40,34 80,36 120,22 160,18 200,8" fill="none" stroke="#0f0f0f" stroke-width="2"/></svg></div>
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px;">{{ t.anRetention }}</div><div class="tfh" style="font-size:30px; margin:4px 0 8px;">84%</div><svg viewBox="0 0 200 50" style="width:100%; height:50px;"><rect x="6" y="22" width="20" height="28" fill="#0f0f0f"/><rect x="36" y="16" width="20" height="34" fill="#0f0f0f"/><rect x="66" y="26" width="20" height="24" fill="#0f0f0f"/><rect x="96" y="12" width="20" height="38" fill="#0f0f0f"/><rect x="126" y="20" width="20" height="30" fill="#0f0f0f"/><rect x="156" y="8" width="20" height="42" fill="#767676"/></svg></div>
+          </div>
+          <div style="display:flex; gap:16px; margin-top:18px;"><div style="flex:1; background:#f0f0f0; border-radius:12px; padding:16px;"><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px;">{{ t.anLTV }}</div><div class="tfh" style="font-size:26px; margin-top:4px;">$847</div></div><div style="flex:1; background:#0f0f0f; color:#fafafa; border-radius:12px; padding:16px;"><div style="font-size:11px; color:#b7b7b7; text-transform:uppercase; letter-spacing:1px;">MRR</div><div class="tfh" style="font-size:26px; margin-top:4px;">$74,892</div></div></div>
+        </div>
+      </div></div>
+
+  </div>
+  <div class="row">
+    <!-- PAYOUTS -->
+    <div><div class="lbl">{{ t.scPayouts }}</div>
+      <div class="win"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.payTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;"><h2 class="tfh" style="font-size:28px;">{{ t.payTitle }}</h2><span style="display:flex; align-items:center; gap:7px; font-size:11px; color:#5c5c5c;"><span style="width:8px; height:8px; border-radius:99px; background:#0f0f0f;"></span>{{ t.payConnected }}</span></div>
+          <div style="display:flex; gap:14px; margin-bottom:18px;">
+            <div style="flex:1; background:#0f0f0f; color:#fafafa; border-radius:14px; padding:20px;"><div style="font-size:11px; color:#b7b7b7; text-transform:uppercase; letter-spacing:1px;">{{ t.payBalance }}</div><div class="tfh" style="font-size:34px; margin-top:6px;">$18,240</div></div>
+            <div style="flex:1; background:#f0f0f0; border-radius:14px; padding:20px;"><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px;">{{ t.payNext }}</div><div style="font-weight:600; font-size:16px; margin-top:10px;">{{ t.payNextV }}</div></div>
+          </div>
+          <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">{{ t.payTx }}</div>
+          <div style="display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f0f0f0; font-size:13px;"><span>Jessica Lopez · Membership</span><span style="font-weight:600;">+$19.99</span></div>
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f0f0f0; font-size:13px;"><span>Maria Rodriguez · Coaching</span><span style="font-weight:600;">+$275.00</span></div>
+            <div style="display:flex; justify-content:space-between; padding:10px 0; font-size:13px;"><span>Sofia Martinez · Membership</span><span style="font-weight:600;">+$19.99</span></div>
+          </div>
+          <p style="font-size:11px; color:#9a9a9a; line-height:1.5; margin-top:auto; padding-top:16px;">{{ t.payRevShare }}</p>
+        </div>
+      </div></div>
+
+    <!-- BRANDING -->
+    <div><div class="lbl">{{ t.scBranding }}</div>
+      <div class="win"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.brTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px; display:flex; flex-direction:column;">
+          <h2 class="tfh" style="font-size:28px; margin-bottom:20px;">{{ t.brTitle }}</h2>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.brAppName }}</div><div class="inp" style="color:#0f0f0f;">{{ t.brAppNameV }}</div></div>
+            <div style="display:flex; gap:14px;">
+              <div style="flex:1;"><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.brAccent }}</div><div style="display:flex; gap:8px; align-items:center;"><span style="width:30px; height:30px; border-radius:8px; background:#0f0f0f;"></span><span style="width:30px; height:30px; border-radius:8px; background:#767676;"></span><span style="width:30px; height:30px; border-radius:8px; background:#f0f0f0; border:1px solid #e2e2e2;"></span><span style="font-size:11px; color:#999; margin-left:4px;">{{ t.brColorNote }}</span></div></div>
+            </div>
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.brLogo }}</div><div class="inp" style="display:flex; align-items:center; gap:10px;"><img src="assets/logo-black.svg" style="height:18px;" /><span>{{ t.brLogoV }}</span></div></div>
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.brDefaultLang }}</div><div class="inp" style="display:flex; justify-content:space-between;">{{ t.brDefaultLangV }}<span style="color:#ccc;">▾</span></div></div>
+            <div><div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">{{ t.brTiers }}</div><div style="display:flex; gap:8px;"><div class="inp" style="flex:1; text-align:center; color:#0f0f0f;">Free</div><div class="inp" style="flex:1; text-align:center; color:#0f0f0f;">$19.99</div><div class="inp" style="flex:1; text-align:center; color:#0f0f0f;">$275</div></div></div>
+          </div>
+          <div class="btn btnp" style="margin-top:auto;">{{ t.brSave }}</div>
+        </div>
+      </div></div>
+
+    <!-- SUPPORT INBOX -->
+    <div><div class="lbl">{{ t.scSupport }}</div>
+      <div class="win"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.supTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px; display:flex; flex-direction:column;">
+          <h2 class="tfh" style="font-size:28px; margin-bottom:16px;">{{ t.supTitle }}</h2>
+          <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:20px; font-size:12px; width:max-content;"><span style="background:#0f0f0f; color:#fafafa; padding:7px 16px; border-radius:100vw; text-transform:uppercase; letter-spacing:1px;">{{ t.supOpen }}</span><span style="color:#888; padding:7px 16px; text-transform:uppercase; letter-spacing:1px;">{{ t.supResolved }}</span></div>
+          <div style="border:1.5px solid #0f0f0f; border-radius:14px; padding:16px; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;"><div style="width:34px; height:34px; border-radius:99px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.supT1Name }}</div><div style="font-size:11px; color:#b3261e;">{{ t.supAttn }}</div></div><span style="font-size:11px; color:#999;">2m</span></div>
+            <div style="font-size:13px; color:#444; margin-bottom:12px;">{{ t.supT1Msg }}</div>
+            <div style="display:flex; gap:8px;"><div class="btn btnp" style="flex:1; padding:9px;">{{ t.supReply }}</div><div class="btn btno" style="flex:1; padding:9px;">{{ t.supAssign }}</div></div>
+          </div>
+          <div style="border:1px solid #e2e2e2; border-radius:14px; padding:16px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;"><div style="width:34px; height:34px; border-radius:99px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.supT2Name }}</div><div style="font-size:11px; color:#999;">EN · {{ t.supOpen }}</div></div><span style="font-size:11px; color:#999;">1h</span></div>
+            <div style="font-size:13px; color:#444;">{{ t.supT2Msg }}</div>
+          </div>
+        </div>
+      </div></div>
+  </div>
+  <div class="row">
+    <div><div class="lbl">{{ t.scBilling }}</div>
+      <div class="win" style="width:620px;"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.billTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;"><h2 class="tfh" style="font-size:28px;">{{ t.billTitle }}</h2><span style="font-size:11px; color:#5c5c5c; border:1px solid #e2e2e2; border-radius:100vw; padding:5px 12px;">{{ t.billWindow }}</span></div>
+          <div style="display:flex; gap:12px; margin-bottom:20px;">
+            <div style="flex:1; background:#0f0f0f; color:#fafafa; border-radius:12px; padding:16px;"><div style="font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#b7b7b7;">{{ t.kMRR }}</div><div class="tfh" style="font-size:26px; margin-top:4px;">$16,799</div></div>
+            <div style="flex:1; background:#f0f0f0; border-radius:12px; padding:16px;"><div style="font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#888;">{{ t.kRenew }}</div><div class="tfh" style="font-size:26px; margin-top:4px;">61</div></div>
+            <div style="flex:1; background:#f0f0f0; border-radius:12px; padding:16px;"><div style="font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#888;">{{ t.kFailed }}</div><div class="tfh" style="font-size:26px; margin-top:4px;">9</div></div>
+          </div>
+          <div style="display:grid; grid-template-columns:2fr 1fr 1.2fr 1fr; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#999; padding:8px 0; border-bottom:1px solid #eee;"><span>{{ t.member }}</span><span>{{ t.cPrice }}</span><span>{{ t.cNext }}</span><span>{{ t.status }}</span></div>
+          <div style="display:grid; grid-template-columns:2fr 1fr 1.2fr 1fr; align-items:center; font-size:13px; padding:11px 0; border-bottom:1px solid #f4f4f4;"><span style="font-weight:600;">Jessica Lopez</span><span>$369</span><span style="color:#5c5c5c;">Jun 12</span><span style="color:#5c5c5c;">{{ t.sScheduled }}</span></div>
+          <div style="display:grid; grid-template-columns:2fr 1fr 1.2fr 1fr; align-items:center; font-size:13px; padding:11px 0; border-bottom:1px solid #f4f4f4;"><span style="font-weight:600;">Maria Rodriguez</span><span>$129</span><span style="color:#5c5c5c;">Jun 18</span><span style="color:#5c5c5c;">{{ t.sScheduled }}</span></div>
+          <div style="display:grid; grid-template-columns:2fr 1fr 1.2fr 1fr; align-items:center; font-size:13px; padding:11px 0; border-bottom:1px solid #f4f4f4;"><span style="font-weight:600;">Daniela Vargas</span><span>$199</span><span style="color:#5c5c5c;">Jun 14</span><span style="color:#b3261e; font-weight:600;">{{ t.sFailed }}</span></div>
+          <div style="display:grid; grid-template-columns:2fr 1fr 1.2fr 1fr; align-items:center; font-size:13px; padding:11px 0; border-bottom:1px solid #f4f4f4;"><span style="font-weight:600;">Sofia Martinez</span><span>$275</span><span style="color:#5c5c5c;">Jun 20</span><span style="color:#5c5c5c;">{{ t.sScheduled }}</span></div>
+          <div style="display:grid; grid-template-columns:2fr 1fr 1.2fr 1fr; align-items:center; font-size:13px; padding:11px 0;"><span style="font-weight:600;">Camila Ortiz</span><span>$149</span><span style="color:#5c5c5c;">Jun 11</span><span style="color:#c89a2b; font-weight:600;">{{ t.sOverdue }}</span></div>
+          <p style="font-size:11px; color:#9a9a9a; line-height:1.5; margin-top:16px;">{{ t.billNote }}</p>
+        </div>
+      </div></div>
+  </div>
+
+  <div class="row">
+    <!-- FORM / QUESTION BUILDER -->
+    <div><div class="lbl">{{ t.scForms }}</div>
+      <div class="win" style="width:620px;"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.formTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;"><h2 class="tfh" style="font-size:28px;">{{ t.formTitle }}</h2><span style="background:#0f0f0f; color:#fafafa; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:9px 16px; border-radius:100vw;">{{ t.formPublish }}</span></div>
+          <div style="font-size:13px; color:#5c5c5c; margin-bottom:18px;">{{ t.formSub }}</div>
+          <div style="display:flex; gap:6px; margin-bottom:18px;"><span style="background:#0f0f0f; color:#fafafa; font-size:12px; padding:6px 14px; border-radius:100vw;">{{ t.formOnboarding }}</span><span style="border:1px solid #e2e2e2; font-size:12px; padding:6px 14px; border-radius:100vw;">{{ t.formCheckin }}</span><span style="border:1px solid #e2e2e2; font-size:12px; padding:6px 14px; border-radius:100vw;">{{ t.formIntake }}</span></div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="border:1px solid #ececec; border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:12px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="7" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="17" r="1"/><circle cx="15" cy="7" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="17" r="1"/></svg><div style="flex:1;"><div style="font-size:13px; font-weight:600;">{{ t.q1 }}</div><div style="font-size:11px; color:#999;">{{ t.qShort }}</div></div><span style="font-size:11px; color:#999;">EN · ES</span></div>
+            <div style="border:1px solid #ececec; border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:12px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="7" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="17" r="1"/><circle cx="15" cy="7" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="17" r="1"/></svg><div style="flex:1;"><div style="font-size:13px; font-weight:600;">{{ t.q2 }}</div><div style="font-size:11px; color:#999;">{{ t.qChoice }}</div></div><span style="font-size:11px; color:#999;">EN · ES</span></div>
+            <div style="border:1px solid #ececec; border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:12px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="7" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="17" r="1"/><circle cx="15" cy="7" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="17" r="1"/></svg><div style="flex:1;"><div style="font-size:13px; font-weight:600;">{{ t.q3 }}</div><div style="font-size:11px; color:#999;">{{ t.qNumber }}</div></div><span style="font-size:11px; color:#999;">EN · ES</span></div>
+          </div>
+          <div style="border:1px dashed #d4d4d4; border-radius:12px; text-align:center; font-size:13px; color:#777; padding:13px; margin-top:12px;">{{ t.formAdd }}</div>
+        </div></div></div>
+
+    <!-- NOTIFICATIONS & EMAIL -->
+    <div><div class="lbl">{{ t.scNotif }}</div>
+      <div class="win" style="width:540px;"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.notifTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px; display:flex; flex-direction:column;">
+          <h2 class="tfh" style="font-size:28px; margin-bottom:4px;">{{ t.notifTitle }}</h2>
+          <div style="font-size:13px; color:#5c5c5c; margin-bottom:20px;">{{ t.notifSub }}</div>
+          <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#999; margin-bottom:10px;">{{ t.notifPush }}</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid #f2f2f2;"><span style="font-size:13px;">{{ t.notifWorkout }}</span><span style="width:42px; height:24px; background:#0f0f0f; border-radius:100vw; position:relative;"><span style="position:absolute; top:3px; right:3px; width:18px; height:18px; background:#fff; border-radius:100vw;"></span></span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid #f2f2f2;"><span style="font-size:13px;">{{ t.notifMeal }}</span><span style="width:42px; height:24px; background:#0f0f0f; border-radius:100vw; position:relative;"><span style="position:absolute; top:3px; right:3px; width:18px; height:18px; background:#fff; border-radius:100vw;"></span></span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid #f2f2f2;"><span style="font-size:13px;">{{ t.notifStreak }}</span><span style="width:42px; height:24px; background:#e2e2e2; border-radius:100vw; position:relative;"><span style="position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:100vw;"></span></span></div>
+          <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#999; margin:18px 0 10px;">{{ t.notifEmail }}</div>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #f2f2f2;"><span style="width:30px; height:30px; border-radius:8px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div style="flex:1;"><div style="font-size:13px; font-weight:600;">{{ t.notifWelcome }}</div><div style="font-size:11px; color:#999;">{{ t.notifActive }}</div></div><span style="background:#5EBE62; color:#053b07; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:100vw;">{{ t.notifOn }}</span></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:11px 0;"><span style="width:30px; height:30px; border-radius:8px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><div style="flex:1;"><div style="font-size:13px; font-weight:600;">{{ t.notifWinback }}</div><div style="font-size:11px; color:#999;">{{ t.notifActive }}</div></div><span style="background:#5EBE62; color:#053b07; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:100vw;">{{ t.notifOn }}</span></div>
+        </div></div></div>
+  </div>
+
+  <div class="row">
+    <!-- LATAM PRICING -->
+    <div><div class="lbl">{{ t.scLatam }}</div>
+      <div class="win" style="width:620px;"><div class="winbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="winttl">{{ t.latamTitle }}</span></div>
+        <div style="padding:28px 32px; min-height:380px; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;"><h2 class="tfh" style="font-size:28px;">{{ t.latamTitle }}</h2><span style="background:#0f0f0f; color:#fafafa; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:9px 16px; border-radius:100vw;">{{ t.latamSave }}</span></div>
+          <div style="font-size:13px; color:#5c5c5c; margin-bottom:20px;">{{ t.latamSub }}</div>
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 0.8fr; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#999; padding:8px 0; border-bottom:1px solid #eee;"><span>{{ t.latamMarket }}</span><span>{{ t.latamLocal }}</span><span>{{ t.latamUsd }}</span><span>{{ t.latamFx }}</span></div>
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 0.8fr; align-items:center; font-size:13px; padding:12px 0; border-bottom:1px solid #f4f4f4;"><span style="font-weight:600;">United States</span><span>$19.99</span><span style="color:#999;">$19.99</span><span style="color:#999;">1.00</span></div>
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 0.8fr; align-items:center; font-size:13px; padding:12px 0; border-bottom:1px solid #f4f4f4;"><span style="font-weight:600;">Mexico</span><span>$349 MXN</span><span style="color:#999;">$19.10</span><span style="color:#5EBE62;">18.3</span></div>
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 0.8fr; align-items:center; font-size:13px; padding:12px 0; border-bottom:1px solid #f4f4f4;"><span style="font-weight:600;">Colombia</span><span>$74.900 COP</span><span style="color:#999;">$18.40</span><span style="color:#5EBE62;">4,070</span></div>
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 0.8fr; align-items:center; font-size:13px; padding:12px 0; border-bottom:1px solid #f4f4f4;"><span style="font-weight:600;">Argentina</span><span>$18.500 ARS</span><span style="color:#999;">$18.90</span><span style="color:#5EBE62;">978</span></div>
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 0.8fr; align-items:center; font-size:13px; padding:12px 0;"><span style="font-weight:600;">Spain</span><span>€18,99 EUR</span><span style="color:#999;">$20.40</span><span style="color:#5EBE62;">0.93</span></div>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:18px; padding:14px 16px; background:#f0f0f0; border-radius:12px;"><span style="width:30px; height:30px; border-radius:8px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span style="flex:1; font-size:12px; color:#5c5c5c;">{{ t.latamNote }}</span></div>
+        </div></div></div>
+  </div>
+
+  <!-- ADMIN-END -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { lang:'en' };
+  T(){
+    const en = {
+      title:'Admin Experience', subtitle:'The coach & operator console - same monochrome system, fully bilingual. These extend the live Coach Dashboard.',
+      secAdmin:'Coach & Operator',
+      scLogin:'Coach Login', scChallenge:'Create Challenge', scAuto:'Automation', scAnalytics:'Analytics', scPayouts:'Payouts', scBranding:'Branding & Settings', scSupport:'Support Inbox',
+      email:'Email', password:'Password', signIn:'Sign in',
+      loginTitle:'Sign in to coach', operatorNote:'Operator & assistant-coach access is role-gated.',
+      chTitle:'Create challenge', chName:'Challenge name', chNameV:'Summer Shred Challenge', chDates:'Dates', chDatesV:'May 1 – May 31', chType:'Type', chTypeV:'Leaderboard · points', chPrize:'Prize', chPrizeV:'1 month free + merch', chSegment:'Audience', chSegmentV:'All members · EN + ES', chPublish:'Publish', chPreview:'Preview',
+      autoTitle:'Automation', autoActive:'Active', autoTrigger:'Trigger', autoTriggerV:'New member signs up', autoWait:'Wait', autoWaitV:'1 day', autoAction:'Action', autoActionV:'Send AI welcome in member\u2019s language', autoAdd:'+ Add step',
+      anTitle:'Analytics', anEngage:'Engagement', anFin:'Financial', anRet:'Retention', anActiveU:'Active members', anRetention:'30-day retention', anLTV:'Avg. LTV',
+      payTitle:'Payouts', payBalance:'Available balance', payNext:'Next payout', payNextV:'$12,480 · Jun 20', payTx:'Recent transactions', payRevShare:'Legacy clients are excluded from rev-share automatically.', payConnected:'Stripe Connect · Connected',
+      brTitle:'Branding & app settings', brAppName:'App name', brAppNameV:'Thick & Fit', brAccent:'Accent', brLogo:'Logo', brLogoV:'thickfit-logo.svg', brDefaultLang:'Default language', brDefaultLangV:'Auto (by region)', brTiers:'Tier pricing', brSave:'Save settings',
+      brColorNote:'Monochrome locked · grey accent',
+      supTitle:'Support inbox', supOpen:'Open', supResolved:'Resolved', supAttn:'Needs attention',
+      supT1Name:'Daniela Vargas', supT1Msg:'Payment failed - card declined', supT2Name:'Camila Ortiz', supT2Msg:'How do I log cooked vs uncooked rice?', supReply:'Reply', supAssign:'Assign to assistant',
+      scBilling:'Billing & Renewals', billTitle:'Billing & renewals', billWindow:'Renewals · Jun 11-Jul 14', kMRR:'MRR (authoritative)', kRenew:'Renew in 30 days', kFailed:'Failed / overdue', cPrice:'Price', cNext:'Next billing', sScheduled:'Scheduled', sFailed:'Failed', sOverdue:'Overdue', billNote:'Dunning retries auto-fire on failed payments. Grandfathered per-client pricing ($129-$369) is preserved on migration - never reset to list price.',
+      scForms:'Form & Question Builder', formTitle:'Form builder', formSub:'Edit, add, remove and reorder - bilingual by default', formPublish:'Publish', formOnboarding:'Onboarding', formCheckin:'Check-in', formIntake:'Intake', q1:'What is your primary goal?', qShort:'Single choice', q2:'What equipment do you have?', qChoice:'Multi-select', q3:'What is your current weight?', qNumber:'Number input', formAdd:'+ Add question',
+      scNotif:'Notifications & Email', notifTitle:'Notifications & email', notifSub:'Push and automated email, EN / ES', notifPush:'Push notifications', notifWorkout:'Workout reminders', notifMeal:'Meal log reminders', notifStreak:'Streak alerts', notifEmail:'Email automations', notifWelcome:'Welcome series', notifWinback:'Win-back series', notifActive:'Bilingual - 4 emails', notifOn:'On',
+      scLatam:'LATAM Pricing', latamTitle:'Multi-currency pricing', latamSave:'Auto-sync FX', latamSub:'Local pricing per market, charged in local currency via Stripe', latamMarket:'Market', latamLocal:'Local price', latamUsd:'USD equiv', latamFx:'FX rate', latamNote:'Rates refresh daily. Prices are set per market, not just converted - so they stay round and locally familiar.'
+    };
+    const es = {
+      title:'Experiencia de Admin', subtitle:'La consola de coach y operador - mismo sistema monocromático, totalmente bilingüe. Extienden el Panel de Coach en vivo.',
+      secAdmin:'Coach y Operador',
+      scLogin:'Acceso Coach', scChallenge:'Crear Reto', scAuto:'Automatización', scAnalytics:'Analítica', scPayouts:'Pagos', scBranding:'Marca y Ajustes', scSupport:'Bandeja de Soporte',
+      email:'Correo', password:'Contraseña', signIn:'Iniciar sesión',
+      loginTitle:'Acceso de coach', operatorNote:'El acceso de operador y coach asistente está restringido por rol.',
+      chTitle:'Crear reto', chName:'Nombre del reto', chNameV:'Reto Summer Shred', chDates:'Fechas', chDatesV:'1 – 31 de mayo', chType:'Tipo', chTypeV:'Tabla · por puntos', chPrize:'Premio', chPrizeV:'1 mes gratis + merch', chSegment:'Audiencia', chSegmentV:'Todas · EN + ES', chPublish:'Publicar', chPreview:'Vista previa',
+      autoTitle:'Automatización', autoActive:'Activa', autoTrigger:'Disparador', autoTriggerV:'Nueva miembro se registra', autoWait:'Esperar', autoWaitV:'1 día', autoAction:'Acción', autoActionV:'Enviar bienvenida IA en el idioma de la miembro', autoAdd:'+ Agregar paso',
+      anTitle:'Analítica', anEngage:'Engagement', anFin:'Financiero', anRet:'Retención', anActiveU:'Miembros activas', anRetention:'Retención 30 días', anLTV:'LTV promedio',
+      payTitle:'Pagos', payBalance:'Saldo disponible', payNext:'Próximo pago', payNextV:'$12,480 · 20 jun', payTx:'Transacciones recientes', payRevShare:'Las clientas legadas se excluyen del reparto automáticamente.', payConnected:'Stripe Connect · Conectado',
+      brTitle:'Marca y ajustes de la app', brAppName:'Nombre de la app', brAppNameV:'Thick & Fit', brAccent:'Acento', brLogo:'Logo', brLogoV:'thickfit-logo.svg', brDefaultLang:'Idioma predeterminado', brDefaultLangV:'Auto (por región)', brTiers:'Precios de planes', brSave:'Guardar ajustes',
+      brColorNote:'Monocromático fijo · acento gris',
+      supTitle:'Bandeja de soporte', supOpen:'Abiertos', supResolved:'Resueltos', supAttn:'Requiere atención',
+      supT1Name:'Daniela Vargas', supT1Msg:'Pago fallido - tarjeta rechazada', supT2Name:'Camila Ortiz', supT2Msg:'¿Cómo registro arroz cocido vs crudo?', supReply:'Responder', supAssign:'Asignar a asistente',
+      scBilling:'Pagos y Renovaciones', billTitle:'Pagos y renovaciones', billWindow:'Renovaciones · 11 jun-14 jul', kMRR:'MRR (autoritativo)', kRenew:'Renuevan en 30 días', kFailed:'Fallidos / vencidos', cPrice:'Precio', cNext:'Próximo cobro', sScheduled:'Programado', sFailed:'Fallido', sOverdue:'Vencido', billNote:'Los reintentos de cobro se disparan solos al fallar un pago. El precio individual heredado ($129-$369) se conserva en la migración - nunca se reinicia.',
+      scForms:'Constructor de Formularios', formTitle:'Constructor de formularios', formSub:'Edita, agrega, quita y reordena - bilingüe por defecto', formPublish:'Publicar', formOnboarding:'Bienvenida', formCheckin:'Check-in', formIntake:'Admisión', q1:'¿Cuál es tu meta principal?', qShort:'Opción única', q2:'¿Qué equipo tienes?', qChoice:'Selección múltiple', q3:'¿Cuál es tu peso actual?', qNumber:'Número', formAdd:'+ Agregar pregunta',
+      scNotif:'Notificaciones y Correo', notifTitle:'Notificaciones y correo', notifSub:'Push y correo automático, EN / ES', notifPush:'Notificaciones push', notifWorkout:'Recordatorios de entreno', notifMeal:'Recordatorios de comidas', notifStreak:'Alertas de racha', notifEmail:'Correos automáticos', notifWelcome:'Serie de bienvenida', notifWinback:'Serie de recuperación', notifActive:'Bilingüe - 4 correos', notifOn:'Activo',
+      scLatam:'Precios LATAM', latamTitle:'Precios multi-moneda', latamSave:'Sincroniza FX', latamSub:'Precio local por mercado, cobrado en moneda local vía Stripe', latamMarket:'Mercado', latamLocal:'Precio local', latamUsd:'Equiv USD', latamFx:'Tipo FX', latamNote:'Las tasas se actualizan a diario. Los precios se fijan por mercado, no solo convertidos - se mantienen redondos y familiares.'
+    };
+    return this.state.lang==='en'?en:es;
+  }
+  renderVals(){
+    const s=this.state, t=this.T();
+    const on={ background:'#0f0f0f', color:'#fafafa', fontSize:'12px', fontWeight:700, letterSpacing:'1px', padding:'7px 15px', cursor:'pointer' };
+    const off={ background:'transparent', color:'#0f0f0f', fontSize:'12px', fontWeight:700, letterSpacing:'1px', padding:'7px 15px', cursor:'pointer' };
+    return { t, setEn:()=>this.setState({lang:'en'}), setEs:()=>this.setState({lang:'es'}), enSt:s.lang==='en'?on:off, esSt:s.lang==='es'?on:off };
+  }
+}
+</script>
+</body>
+</html>
