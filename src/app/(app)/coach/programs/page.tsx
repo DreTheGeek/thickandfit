@@ -1,20 +1,17 @@
-// Coach programs list. Coach-guarded. The full builder layers on /api/programs.
+// Coach programs list. Coach-guarded. Links to the builder; "New Program" creates one.
 import type { ReactElement } from 'react';
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
-import { PageHeader } from '@/components/ui/page-header';
+import { PageTitle } from '@/components/ui/section';
+import { ButtonLink } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icons';
 
 export const dynamic = 'force-dynamic';
 
-type PlanRow = {
-  id: string;
-  name_en: string;
-  weeks: number;
-  is_template: boolean;
-  updated_at: string;
-};
+type PlanRow = { id: string; name_en: string; weeks: number; is_template: boolean };
 
 export default async function CoachProgramsPage(): Promise<ReactElement> {
   const ctx = await requireCoach();
@@ -32,17 +29,23 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-8 py-10">
-      <PageHeader title={t('programs')} />
+    <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <PageTitle>{t('programs')}</PageTitle>
+        <ButtonLink href="/coach/programs/new" size="sm" className="shrink-0">
+          {t('newProgram')}
+        </ButtonLink>
+      </div>
       {plans.length === 0 ? (
         <p className="text-sm text-muted">{t('noPrograms')}</p>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-line">
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface">
           {plans.map((p, i) => (
-            <div
+            <Link
               key={p.id}
+              href={`/coach/programs/${p.id}`}
               className={[
-                'flex items-center justify-between bg-surface px-4 py-3.5',
+                'tf-press flex items-center justify-between px-4 py-3.5',
                 i < plans.length - 1 ? 'border-b border-divider' : '',
               ].join(' ')}
             >
@@ -50,8 +53,9 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
               <span className="flex items-center gap-2 text-[12px] text-faint">
                 {p.weeks}w
                 {p.is_template && <Badge variant="inactive">{t('template')}</Badge>}
+                <Icon name="chevronRight" size={16} className="text-line" />
               </span>
-            </div>
+            </Link>
           ))}
         </div>
       )}

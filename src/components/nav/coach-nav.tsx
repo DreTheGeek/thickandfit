@@ -5,32 +5,39 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { signOutAction } from '@/lib/auth/actions';
+import { Wordmark } from '@/components/ui/wordmark';
 import { Icon, type IconName } from '@/components/ui/icons';
 
-type Item = { href: string; key: 'overview' | 'subscribers' | 'programs' | 'forms'; icon: IconName };
+type Item = {
+  href: string;
+  key: 'overview' | 'subscribers' | 'programs' | 'forms' | 'broadcasts' | 'appHealth';
+  icon: IconName;
+};
 
 const ITEMS: Item[] = [
-  { href: '/coach', key: 'overview', icon: 'steps' },
+  { href: '/coach', key: 'overview', icon: 'pulse' },
   { href: '/coach/subscribers', key: 'subscribers', icon: 'community' },
   { href: '/coach/programs', key: 'programs', icon: 'clipboard' },
   { href: '/coach/forms', key: 'forms', icon: 'file' },
+  { href: '/coach/broadcasts', key: 'broadcasts', icon: 'megaphone' },
+  { href: '/coach/health', key: 'appHealth', icon: 'bolt' },
 ];
 
-/** Light, Lenus-style coach sidebar (monochrome, no green in the console). */
-export function CoachSidebar(): ReactElement {
+/** Coach nav content, shared by the desktop sidebar and the mobile drawer. */
+export function CoachNav({ onNavigate }: { onNavigate?: () => void }): ReactElement {
   const pathname = usePathname();
   const t = useTranslations('app.coach');
   const c = useTranslations('app.common');
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-surface">
+    <div className="flex h-full flex-col">
       <div className="flex h-16 items-center border-b border-line px-5">
-        <Link href="/coach" className="tf-display text-[22px] text-ink">
+        <Link href="/coach" onClick={onNavigate} className="tf-display text-[22px] text-ink">
           Thick &amp; Fit
         </Link>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 p-3">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
         {ITEMS.map(({ href, key, icon }) => {
           const active =
             href === '/coach'
@@ -40,14 +47,13 @@ export function CoachSidebar(): ReactElement {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={[
-                'flex items-center gap-3 border-l-2 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] transition-colors',
-                active
-                  ? 'border-ink bg-warm text-ink'
-                  : 'border-transparent text-muted hover:bg-warm/60 hover:text-ink',
+                'flex items-center gap-3 rounded-full px-4 py-2.5 text-[13px] font-medium transition-colors',
+                active ? 'bg-warm font-semibold text-ink' : 'text-muted hover:bg-warm/60 hover:text-ink',
               ].join(' ')}
             >
-              <Icon name={icon} size={16} />
+              <Icon name={icon} size={17} />
               {t(key)}
             </Link>
           );
@@ -58,12 +64,17 @@ export function CoachSidebar(): ReactElement {
         <form action={signOutAction}>
           <button
             type="submit"
-            className="w-full px-4 py-2.5 text-left text-[12px] font-semibold uppercase tracking-[0.12em] text-muted transition-colors hover:text-ink"
+            className="w-full rounded-full px-4 py-2.5 text-left text-[12px] font-semibold uppercase tracking-[0.12em] text-muted transition-colors hover:text-ink"
           >
             {c('signOut')}
           </button>
         </form>
       </div>
-    </aside>
+    </div>
   );
+}
+
+/** Mobile-only wordmark fallback shown in the top bar. */
+export function CoachTopWordmark(): ReactElement {
+  return <Wordmark height={20} />;
 }

@@ -113,6 +113,26 @@ const PATHS = {
       <path d="M5.6 5.6 18.4 18.4" />
     </>
   ),
+  menu: <path d="M3 6h18M3 12h18M3 18h18" />,
+  bolt: <path d="M13 3 5 13h6l-1 8 8-11h-6z" />,
+  megaphone: (
+    <>
+      <path d="M3 11v2a1 1 0 0 0 1 1h2l9 4V6L6 10H4a1 1 0 0 0-1 1z" />
+      <path d="M18 8.5a4 4 0 0 1 0 7" />
+    </>
+  ),
+  pulse: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3.5" />
+    </>
+  ),
+  card: (
+    <>
+      <rect x="3" y="5.5" width="18" height="13" rx="2" />
+      <path d="M3 10h18" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;
