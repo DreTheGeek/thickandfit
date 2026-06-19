@@ -133,6 +133,16 @@ const PATHS = {
       <path d="M3 10h18" />
     </>
   ),
+  home: <path d="M4 11.5 12 4l8 7.5M6 10v9h12v-9" />,
+  funnel: <path d="M3 5h18l-7 8v6l-4-2v-4z" />,
+  grid: (
+    <>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1.4" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.4" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.4" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.4" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;
