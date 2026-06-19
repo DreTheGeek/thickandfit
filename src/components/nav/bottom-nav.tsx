@@ -48,7 +48,7 @@ export function BottomNav(): ReactElement | null {
   if (isHidden(pathname)) return null;
 
   return (
-    <nav className="flex flex-none border-t border-divider bg-surface px-3.5 pb-3.5 pt-2.5">
+    <nav className="flex flex-none border-t border-divider bg-surface px-3.5 pb-3.5 pt-2.5 lg:hidden">
       {TABS.map((tab) => {
         const active = tab.match(pathname);
         return (
