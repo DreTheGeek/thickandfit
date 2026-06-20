@@ -7,7 +7,7 @@ import { useClientFilterUrl } from '@/components/coach/use-client-filters';
 import { RecipeCard } from '@/components/coach/recipe-card';
 import type { RecipesPage, RecipeFilters, RecipeSort } from '@/lib/coach/recipes-types';
 
-const SORTS: RecipeSort[] = ['name', 'kcal', 'protein', 'time'];
+const SORTS: RecipeSort[] = ['name', 'kcal', 'protein', 'time', 'quality'];
 
 export function RecipesView({ page, filters }: { page: RecipesPage; filters: RecipeFilters }): ReactElement {
   const t = useTranslations('app.coach');
@@ -58,6 +58,13 @@ export function RecipesView({ page, filters }: { page: RecipesPage; filters: Rec
 
       {/* category chips + quick filters */}
       <div className="tf-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        <button type="button" onClick={() => setParam('favorites', filters.favorites ? null : '1')} className={chipCls(filters.favorites)}>
+          <Icon name="heart" size={12} className={filters.favorites ? 'mr-1 inline fill-current' : 'mr-1 inline'} strokeWidth={filters.favorites ? 0 : 1.8} />
+          {t('filterFavorites')} <span className="text-faint">{page.facets.favoritesCount}</span>
+        </button>
+        <button type="button" onClick={() => setParam('hasVideo', filters.hasVideo ? null : '1')} className={chipCls(filters.hasVideo)}>
+          {t('filterHasVideo')} <span className="text-faint">{page.facets.hasVideoCount}</span>
+        </button>
         <button type="button" onClick={() => setParam('highProtein', filters.highProtein ? null : '1')} className={chipCls(filters.highProtein)}>
           {t('filterHighProtein')}
         </button>

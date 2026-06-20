@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { RecipeImage } from '@/components/coach/recipe-image';
+import { RecipeFavoriteButton } from '@/components/coach/recipe-favorite-button';
+import { RecipeQualityBadge } from '@/components/coach/recipe-quality-badge';
 import type { RecipeRow } from '@/lib/coach/recipes-types';
 
 function Macro({ label, value }: { label: string; value: number }): ReactElement {
@@ -35,14 +37,24 @@ export function RecipeCard({ recipe }: { recipe: RecipeRow }): ReactElement {
         <span className="absolute left-2 top-2 rounded-full bg-ink/85 px-2.5 py-1 text-[11px] font-semibold text-bg">
           {recipe.kcal} kcal
         </span>
-        {recipe.hasVideo && (
-          <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink/85 text-bg">
-            <Icon name="camera" size={12} />
-          </span>
-        )}
+        <span className="absolute right-2 top-2 flex items-center gap-1.5">
+          {recipe.hasVideo && (
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink/85 text-bg">
+              <Icon name="play" size={12} />
+            </span>
+          )}
+          <RecipeFavoriteButton recipeId={recipe.id} initial={recipe.isFavorite} />
+        </span>
       </div>
       <div className="flex flex-1 flex-col p-3.5">
-        {recipe.category && <div className="mb-1 text-[10px] font-semibold uppercase tracking-[1px] text-faint">{recipe.category}</div>}
+        <div className="mb-1 flex items-center justify-between gap-2">
+          {recipe.category ? (
+            <div className="text-[10px] font-semibold uppercase tracking-[1px] text-faint">{recipe.category}</div>
+          ) : (
+            <span />
+          )}
+          <RecipeQualityBadge band={recipe.qualityBand} />
+        </div>
         <div className="mb-3 line-clamp-2 text-[14px] font-semibold leading-tight">{recipe.name || t('recipeUntitled')}</div>
         <div className="mt-auto flex items-center justify-between border-t border-divider pt-3">
           <div className="flex gap-3.5">

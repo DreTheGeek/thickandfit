@@ -20,7 +20,7 @@ export default async function CoachRecipesPage({
   const locale = await getLocale();
   if (!ctx.companyId) return <div className="p-8 text-sm text-muted">{t('noRecipes')}</div>;
   const filters = parseRecipeFilters(await searchParams);
-  const page = await getRecipesPage(ctx.companyId, filters, locale);
+  const page = await getRecipesPage(ctx.companyId, filters, locale, ctx.userId);
 
   return (
     <div className="w-full px-5 py-8 sm:px-8 lg:py-10">
