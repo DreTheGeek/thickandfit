@@ -229,6 +229,11 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     next_amount_cents: number | null;
     is_auto_renew: boolean | null;
     ended_at: string | null;
+    last_charge_date: string | null;
+    num_charges: number | null;
+    days_since_last_charge: number | null;
+    meal_plan_sent_at: string | null;
+    workout_plan_sent_at: string | null;
   };
   type Snap = {
     meal_plans: number | null;
@@ -289,6 +294,28 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     return entry;
   });
 
+  // The client's most recent assigned meal plan (Lenus import linked plans by contact).
+  const { data: mpData } = await sb
+    .from('meal_plans')
+    .select('id, name, calorie_goal, protein_g, carb_g, fat_g, macro_timing_name')
+    .eq('company_id', companyId)
+    .eq('contact_id', contactId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const mp = mpData as {
+    id: string;
+    name: string;
+    calorie_goal: number | null;
+    protein_g: number | null;
+    carb_g: number | null;
+    fat_g: number | null;
+    macro_timing_name: string | null;
+  } | null;
+  const mealPlan = mp
+    ? { id: mp.id, name: mp.name, calorieGoal: mp.calorie_goal, proteinG: mp.protein_g, carbG: mp.carb_g, fatG: mp.fat_g, macroTiming: mp.macro_timing_name }
+    : null;
+
   const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || 'Unknown';
   const startedAt = sub?.started_at ?? null;
   const tenureDays = startedAt
@@ -320,9 +347,15 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     startedAt,
     endedAt: sub?.ended_at ?? null,
     nextBillingDate: sub?.next_billing_date ?? null,
+    lastChargeDate: sub?.last_charge_date ?? null,
+    numCharges: sub?.num_charges ?? null,
+    daysSinceLastCharge: sub?.days_since_last_charge ?? null,
+    mealPlanSentAt: sub?.meal_plan_sent_at ?? null,
+    workoutPlanSentAt: sub?.workout_plan_sent_at ?? null,
     tenureDays,
     createdAt: raw.created_at,
     tags,
+    mealPlan,
     snapshot: snap
       ? {
           mealPlans: snap.meal_plans,

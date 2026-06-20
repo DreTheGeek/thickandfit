@@ -116,9 +116,23 @@ export type ClientDetail = {
   startedAt: string | null;
   endedAt: string | null;
   nextBillingDate: string | null;
+  lastChargeDate: string | null;
+  numCharges: number | null;
+  daysSinceLastCharge: number | null;
+  mealPlanSentAt: string | null;
+  workoutPlanSentAt: string | null;
   tenureDays: number | null;
   createdAt: string;
   tags: TagLite[];
+  mealPlan: {
+    id: string;
+    name: string;
+    calorieGoal: number | null;
+    proteinG: number | null;
+    carbG: number | null;
+    fatG: number | null;
+    macroTiming: string | null;
+  } | null;
   snapshot: {
     mealPlans: number | null;
     measurements: number | null;

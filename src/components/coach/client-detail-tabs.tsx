@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, type ReactElement, type ReactNode } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { UnderlineTabs, type TabOption } from '@/components/ui/tabs';
+import { Icon } from '@/components/ui/icons';
+import { MacroRing } from '@/components/coach/macro-ring';
 import { formatCents } from '@/components/coach/money';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
-type Tab = 'overview' | 'billing' | 'payments' | 'engagement' | 'tags';
+type Tab = 'overview' | 'billing' | 'payments' | 'nutrition' | 'engagement' | 'tags';
 
 function fmtDate(value: string | null, locale: string): string {
   if (!value) return '-';
@@ -17,9 +20,18 @@ function fmtDate(value: string | null, locale: string): string {
 
 function Row({ label, value }: { label: string; value: ReactNode }): ReactElement {
   return (
-    <div className="flex items-center justify-between border-b border-divider py-2.5 last:border-0">
+    <div className="flex items-center justify-between gap-3 border-b border-divider py-2.5 last:border-0">
       <span className="text-[13px] text-faint">{label}</span>
-      <span className="text-[13px] font-medium text-ink">{value}</span>
+      <span className="text-right text-[13px] font-medium text-ink">{value}</span>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }): ReactElement {
+  return (
+    <div className="rounded-2xl border border-line bg-surface px-5 py-2">
+      <div className="-mx-5 mb-1 border-b border-divider px-5 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[1px] text-faint">{title}</div>
+      {children}
     </div>
   );
 }
@@ -28,26 +40,55 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
   const t = useTranslations('app.coach');
   const [tab, setTab] = useState<Tab>('overview');
   const cur = detail.currency;
+  const mp = detail.mealPlan;
 
   const options: TabOption<Tab>[] = [
     { value: 'overview', label: t('tabOverview') },
     { value: 'billing', label: t('tabBilling') },
     { value: 'payments', label: t('tabPayments') },
+    { value: 'nutrition', label: t('tabNutrition') },
     { value: 'engagement', label: t('tabEngagement') },
     { value: 'tags', label: t('tabTags') },
   ];
 
-  const billingRows = (
-    <div className="rounded-2xl border border-line bg-surface px-5 py-2">
+  const mealPlanCard = (full: boolean): ReactElement | null => {
+    if (!mp) {
+      return full ? <p className="rounded-2xl border border-line bg-surface py-12 text-center text-sm text-faint">{t('noMealPlanAssigned')}</p> : null;
+    }
+    return (
+      <Link href={`/coach/tool/meal-plans/${mp.id}`} className="tf-press block rounded-2xl border border-line bg-surface p-5 hover:border-ink">
+        <div className="flex items-center gap-4">
+          <MacroRing proteinG={mp.proteinG ?? 0} carbG={mp.carbG ?? 0} fatG={mp.fatG ?? 0} kcal={mp.calorieGoal ?? 0} size={72} />
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold uppercase tracking-[1px] text-faint">{t('assignedMealPlan')}</div>
+            <div className="truncate font-display text-[18px] leading-tight">{mp.name}</div>
+            <div className="mt-1 text-[12px] text-muted">
+              {mp.calorieGoal != null && <span>{mp.calorieGoal} kcal · </span>}
+              {Math.round(mp.proteinG ?? 0)}p / {Math.round(mp.carbG ?? 0)}c / {Math.round(mp.fatG ?? 0)}f
+            </div>
+          </div>
+          <Icon name="chevronRight" size={18} className="shrink-0 text-line" />
+        </div>
+      </Link>
+    );
+  };
+
+  const planDelivery = (detail.mealPlanSentAt || detail.workoutPlanSentAt) && (
+    <Section title={t('planDelivery')}>
+      <Row label={t('mealPlanSent')} value={fmtDate(detail.mealPlanSentAt, locale)} />
+      <Row label={t('workoutPlanSent')} value={fmtDate(detail.workoutPlanSentAt, locale)} />
+    </Section>
+  );
+
+  const fullBilling = (
+    <Section title={t('tabBilling')}>
       <Row
         label={t('grandfatheredPrice')}
         value={
-          <span className="flex items-center gap-2">
+          <span className="flex items-center justify-end gap-2">
             {formatCents(detail.priceCents, cur, locale)}
             {detail.isLegacy && detail.priceCents != null && (
-              <span className="rounded-full bg-warm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[1px] text-muted">
-                {t('grandfatheredMarker')}
-              </span>
+              <span className="rounded-full bg-warm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[1px] text-muted">{t('grandfatheredMarker')}</span>
             )}
           </span>
         }
@@ -56,10 +97,12 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
       <Row label={t('autoRenew')} value={detail.isAutoRenew == null ? '-' : detail.isAutoRenew ? t('yes') : t('no')} />
       <Row label={t('nextBilling')} value={fmtDate(detail.nextBillingDate, locale)} />
       <Row label={t('nextAmount')} value={formatCents(detail.nextAmountCents, cur, locale)} />
+      <Row label={t('lastCharge')} value={fmtDate(detail.lastChargeDate, locale)} />
+      <Row label={t('totalCharges')} value={detail.numCharges ?? '-'} />
       <Row label={t('lifetimePaid')} value={formatCents(detail.lifetimeCents, cur, locale, 2)} />
       <Row label={t('startedAt')} value={fmtDate(detail.startedAt, locale)} />
       <Row label={t('endedAt')} value={fmtDate(detail.endedAt, locale)} />
-    </div>
+    </Section>
   );
 
   return (
@@ -68,10 +111,17 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
 
       {tab === 'overview' && (
         <div className="flex flex-col gap-4">
-          {billingRows}
+          <Section title={t('membership')}>
+            <Row label={t('facetStatus')} value={<span className="capitalize">{detail.status ?? '-'}</span>} />
+            <Row label={t('nextBilling')} value={fmtDate(detail.nextBillingDate, locale)} />
+            <Row label={t('nextAmount')} value={formatCents(detail.nextAmountCents, cur, locale)} />
+            <Row label={t('lastCharge')} value={fmtDate(detail.lastChargeDate, locale)} />
+            <Row label={t('autoRenew')} value={detail.isAutoRenew == null ? '-' : detail.isAutoRenew ? t('yes') : t('no')} />
+          </Section>
+          {planDelivery}
+          {mealPlanCard(false)}
           {detail.ledger.length > 0 && (
-            <div className="rounded-2xl border border-line bg-surface px-5 py-4">
-              <div className="mb-2 text-[12px] font-semibold uppercase tracking-[1px] text-faint">{t('tabPayments')}</div>
+            <Section title={t('tabPayments')}>
               {detail.ledger.slice(0, 4).map((e, i) => (
                 <div key={i} className="flex items-center justify-between border-b border-divider py-2 text-[13px] last:border-0">
                   <span className="text-soft">{fmtDate(e.date, locale)}</span>
@@ -79,12 +129,12 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
                   <span className="font-medium tabular-nums">{formatCents(e.grossCents, e.currency, locale, 2)}</span>
                 </div>
               ))}
-            </div>
+            </Section>
           )}
         </div>
       )}
 
-      {tab === 'billing' && billingRows}
+      {tab === 'billing' && fullBilling}
 
       {tab === 'payments' && (
         <div className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -116,6 +166,13 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {tab === 'nutrition' && (
+        <div className="flex flex-col gap-4">
+          {mealPlanCard(true)}
+          {planDelivery}
         </div>
       )}
 

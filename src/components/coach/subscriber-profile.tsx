@@ -29,9 +29,8 @@ type TabKey =
   | 'overview' | 'nutrition' | 'workouts' | 'community'
   | 'progress' | 'messages' | 'billing' | 'notes';
 
-const TABS: TabKey[] = [
-  'overview', 'nutrition', 'workouts', 'community', 'progress', 'messages', 'billing', 'notes',
-];
+// Only tabs backed by real data — no empty placeholder tabs.
+const TABS: TabKey[] = ['overview', 'workouts'];
 const TAB_LABEL: Record<TabKey, string> = {
   overview: 'tabOverview', nutrition: 'tabNutrition', workouts: 'tabWorkouts', community: 'tabCommunity',
   progress: 'tabProgress', messages: 'tabMessages', billing: 'tabBilling', notes: 'tabNotes',
@@ -169,17 +168,6 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
         </Card>
       )}
 
-      {tab !== 'overview' && tab !== 'workouts' && (
-        <Card className="p-10 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-warm">
-            <Icon name="chat" size={24} />
-          </div>
-          <div className="font-display text-[22px]">{t(TAB_LABEL[tab])}</div>
-          <p className="mt-2 text-[13px] text-soft">
-            {t('genericPanel', { tab: t(TAB_LABEL[tab]).toLowerCase() })}
-          </p>
-        </Card>
-      )}
     </div>
   );
 }
