@@ -8,8 +8,8 @@ import type { PipelineBoard } from '@/lib/coach/leads-types';
 
 function Kpi({ label, value, dark = false }: { label: string; value: string; dark?: boolean }): ReactElement {
   return (
-    <div className={['rounded-2xl p-4', dark ? 'bg-ink text-white' : 'bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.06)]'].join(' ')}>
-      <div className={['text-[10px] font-semibold uppercase tracking-[1px]', dark ? 'text-white/55' : 'text-faint'].join(' ')}>{label}</div>
+    <div className={['rounded-2xl p-4', dark ? 'bg-ink text-bg' : 'bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.06)]'].join(' ')}>
+      <div className={['text-[10px] font-semibold uppercase tracking-[1px]', dark ? 'text-bg/55' : 'text-faint'].join(' ')}>{label}</div>
       <div className="mt-1 font-display text-[24px] leading-none">{value}</div>
     </div>
   );

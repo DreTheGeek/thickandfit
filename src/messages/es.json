@@ -61,7 +61,10 @@
       "comingSoonBody": "Esto viene en camino. Lo estamos construyendo ahora.",
       "soon": "Pronto",
       "back": "Atrás",
-      "notifications": "Notificaciones"
+      "notifications": "Notificaciones",
+      "theme_light": "Claro",
+      "theme_dark": "Oscuro",
+      "theme_system": "Sistema"
     },
     "today": {
       "greeting": "Hola {name}",

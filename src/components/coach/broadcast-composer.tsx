@@ -107,7 +107,7 @@ export function BroadcastComposer(): ReactElement {
           <div className="mt-2 flex justify-center rounded-2xl bg-warm p-6">
             <div className="w-[220px] rounded-[30px] bg-ink p-2">
               <div className="rounded-[24px] bg-surface p-5 text-center">
-                <div className="mx-auto mb-2.5 flex h-12 w-12 items-center justify-center rounded-full bg-ink font-display text-white">
+                <div className="mx-auto mb-2.5 flex h-12 w-12 items-center justify-center rounded-full bg-ink font-display text-bg">
                   CS
                 </div>
                 <Tag outlined={false} className="mb-2.5">Coach Steph</Tag>

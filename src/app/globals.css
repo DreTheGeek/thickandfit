@@ -1,43 +1,86 @@
 @import "tailwindcss";
 
+/* dark mode driven by next-themes (data-theme="dark"). The neutral tokens flip via the
+   indirection vars below, so the whole app re-themes with no component changes. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ==========================================================================
    Thick & Fit — design tokens (light monochrome system, per design handoff)
    The product is monochrome. Green (--color-accent) is FUNCTIONAL ONLY:
    completion, streaks, live/active indicators, positive deltas. Never decorative.
+   Raw palette lives in :root (light) + [data-theme="dark"] (dark); @theme maps to it.
    ========================================================================== */
+:root {
+  --c-ink: #0f0f0f;
+  --c-bg: #fafafa;
+  --c-surface: #ffffff;
+  --c-warm: #f0f0f0;
+  --c-line: #e4e4e4;
+  --c-divider: #f0f0ee;
+  --c-muted: #767676;
+  --c-soft: #5c5c5c;
+  --c-faint: #999999;
+  --c-accent: #5ebe62;
+  --c-accent-ink: #053b07;
+  --c-pending: #fbe6a2;
+  --c-pending-ink: #6b5200;
+  --c-alert: #f3c0c0;
+  --c-alert-ink: #7a1f1f;
+  --c-warning: #c89a2b;
+}
+
+[data-theme="dark"] {
+  --c-ink: #f4f4f5;
+  --c-bg: #0c0c0e;
+  --c-surface: #18181b;
+  --c-warm: #232328;
+  --c-line: #2c2c32;
+  --c-divider: #232328;
+  --c-muted: #a1a1aa;
+  --c-soft: #c6c6cd;
+  --c-faint: #71717a;
+  --c-accent: #5ebe62;
+  --c-accent-ink: #bff0c1;
+  --c-pending: #3a3214;
+  --c-pending-ink: #fbe6a2;
+  --c-alert: #3a1d1d;
+  --c-alert-ink: #f3c0c0;
+  --c-warning: #d8ad3f;
+}
+
 @theme inline {
   /* type */
   --font-gulams: var(--font-gulams);
   --font-display: var(--font-gulams);
   --font-sans: var(--font-inter);
 
-  /* surfaces + ink */
-  --color-ink: #0f0f0f;
-  --color-bg: #fafafa;
-  --color-surface: #ffffff;
-  --color-warm: #f0f0f0;
-  --color-line: #e4e4e4;
-  --color-divider: #f0f0ee;
-  --color-muted: #767676;
-  --color-soft: #5c5c5c;
-  --color-faint: #999999;
+  /* surfaces + ink (flip with theme) */
+  --color-ink: var(--c-ink);
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-warm: var(--c-warm);
+  --color-line: var(--c-line);
+  --color-divider: var(--c-divider);
+  --color-muted: var(--c-muted);
+  --color-soft: var(--c-soft);
+  --color-faint: var(--c-faint);
 
   /* functional accent (green) */
-  --color-accent: #5ebe62;
-  --color-accent-ink: #053b07;
+  --color-accent: var(--c-accent);
+  --color-accent-ink: var(--c-accent-ink);
 
-  /* legacy brand alias — marketing landing only (do-not-redesign). Same green. */
+  /* legacy brand alias — marketing landing only (do-not-redesign). Same green, static. */
   --color-olive: #5ebe62;
   --color-olive-600: #4aa550;
 
-  /* status */
-  --color-pending: #fbe6a2;
-  --color-pending-ink: #6b5200;
-  --color-alert: #f3c0c0;
-  --color-alert-ink: #7a1f1f;
-  --color-warning: #c89a2b;
+  /* status (flip with theme) */
+  --color-pending: var(--c-pending);
+  --color-pending-ink: var(--c-pending-ink);
+  --color-alert: var(--c-alert);
+  --color-alert-ink: var(--c-alert-ink);
+  --color-warning: var(--c-warning);
 
-  /* macro ring (nutrition, phase 2) */
+  /* macro ring (nutrition) — static, readable on both themes */
   --color-macro-protein: #2a9d8f;
   --color-macro-carbs: #e9a23b;
   --color-macro-fat: #5ebe62;
@@ -56,8 +99,8 @@
       "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   ::selection {
-    background: #0f0f0f;
-    color: #fafafa;
+    background: var(--color-ink);
+    color: var(--color-bg);
   }
 }
 

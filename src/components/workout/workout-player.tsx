@@ -420,7 +420,7 @@ function Stepper({
           type="button"
           onClick={onInc}
           aria-label="increase"
-          className="tf-press flex h-[42px] w-[42px] items-center justify-center rounded-full bg-ink text-white"
+          className="tf-press flex h-[42px] w-[42px] items-center justify-center rounded-full bg-ink text-bg"
         >
           <Icon name="plus" size={18} />
         </button>

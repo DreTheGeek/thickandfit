@@ -37,7 +37,7 @@ export function ClientsSmartLists({
         key={key}
         className={[
           'group inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-medium',
-          isActive ? 'border-ink bg-ink text-white' : 'border-line text-soft hover:border-ink hover:text-ink',
+          isActive ? 'border-ink bg-ink text-bg' : 'border-line text-soft hover:border-ink hover:text-ink',
         ].join(' ')}
       >
         <button type="button" onClick={onClick} className="tf-press">
@@ -47,7 +47,7 @@ export function ClientsSmartLists({
           <button
             type="button"
             onClick={onDelete}
-            className={['tf-press opacity-0 transition-opacity group-hover:opacity-100', isActive ? 'text-white/70' : 'text-faint'].join(' ')}
+            className={['tf-press opacity-0 transition-opacity group-hover:opacity-100', isActive ? 'text-bg/70' : 'text-faint'].join(' ')}
             aria-label={t('deleteList')}
           >
             <Icon name="x" size={12} />

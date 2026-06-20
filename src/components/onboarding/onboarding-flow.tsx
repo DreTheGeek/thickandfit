@@ -227,7 +227,7 @@ function GoalCard({
     >
       {label}
       {active ? (
-        <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-ink text-white">
+        <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-ink text-bg">
           <Icon name="check" size={11} strokeWidth={2.6} />
         </span>
       ) : (

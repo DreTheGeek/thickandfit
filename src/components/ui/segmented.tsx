@@ -35,7 +35,7 @@ export function Segmented<T extends string>({
             onClick={() => onChange(opt.value)}
             className={[
               'tf-press cursor-pointer rounded-full px-4 py-2 text-[12px] uppercase tracking-[1px]',
-              active ? 'bg-ink text-white' : 'text-faint',
+              active ? 'bg-ink text-bg' : 'text-faint',
             ].join(' ')}
           >
             {opt.label}

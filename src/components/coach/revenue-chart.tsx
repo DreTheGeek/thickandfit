@@ -34,8 +34,8 @@ export function RevenueChart({ data }: { data: Point[] }): ReactElement {
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
       <defs>
         <linearGradient id="gGross" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#0f0f0f" stopOpacity={0.16} />
-          <stop offset="100%" stopColor="#0f0f0f" stopOpacity={0} />
+          <stop offset="0%" stopColor="var(--color-ink)" stopOpacity={0.16} />
+          <stop offset="100%" stopColor="var(--color-ink)" stopOpacity={0} />
         </linearGradient>
         <linearGradient id="gCoach" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#5EBE62" stopOpacity={0.24} />
@@ -45,8 +45,8 @@ export function RevenueChart({ data }: { data: Point[] }): ReactElement {
 
       {ticks.map((tk, i) => (
         <g key={i}>
-          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="#f0f0f0" strokeWidth={1} />
-          <text x={padL - 8} y={y(tk) + 3} textAnchor="end" fontSize="10" fill="#999">
+          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--color-divider)" strokeWidth={1} />
+          <text x={padL - 8} y={y(tk) + 3} textAnchor="end" fontSize="10" fill="var(--color-faint)">
             {tick(tk)}
           </text>
         </g>
@@ -54,18 +54,18 @@ export function RevenueChart({ data }: { data: Point[] }): ReactElement {
 
       <path d={area('gross')} fill="url(#gGross)" />
       <path d={area('coach')} fill="url(#gCoach)" />
-      <path d={line('gross')} fill="none" stroke="#0f0f0f" strokeWidth={2} />
+      <path d={line('gross')} fill="none" stroke="var(--color-ink)" strokeWidth={2} />
       <path d={line('coach')} fill="none" stroke="#5EBE62" strokeWidth={2} />
 
       {data.map((d, i) => (
-        <circle key={i} cx={x(i)} cy={y(d.gross)} r={2.5} fill="#0f0f0f">
+        <circle key={i} cx={x(i)} cy={y(d.gross)} r={2.5} fill="var(--color-ink)">
           <title>{`${d.label}: ${money(d.gross)} gross / ${money(d.coach)} take`}</title>
         </circle>
       ))}
 
       {data.map((d, i) =>
         i % labelEvery === 0 ? (
-          <text key={`l${i}`} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="#999">
+          <text key={`l${i}`} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--color-faint)">
             {d.label}
           </text>
         ) : null,

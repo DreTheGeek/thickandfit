@@ -93,7 +93,7 @@ export function SubscribersList({ rows }: { rows: CoachSubscriber[] }): ReactEle
               onClick={() => setSeg(c.key)}
               className={[
                 'tf-press shrink-0 rounded-full border px-3.5 py-1.5 text-[12px]',
-                active ? 'border-ink bg-ink text-white' : 'border-line bg-surface text-ink',
+                active ? 'border-ink bg-ink text-bg' : 'border-line bg-surface text-ink',
               ].join(' ')}
             >
               {c.label} · {c.n}

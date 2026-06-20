@@ -17,7 +17,7 @@ export function Card({
       className={[
         'rounded-2xl',
         dark
-          ? 'bg-ink text-white'
+          ? 'bg-ink text-bg'
           : 'bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.08)]',
         className,
       ].join(' ')}

@@ -65,7 +65,7 @@ function FacetRow({
       <span
         className={[
           'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
-          active ? 'border-ink bg-ink text-white' : 'border-line',
+          active ? 'border-ink bg-ink text-bg' : 'border-line',
         ].join(' ')}
       >
         {active && <Icon name="check" size={11} />}

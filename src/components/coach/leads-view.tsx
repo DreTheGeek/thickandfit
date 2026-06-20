@@ -40,7 +40,7 @@ export function LeadsView({ board, filters, locale }: { board: PipelineBoard; fi
               onClick={() => setParam('pipeline', p.slug)}
               className={[
                 'tf-press rounded-full border px-4 py-2 text-[13px] font-semibold',
-                isActive ? 'border-ink bg-ink text-white' : 'border-line text-soft hover:border-ink hover:text-ink',
+                isActive ? 'border-ink bg-ink text-bg' : 'border-line text-soft hover:border-ink hover:text-ink',
               ].join(' ')}
             >
               {p.slug === 'reengagement' ? t('pipelineReengagement') : t('pipelineMarketing')}
@@ -72,11 +72,11 @@ export function LeadsView({ board, filters, locale }: { board: PipelineBoard; fi
                 onClick={() => setParam('status', s)}
                 className={[
                   'tf-press inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold',
-                  on ? 'border-ink bg-ink text-white' : 'border-line text-muted hover:border-ink hover:text-ink',
+                  on ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:border-ink hover:text-ink',
                 ].join(' ')}
               >
                 {statusLabel(t, s)}
-                <span className={on ? 'text-white/70' : 'text-faint'}>{statusCount.get(s) ?? 0}</span>
+                <span className={on ? 'text-bg/70' : 'text-faint'}>{statusCount.get(s) ?? 0}</span>
               </button>
             );
           })}

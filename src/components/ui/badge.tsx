@@ -13,7 +13,7 @@ const BADGE: Record<BadgeVariant, string> = {
   inactive: 'bg-line text-soft',
   pending: 'bg-pending text-pending-ink',
   cancelled: 'bg-alert text-alert-ink',
-  legacy: 'bg-ink text-white',
+  legacy: 'bg-ink text-bg',
   accent: 'bg-accent text-white', // live / positive / unread only
 };
 

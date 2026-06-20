@@ -61,7 +61,10 @@
       "comingSoonBody": "This is on the way. We're building it now.",
       "soon": "Soon",
       "back": "Back",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "theme_light": "Light",
+      "theme_dark": "Dark",
+      "theme_system": "System"
     },
     "today": {
       "greeting": "Hey {name}",

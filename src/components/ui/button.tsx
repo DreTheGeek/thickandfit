@@ -8,7 +8,7 @@ const BASE =
   'tf-press inline-flex items-center justify-center gap-2 rounded-full font-semibold uppercase leading-none cursor-pointer disabled:cursor-default disabled:opacity-50';
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-ink text-white',
+  primary: 'bg-ink text-bg',
   light: 'bg-bg text-ink', // for placement on dark cards
   ghost: 'bg-warm text-ink',
   outline: 'border border-ink text-ink bg-transparent',

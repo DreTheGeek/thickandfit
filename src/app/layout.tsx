@@ -9,6 +9,7 @@ import { IOSInstallBanner } from "@/components/pwa/ios-install-banner";
 import { AndroidInstallButton } from "@/components/pwa/android-install-button";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { Providers } from "@/components/providers";
 
 const gulamsCondensed = localFont({
   src: "../../public/assets/fonts/a0274ead7b73.woff2",
@@ -74,6 +75,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
+      suppressHydrationWarning
       className={`w-mod-js ${gulamsCondensed.variable} ${inter.variable}`}
     >
       <head>
@@ -86,7 +88,7 @@ export default async function RootLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
+          <Providers>{children}</Providers>
         </NextIntlClientProvider>
         <SwRegister />
         <IOSInstallBanner />

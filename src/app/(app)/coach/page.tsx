@@ -124,19 +124,19 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
             key={k.label}
             className={[
               'rounded-2xl p-5',
-              k.dark ? 'bg-ink text-white' : 'bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.06)]',
+              k.dark ? 'bg-ink text-bg' : 'bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.06)]',
             ].join(' ')}
           >
             <div
               className={[
                 'text-[10px] font-semibold uppercase tracking-[1px]',
-                k.dark ? 'text-white/55' : k.warn && Number(k.value) > 0 ? 'text-[#d9534f]' : 'text-faint',
+                k.dark ? 'text-bg/55' : k.warn && Number(k.value) > 0 ? 'text-[#d9534f]' : 'text-faint',
               ].join(' ')}
             >
               {k.label}
             </div>
             <div className="mt-1.5 font-display text-[28px] leading-none">{k.value}</div>
-            <div className={['mt-1 text-[11px]', k.dark ? 'text-white/45' : 'text-faint'].join(' ')}>{k.sub}</div>
+            <div className={['mt-1 text-[11px]', k.dark ? 'text-bg/45' : 'text-faint'].join(' ')}>{k.sub}</div>
           </div>
         ))}
       </div>
