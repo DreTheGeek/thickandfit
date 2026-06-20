@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
+import { PhotoScan } from '@/components/nutrition/photo-scan';
 import { searchFoodsAction, getFoodDetailAction, logFoodAction, deleteFoodLogAction, lookupBarcodeAction } from '@/lib/nutrition/diary-actions';
 import { MEAL_SLOTS, macrosForGrams, effectiveGrams, type DiaryDay, type FoodLite, type FoodPortion, type FoodState, type MealSlot } from '@/lib/nutrition/macros';
 
@@ -143,6 +144,11 @@ export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
           )}
         </div>
         {diary.targetSource === 'default' && <p className="mt-3 text-[11px] text-faint">{t('defaultTargetNote')}</p>}
+      </div>
+
+      {/* Photo-to-macro: the wedge. Snap a meal, confirm, log. */}
+      <div className="mt-5">
+        <PhotoScan />
       </div>
 
       {/* Add food */}

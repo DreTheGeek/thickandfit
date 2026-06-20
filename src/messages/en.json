@@ -667,7 +667,22 @@
       "barcodePlaceholder": "Enter barcode number...",
       "barcodeLookup": "Look up",
       "barcodeLooking": "Looking...",
-      "barcodeNotFound": "No food found for that barcode. Try searching by name."
+      "barcodeNotFound": "No food found for that barcode. Try searching by name.",
+      "photoScanTitle": "Snap your meal",
+      "photoScanSubtitle": "Photo to macros in seconds",
+      "photoTakeOrUpload": "Take a photo or upload one",
+      "photoAnalyzing": "Reading your plate...",
+      "photoConfirmHint": "Confirm what you ate, then log it. Estimates include hidden cooking oil.",
+      "photoDetectedAs": "Detected as {name}",
+      "photoNoMatch": "No match in our food database yet",
+      "photoLogged": "Logged",
+      "photoLogAll": "Log all {n}",
+      "photoNewPhoto": "New photo",
+      "photoTryAgain": "Try again",
+      "photoNotConfigured": "Photo scan is almost ready",
+      "photoNotConfiguredNote": "The AI photo engine is not switched on yet. Search or scan a barcode in the meantime.",
+      "photoNoFood": "We could not spot any food in that photo. Try a clearer shot.",
+      "photoError": "Something went wrong reading that photo. Please try again."
     }
   }
 }

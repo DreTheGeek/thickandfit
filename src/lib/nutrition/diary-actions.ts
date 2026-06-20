@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
-import { macrosForGrams, type FoodLite } from '@/lib/nutrition/macros';
+import { macrosForGrams, foodStateFromName, type FoodLite } from '@/lib/nutrition/macros';
 import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
 
 export async function searchFoodsAction(query: string): Promise<FoodLite[]> {
@@ -83,6 +83,82 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
   });
   if (error) {
     console.error('logFoodAction:', error.message);
+    return { ok: false, error: 'insert_failed' };
+  }
+  revalidatePath('/nutrition');
+  return { ok: true };
+}
+
+// Log a single photo-detected food. The client sends the visible (cooked, as-photographed) grams;
+// the server matches the row's stated state and converts to the raw-equivalent grams so the
+// per-100g macros apply correctly, then recomputes macros server-side. source = 'photo'.
+const PhotoLogInput = z.object({
+  foodId: z.string().uuid(),
+  name: z.string().min(1).max(200),
+  predictedName: z.string().min(1).max(200),
+  mealSlot: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
+  grams: z.number().positive().max(5000),
+});
+
+export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
+  const parsed = PhotoLogInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireAuth();
+  const sb = await createClient();
+
+  const { data: food } = await sb
+    .from('foods')
+    .select('kcal, protein_g, carb_g, fat_g, category, name_en, name_es')
+    .eq('id', parsed.data.foodId)
+    .maybeSingle();
+  if (!food) return { ok: false, error: 'not_found' };
+  const f = food as {
+    kcal: number;
+    protein_g: number;
+    carb_g: number;
+    fat_g: number;
+    category: string | null;
+    name_en: string;
+    name_es: string | null;
+  };
+
+  // Photo grams are the visible cooked portion. If the row is stated raw, convert cooked -> raw.
+  let effGrams = parsed.data.grams;
+  const listed = foodStateFromName(`${f.name_en} ${f.name_es ?? ''} ${parsed.data.predictedName}`);
+  if (listed === 'raw' && f.category) {
+    const { data: r } = await sb
+      .from('cooked_uncooked_ratios')
+      .select('factor')
+      .eq('category', f.category)
+      .eq('state_from', 'raw')
+      .eq('state_to', 'cooked')
+      .limit(1)
+      .maybeSingle();
+    const factor = r ? Number((r as { factor: number }).factor) : 0;
+    if (factor > 0) effGrams = Math.round(parsed.data.grams / factor);
+  }
+
+  const m = macrosForGrams(
+    { kcal: Number(f.kcal), proteinG: Number(f.protein_g), carbG: Number(f.carb_g), fatG: Number(f.fat_g) },
+    effGrams,
+  );
+
+  const { error } = await sb.from('food_log').insert({
+    company_id: ctx.companyId,
+    profile_id: ctx.userId,
+    name: parsed.data.name,
+    food_id: parsed.data.foodId,
+    meal_slot: parsed.data.mealSlot,
+    grams: effGrams,
+    amount: effGrams,
+    source: 'photo',
+    kcal: m.kcal,
+    protein_g: m.proteinG,
+    carb_g: m.carbG,
+    fat_g: m.fatG,
+  });
+  if (error) {
+    console.error('logPhotoFoodAction:', error.message);
     return { ok: false, error: 'insert_failed' };
   }
   revalidatePath('/nutrition');

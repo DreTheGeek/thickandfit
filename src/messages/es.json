@@ -667,7 +667,22 @@
       "barcodePlaceholder": "Ingresa el numero de codigo de barras...",
       "barcodeLookup": "Buscar",
       "barcodeLooking": "Buscando...",
-      "barcodeNotFound": "No se encontro ningun alimento con ese codigo. Intenta buscar por nombre."
+      "barcodeNotFound": "No se encontro ningun alimento con ese codigo. Intenta buscar por nombre.",
+      "photoScanTitle": "Toma tu comida",
+      "photoScanSubtitle": "De foto a macros en segundos",
+      "photoTakeOrUpload": "Toma una foto o sube una",
+      "photoAnalyzing": "Leyendo tu plato...",
+      "photoConfirmHint": "Confirma lo que comiste y registralo. Las estimaciones incluyen el aceite de coccion oculto.",
+      "photoDetectedAs": "Detectado como {name}",
+      "photoNoMatch": "Aun no hay coincidencia en nuestra base de alimentos",
+      "photoLogged": "Registrado",
+      "photoLogAll": "Registrar los {n}",
+      "photoNewPhoto": "Nueva foto",
+      "photoTryAgain": "Intentar de nuevo",
+      "photoNotConfigured": "El escaneo por foto casi esta listo",
+      "photoNotConfiguredNote": "El motor de fotos con IA aun no esta activado. Mientras tanto, busca o escanea un codigo de barras.",
+      "photoNoFood": "No pudimos identificar comida en esa foto. Intenta una toma mas clara.",
+      "photoError": "Algo salio mal al leer esa foto. Intenta de nuevo."
     }
   }
 }
