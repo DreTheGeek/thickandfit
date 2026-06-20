@@ -1,0 +1,180 @@
+// Pure, client-safe types + constants + filter parsing for the Clients CRM. No server imports,
+// so client components can import these without dragging in the service client. The server data
+// layer (clients.ts) re-exports everything from here.
+import type { Standing } from '@/lib/coach/standing';
+
+export type SortField = 'name' | 'mrr' | 'started' | 'lifetime';
+export type SortDir = 'asc' | 'desc';
+
+export type ClientFilters = {
+  q: string;
+  standing: string[];
+  status: string[];
+  health: string[];
+  product: string[];
+  lang: string[];
+  owner: string[];
+  tags: string[];
+  cohort: string[];
+  legacy: boolean | null;
+  sort: SortField;
+  dir: SortDir;
+  page: number;
+  pageSize: number;
+  segment: string | null;
+};
+
+export type TagLite = { slug: string; label: string; category: string; color: string };
+
+export type ClientRow = {
+  id: string;
+  name: string;
+  initials: string;
+  email: string | null;
+  phone: string | null;
+  status: string | null;
+  billingHealth: string | null;
+  standing: Standing;
+  productType: string | null;
+  priceCents: number | null;
+  lifetimeCents: number | null;
+  currency: string;
+  language: string | null;
+  owner: string | null;
+  tags: TagLite[];
+  tagSlugs: string[];
+  nextBillingDate: string | null;
+  startedAt: string | null;
+  cohortYear: string;
+  createdAt: string;
+  isLegacy: boolean;
+  wasLead: boolean;
+};
+
+export type Bucket = { key: string; count: number };
+export type TagStat = TagLite & { count: number };
+export type ClientFacets = {
+  standing: Bucket[];
+  status: Bucket[];
+  health: Bucket[];
+  product: Bucket[];
+  lang: Bucket[];
+  owner: Bucket[];
+  cohort: Bucket[];
+  tags: TagStat[];
+  legacyCount: number;
+};
+
+export type ClientsPage = {
+  rows: ClientRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  facets: ClientFacets;
+  totalAll: number;
+};
+
+export type SavedSegment = {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+  definition: Partial<ClientFilters>;
+};
+
+export type LedgerEntry = {
+  date: string | null;
+  category: string | null;
+  grossCents: number;
+  coachCents: number;
+  currency: string;
+  runningCents: number;
+};
+
+export type ClientDetail = {
+  id: string;
+  name: string;
+  initials: string;
+  email: string | null;
+  phone: string | null;
+  language: string | null;
+  owner: string | null;
+  source: string | null;
+  legacySource: string | null;
+  lenusId: string | null;
+  isLegacy: boolean;
+  wasLead: boolean;
+  status: string | null;
+  billingHealth: string | null;
+  standing: Standing;
+  productType: string | null;
+  priceCents: number | null;
+  nextAmountCents: number | null;
+  lifetimeCents: number | null;
+  currency: string;
+  isAutoRenew: boolean | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  nextBillingDate: string | null;
+  tenureDays: number | null;
+  createdAt: string;
+  tags: TagLite[];
+  snapshot: {
+    mealPlans: number | null;
+    measurements: number | null;
+    checkins: number | null;
+    workouts: number | null;
+    messages: number | null;
+    healthAssessment: number | null;
+    weightGoal: string | null;
+    goalIntensity: string | null;
+  } | null;
+  ledger: LedgerEntry[];
+};
+
+export const NONE_KEY = '__none';
+
+const SORTS: readonly SortField[] = ['name', 'mrr', 'started', 'lifetime'];
+
+function toArr(v: string | string[] | undefined): string[] {
+  if (v == null) return [];
+  return (Array.isArray(v) ? v : [v]).filter((s) => typeof s === 'string' && s.length > 0);
+}
+
+/** Parse + sanitize raw searchParams into typed filters. Strips junk, caps pageSize, defaults. */
+export function parseClientFilters(raw: Record<string, string | string[] | undefined>): ClientFilters {
+  const sort = SORTS.includes(raw.sort as SortField) ? (raw.sort as SortField) : 'name';
+  const legacyRaw = typeof raw.legacy === 'string' ? raw.legacy : '';
+  return {
+    q: typeof raw.q === 'string' ? raw.q.trim().slice(0, 80) : '',
+    standing: toArr(raw.standing),
+    status: toArr(raw.status),
+    health: toArr(raw.health),
+    product: toArr(raw.product),
+    lang: toArr(raw.lang),
+    owner: toArr(raw.owner),
+    tags: toArr(raw.tags),
+    cohort: toArr(raw.cohort),
+    legacy: legacyRaw === '1' || legacyRaw === 'true' ? true : legacyRaw === '0' || legacyRaw === 'false' ? false : null,
+    sort,
+    dir: raw.dir === 'desc' ? 'desc' : 'asc',
+    page: Math.max(1, Math.floor(Number(raw.page)) || 1),
+    pageSize: Math.min(100, Math.max(10, Math.floor(Number(raw.pageSize)) || 50)),
+    segment: typeof raw.segment === 'string' ? raw.segment : null,
+  };
+}
+
+export type SegmentPreset = { slug: string; labelKey: string; filter: Partial<ClientFilters> };
+export const SEGMENT_PRESETS: SegmentPreset[] = [
+  { slug: 'all', labelKey: 'segAllClients', filter: {} },
+  { slug: 'healthy', labelKey: 'segActivePayers', filter: { standing: ['healthy'] } },
+  { slug: 'at-risk', labelKey: 'segAtRisk', filter: { standing: ['at_risk'] } },
+  { slug: 'churned', labelKey: 'segChurnedWinback', filter: { standing: ['churned'] } },
+  { slug: 'cancelling', labelKey: 'segCancelling', filter: { tags: ['cancelling'] } },
+  { slug: 'personal-coaching', labelKey: 'segPersonalCoaching', filter: { product: ['personalCoaching'] } },
+  { slug: 'bootcamp', labelKey: 'segBootcamp', filter: { product: ['bootcamp'] } },
+  { slug: 'six-week', labelKey: 'segSixWeek', filter: { tags: ['6-week-body-recomp'] } },
+  { slug: 'her-again', labelKey: 'segHerAgain', filter: { tags: ['her-again-challenge'] } },
+  { slug: 'health-flags', labelKey: 'segHealthFlags', filter: { tags: ['pcos', 'glp-1'] } },
+  { slug: 'spanish', labelKey: 'segSpanishSpeaking', filter: { tags: ['spanish'] } },
+];

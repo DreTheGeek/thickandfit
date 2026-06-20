@@ -18,7 +18,7 @@ const SECTIONS: NavSection[] = [
   {
     headerKey: 'navClients',
     items: [
-      { key: 'navClients', href: '/coach/subscribers', icon: 'user' },
+      { key: 'navClients', href: '/coach/clients', icon: 'user' },
       { key: 'navLeads', href: '/coach/leads', icon: 'funnel' },
       { key: 'navInbox', href: '/coach/inbox', icon: 'chat' },
       { key: 'navCommunity', href: '/coach/community', icon: 'community' },
