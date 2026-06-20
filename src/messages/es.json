@@ -585,6 +585,25 @@
       "accountSettings": "Ajustes de cuenta",
       "help": "Ayuda y soporte",
       "settings": "Ajustes"
+    },
+    "nutrition": {
+      "title": "Nutrición",
+      "searchPlaceholder": "Buscar alimentos...",
+      "add": "Agregar",
+      "grams": "Gramos",
+      "meal": "Comida",
+      "breakfast": "Desayuno",
+      "lunch": "Almuerzo",
+      "dinner": "Cena",
+      "snack": "Snack",
+      "protein": "Proteína",
+      "carbs": "Carbohidratos",
+      "fat": "Grasa",
+      "kcalToday": "kcal hoy",
+      "ofTargetKcal": "de {target} kcal",
+      "kcalLeft": "{n} kcal restantes",
+      "defaultTargetNote": "Usando un objetivo predeterminado hasta que tu coach lo configure.",
+      "noEntriesYet": "Aún no has registrado nada hoy. Busca un alimento para empezar."
     }
   }
 }

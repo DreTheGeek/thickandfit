@@ -1,10 +1,15 @@
+// Subscriber food diary (Phase 2 nutrition engine). Replaces the ComingSoon stub: search the
+// shared food corpus, log to today's diary, see intake vs target.
 import type { ReactElement } from 'react';
-import { getTranslations } from 'next-intl/server';
-import { ComingSoon } from '@/components/app/coming-soon';
+import { requireAuth } from '@/lib/auth/guards';
+import { getDiary, todayIso } from '@/lib/nutrition/diary';
+import { DiaryScreen } from '@/components/nutrition/diary-screen';
 
 export const dynamic = 'force-dynamic';
 
 export default async function NutritionPage(): Promise<ReactElement> {
-  const t = await getTranslations('app.nav');
-  return <ComingSoon title={t('nutrition')} />;
+  const ctx = await requireAuth();
+  const date = todayIso();
+  const diary = await getDiary(ctx.userId, ctx.companyId, date);
+  return <DiaryScreen diary={diary} />;
 }

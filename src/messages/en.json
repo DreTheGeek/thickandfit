@@ -585,6 +585,25 @@
       "accountSettings": "Account Settings",
       "help": "Help & Support",
       "settings": "Settings"
+    },
+    "nutrition": {
+      "title": "Nutrition",
+      "searchPlaceholder": "Search foods...",
+      "add": "Add",
+      "grams": "Grams",
+      "meal": "Meal",
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snack",
+      "protein": "Protein",
+      "carbs": "Carbs",
+      "fat": "Fat",
+      "kcalToday": "kcal today",
+      "ofTargetKcal": "of {target} kcal",
+      "kcalLeft": "{n} kcal left",
+      "defaultTargetNote": "Using a default target until your coach sets one.",
+      "noEntriesYet": "Nothing logged yet today. Search a food to start."
     }
   }
 }
