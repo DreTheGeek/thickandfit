@@ -7,7 +7,7 @@ import type { ReactElement } from 'react';
 import { Icon, type IconName } from '@/components/ui/icons';
 
 type Tab = {
-  key: 'today' | 'chat' | 'activities' | 'nutrition' | 'you';
+  key: 'today' | 'community' | 'activities' | 'nutrition' | 'you';
   href: string;
   icon: IconName;
   match: (path: string) => boolean;
@@ -15,7 +15,7 @@ type Tab = {
 
 const TABS: Tab[] = [
   { key: 'today', href: '/dashboard', icon: 'calendar', match: (p) => p === '/dashboard' },
-  { key: 'chat', href: '/messages', icon: 'chat', match: (p) => p.startsWith('/messages') },
+  { key: 'community', href: '/community', icon: 'community', match: (p) => p.startsWith('/community') },
   {
     key: 'activities',
     href: '/workouts',

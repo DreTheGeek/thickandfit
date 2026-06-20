@@ -49,10 +49,37 @@
   "app": {
     "nav": {
       "today": "Hoy",
-      "chat": "Chat",
+      "community": "Comunidad",
       "activities": "Actividades",
       "nutrition": "Nutrición",
       "you": "Tú"
+    },
+    "community": {
+      "title": "Comunidad",
+      "subtitle": "Entrenen juntas. Aliéntense entre sí. Aquí el trabajo se vuelve divertido.",
+      "composerPlaceholder": "Comparte un logro, haz una pregunta o anima al equipo...",
+      "post": "Publicar",
+      "posting": "Publicando...",
+      "postAsBroadcast": "Fijar como anuncio",
+      "coachBroadcast": "Anuncio de la coach",
+      "coachBadge": "Coach",
+      "comment": "Comentar",
+      "commentsCount": "{count, plural, one {# comentario} other {# comentarios}}",
+      "addComment": "Escribe un comentario...",
+      "noCommentsYet": "Sé la primera en comentar.",
+      "send": "Enviar",
+      "emptyTitle": "Aún no hay nada aquí",
+      "emptyBody": "Inicia la conversación. Publica tu primer logro y el equipo te seguirá.",
+      "activeChallenge": "Reto activo",
+      "joinChallenge": "Unirme al reto",
+      "joining": "Uniéndome...",
+      "leaderboard": "Tabla de posiciones",
+      "yourProgress": "Tu progreso",
+      "you": "Tú",
+      "daysLeft": "{count, plural, one {# día restante} other {# días restantes}}",
+      "participants": "{count, plural, one {# integrante} other {# integrantes}}",
+      "noParticipants": "Nadie se ha unido todavía. Sé la primera.",
+      "noPosts": "Aún no hay publicaciones."
     },
     "common": {
       "viewAll": "Ver todo",

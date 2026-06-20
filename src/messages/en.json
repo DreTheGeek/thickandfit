@@ -49,10 +49,37 @@
   "app": {
     "nav": {
       "today": "Today",
-      "chat": "Chat",
+      "community": "Community",
       "activities": "Activities",
       "nutrition": "Nutrition",
       "you": "You"
+    },
+    "community": {
+      "title": "Community",
+      "subtitle": "Train together. Cheer each other on. This is where the work gets fun.",
+      "composerPlaceholder": "Share a win, ask a question, or hype the crew...",
+      "post": "Post",
+      "posting": "Posting...",
+      "postAsBroadcast": "Pin as a broadcast",
+      "coachBroadcast": "Coach broadcast",
+      "coachBadge": "Coach",
+      "comment": "Comment",
+      "commentsCount": "{count, plural, one {# comment} other {# comments}}",
+      "addComment": "Write a comment...",
+      "noCommentsYet": "Be the first to comment.",
+      "send": "Send",
+      "emptyTitle": "Nothing here yet",
+      "emptyBody": "Start the conversation. Post your first win and the crew will follow.",
+      "activeChallenge": "Active challenge",
+      "joinChallenge": "Join challenge",
+      "joining": "Joining...",
+      "leaderboard": "Leaderboard",
+      "yourProgress": "Your progress",
+      "you": "You",
+      "daysLeft": "{count, plural, one {# day left} other {# days left}}",
+      "participants": "{count, plural, one {# member} other {# members}}",
+      "noParticipants": "No one has joined yet. Be first.",
+      "noPosts": "No posts yet."
     },
     "common": {
       "viewAll": "View all",
