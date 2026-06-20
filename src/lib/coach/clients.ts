@@ -316,6 +316,20 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     ? { id: mp.id, name: mp.name, calorieGoal: mp.calorie_goal, proteinG: mp.protein_g, carbG: mp.carb_g, fatG: mp.fat_g, macroTiming: mp.macro_timing_name }
     : null;
 
+  // Client files + progress photos (imported from Lenus media, re-hosted on R2).
+  const { data: fileData } = await sb
+    .from('contact_files')
+    .select('category, url, bytes')
+    .eq('company_id', companyId)
+    .eq('contact_id', contactId)
+    .order('created_at', { ascending: false })
+    .limit(300);
+  const files = ((fileData ?? []) as { category: string | null; url: string; bytes: number | null }[]).map((f) => ({
+    category: f.category,
+    url: f.url,
+    bytes: f.bytes,
+  }));
+
   const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || 'Unknown';
   const startedAt = sub?.started_at ?? null;
   const tenureDays = startedAt
@@ -369,5 +383,6 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
         }
       : null,
     ledger,
+    files,
   };
 }

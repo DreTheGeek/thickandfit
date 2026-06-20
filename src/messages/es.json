@@ -559,7 +559,11 @@
       "planDelivery": "Entrega de planes",
       "mealPlanSent": "Plan de comidas enviado",
       "workoutPlanSent": "Plan de entrenamiento enviado",
-      "membership": "Membresía"
+      "membership": "Membresía",
+      "tabFiles": "Archivos",
+      "progressPhotos": "Fotos de progreso",
+      "documents": "Documentos",
+      "noFiles": "Aún no hay archivos."
     },
     "you": {
       "title": "Tú",

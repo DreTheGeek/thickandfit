@@ -559,7 +559,11 @@
       "planDelivery": "Plan delivery",
       "mealPlanSent": "Meal plan sent",
       "workoutPlanSent": "Workout plan sent",
-      "membership": "Membership"
+      "membership": "Membership",
+      "tabFiles": "Files",
+      "progressPhotos": "Progress photos",
+      "documents": "Documents",
+      "noFiles": "No files yet."
     },
     "you": {
       "title": "You",

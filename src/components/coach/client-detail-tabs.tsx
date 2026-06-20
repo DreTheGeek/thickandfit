@@ -6,16 +6,24 @@ import { useTranslations } from 'next-intl';
 import { UnderlineTabs, type TabOption } from '@/components/ui/tabs';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
+import { RecipeImage } from '@/components/coach/recipe-image';
 import { formatCents } from '@/components/coach/money';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
-type Tab = 'overview' | 'billing' | 'payments' | 'nutrition' | 'engagement' | 'tags';
+type Tab = 'overview' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
 
 function fmtDate(value: string | null, locale: string): string {
   if (!value) return '-';
   const d = new Date(`${value}T00:00:00`);
   if (Number.isNaN(d.getTime())) return '-';
   return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(d);
+}
+
+function fmtBytes(b: number | null): string {
+  if (!b) return '';
+  if (b < 1024) return `${b} B`;
+  if (b < 1048576) return `${Math.round(b / 1024)} KB`;
+  return `${(b / 1048576).toFixed(1)} MB`;
 }
 
 function Row({ label, value }: { label: string; value: ReactNode }): ReactElement {
@@ -41,12 +49,15 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
   const [tab, setTab] = useState<Tab>('overview');
   const cur = detail.currency;
   const mp = detail.mealPlan;
+  const photos = detail.files.filter((f) => f.category === 'progress_photos');
+  const docs = detail.files.filter((f) => f.category !== 'progress_photos');
 
   const options: TabOption<Tab>[] = [
     { value: 'overview', label: t('tabOverview') },
     { value: 'billing', label: t('tabBilling') },
     { value: 'payments', label: t('tabPayments') },
     { value: 'nutrition', label: t('tabNutrition') },
+    { value: 'files', label: detail.files.length > 0 ? `${t('tabFiles')} (${detail.files.length})` : t('tabFiles') },
     { value: 'engagement', label: t('tabEngagement') },
     { value: 'tags', label: t('tabTags') },
   ];
@@ -175,6 +186,56 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
           {planDelivery}
         </div>
       )}
+
+      {tab === 'files' &&
+        (detail.files.length === 0 ? (
+          <p className="rounded-2xl border border-line bg-surface py-12 text-center text-sm text-faint">{t('noFiles')}</p>
+        ) : (
+          <div className="flex flex-col gap-6">
+            {photos.length > 0 && (
+              <div>
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-faint">
+                  {t('progressPhotos')} · {photos.length}
+                </div>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                  {photos.slice(0, 60).map((f, i) => (
+                    <a
+                      key={i}
+                      href={f.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="tf-press relative aspect-square overflow-hidden rounded-xl border border-line bg-warm"
+                    >
+                      <RecipeImage src={f.url} alt="" icon="camera" sizes="200px" />
+                    </a>
+                  ))}
+                </div>
+                {photos.length > 60 && <div className="mt-2 text-[12px] text-faint">{t('plusMore', { n: photos.length - 60 })}</div>}
+              </div>
+            )}
+            {docs.length > 0 && (
+              <div>
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-faint">
+                  {t('documents')} · {docs.length}
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+                  {docs.map((f, i) => (
+                    <a
+                      key={i}
+                      href={f.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="tf-press flex items-center justify-between gap-3 border-b border-divider px-4 py-3 last:border-0 hover:bg-warm/50"
+                    >
+                      <span className="truncate text-[13px] capitalize">{(f.category ?? 'file').replace(/_/g, ' ')}</span>
+                      <span className="shrink-0 text-[12px] text-faint">{fmtBytes(f.bytes)}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
 
       {tab === 'engagement' &&
         (detail.snapshot ? (

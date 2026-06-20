@@ -144,7 +144,10 @@ export type ClientDetail = {
     goalIntensity: string | null;
   } | null;
   ledger: LedgerEntry[];
+  files: ClientFile[];
 };
+
+export type ClientFile = { category: string | null; url: string; bytes: number | null };
 
 export const NONE_KEY = '__none';
 
