@@ -119,7 +119,7 @@ export function ClientProfile({
           <div className="rounded-2xl border border-line bg-surface p-5">
             <div className="mb-1 text-[12px] font-semibold uppercase tracking-[1px] text-faint">{t('contactInfo')}</div>
             <RailRow label={t('email')} value={detail.email ?? '-'} />
-            <RailRow label={t('message')} value={detail.phone ?? '-'} />
+            <RailRow label={t('phone')} value={detail.phone ?? '-'} />
             <RailRow label={t('facetLanguage')} value={detail.language === 'es' ? t('spanish') : t('english')} />
             <RailRow label={t('owner')} value={<span className="capitalize">{detail.owner ?? '-'}</span>} />
           </div>

@@ -24,7 +24,7 @@ export function LeadCard({ card, locale }: { card: LeadCardRow; locale: string }
       <div className="flex items-center gap-2.5">
         <Avatar initials={card.initials} size={28} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[13px] font-semibold text-ink">{card.name}</div>
+          <div className="truncate text-[13px] font-semibold text-ink">{card.name || t('leadUnnamed')}</div>
           {card.source && <div className="truncate text-[11px] text-faint">{card.source}</div>}
         </div>
         {card.valueCents != null && card.valueCents > 0 && (
@@ -47,7 +47,7 @@ export function LeadCard({ card, locale }: { card: LeadCardRow; locale: string }
       <div className="mt-2 flex items-center justify-between">
         {card.status === 'open' ? (
           <span className={['text-[11px]', rotting ? 'font-semibold text-alert-ink' : 'text-faint'].join(' ')}>
-            {card.daysInStage != null ? t('idleDays', { days: card.daysInStage }) : ''}
+            {card.daysInStage != null ? t('idleDays', { days: card.daysInStage }) : t('leadNew')}
           </span>
         ) : (
           <LeadStatusPill status={card.status} />

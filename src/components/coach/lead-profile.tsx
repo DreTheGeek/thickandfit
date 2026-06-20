@@ -55,7 +55,7 @@ export function LeadProfile({
             <Avatar initials={detail.initials} size={60} />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="tf-display text-[26px] leading-none">{detail.name}</h1>
+                <h1 className="tf-display text-[26px] leading-none">{detail.name || t('leadUnnamed')}</h1>
                 <LeadStatusPill status={detail.status} />
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-faint">
@@ -102,7 +102,7 @@ export function LeadProfile({
           <div className="rounded-2xl border border-line bg-surface p-5">
             <div className="mb-1 text-[12px] font-semibold uppercase tracking-[1px] text-faint">{t('contactInfo')}</div>
             <RailRow label={t('email')} value={detail.email ?? '-'} />
-            <RailRow label={t('message')} value={detail.phone ?? '-'} />
+            <RailRow label={t('phone')} value={detail.phone ?? '-'} />
             <RailRow label={t('facetLanguage')} value={detail.language === 'es' ? t('spanish') : t('english')} />
             <RailRow label={t('owner')} value={<span className="capitalize">{detail.owner ?? '-'}</span>} />
           </div>

@@ -2,6 +2,13 @@
 export type LeadStatus = 'open' | 'won' | 'lost' | 'abandoned';
 export type LeadVariant = 'accent' | 'pending' | 'inactive';
 
+export const LEAD_STATUSES = ['open', 'won', 'lost', 'abandoned'] as const;
+
+/** Narrow an arbitrary string to a LeadStatus (single source of truth; unknown -> open). */
+export function toLeadStatus(s: string | null): LeadStatus {
+  return (LEAD_STATUSES as readonly string[]).includes(s ?? '') ? (s as LeadStatus) : 'open';
+}
+
 export const LEAD_STATUS_VARIANT: Record<LeadStatus, LeadVariant> = {
   won: 'accent',
   open: 'pending',

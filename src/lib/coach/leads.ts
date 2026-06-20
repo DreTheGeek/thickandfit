@@ -3,7 +3,7 @@
 // pinned by the caller from requireCoach ctx. Pure types live in leads-types.ts (re-exported).
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
-import { pipelineSlug, type LeadStatus } from '@/lib/coach/lead-standing';
+import { pipelineSlug, toLeadStatus } from '@/lib/coach/lead-standing';
 import type { Bucket, TagLite } from '@/lib/coach/clients-types';
 import {
   COLUMN_CARD_CAP,
@@ -65,18 +65,18 @@ function tally(rows: { key: string | null }[]): Bucket[] {
 
 function mapCard(o: OppRaw, stageName: string): LeadCardRow {
   const c = one(o.contact);
-  const name = c ? [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || o.name || 'Lead' : o.name || 'Lead';
+  const name = c ? [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || o.name || '' : o.name || '';
   const tags: TagLite[] = (c?.contact_tags ?? []).map((t) => one(t.tag)).filter((t): t is TagLite => t != null);
   return {
     id: o.id,
     name,
-    initials: initialsOf(name),
+    initials: initialsOf(name || '?'),
     contactId: c?.id ?? null,
     email: c?.email ?? null,
     phone: c?.phone ?? null,
     valueCents: o.monetary_value_cents,
     currency: 'USD',
-    status: (['open', 'won', 'lost', 'abandoned'].includes(o.status ?? '') ? o.status : 'open') as LeadStatus,
+    status: toLeadStatus(o.status),
     stageId: o.stage_id,
     stageName,
     source: o.source,
@@ -93,11 +93,12 @@ const OPP_SELECT =
 
 export async function getPipelineBoard(companyId: string, filters: LeadFilters): Promise<PipelineBoard> {
   const sb = createServiceClient();
-  const { data: pipeData } = await sb
+  const { data: pipeData, error: pipeErr } = await sb
     .from('pipelines')
     .select('id, name')
     .eq('company_id', companyId)
     .order('created_at', { ascending: true });
+  if (pipeErr) throw new Error(`getPipelineBoard pipelines: ${pipeErr.message}`);
   const pipelines: PipelineMeta[] = ((pipeData ?? []) as { id: string; name: string }[]).map((p) => ({
     id: p.id,
     name: p.name,
@@ -119,12 +120,13 @@ export async function getPipelineBoard(companyId: string, filters: LeadFilters):
   const stages = (stageData ?? []) as { id: string; name: string; position: number }[];
   const stageName = new Map(stages.map((s) => [s.id, s.name]));
 
-  const { data: oppData } = await sb
+  const { data: oppData, error: oppErr } = await sb
     .from('opportunities')
     .select(OPP_SELECT)
     .eq('company_id', companyId)
     .eq('pipeline_id', active.id)
     .limit(2000);
+  if (oppErr) throw new Error(`getPipelineBoard opportunities: ${oppErr.message}`);
   const opps = (oppData ?? []) as unknown as OppRaw[];
 
   // KPIs over the whole pipeline (status-independent)
@@ -181,16 +183,17 @@ export async function getPipelineBoard(companyId: string, filters: LeadFilters):
 
 export async function getLeadDetail(companyId: string, oppId: string): Promise<LeadDetail | null> {
   const sb = createServiceClient();
-  const { data } = await sb
+  const { data, error } = await sb
     .from('opportunities')
     .select(
-      'id, name, monetary_value_cents, status, source, lost_reason, forecast_probability, created_at, ghl_updated_at, last_stage_change_at, ghl_contact_id, ' +
+      'id, name, monetary_value_cents, status, source, lost_reason, forecast_probability, created_at, ghl_updated_at, last_stage_change_at, ghl_contact_id, assigned_to, ' +
         'contact:contacts(id, first_name, last_name, email, phone, owner, language, contact_tags(tag:tags(slug, label, category, color))), ' +
         'stage:pipeline_stages(name), pipeline:pipelines(name)',
     )
     .eq('company_id', companyId)
     .eq('id', oppId)
     .maybeSingle();
+  if (error) throw new Error(`getLeadDetail: ${error.message}`);
   if (!data) return null;
 
   const o = data as unknown as OppRaw & {
@@ -202,7 +205,7 @@ export async function getLeadDetail(companyId: string, oppId: string): Promise<L
     pipeline: { name: string } | { name: string }[] | null;
   };
   const c = one(o.contact);
-  const name = c ? [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || o.name || 'Lead' : o.name || 'Lead';
+  const name = c ? [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || o.name || '' : o.name || '';
   const tags: TagLite[] = (c?.contact_tags ?? []).map((t) => one(t.tag)).filter((t): t is TagLite => t != null);
 
   const { data: auditData } = await sb
@@ -223,14 +226,14 @@ export async function getLeadDetail(companyId: string, oppId: string): Promise<L
   return {
     id: o.id,
     name,
-    initials: initialsOf(name),
+    initials: initialsOf(name || '?'),
     contactId: c?.id ?? null,
     ghlContactId: o.ghl_contact_id,
     email: c?.email ?? null,
     phone: c?.phone ?? null,
     owner: c?.owner ?? o.assigned_to ?? null,
     language: c?.language ?? null,
-    status: (['open', 'won', 'lost', 'abandoned'].includes(o.status ?? '') ? o.status : 'open') as LeadStatus,
+    status: toLeadStatus(o.status),
     valueCents: o.monetary_value_cents,
     currency: 'USD',
     pipelineName: one(o.pipeline)?.name ?? null,

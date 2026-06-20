@@ -462,7 +462,11 @@
       "colCreated": "Creado",
       "facetSource": "Origen",
       "lostReasonLabel": "Razón de pérdida",
-      "leadTimeline": "Actividad"
+      "leadTimeline": "Actividad",
+      "leadUnnamed": "Prospecto sin nombre",
+      "noLeadsFiltered": "Ningún prospecto coincide con tus filtros.",
+      "phone": "Teléfono",
+      "leadNew": "Nuevo"
     },
     "you": {
       "title": "Tú",

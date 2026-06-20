@@ -15,7 +15,7 @@ function statusLabel(t: (k: string) => string, s: string): string {
 
 export function LeadsView({ board, filters, locale }: { board: PipelineBoard; filters: LeadFilters; locale: string }): ReactElement {
   const t = useTranslations('app.coach');
-  const { setParam, toggleMulti } = useClientFilterUrl();
+  const { setParam } = useClientFilterUrl();
   const [q, setQ] = useState(filters.q);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusCount = new Map(board.statusCounts.map((b) => [b.key, b.count]));
@@ -69,7 +69,7 @@ export function LeadsView({ board, filters, locale }: { board: PipelineBoard; fi
               <button
                 key={s}
                 type="button"
-                onClick={() => toggleMulti('status', s)}
+                onClick={() => setParam('status', s)}
                 className={[
                   'tf-press inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold',
                   on ? 'border-ink bg-ink text-white' : 'border-line text-muted hover:border-ink hover:text-ink',

@@ -462,7 +462,11 @@
       "colCreated": "Created",
       "facetSource": "Source",
       "lostReasonLabel": "Lost reason",
-      "leadTimeline": "Activity"
+      "leadTimeline": "Activity",
+      "leadUnnamed": "Unnamed lead",
+      "noLeadsFiltered": "No leads match your filters.",
+      "phone": "Phone",
+      "leadNew": "New"
     },
     "you": {
       "title": "You",

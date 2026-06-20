@@ -31,6 +31,8 @@ export function LeadsBoard({ board, locale }: { board: PipelineBoard; locale: st
 
       {board.columns.length === 0 ? (
         <p className="py-16 text-center text-sm text-faint">{t('noLeads')}</p>
+      ) : board.shownCount === 0 ? (
+        <p className="py-16 text-center text-sm text-faint">{t('noLeadsFiltered')}</p>
       ) : (
         <div className="tf-scroll flex gap-3 overflow-x-auto pb-3">
           {board.columns.map((col) => (
