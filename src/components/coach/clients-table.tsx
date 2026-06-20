@@ -8,7 +8,8 @@ import { Icon } from '@/components/ui/icons';
 import { StatusPill } from '@/components/coach/status-pill';
 import { formatCents } from '@/components/coach/money';
 import { useClientFilterUrl } from '@/components/coach/use-client-filters';
-import type { ClientRow, SortField } from '@/lib/coach/clients-types';
+import { healthLabel } from '@/components/coach/client-labels';
+import { NONE_KEY, type ClientRow, type SortField } from '@/lib/coach/clients-types';
 
 function planLabel(t: (k: string) => string, p: string | null): string {
   if (p === 'personalCoaching') return t('planPersonalCoaching');
@@ -90,8 +91,9 @@ export function ClientsTable({
                 {t('colMember')}
               </Th>
               <Th>{t('colStatus')}</Th>
+              <Th className="hidden lg:table-cell">{t('facetBillingHealth')}</Th>
               <Th className="hidden sm:table-cell">{t('colPlan')}</Th>
-              <Th className="hidden xl:table-cell">{t('colTags')}</Th>
+              <Th className="hidden lg:table-cell">{t('colTags')}</Th>
               <Th field="mrr" active={sort === 'mrr'} dir={dir} onSort={setSort} align="right">
                 {t('colMrr')}
               </Th>
@@ -123,8 +125,11 @@ export function ClientsTable({
                 <td className="px-3 py-2.5">
                   <StatusPill status={r.status} health={r.billingHealth} />
                 </td>
+                <td className="hidden px-3 py-2.5 text-[13px] text-soft lg:table-cell">
+                  {r.billingHealth ? healthLabel(t, r.billingHealth) : <span className="text-faint">{healthLabel(t, NONE_KEY)}</span>}
+                </td>
                 <td className="hidden px-3 py-2.5 text-[13px] text-soft sm:table-cell">{planLabel(t, r.productType)}</td>
-                <td className="hidden px-3 py-2.5 xl:table-cell">
+                <td className="hidden px-3 py-2.5 lg:table-cell">
                   <div className="flex flex-wrap gap-1">
                     {r.tags.slice(0, 2).map((tag) => (
                       <span
@@ -146,7 +151,7 @@ export function ClientsTable({
                   {formatCents(r.lifetimeCents, r.currency, locale)}
                 </td>
                 <td className="hidden px-3 py-2.5 text-[13px] capitalize text-soft lg:table-cell">{r.owner ?? '-'}</td>
-                <td className="hidden px-3 py-2.5 text-[13px] text-soft lg:table-cell">{fmtDate(r.startedAt, locale)}</td>
+                <td className="hidden whitespace-nowrap px-3 py-2.5 text-[13px] text-soft lg:table-cell">{fmtDate(r.startedAt, locale)}</td>
               </tr>
             ))}
           </tbody>

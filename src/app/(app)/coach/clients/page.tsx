@@ -29,7 +29,7 @@ export default async function CoachClientsPage({
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-5 py-8 sm:px-8 lg:py-10">
+    <div className="w-full px-5 py-8 sm:px-8 lg:py-10">
       <Eyebrow>{t('navClients')}</Eyebrow>
       <PageTitle className="mb-5 mt-1">{t('clientsTitle')}</PageTitle>
       <ClientsView page={page} segments={segments} filters={filters} locale={locale} />
