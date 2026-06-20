@@ -603,7 +603,11 @@
       "ofTargetKcal": "de {target} kcal",
       "kcalLeft": "{n} kcal restantes",
       "defaultTargetNote": "Usando un objetivo predeterminado hasta que tu coach lo configure.",
-      "noEntriesYet": "Aún no has registrado nada hoy. Busca un alimento para empezar."
+      "noEntriesYet": "Aún no has registrado nada hoy. Busca un alimento para empezar.",
+      "raw": "Crudo",
+      "cooked": "Cocido",
+      "weighedAs": "Pesado",
+      "loggingEquiv": "Registrando {grams}g equivalente {state}"
     }
   }
 }

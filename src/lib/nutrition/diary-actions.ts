@@ -6,12 +6,20 @@ import { getLocale } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, type FoodLite } from '@/lib/nutrition/macros';
-import { searchFoods } from '@/lib/nutrition/foods';
+import { searchFoods, getFoodDetail, type FoodDetail } from '@/lib/nutrition/foods';
 
 export async function searchFoodsAction(query: string): Promise<FoodLite[]> {
   await requireAuth();
   const locale = await getLocale();
   return searchFoods(query, locale);
+}
+
+export async function getFoodDetailAction(foodId: string): Promise<FoodDetail | null> {
+  const parsed = z.string().uuid().safeParse(foodId);
+  if (!parsed.success) return null;
+  await requireAuth();
+  const locale = await getLocale();
+  return getFoodDetail(parsed.data, locale);
 }
 
 const LogInput = z.object({

@@ -2,9 +2,11 @@
 // readable by any authenticated user). Bilingual search over the lowercased search_text.
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
-import type { FoodLite, FoodPortion } from '@/lib/nutrition/macros';
+import { foodStateFromName, type FoodLite, type FoodPortion, type FoodState } from '@/lib/nutrition/macros';
 
 export * from '@/lib/nutrition/macros';
+
+export type FoodDetail = { food: FoodLite; portions: FoodPortion[]; cookedFactor: number | null; foodState: FoodState | null };
 
 type FoodRaw = {
   id: string;
@@ -38,6 +40,42 @@ function mapFood(r: FoodRaw, locale: string): FoodLite {
 }
 
 const COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
+
+export async function getFoodDetail(id: string, locale: string): Promise<FoodDetail | null> {
+  const sb = await createClient();
+  const { data } = await sb.from('foods').select(COLS).eq('id', id).maybeSingle();
+  if (!data) return null;
+  const raw = data as unknown as FoodRaw & { category: string | null };
+  const food = mapFood(raw, locale);
+
+  const { data: pData } = await sb
+    .from('food_portions')
+    .select('id, label_en, label_es, grams, is_cooked, is_default')
+    .eq('food_id', id)
+    .order('is_default', { ascending: false });
+  const portions: FoodPortion[] = ((pData ?? []) as { id: string; label_en: string; label_es: string | null; grams: number; is_cooked: boolean; is_default: boolean }[]).map((p) => ({
+    id: p.id,
+    label: (locale === 'es' ? p.label_es || p.label_en : p.label_en) || p.label_en,
+    grams: Number(p.grams),
+    isCooked: p.is_cooked,
+    isDefault: p.is_default,
+  }));
+
+  let cookedFactor: number | null = null;
+  if (raw.category) {
+    const { data: rData } = await sb
+      .from('cooked_uncooked_ratios')
+      .select('factor')
+      .eq('category', raw.category)
+      .eq('state_from', 'raw')
+      .eq('state_to', 'cooked')
+      .limit(1)
+      .maybeSingle();
+    cookedFactor = rData ? Number((rData as { factor: number }).factor) : null;
+  }
+
+  return { food, portions, cookedFactor, foodState: foodStateFromName(`${raw.name_en} ${raw.name_es ?? ''}`) };
+}
 
 export async function searchFoods(query: string, locale: string): Promise<FoodLite[]> {
   const q = query.trim();

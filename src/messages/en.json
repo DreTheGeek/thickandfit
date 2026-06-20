@@ -603,7 +603,11 @@
       "ofTargetKcal": "of {target} kcal",
       "kcalLeft": "{n} kcal left",
       "defaultTargetNote": "Using a default target until your coach sets one.",
-      "noEntriesYet": "Nothing logged yet today. Search a food to start."
+      "noEntriesYet": "Nothing logged yet today. Search a food to start.",
+      "raw": "Raw",
+      "cooked": "Cooked",
+      "weighedAs": "Weighed",
+      "loggingEquiv": "Logging {grams}g {state} equivalent"
     }
   }
 }

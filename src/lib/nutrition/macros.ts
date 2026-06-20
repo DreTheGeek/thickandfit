@@ -64,3 +64,22 @@ export function sumMacros(rows: MacroTotals[]): MacroTotals {
 export function convertCookedRaw(grams: number, factor: number, to: 'cooked' | 'raw'): number {
   return Math.round(to === 'cooked' ? grams * factor : grams / factor);
 }
+
+export type FoodState = 'raw' | 'cooked';
+
+// Infer whether a food row's macros are stated for the raw or cooked form, from its name (EN/ES).
+export function foodStateFromName(name: string): FoodState | null {
+  const n = name.toLowerCase();
+  if (/\b(raw|dry|crud|seca|seco)\b/.test(n)) return 'raw';
+  if (/\b(cooked|cocid|cocida)\b/.test(n)) return 'cooked';
+  return null;
+}
+
+// Convert the weight the user actually measured into the grams of the food's stated state, so the
+// per-100g macros apply correctly. factor = raw->cooked weight multiplier (cooked = raw * factor).
+export function effectiveGrams(entered: number, weighed: FoodState, listed: FoodState, factor: number): number {
+  if (weighed === listed || factor <= 0) return entered;
+  if (listed === 'cooked' && weighed === 'raw') return Math.round(entered * factor);
+  if (listed === 'raw' && weighed === 'cooked') return Math.round(entered / factor);
+  return entered;
+}
