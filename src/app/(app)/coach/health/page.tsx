@@ -1,64 +1,39 @@
-// Coach app-health. Coach-guarded. Honest current-deploy status; live monitoring (Sentry/
-// PostHog) connects in Phase 3, so no fabricated metrics here.
+// Coach App Health — real service probes, live data counts, automation + deploy info, and the
+// system coverage checklist (action -> reaction). No fabricated status lights.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
-import { PageTitle, SectionTitle } from '@/components/ui/section';
-import { Badge } from '@/components/ui/badge';
+import { getSystemHealth } from '@/lib/coach/system-health';
+import { PageTitle } from '@/components/ui/section';
+import { HealthView } from '@/components/coach/health-view';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CoachHealthPage(): Promise<ReactElement> {
-  await requireCoach();
+  const ctx = await requireCoach();
   const t = await getTranslations('app.coach');
   const locale = await getLocale();
-  const notConfigured = locale === 'es' ? 'No configurado' : 'Not configured';
+  if (!ctx.companyId) return <div className="p-8 text-sm text-muted">{t('noData')}</div>;
 
-  const services: { name: string; up: boolean }[] = [
-    { name: locale === 'es' ? 'Base de datos' : 'Database', up: true },
-    { name: 'API', up: true },
-    { name: locale === 'es' ? 'Autenticación' : 'Authentication', up: true },
-    { name: locale === 'es' ? 'Correo (Resend)' : 'Email (Resend)', up: true },
-    { name: locale === 'es' ? 'Pagos (Stripe)' : 'Payments (Stripe)', up: false },
-    { name: locale === 'es' ? 'Video (Mux)' : 'Video (Mux)', up: false },
-    { name: 'AI', up: false },
-  ];
+  const health = await getSystemHealth(ctx.companyId);
+  const degraded = health.services.some((s) => s.status === 'down');
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto w-full max-w-4xl px-5 py-8 sm:px-8 lg:py-10">
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
         <PageTitle>{t('appHealth')}</PageTitle>
-        <Badge variant="accent">{t('allOperational')}</Badge>
+        <span
+          className={[
+            'rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[1px] text-white',
+            degraded ? 'bg-alert' : 'bg-accent',
+          ].join(' ')}
+        >
+          {degraded ? t('healthDegraded') : t('healthOperational')}
+        </span>
       </div>
-      <p className="mb-6 max-w-2xl rounded-xl bg-warm px-4 py-3 text-[13px] text-soft">
-        {t('monitoringSoon')}
-      </p>
+      <p className="mb-6 text-[13px] text-faint">{t('healthCheckedLive')}</p>
 
-      <div className="rounded-2xl bg-surface p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <SectionTitle className="mb-3">{t('systemStatus')}</SectionTitle>
-        {services.map((s, i) => (
-          <div
-            key={s.name}
-            className={[
-              'flex items-center justify-between py-3',
-              i < services.length - 1 ? 'border-b border-divider' : '',
-            ].join(' ')}
-          >
-            <span className="text-[14px]">{s.name}</span>
-            <span
-              className={[
-                'inline-flex items-center gap-2 text-[13px] font-medium',
-                s.up ? 'text-accent-ink' : 'text-faint',
-              ].join(' ')}
-            >
-              <span
-                className={['h-2 w-2 rounded-full', s.up ? 'bg-accent' : 'bg-line'].join(' ')}
-              />
-              {s.up ? t('operational') : notConfigured}
-            </span>
-          </div>
-        ))}
-      </div>
+      <HealthView health={health} locale={locale} />
     </div>
   );
 }
