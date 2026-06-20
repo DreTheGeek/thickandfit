@@ -35,13 +35,21 @@ function planLabel(t: (k: string) => string, p: string | null): string {
   return '-';
 }
 
-export function ClientProfile({ detail, locale }: { detail: ClientDetail; locale: string }): ReactElement {
+export function ClientProfile({
+  detail,
+  locale,
+  backHref = '/coach/clients',
+}: {
+  detail: ClientDetail;
+  locale: string;
+  backHref?: string;
+}): ReactElement {
   const t = useTranslations('app.coach');
   const cur = detail.currency;
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-5 py-7 sm:px-8">
-      <Link href="/coach/clients" className="tf-press mb-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
+      <Link href={backHref} className="tf-press mb-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
         <Icon name="arrowLeft" size={15} /> {t('backToClients')}
       </Link>
 

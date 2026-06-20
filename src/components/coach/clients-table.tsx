@@ -59,12 +59,14 @@ function Th({
 
 export function ClientsTable({
   rows,
+  totalAll,
   sort,
   dir,
   locale,
   pending,
 }: {
   rows: ClientRow[];
+  totalAll: number;
   sort: SortField;
   dir: 'asc' | 'desc';
   locale: string;
@@ -72,7 +74,11 @@ export function ClientsTable({
 }): ReactElement {
   const t = useTranslations('app.coach');
   const router = useRouter();
-  const { setSort } = useClientFilterUrl();
+  const { setSort, sp } = useClientFilterUrl();
+  const open = (id: string): void => {
+    const qs = sp.toString();
+    router.push(qs ? `/coach/clients/${id}?from=${encodeURIComponent(qs)}` : `/coach/clients/${id}`);
+  };
 
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-surface">
@@ -102,7 +108,7 @@ export function ClientsTable({
             {rows.map((r) => (
               <tr
                 key={r.id}
-                onClick={() => router.push(`/coach/clients/${r.id}`)}
+                onClick={() => open(r.id)}
                 className="tf-press cursor-pointer border-b border-divider last:border-0 hover:bg-warm/50"
               >
                 <td className="px-3 py-2.5">
@@ -146,7 +152,11 @@ export function ClientsTable({
           </tbody>
         </table>
       </div>
-      {rows.length === 0 && <div className="px-4 py-16 text-center text-sm text-faint">{t('noClientsFiltered')}</div>}
+      {rows.length === 0 && (
+        <div className="px-4 py-16 text-center text-sm text-faint">
+          {totalAll === 0 ? t('noClients') : t('noClientsFiltered')}
+        </div>
+      )}
     </div>
   );
 }

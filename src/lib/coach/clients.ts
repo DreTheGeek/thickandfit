@@ -270,8 +270,10 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     .eq('company_id', companyId)
     .eq('contact_id', contactId)
     .order('occurred_at', { ascending: false })
-    .limit(500);
+    .limit(1000);
   const txns = (txnData ?? []) as { occurred_at: string | null; category: string | null; gross_cents: number | null; coach_cents: number | null; currency: string | null }[];
+  // If we hit the cap the ledger is windowed, so it cannot back a money total.
+  const ledgerTruncated = txns.length >= 1000;
   let running = txns.reduce((acc, t) => acc + Number(t.gross_cents ?? 0), 0);
   const ledgerTotalCents = running;
   const ledger: LedgerEntry[] = txns.map((t) => {
@@ -312,7 +314,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     productType: sub?.product_type ?? raw.product_type ?? null,
     priceCents: sub?.grandfathered_price_cents ?? null,
     nextAmountCents: sub?.next_amount_cents ?? null,
-    lifetimeCents: sub?.lifetime_paid_cents ?? (txns.length ? ledgerTotalCents : null),
+    lifetimeCents: sub?.lifetime_paid_cents ?? (txns.length && !ledgerTruncated ? ledgerTotalCents : null),
     currency: sub?.currency ?? 'USD',
     isAutoRenew: sub?.is_auto_renew ?? null,
     startedAt,

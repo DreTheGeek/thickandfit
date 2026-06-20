@@ -143,7 +143,8 @@ function toArr(v: string | string[] | undefined): string[] {
 
 /** Parse + sanitize raw searchParams into typed filters. Strips junk, caps pageSize, defaults. */
 export function parseClientFilters(raw: Record<string, string | string[] | undefined>): ClientFilters {
-  const sort = SORTS.includes(raw.sort as SortField) ? (raw.sort as SortField) : 'name';
+  const sortRaw = typeof raw.sort === 'string' ? raw.sort : '';
+  const sort = SORTS.includes(sortRaw as SortField) ? (sortRaw as SortField) : 'name';
   const legacyRaw = typeof raw.legacy === 'string' ? raw.legacy : '';
   return {
     q: typeof raw.q === 'string' ? raw.q.trim().slice(0, 80) : '',

@@ -432,7 +432,14 @@
       "owner": "Owner",
       "sourceDetails": "Source",
       "sourceLabel": "Source",
-      "tenureDays": "Days"
+      "tenureDays": "Days",
+      "clearAll": "Clear all",
+      "deleteList": "Delete list",
+      "errSaveListFailed": "Could not save the list. Try again.",
+      "errDeleteListFailed": "Could not delete the list.",
+      "errNoCompany": "No company found.",
+      "errNameTaken": "That name is already used.",
+      "errInvalidName": "Enter a valid name."
     },
     "you": {
       "title": "You",

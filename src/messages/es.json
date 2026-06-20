@@ -432,7 +432,14 @@
       "owner": "Responsable",
       "sourceDetails": "Origen",
       "sourceLabel": "Origen",
-      "tenureDays": "Días"
+      "tenureDays": "Días",
+      "clearAll": "Borrar todo",
+      "deleteList": "Eliminar lista",
+      "errSaveListFailed": "No se pudo guardar la lista. Inténtalo de nuevo.",
+      "errDeleteListFailed": "No se pudo eliminar la lista.",
+      "errNoCompany": "No se encontró la empresa.",
+      "errNameTaken": "Ese nombre ya está en uso.",
+      "errInvalidName": "Ingresa un nombre válido."
     },
     "you": {
       "title": "Tú",

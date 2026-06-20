@@ -35,6 +35,8 @@ export function useClientFilterUrl(): ClientUrl {
       const next = new URLSearchParams(sp.toString());
       if (value == null || value === '') next.delete(key);
       else next.set(key, value);
+      // a filter change (anything but sort/dir/page) invalidates the active smart list
+      if (key !== 'sort' && key !== 'dir' && key !== 'page' && key !== 'segment') next.delete('segment');
       commit(next, key === 'sort' || key === 'dir' || key === 'page');
     },
     [sp, commit],

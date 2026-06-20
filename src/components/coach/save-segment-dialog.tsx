@@ -37,7 +37,12 @@ export function SaveSegmentDialog({
         setError('');
         onClose();
       } else {
-        setError(res.error);
+        const map: Record<string, string> = {
+          no_company: 'errNoCompany',
+          invalid_input: 'errInvalidName',
+          name_taken: 'errNameTaken',
+        };
+        setError(t(map[res.error] ?? 'errSaveListFailed'));
       }
     });
   }

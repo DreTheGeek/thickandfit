@@ -28,5 +28,7 @@ export function logCoachAction(
       previous_state: params.previousState ?? null,
       new_state: params.newState ?? null,
     })
-    .then(() => undefined);
+    .then(() => undefined, (e: unknown) => {
+      console.error('[audit_log] write failed', e instanceof Error ? e.message : e);
+    });
 }

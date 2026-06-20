@@ -43,7 +43,10 @@ export async function createSavedSegment(input: {
     })
     .select('id')
     .single();
-  if (error || !data) return { ok: false, error: error?.message ?? 'insert_failed' };
+  if (error || !data) {
+    console.error('[createSavedSegment]', error?.message);
+    return { ok: false, error: error?.code === '23505' ? 'name_taken' : 'insert_failed' };
+  }
 
   logCoachAction(sb, {
     companyId: ctx.companyId,
@@ -62,7 +65,10 @@ export async function deleteSavedSegment(id: string): Promise<{ ok: boolean; err
   if (!ctx.companyId) return { ok: false, error: 'no_company' };
   const sb = createServiceClient();
   const { error } = await sb.from('saved_segments').delete().eq('id', id).eq('company_id', ctx.companyId);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    console.error('[deleteSavedSegment]', error.message);
+    return { ok: false, error: 'delete_failed' };
+  }
   logCoachAction(sb, {
     companyId: ctx.companyId,
     userId: ctx.userId,

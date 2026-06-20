@@ -66,7 +66,14 @@ export function ClientsView({
           <ClientsFilterRail facets={page.facets} filters={filters} />
         </div>
         <div className="min-w-0 flex-1">
-          <ClientsTable rows={page.rows} sort={filters.sort} dir={filters.dir} locale={locale} pending={pending} />
+          <ClientsTable
+            rows={page.rows}
+            totalAll={page.totalAll}
+            sort={filters.sort}
+            dir={filters.dir}
+            locale={locale}
+            pending={pending}
+          />
           <Pagination total={page.total} page={page.page} pageSize={page.pageSize} />
         </div>
       </div>

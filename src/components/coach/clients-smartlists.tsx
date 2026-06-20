@@ -19,6 +19,18 @@ export function ClientsSmartLists({
   const [pending, start] = useTransition();
   const active = filters.segment;
 
+  function remove(s: SavedSegment): void {
+    if (!window.confirm(`${t('deleteList')}: ${s.name}?`)) return;
+    start(async () => {
+      const res = await deleteSavedSegment(s.id);
+      if (!res.ok) {
+        window.alert(t('errDeleteListFailed'));
+        return;
+      }
+      if (active === s.slug) applyFilterSet({}, 'all');
+    });
+  }
+
   function chip(key: string, label: string, isActive: boolean, onClick: () => void, onDelete?: () => void): ReactElement {
     return (
       <span
@@ -36,7 +48,7 @@ export function ClientsSmartLists({
             type="button"
             onClick={onDelete}
             className={['tf-press opacity-0 transition-opacity group-hover:opacity-100', isActive ? 'text-white/70' : 'text-faint'].join(' ')}
-            aria-label="delete"
+            aria-label={t('deleteList')}
           >
             <Icon name="x" size={12} />
           </button>
@@ -58,7 +70,7 @@ export function ClientsSmartLists({
           s.name,
           active === s.slug,
           () => applyFilterSet(s.definition as Record<string, unknown>, s.slug),
-          () => start(() => void deleteSavedSegment(s.id)),
+          () => remove(s),
         ),
       )}
       {pending && <span className="self-center text-[12px] text-faint">...</span>}

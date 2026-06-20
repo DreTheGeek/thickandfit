@@ -10,8 +10,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function CoachClientDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string | string[] }>;
 }): Promise<ReactElement> {
   const ctx = await requireCoach();
   if (!ctx.companyId) notFound();
@@ -19,5 +21,8 @@ export default async function CoachClientDetailPage({
   const detail = await getClientDetail(ctx.companyId, id);
   if (!detail) notFound();
   const locale = await getLocale();
-  return <ClientProfile detail={detail} locale={locale} />;
+  const { from } = await searchParams;
+  const fromQs = typeof from === 'string' ? from : '';
+  const backHref = fromQs ? `/coach/clients?${fromQs}` : '/coach/clients';
+  return <ClientProfile detail={detail} locale={locale} backHref={backHref} />;
 }
