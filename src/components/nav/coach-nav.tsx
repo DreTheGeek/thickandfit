@@ -29,7 +29,7 @@ const SECTIONS: NavSection[] = [
     items: [
       { key: 'programs', href: '/coach/programs', icon: 'clipboard' },
       { key: 'toolTrainingTemplates', href: '/coach/tool/training-templates', icon: 'grid' },
-      { key: 'toolExercises', href: '/coach/tool/exercises', icon: 'dumbbell' },
+      { key: 'toolExercises', href: '/coach/exercises', icon: 'dumbbell' },
       { key: 'toolExerciseBlocks', href: '/coach/tool/exercise-blocks', icon: 'dumbbell' },
     ],
   },
