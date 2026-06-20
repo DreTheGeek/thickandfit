@@ -3,6 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { recommendNext, type SetResult, type RepRange } from '@/lib/overload/recommend';
+import { explainRecommendation } from '@/lib/overload/explain';
 
 const setSchema = z.object({
   exercise_id: z.string().uuid(),
@@ -106,4 +107,80 @@ export async function recommendForExercise(
 ) {
   const history = await getExerciseHistory(companyId, profileId, exerciseId);
   return { history_points: history.length, recommendation: recommendNext(history, range) };
+}
+
+export type OverloadHint = {
+  exerciseId: string;
+  action: 'increase_reps' | 'increase_weight' | 'hold' | 'deload';
+  weight: number | null;
+  reps: number;
+  rationale: string;
+  historyPoints: number;
+};
+
+type ExerciseTarget = { exerciseId: string; name: string; reps: number | null };
+
+// Build a sensible double-progression window from the planned target reps.
+function rangeFromTarget(reps: number | null): RepRange {
+  if (!reps || reps <= 0) return { min: 8, max: 12 };
+  return { min: reps, max: reps + 2 };
+}
+
+// One recommendation per exercise, history fetched in a single round trip, then the
+// deterministic number is explained in the client's locale (AI layer falls back gracefully).
+export async function recommendForSession(
+  companyId: string,
+  profileId: string,
+  targets: ExerciseTarget[],
+  locale: 'en' | 'es',
+): Promise<Map<string, OverloadHint>> {
+  const out = new Map<string, OverloadHint>();
+  if (!targets.length) return out;
+
+  const supabase = createServiceClient();
+  const { data: logs } = await supabase
+    .from('workout_logs')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('profile_id', profileId);
+  const logIds = (logs ?? []).map((l) => l.id);
+
+  const byExercise = new Map<string, SetResult[]>();
+  if (logIds.length) {
+    const exerciseIds = targets.map((tg) => tg.exerciseId);
+    const { data: sets } = await supabase
+      .from('set_logs')
+      .select('exercise_id, weight, reps, completed, difficulty, created_at')
+      .in('exercise_id', exerciseIds)
+      .in('workout_log_id', logIds)
+      .order('created_at', { ascending: true });
+    for (const s of sets ?? []) {
+      const list = byExercise.get(s.exercise_id) ?? [];
+      list.push({
+        weight: s.weight,
+        reps: s.reps,
+        completed: s.completed,
+        difficulty: (s.difficulty ?? 'moderate') as SetResult['difficulty'],
+      });
+      byExercise.set(s.exercise_id, list);
+    }
+  }
+
+  await Promise.all(
+    targets.map(async (tg) => {
+      const history = (byExercise.get(tg.exerciseId) ?? []).slice(-4);
+      const rec = recommendNext(history, rangeFromTarget(tg.reps));
+      const rationale = await explainRecommendation(rec, tg.name, locale);
+      out.set(tg.exerciseId, {
+        exerciseId: tg.exerciseId,
+        action: rec.action,
+        weight: rec.weight,
+        reps: rec.reps,
+        rationale,
+        historyPoints: history.length,
+      });
+    }),
+  );
+
+  return out;
 }

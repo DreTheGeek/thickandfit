@@ -154,7 +154,19 @@
       "niceWork": "Nice work, that's logged.",
       "demo": "Demo",
       "noCues": "Follow your coach's cues for this movement.",
-      "targetMuscle": "Target muscle"
+      "targetMuscle": "Target muscle",
+      "overloadTitle": "Coach suggestion",
+      "overloadTarget": "{weight} lb x {reps}",
+      "overloadTargetBodyweight": "Bodyweight x {reps}",
+      "overloadThin": "Not much history yet. Start at the bottom of the range and build from there.",
+      "overloadApply": "Use this",
+      "overloadDismiss": "Dismiss suggestion",
+      "overloadAction": {
+        "increase_reps": "Add a rep",
+        "increase_weight": "Add weight",
+        "hold": "Hold steady",
+        "deload": "Deload"
+      }
     },
     "coach": {
       "overview": "Overview",

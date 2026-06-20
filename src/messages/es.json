@@ -154,7 +154,19 @@
       "niceWork": "¡Bien hecho, quedó registrado!",
       "demo": "Demo",
       "noCues": "Sigue las indicaciones de tu coach para este movimiento.",
-      "targetMuscle": "Músculo objetivo"
+      "targetMuscle": "Músculo objetivo",
+      "overloadTitle": "Sugerencia del coach",
+      "overloadTarget": "{weight} lb x {reps}",
+      "overloadTargetBodyweight": "Peso corporal x {reps}",
+      "overloadThin": "Aún hay poco historial. Empieza en la parte baja del rango y avanza desde ahí.",
+      "overloadApply": "Usar esto",
+      "overloadDismiss": "Descartar sugerencia",
+      "overloadAction": {
+        "increase_reps": "Suma una rep",
+        "increase_weight": "Sube el peso",
+        "hold": "Mantén firme",
+        "deload": "Baja la carga"
+      }
     },
     "coach": {
       "overview": "Resumen",

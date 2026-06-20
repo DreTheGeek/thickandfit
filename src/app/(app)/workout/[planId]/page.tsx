@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/auth/guards';
 import { getProgram } from '@/lib/programs/engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { WorkoutPlayer, type PlayerExercise } from '@/components/workout/workout-player';
+import { recommendForSession } from '@/lib/workout/logging';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,8 +62,24 @@ export default async function WorkoutPage({
     (muscles ?? []).map((m) => [m.key, locale === 'es' ? (m.label_es ?? m.label_en) : m.label_en]),
   );
 
+  // Progressive-overload recommendation per exercise from the client's recent set history.
+  const recLocale = locale === 'es' ? 'es' : 'en';
+  const overloadByExercise = ctx.companyId
+    ? await recommendForSession(
+        ctx.companyId,
+        ctx.userId,
+        exList.map((e) => ({
+          exerciseId: e.exercise_id,
+          name: (locale === 'es' && byId.get(e.exercise_id)?.name_es) || byId.get(e.exercise_id)?.name_en || 'Exercise',
+          reps: e.reps,
+        })),
+        recLocale,
+      )
+    : new Map();
+
   const playerExercises: PlayerExercise[] = exList.map((e) => {
     const meta = byId.get(e.exercise_id);
+    const hint = overloadByExercise.get(e.exercise_id) ?? null;
     return {
       exercise_id: e.exercise_id,
       name: (locale === 'es' && meta?.name_es) || meta?.name_en || 'Exercise',
@@ -74,6 +91,15 @@ export default async function WorkoutPage({
       cues: (locale === 'es' && meta?.cues_es) || meta?.cues_en || null,
       muscle: meta?.muscle_group ? (muscleLabel.get(meta.muscle_group) ?? meta.muscle_group) : null,
       video_mux_id: meta?.video_mux_id ?? null,
+      overload: hint
+        ? {
+            action: hint.action,
+            weight: hint.weight,
+            reps: hint.reps,
+            rationale: hint.rationale,
+            historyPoints: hint.historyPoints,
+          }
+        : null,
     };
   });
 

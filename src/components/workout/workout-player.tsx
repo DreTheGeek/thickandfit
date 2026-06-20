@@ -13,6 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Tag } from '@/components/ui/badge';
 import { Confetti, useConfetti } from '@/components/ui/confetti';
 
+export type OverloadHint = {
+  action: 'increase_reps' | 'increase_weight' | 'hold' | 'deload';
+  weight: number | null;
+  reps: number;
+  rationale: string;
+  historyPoints: number;
+};
 export type PlayerExercise = {
   exercise_id: string;
   name: string;
@@ -24,6 +31,7 @@ export type PlayerExercise = {
   cues: string | null;
   muscle: string | null;
   video_mux_id: string | null;
+  overload: OverloadHint | null;
 };
 type Substitute = { exercise: { id: string; name_en: string } | null; reason_tag: string | null };
 type LoggedSet = {
@@ -82,8 +90,10 @@ export function WorkoutPlayer({
 
   const ex = exercises[idx];
   const totalSets = ex?.sets ?? 1;
-  const [reps, setReps] = useState(ex?.reps ?? 10);
-  const [weight, setWeight] = useState(ex?.weight ?? 0);
+  // Prefill from the progressive-overload recommendation when we have one, else the plan target.
+  const [reps, setReps] = useState(ex?.overload?.reps ?? ex?.reps ?? 10);
+  const [weight, setWeight] = useState(ex?.overload?.weight ?? ex?.weight ?? 0);
+  const [hintOpen, setHintOpen] = useState(true);
 
   // Wake Lock for the whole session.
   useEffect(() => {
@@ -185,14 +195,22 @@ export function WorkoutPlayer({
       const next = exercises[idx + 1];
       setIdx(idx + 1);
       setSetNum(1);
-      setReps(next.reps ?? 10);
-      setWeight(next.weight ?? 0);
+      setReps(next.overload?.reps ?? next.reps ?? 10);
+      setWeight(next.overload?.weight ?? next.weight ?? 0);
+      setHintOpen(true);
       setTab('instructions');
       if (ex.rest_sec) setRest(ex.rest_sec);
     } else {
       void finish();
     }
   }, [ex, setNum, totalSets, idx, exercises, reps, weight, finish]);
+
+  const applyHint = useCallback((): void => {
+    if (!ex?.overload) return;
+    setReps(ex.overload.reps);
+    if (ex.overload.weight !== null) setWeight(ex.overload.weight);
+    setHintOpen(false);
+  }, [ex]);
 
   const muscleLabel = ex?.muscle ?? null;
   const cueLines = ex?.cues
@@ -286,6 +304,11 @@ export function WorkoutPlayer({
               {muscleLabel ?? '-'}
             </div>
           </div>
+        )}
+
+        {/* Progressive-overload recommendation (first set only) */}
+        {ex.overload && setNum === 1 && hintOpen && (
+          <OverloadCard hint={ex.overload} onApply={applyHint} onDismiss={() => setHintOpen(false)} />
         )}
 
         {/* Steppers */}
@@ -384,6 +407,98 @@ export function WorkoutPlayer({
             : t('logSet')}
         </Button>
       </div>
+    </div>
+  );
+}
+
+// Pure-SVG glyph + colorway per overload action. No chart library.
+function actionVisual(action: OverloadHint['action']): { glyph: ReactElement; tone: string } {
+  const stroke = 'currentColor';
+  switch (action) {
+    case 'increase_weight':
+    case 'increase_reps':
+      return {
+        tone: 'text-accent',
+        glyph: (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 13V3M8 3L4 7M8 3l4 4" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+      };
+    case 'deload':
+      return {
+        tone: 'text-alert',
+        glyph: (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 3v10M8 13l-4-4M8 13l4-4" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+      };
+    default:
+      return {
+        tone: 'text-muted',
+        glyph: (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 8h10" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        ),
+      };
+  }
+}
+
+function OverloadCard({
+  hint,
+  onApply,
+  onDismiss,
+}: {
+  hint: OverloadHint;
+  onApply: () => void;
+  onDismiss: () => void;
+}): ReactElement {
+  const t = useTranslations('app.exercise');
+  const { glyph, tone } = actionVisual(hint.action);
+  const thin = hint.historyPoints < 2;
+  const actionLabel = t(`overloadAction.${hint.action}`);
+  const target =
+    hint.weight !== null
+      ? t('overloadTarget', { weight: hint.weight, reps: hint.reps })
+      : t('overloadTargetBodyweight', { reps: hint.reps });
+
+  return (
+    <div className="mt-[22px] rounded-2xl bg-surface p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className={`flex h-6 w-6 items-center justify-center rounded-full bg-bg ${tone}`}>
+            {glyph}
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
+            {t('overloadTitle')}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label={t('overloadDismiss')}
+          className="tf-press text-faint"
+        >
+          <Icon name="x" size={14} />
+        </button>
+      </div>
+
+      <div className={`mt-2 text-[13px] font-semibold ${tone}`}>{actionLabel}</div>
+      <div className="mt-0.5 font-display text-[22px] leading-none text-ink">{target}</div>
+      <p className="mt-2 text-[13px] leading-[1.6] text-soft">{hint.rationale}</p>
+      {thin && (
+        <p className="mt-1 text-[12px] leading-[1.5] text-faint">{t('overloadThin')}</p>
+      )}
+
+      <button
+        type="button"
+        onClick={onApply}
+        className="tf-press mt-3 text-[12px] font-semibold uppercase tracking-[1px] text-accent"
+      >
+        {t('overloadApply')}
+      </button>
     </div>
   );
 }
