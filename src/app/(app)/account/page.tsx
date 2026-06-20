@@ -36,6 +36,16 @@ export default async function AccountPage(): Promise<ReactElement> {
         contentLocale={profile?.content_locale ?? 'en'}
       />
 
+      <Link
+        href="/account/billing"
+        className="tf-press mt-6 flex items-center justify-between border border-line px-4 py-3.5"
+      >
+        <span className="text-[12px] font-semibold uppercase tracking-[2px] text-muted">
+          {t('billing.title')}
+        </span>
+        <Icon name="chevronRight" size={18} className="text-faint" />
+      </Link>
+
       <form action={signOutAction} className="mt-8">
         <button
           type="submit"

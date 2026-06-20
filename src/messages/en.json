@@ -683,6 +683,58 @@
       "photoNotConfiguredNote": "The AI photo engine is not switched on yet. Search or scan a barcode in the meantime.",
       "photoNoFood": "We could not spot any food in that photo. Try a clearer shot.",
       "photoError": "Something went wrong reading that photo. Please try again."
+    },
+    "billing": {
+      "title": "Billing",
+      "back": "Back",
+      "plan": "Plan",
+      "subscribeCta": "Start subscription",
+      "cancelCta": "Cancel subscription",
+      "reactivateCta": "Reactivate",
+      "confirmCancel": "Confirm cancel",
+      "keepPlan": "Keep my plan",
+      "cancelConfirm": "Your plan stays active until the end of the current period. You will not be charged again.",
+      "nextCharge": "Next charge {amount} on {date}",
+      "endsOn": "Access ends {date} (no further charges)",
+      "noActivePlan": "You do not have an active subscription.",
+      "cardOnFile": "{brand} ending in {last4}",
+      "card": "Card",
+      "history": "Payment history",
+      "reasonLabel": "Why are you leaving? (optional)",
+      "reasonNone": "Prefer not to say",
+      "reasonPlaceholder": "Tell us more (optional)",
+      "honestNote": "No hidden fees. No retention traps. Cancel any time in one tap.",
+      "status": {
+        "trialing": "Trialing",
+        "active": "Active",
+        "past_due": "Past due",
+        "canceled": "Canceled",
+        "incomplete": "Incomplete",
+        "unpaid": "Unpaid",
+        "paused": "Paused",
+        "none": "No plan"
+      },
+      "reason": {
+        "too_expensive": "Too expensive",
+        "not_using": "Not using it enough",
+        "missing_feature": "Missing a feature I need",
+        "other": "Other"
+      },
+      "payment": {
+        "succeeded": "Paid",
+        "failed": "Failed",
+        "refunded": "Refunded",
+        "partially_refunded": "Partial refund",
+        "pending": "Pending"
+      },
+      "error": {
+        "notConfigured": "Billing is not available yet.",
+        "stripeError": "Something went wrong with billing. Please try again.",
+        "noSubscription": "No subscription found.",
+        "noEmail": "No email on file.",
+        "noCompany": "Account not ready.",
+        "generic": "Something went wrong. Please try again."
+      }
     }
   }
 }

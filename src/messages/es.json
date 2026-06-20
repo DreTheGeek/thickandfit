@@ -683,6 +683,58 @@
       "photoNotConfiguredNote": "El motor de fotos con IA aun no esta activado. Mientras tanto, busca o escanea un codigo de barras.",
       "photoNoFood": "No pudimos identificar comida en esa foto. Intenta una toma mas clara.",
       "photoError": "Algo salio mal al leer esa foto. Intenta de nuevo."
+    },
+    "billing": {
+      "title": "Facturación",
+      "back": "Atrás",
+      "plan": "Plan",
+      "subscribeCta": "Iniciar suscripción",
+      "cancelCta": "Cancelar suscripción",
+      "reactivateCta": "Reactivar",
+      "confirmCancel": "Confirmar cancelación",
+      "keepPlan": "Mantener mi plan",
+      "cancelConfirm": "Tu plan sigue activo hasta el final del período actual. No se te volverá a cobrar.",
+      "nextCharge": "Próximo cargo {amount} el {date}",
+      "endsOn": "El acceso termina el {date} (sin más cargos)",
+      "noActivePlan": "No tienes una suscripción activa.",
+      "cardOnFile": "{brand} terminada en {last4}",
+      "card": "Tarjeta",
+      "history": "Historial de pagos",
+      "reasonLabel": "¿Por qué te vas? (opcional)",
+      "reasonNone": "Prefiero no decir",
+      "reasonPlaceholder": "Cuéntanos más (opcional)",
+      "honestNote": "Sin cargos ocultos. Sin trampas de retención. Cancela cuando quieras con un toque.",
+      "status": {
+        "trialing": "En prueba",
+        "active": "Activo",
+        "past_due": "Pago vencido",
+        "canceled": "Cancelado",
+        "incomplete": "Incompleto",
+        "unpaid": "Sin pagar",
+        "paused": "Pausado",
+        "none": "Sin plan"
+      },
+      "reason": {
+        "too_expensive": "Demasiado caro",
+        "not_using": "No lo uso lo suficiente",
+        "missing_feature": "Falta una función que necesito",
+        "other": "Otro"
+      },
+      "payment": {
+        "succeeded": "Pagado",
+        "failed": "Fallido",
+        "refunded": "Reembolsado",
+        "partially_refunded": "Reembolso parcial",
+        "pending": "Pendiente"
+      },
+      "error": {
+        "notConfigured": "La facturación aún no está disponible.",
+        "stripeError": "Algo salió mal con la facturación. Inténtalo de nuevo.",
+        "noSubscription": "No se encontró ninguna suscripción.",
+        "noEmail": "No hay correo registrado.",
+        "noCompany": "La cuenta no está lista.",
+        "generic": "Algo salió mal. Inténtalo de nuevo."
+      }
     }
   }
 }

@@ -74,9 +74,9 @@ type StripeSubscriptionObject = {
   customer: string;
   status: string;
   cancel_at_period_end: boolean;
-  current_period_end: number | null;
-  canceled_at: number | null;
-  trial_end: number | null;
+  current_period_end?: number | null;
+  canceled_at?: number | null;
+  trial_end?: number | null;
   metadata?: Record<string, string>;
   items?: { data: Array<{ price?: { id: string; unit_amount?: number | null; currency?: string } }> };
 };
