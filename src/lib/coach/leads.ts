@@ -18,6 +18,19 @@ import {
 
 export * from '@/lib/coach/leads-types';
 
+/** Most recent opportunity sync timestamp (for the "last synced" label). */
+export async function getLastSync(companyId: string): Promise<string | null> {
+  const sb = createServiceClient();
+  const { data } = await sb
+    .from('opportunities')
+    .select('synced_at')
+    .eq('company_id', companyId)
+    .order('synced_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data?.synced_at as string | undefined) ?? null;
+}
+
 type TagJoin = { tag: TagLite | TagLite[] | null };
 type ContactEmbed = {
   id: string;

@@ -466,7 +466,12 @@
       "leadUnnamed": "Unnamed lead",
       "noLeadsFiltered": "No leads match your filters.",
       "phone": "Phone",
-      "leadNew": "New"
+      "leadNew": "New",
+      "syncNow": "Sync now",
+      "syncRunning": "Syncing...",
+      "syncDone": "Synced {n} opportunities",
+      "syncFailed": "Sync failed",
+      "lastSynced": "Synced {when}"
     },
     "you": {
       "title": "You",

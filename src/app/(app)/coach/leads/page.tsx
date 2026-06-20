@@ -2,9 +2,10 @@
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
-import { parseLeadFilters, getPipelineBoard } from '@/lib/coach/leads';
+import { parseLeadFilters, getPipelineBoard, getLastSync } from '@/lib/coach/leads';
 import { Eyebrow, PageTitle } from '@/components/ui/section';
 import { LeadsView } from '@/components/coach/leads-view';
+import { SyncNowButton } from '@/components/coach/sync-now-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +21,17 @@ export default async function CoachLeadsPage({
     return <div className="p-8 text-sm text-muted">{t('noLeads')}</div>;
   }
   const filters = parseLeadFilters(await searchParams);
-  const board = await getPipelineBoard(ctx.companyId, filters);
+  const [board, lastSync] = await Promise.all([getPipelineBoard(ctx.companyId, filters), getLastSync(ctx.companyId)]);
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-5 py-8 sm:px-8 lg:py-10">
-      <Eyebrow>{t('navLeads')}</Eyebrow>
-      <PageTitle className="mb-5 mt-1">{t('leadsTitle')}</PageTitle>
+    <div className="w-full px-5 py-8 sm:px-8 lg:py-10">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <Eyebrow>{t('navLeads')}</Eyebrow>
+          <PageTitle className="mt-1">{t('leadsTitle')}</PageTitle>
+        </div>
+        <SyncNowButton lastSync={lastSync} locale={locale} />
+      </div>
       <LeadsView board={board} filters={filters} locale={locale} />
     </div>
   );

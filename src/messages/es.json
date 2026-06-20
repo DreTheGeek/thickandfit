@@ -466,7 +466,12 @@
       "leadUnnamed": "Prospecto sin nombre",
       "noLeadsFiltered": "Ningún prospecto coincide con tus filtros.",
       "phone": "Teléfono",
-      "leadNew": "Nuevo"
+      "leadNew": "Nuevo",
+      "syncNow": "Sincronizar",
+      "syncRunning": "Sincronizando...",
+      "syncDone": "{n} oportunidades sincronizadas",
+      "syncFailed": "Error al sincronizar",
+      "lastSynced": "Sincronizado {when}"
     },
     "you": {
       "title": "Tú",

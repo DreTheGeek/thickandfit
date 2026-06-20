@@ -135,6 +135,7 @@ const PATHS = {
   ),
   home: <path d="M4 11.5 12 4l8 7.5M6 10v9h12v-9" />,
   funnel: <path d="M3 5h18l-7 8v6l-4-2v-4z" />,
+  refresh: <path d="M20 11a8 8 0 0 0-14-4l-2 2m0-4v4h4m-6 2a8 8 0 0 0 14 4l2-2m0 4v-4h-4" />,
   grid: (
     <>
       <rect x="4" y="4" width="6.5" height="6.5" rx="1.4" />
