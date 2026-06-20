@@ -643,7 +643,13 @@
       "raw": "Crudo",
       "cooked": "Cocido",
       "weighedAs": "Pesado",
-      "loggingEquiv": "Registrando {grams}g equivalente {state}"
+      "loggingEquiv": "Registrando {grams}g equivalente {state}",
+      "searchMode": "Buscar",
+      "barcodeMode": "Codigo de barras",
+      "barcodePlaceholder": "Ingresa el numero de codigo de barras...",
+      "barcodeLookup": "Buscar",
+      "barcodeLooking": "Buscando...",
+      "barcodeNotFound": "No se encontro ningun alimento con ese codigo. Intenta buscar por nombre."
     }
   }
 }

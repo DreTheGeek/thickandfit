@@ -144,6 +144,11 @@ const PATHS = {
       <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.4" />
     </>
   ),
+  barcode: (
+    <>
+      <path d="M3 5v14M7 5v14M11 5v10M11 17v2M15 5v14M19 5v10M19 17v2" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;

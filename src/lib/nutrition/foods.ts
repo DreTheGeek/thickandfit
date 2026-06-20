@@ -88,6 +88,18 @@ export async function searchFoods(query: string, locale: string): Promise<FoodLi
   return ((data ?? []) as unknown as FoodRaw[]).map((r) => mapFood(r, locale));
 }
 
+// Manual barcode lookup. Normalizes the entry (digits only), then matches foods.barcode. The
+// un-paywalled differentiator: any logged barcode resolves straight to a loggable food.
+export async function lookupFoodByBarcode(barcode: string, locale: string): Promise<FoodLite | null> {
+  const code = barcode.replace(/\D/g, '');
+  if (!code) return null;
+  const sb = await createClient();
+  const { data, error } = await sb.from('foods').select(COLS).eq('barcode', code).limit(1).maybeSingle();
+  if (error) throw new Error(`lookupFoodByBarcode: ${error.message}`);
+  if (!data) return null;
+  return mapFood(data as unknown as FoodRaw, locale);
+}
+
 export async function getFoodWithPortions(
   id: string,
   locale: string,

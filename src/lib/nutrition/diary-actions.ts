@@ -6,12 +6,26 @@ import { getLocale } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, type FoodLite } from '@/lib/nutrition/macros';
-import { searchFoods, getFoodDetail, type FoodDetail } from '@/lib/nutrition/foods';
+import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
 
 export async function searchFoodsAction(query: string): Promise<FoodLite[]> {
   await requireAuth();
   const locale = await getLocale();
   return searchFoods(query, locale);
+}
+
+const BarcodeInput = z.string().trim().min(4).max(32).regex(/^[0-9\s-]+$/);
+
+export type BarcodeResult = { ok: boolean; food?: FoodLite; error?: 'invalid' | 'not_found' };
+
+export async function lookupBarcodeAction(barcode: unknown): Promise<BarcodeResult> {
+  const parsed = BarcodeInput.safeParse(barcode);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  await requireAuth();
+  const locale = await getLocale();
+  const food = await lookupFoodByBarcode(parsed.data, locale);
+  if (!food) return { ok: false, error: 'not_found' };
+  return { ok: true, food };
 }
 
 export async function getFoodDetailAction(foodId: string): Promise<FoodDetail | null> {
@@ -28,6 +42,7 @@ const LogInput = z.object({
   mealSlot: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
   grams: z.number().positive().max(5000),
   portionId: z.string().uuid().nullable().optional(),
+  source: z.enum(['search', 'barcode']).optional(),
 });
 
 export type LogResult = { ok: boolean; error?: string };
@@ -60,7 +75,7 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
     meal_slot: parsed.data.mealSlot,
     grams: parsed.data.grams,
     amount: parsed.data.grams,
-    source: 'search',
+    source: parsed.data.source ?? 'search',
     kcal: m.kcal,
     protein_g: m.proteinG,
     carb_g: m.carbG,

@@ -643,7 +643,13 @@
       "raw": "Raw",
       "cooked": "Cooked",
       "weighedAs": "Weighed",
-      "loggingEquiv": "Logging {grams}g {state} equivalent"
+      "loggingEquiv": "Logging {grams}g {state} equivalent",
+      "searchMode": "Search",
+      "barcodeMode": "Barcode",
+      "barcodePlaceholder": "Enter barcode number...",
+      "barcodeLookup": "Look up",
+      "barcodeLooking": "Looking...",
+      "barcodeNotFound": "No food found for that barcode. Try searching by name."
     }
   }
 }

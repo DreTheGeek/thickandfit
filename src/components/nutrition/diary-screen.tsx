@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
-import { searchFoodsAction, getFoodDetailAction, logFoodAction, deleteFoodLogAction } from '@/lib/nutrition/diary-actions';
+import { searchFoodsAction, getFoodDetailAction, logFoodAction, deleteFoodLogAction, lookupBarcodeAction } from '@/lib/nutrition/diary-actions';
 import { MEAL_SLOTS, macrosForGrams, effectiveGrams, type DiaryDay, type FoodLite, type FoodPortion, type FoodState, type MealSlot } from '@/lib/nutrition/macros';
 
 function MacroBar({ label, value, target, color }: { label: string; value: number; target: number; color: string }): ReactElement {
@@ -32,6 +32,9 @@ export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<FoodLite[]>([]);
   const [sel, setSel] = useState<FoodLite | null>(null);
+  const [mode, setMode] = useState<'search' | 'barcode'>('search');
+  const [barcode, setBarcode] = useState('');
+  const [scanState, setScanState] = useState<'idle' | 'loading' | 'not_found'>('idle');
   const [grams, setGrams] = useState(100);
   const [slot, setSlot] = useState<MealSlot>('breakfast');
   const [busy, setBusy] = useState(false);
@@ -50,8 +53,10 @@ export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
       setResults(await searchFoodsAction(v));
     }, 250);
   }
-  async function selectFood(f: FoodLite): Promise<void> {
+  const [selSource, setSelSource] = useState<'search' | 'barcode'>('search');
+  async function selectFood(f: FoodLite, src: 'search' | 'barcode' = 'search'): Promise<void> {
     setSel(f);
+    setSelSource(src);
     setGrams(100);
     setPortionId(null);
     setPortions([]);
@@ -71,18 +76,33 @@ export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
     }
   }
 
+  async function onBarcodeLookup(): Promise<void> {
+    const code = barcode.trim();
+    if (!code) return;
+    setScanState('loading');
+    const res = await lookupBarcodeAction(code);
+    if (res.ok && res.food) {
+      setScanState('idle');
+      await selectFood(res.food, 'barcode');
+    } else {
+      setScanState('not_found');
+    }
+  }
+
   const showConvert = cookedFactor != null && foodState != null;
   const effGrams = showConvert && weighed !== foodState ? effectiveGrams(grams, weighed, foodState as FoodState, cookedFactor as number) : grams;
 
   async function add(): Promise<void> {
     if (!sel || effGrams <= 0) return;
     setBusy(true);
-    const res = await logFoodAction({ foodId: sel.id, name: sel.name, mealSlot: slot, grams: effGrams, portionId });
+    const res = await logFoodAction({ foodId: sel.id, name: sel.name, mealSlot: slot, grams: effGrams, portionId, source: selSource });
     setBusy(false);
     if (res.ok) {
       setSel(null);
       setQ('');
       setResults([]);
+      setBarcode('');
+      setScanState('idle');
       setGrams(100);
       router.refresh();
     }
@@ -127,17 +147,70 @@ export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
 
       {/* Add food */}
       <div className="mt-5 rounded-2xl border border-line bg-surface p-5">
-        <div className="relative">
-          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-faint">
-            <Icon name="search" size={16} />
-          </span>
-          <input
-            value={q}
-            onChange={(e) => onSearch(e.target.value)}
-            placeholder={t('searchPlaceholder')}
-            className="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-[14px] outline-none placeholder:text-faint focus:border-ink"
-          />
+        {/* Search / barcode mode toggle */}
+        <div className="mb-3 flex w-fit overflow-hidden rounded-full border border-line">
+          {(['search', 'barcode'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setMode(m);
+                setSel(null);
+                setScanState('idle');
+              }}
+              className={['tf-press flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] font-semibold', mode === m ? 'bg-ink text-bg' : 'text-muted'].join(' ')}
+            >
+              <Icon name={m === 'search' ? 'search' : 'barcode'} size={14} />
+              {t(m === 'search' ? 'searchMode' : 'barcodeMode')}
+            </button>
+          ))}
         </div>
+
+        {mode === 'search' ? (
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-faint">
+              <Icon name="search" size={16} />
+            </span>
+            <input
+              value={q}
+              onChange={(e) => onSearch(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              className="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-[14px] outline-none placeholder:text-faint focus:border-ink"
+            />
+          </div>
+        ) : (
+          <div>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-faint">
+                  <Icon name="barcode" size={16} />
+                </span>
+                <input
+                  value={barcode}
+                  onChange={(e) => {
+                    setBarcode(e.target.value);
+                    if (scanState === 'not_found') setScanState('idle');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void onBarcodeLookup();
+                  }}
+                  inputMode="numeric"
+                  placeholder={t('barcodePlaceholder')}
+                  className="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-[14px] tabular-nums outline-none placeholder:text-faint focus:border-ink"
+                />
+              </div>
+              <button
+                type="button"
+                disabled={scanState === 'loading' || !barcode.trim()}
+                onClick={onBarcodeLookup}
+                className="tf-press shrink-0 rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-bg disabled:opacity-50"
+              >
+                {scanState === 'loading' ? t('barcodeLooking') : t('barcodeLookup')}
+              </button>
+            </div>
+            {scanState === 'not_found' && <p className="mt-2 text-[12px] text-alert-ink">{t('barcodeNotFound')}</p>}
+          </div>
+        )}
 
         {sel ? (
           <div className="mt-4 rounded-xl border border-line p-4">
