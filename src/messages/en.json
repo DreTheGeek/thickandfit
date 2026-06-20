@@ -199,7 +199,7 @@
       "toolRecipes": "Recipes",
       "toolRecipeBooks": "Recipe books",
       "toolIngredients": "Ingredients",
-      "toolMealPlans": "Meal plan templates",
+      "toolMealPlans": "Meal plans",
       "toolContentCollections": "Content collections",
       "toolMediaLibrary": "Media library",
       "toolForms": "Forms",
@@ -511,7 +511,9 @@
       "backToMealPlans": "Back to meal plans",
       "perDay": "/day",
       "mealGroups": "Meal groups",
-      "mealOptions": "{n} options"
+      "mealOptions": "{n} options",
+      "recipeUntitled": "Untitled recipe",
+      "mealGroupUntitled": "Meal"
     },
     "you": {
       "title": "You",

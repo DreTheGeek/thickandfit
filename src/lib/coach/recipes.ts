@@ -38,10 +38,11 @@ const RECIPE_COLS =
   'id, name_en, name_es, image_url, category, recipe_book_name, kcal, protein_g, carb_g, fat_g, total_time_minutes, has_video, ingredient_count, search_text';
 
 function pickName(en: string | null, es: string | null, locale: string): string {
-  return (locale === 'es' ? es || en : en || es) || 'Recipe';
+  // empty fallback; the component supplies a locale-aware label (t('recipeUntitled'))
+  return (locale === 'es' ? es || en : en || es) || '';
 }
 
-function mapRow(r: RecipeRaw, locale: string): RecipeRow & { search: string } {
+function mapRow(r: RecipeRaw, locale: string): RecipeRow {
   return {
     id: r.id,
     name: pickName(r.name_en, r.name_es, locale),
@@ -55,7 +56,6 @@ function mapRow(r: RecipeRaw, locale: string): RecipeRow & { search: string } {
     totalTime: r.total_time_minutes ?? 0,
     hasVideo: r.has_video ?? false,
     ingredientCount: r.ingredient_count ?? 0,
-    search: (r.search_text ?? '').toLowerCase(),
   };
 }
 
@@ -68,9 +68,8 @@ function tally(rows: { key: string | null }[]): Bucket[] {
   return [...m.entries()].map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
 }
 
-type Row = ReturnType<typeof mapRow>;
-function matches(r: Row, f: RecipeFilters, exclude: 'category' | 'book' | null): boolean {
-  if (f.q && !r.search.includes(f.q.toLowerCase())) return false;
+function matches(r: RecipeRow, f: RecipeFilters, exclude: 'category' | 'book' | null, search: string): boolean {
+  if (f.q && !search.includes(f.q.toLowerCase())) return false;
   if (exclude !== 'category' && f.category.length && !f.category.includes(r.category ?? '')) return false;
   if (exclude !== 'book' && f.book.length && !f.book.includes(r.bookName ?? '')) return false;
   if (f.hasVideo && !r.hasVideo) return false;
@@ -82,9 +81,12 @@ export async function getRecipesPage(companyId: string, filters: RecipeFilters, 
   const sb = createServiceClient();
   const { data, error } = await sb.from('recipes').select(RECIPE_COLS).eq('company_id', companyId).limit(2000);
   if (error) throw new Error(`getRecipesPage: ${error.message}`);
-  const all = ((data ?? []) as RecipeRaw[]).map((r) => mapRow(r, locale));
+  const raws = (data ?? []) as RecipeRaw[];
+  const searchById = new Map(raws.map((r) => [r.id, (r.search_text ?? '').toLowerCase()]));
+  const sx = (id: string): string => searchById.get(id) ?? '';
+  const all = raws.map((r) => mapRow(r, locale));
 
-  const filtered = all.filter((r) => matches(r, filters, null));
+  const filtered = all.filter((r) => matches(r, filters, null, sx(r.id)));
   const mul = filters.dir === 'asc' ? 1 : -1;
   filtered.sort((a, b) => {
     switch (filters.sort) {
@@ -101,8 +103,8 @@ export async function getRecipesPage(companyId: string, filters: RecipeFilters, 
 
   const start = (filters.page - 1) * filters.pageSize;
   const facets: RecipeFacets = {
-    category: tally(all.filter((r) => matches(r, filters, 'category')).map((r) => ({ key: r.category }))),
-    book: tally(all.filter((r) => matches(r, filters, 'book')).map((r) => ({ key: r.bookName }))),
+    category: tally(all.filter((r) => matches(r, filters, 'category', sx(r.id))).map((r) => ({ key: r.category }))),
+    book: tally(all.filter((r) => matches(r, filters, 'book', sx(r.id))).map((r) => ({ key: r.bookName }))),
     hasVideoCount: all.filter((r) => r.hasVideo).length,
     highProteinCount: all.filter((r) => r.proteinG >= HIGH_PROTEIN_G).length,
   };
@@ -118,12 +120,13 @@ export async function getRecipesPage(companyId: string, filters: RecipeFilters, 
 
 export async function getRecipeDetail(companyId: string, id: string, locale: string): Promise<RecipeDetail | null> {
   const sb = createServiceClient();
-  const { data } = await sb
+  const { data, error } = await sb
     .from('recipes')
     .select(`${RECIPE_COLS}, procedure_en, procedure_es, prep_time_minutes, cooking_time_minutes, spices`)
     .eq('company_id', companyId)
     .eq('id', id)
     .maybeSingle();
+  if (error) throw new Error(`getRecipeDetail: ${error.message}`);
   if (!data) return null;
   const raw = data as RecipeRaw & {
     procedure_en: string | null;

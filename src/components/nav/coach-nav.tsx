@@ -8,7 +8,6 @@ import type { ReactElement } from 'react';
 import { signOutAction } from '@/lib/auth/actions';
 import { Wordmark } from '@/components/ui/wordmark';
 import { Icon, type IconName } from '@/components/ui/icons';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 type NavItem = { key: string; href: string; icon: IconName };
 type NavSection = { headerKey: string; items: NavItem[] };
@@ -141,9 +140,6 @@ export function CoachNav({ onNavigate }: { onNavigate?: () => void }): ReactElem
       </nav>
 
       <div className="shrink-0 border-t border-line p-3">
-        <div className="mb-1 flex justify-center px-1 pb-2">
-          <ThemeToggle />
-        </div>
         <form action={signOutAction}>
           <button
             type="submit"

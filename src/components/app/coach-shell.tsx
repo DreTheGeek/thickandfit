@@ -5,6 +5,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { CoachNav, CoachTopWordmark } from '@/components/nav/coach-nav';
 import { Icon } from '@/components/ui/icons';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 /**
  * Responsive coach console shell.
@@ -23,17 +24,22 @@ export function CoachShell({ children }: { children: ReactNode }): ReactElement 
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile/tablet top bar */}
-        <header className="flex h-14 items-center justify-between border-b border-line bg-surface px-4 lg:hidden">
-          <CoachTopWordmark />
-          <button
-            type="button"
-            aria-label="Menu"
-            onClick={() => setOpen(true)}
-            className="tf-press text-ink"
-          >
-            <Icon name="menu" size={24} />
-          </button>
+        {/* Top bar (all sizes): wordmark + hamburger on mobile, theme toggle always on the right */}
+        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line bg-surface px-4">
+          <div className="lg:hidden">
+            <CoachTopWordmark />
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
+            <button
+              type="button"
+              aria-label="Menu"
+              onClick={() => setOpen(true)}
+              className="tf-press text-ink lg:hidden"
+            >
+              <Icon name="menu" size={24} />
+            </button>
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto">{children}</main>

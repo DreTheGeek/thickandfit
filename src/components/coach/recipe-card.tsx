@@ -1,11 +1,11 @@
 'use client';
 
 import type { ReactElement } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
+import { RecipeImage } from '@/components/coach/recipe-image';
 import type { RecipeRow } from '@/lib/coach/recipes-types';
 
 function Macro({ label, value }: { label: string; value: number }): ReactElement {
@@ -26,20 +26,12 @@ export function RecipeCard({ recipe }: { recipe: RecipeRow }): ReactElement {
   return (
     <Link href={href} className="tf-press group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-warm">
-        {recipe.image ? (
-          <Image
-            src={recipe.image}
-            alt={recipe.name}
-            fill
-            sizes="(max-width: 640px) 50vw, 280px"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            unoptimized
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-faint">
-            <Icon name="nutrition" size={32} />
-          </div>
-        )}
+        <RecipeImage
+          src={recipe.image}
+          alt={recipe.name}
+          sizes="(max-width: 640px) 50vw, 280px"
+          imgClassName="object-cover transition-transform duration-300 group-hover:scale-105"
+        />
         <span className="absolute left-2 top-2 rounded-full bg-ink/85 px-2.5 py-1 text-[11px] font-semibold text-bg">
           {recipe.kcal} kcal
         </span>
@@ -51,7 +43,7 @@ export function RecipeCard({ recipe }: { recipe: RecipeRow }): ReactElement {
       </div>
       <div className="flex flex-1 flex-col p-3.5">
         {recipe.category && <div className="mb-1 text-[10px] font-semibold uppercase tracking-[1px] text-faint">{recipe.category}</div>}
-        <div className="mb-3 line-clamp-2 text-[14px] font-semibold leading-tight">{recipe.name}</div>
+        <div className="mb-3 line-clamp-2 text-[14px] font-semibold leading-tight">{recipe.name || t('recipeUntitled')}</div>
         <div className="mt-auto flex items-center justify-between border-t border-divider pt-3">
           <div className="flex gap-3.5">
             <Macro label={t('macroP')} value={recipe.proteinG} />

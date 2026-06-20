@@ -31,19 +31,17 @@ function clientName(c: ContactLite): string | null {
   if (!c) return null;
   return [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || null;
 }
-function mapRow(p: PlanRaw): MealPlanRow & { search: string } {
-  const cn = clientName(one(p.contact));
+function mapRow(p: PlanRaw): MealPlanRow {
   return {
     id: p.id,
     name: p.name,
-    clientName: cn,
+    clientName: clientName(one(p.contact)),
     calorieGoal: p.calorie_goal,
     proteinG: p.protein_g,
     carbG: p.carb_g,
     fatG: p.fat_g,
     macroTiming: p.macro_timing_name,
     numGroups: p.num_meal_groups,
-    search: `${p.name} ${cn ?? ''}`.toLowerCase(),
   };
 }
 
@@ -56,7 +54,8 @@ export async function getMealPlansPage(companyId: string, filters: MealPlanFilte
   if (error) throw new Error(`getMealPlansPage: ${error.message}`);
   const all = ((data ?? []) as unknown as PlanRaw[]).map(mapRow);
 
-  const filtered = all.filter((r) => (filters.q ? r.search.includes(filters.q.toLowerCase()) : true));
+  const q = filters.q.toLowerCase();
+  const filtered = all.filter((r) => (q ? `${r.name} ${r.clientName ?? ''}`.toLowerCase().includes(q) : true));
   const mul = filters.dir === 'asc' ? 1 : -1;
   filtered.sort((a, b) => {
     switch (filters.sort) {
@@ -80,21 +79,27 @@ export async function getMealPlansPage(companyId: string, filters: MealPlanFilte
 
 export async function getMealPlanDetail(companyId: string, id: string): Promise<MealPlanDetail | null> {
   const sb = createServiceClient();
-  const { data } = await sb
+  const { data, error } = await sb
     .from('meal_plans')
     .select(`${COLS}, plan_jsonb`)
     .eq('company_id', companyId)
     .eq('id', id)
     .maybeSingle();
+  if (error) throw new Error(`getMealPlanDetail: ${error.message}`);
   if (!data) return null;
   const p = data as unknown as PlanRaw;
   const base = mapRow(p);
 
   const rawGroups =
     p.plan_jsonb && typeof p.plan_jsonb === 'object' && Array.isArray((p.plan_jsonb as { mealGroups?: unknown }).mealGroups)
-      ? ((p.plan_jsonb as { mealGroups: { name?: string; numberOfMeals?: number }[] }).mealGroups)
+      ? ((p.plan_jsonb as { mealGroups: unknown[] }).mealGroups)
       : [];
-  const groups: MealGroupLite[] = rawGroups.map((g) => ({ name: g.name ?? 'Meal', numberOfMeals: g.numberOfMeals ?? null }));
+  const groups: MealGroupLite[] = rawGroups
+    .filter((g): g is Record<string, unknown> => g != null && typeof g === 'object')
+    .map((g) => ({
+      name: typeof g.name === 'string' && g.name ? g.name : '',
+      numberOfMeals: typeof g.numberOfMeals === 'number' ? g.numberOfMeals : null,
+    }));
 
   return {
     id: base.id,

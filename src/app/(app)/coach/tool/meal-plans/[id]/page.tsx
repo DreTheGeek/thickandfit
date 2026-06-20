@@ -24,7 +24,7 @@ export default async function CoachMealPlanDetailPage({
   if (!p) notFound();
   const t = await getTranslations('app.coach');
   const { from } = await searchParams;
-  const fromQs = typeof from === 'string' ? from : '';
+  const fromQs = Array.isArray(from) ? (from[0] ?? '') : (from ?? '');
   const backHref = fromQs ? `/coach/tool/meal-plans?${fromQs}` : '/coach/tool/meal-plans';
 
   const macros = [
@@ -72,7 +72,7 @@ export default async function CoachMealPlanDetailPage({
           <div className="flex flex-col">
             {p.groups.map((g, i) => (
               <div key={i} className="flex items-center justify-between border-b border-divider py-3 text-[14px] last:border-0">
-                <span className="font-medium">{g.name}</span>
+                <span className="font-medium">{g.name || t('mealGroupUntitled')}</span>
                 {g.numberOfMeals != null && <span className="text-[12px] text-faint">{t('mealOptions', { n: g.numberOfMeals })}</span>}
               </div>
             ))}

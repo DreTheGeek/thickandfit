@@ -70,7 +70,19 @@ export function MealPlansView({ page, filters }: { page: MealPlansPage; filters:
             </thead>
             <tbody>
               {page.rows.map((r) => (
-                <tr key={r.id} onClick={() => open(r.id)} className="tf-press cursor-pointer border-b border-divider last:border-0 hover:bg-warm/50">
+                <tr
+                  key={r.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => open(r.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      open(r.id);
+                    }
+                  }}
+                  className="tf-press cursor-pointer border-b border-divider last:border-0 hover:bg-warm/50"
+                >
                   <td className="px-4 py-3 text-[13px] font-semibold">{r.clientName ?? t('leadUnnamed')}</td>
                   <td className="hidden px-4 py-3 text-[13px] text-soft sm:table-cell">{r.name}</td>
                   <td className="px-4 py-3 text-right text-[13px] font-semibold tabular-nums">{r.calorieGoal ?? '-'}</td>

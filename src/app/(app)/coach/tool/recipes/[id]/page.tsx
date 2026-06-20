@@ -1,6 +1,5 @@
 // Recipe detail: hero image, macro ring, ingredient list (with per-ingredient macros), procedure.
 import type { ReactElement } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -8,6 +7,7 @@ import { requireCoach } from '@/lib/auth/guards';
 import { getRecipeDetail } from '@/lib/coach/recipes';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
+import { RecipeImage } from '@/components/coach/recipe-image';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ export default async function CoachRecipeDetailPage({
   if (!r) notFound();
   const t = await getTranslations('app.coach');
   const { from } = await searchParams;
-  const fromQs = typeof from === 'string' ? from : '';
+  const fromQs = Array.isArray(from) ? (from[0] ?? '') : (from ?? '');
   const backHref = fromQs ? `/coach/tool/recipes?${fromQs}` : '/coach/tool/recipes';
 
   return (
@@ -38,19 +38,13 @@ export default async function CoachRecipeDetailPage({
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="w-full shrink-0 lg:w-[420px]">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-warm">
-            {r.image ? (
-              <Image src={r.image} alt={r.name} fill sizes="420px" className="object-cover" unoptimized />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-faint">
-                <Icon name="nutrition" size={40} />
-              </div>
-            )}
+            <RecipeImage src={r.image} alt={r.name} sizes="420px" />
           </div>
         </div>
 
         <div className="min-w-0 flex-1">
           {r.category && <div className="mb-1 text-[11px] font-semibold uppercase tracking-[1.5px] text-faint">{r.category}</div>}
-          <h1 className="tf-display text-[30px] leading-tight">{r.name}</h1>
+          <h1 className="tf-display text-[30px] leading-tight">{r.name || t('recipeUntitled')}</h1>
           {r.bookName && <div className="mt-1 text-[13px] text-muted">{r.bookName}</div>}
 
           <div className="mt-5 flex items-center gap-5 rounded-2xl border border-line bg-surface p-4">
