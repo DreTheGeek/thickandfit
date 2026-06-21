@@ -44,6 +44,12 @@
     "resetCta": "Enviar enlace",
     "resetSent": "Si ese correo existe, te enviaremos un enlace.",
     "checkEmail": "Revisa tu correo para confirmar tu cuenta.",
+    "newPasswordTitle": "Crea una contraseña nueva",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirma la contraseña",
+    "updatePasswordCta": "Actualizar contraseña",
+    "oauthError": "No pudimos iniciar tu sesión con ese proveedor. Inténtalo de nuevo o usa el correo.",
+    "authError": "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo.",
     "or": "o"
   },
   "app": {

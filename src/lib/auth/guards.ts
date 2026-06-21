@@ -11,6 +11,7 @@ export async function requireAuth(): Promise<AuthContext> {
 
 export async function requireCoach(): Promise<AuthContext> {
   const ctx = await requireAuth();
-  if (!hasRole(ctx.role, COACH_ROLES)) redirect('/');
+  // Authed non-coaches belong in the app, not the marketing landing.
+  if (!hasRole(ctx.role, COACH_ROLES)) redirect('/dashboard');
   return ctx;
 }

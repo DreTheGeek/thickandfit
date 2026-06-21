@@ -44,6 +44,12 @@
     "resetCta": "Send reset link",
     "resetSent": "If that email exists, a reset link is on its way.",
     "checkEmail": "Check your email to confirm your account.",
+    "newPasswordTitle": "Set a new password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "updatePasswordCta": "Update password",
+    "oauthError": "We could not sign you in with that provider. Try again or use email.",
+    "authError": "Something went wrong signing you in. Please try again.",
     "or": "or"
   },
   "app": {
