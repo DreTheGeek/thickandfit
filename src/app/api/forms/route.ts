@@ -1,4 +1,4 @@
-// Save a form (coach). POST { title_en, title_es?, type?, fields:[...] } — field order = array index.
+// Save a form (coach). POST { title_en, title_es?, type?, fields:[...] }. Field order = array index.
 import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { saveFormSchema, saveForm } from '@/lib/forms/engine';

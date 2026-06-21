@@ -1,6 +1,6 @@
 // Real system-health checks for the coach App Health surface. Server-only: probes the DB,
 // reads live row counts, and reports which integrations are actually configured (env presence
-// only — secret VALUES are never returned). No fabricated "operational" lights.
+// only; secret VALUES are never returned). No fabricated "operational" lights.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 

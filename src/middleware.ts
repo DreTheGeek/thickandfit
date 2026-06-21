@@ -1,6 +1,6 @@
 // Two jobs per request:
 // 1. Refresh the Supabase session so rotated auth cookies are persisted (Server Components
-//    cannot write cookies, so this middleware must — without it sessions break after the
+//    cannot write cookies, so this middleware must; without it sessions break after the
 //    first token rotation and users get bounced back to sign-in).
 // 2. On first visit (no ui_locale cookie), default the interface language from the
 //    visitor's country: LATAM/ES -> Spanish, else English. User-overridable later.

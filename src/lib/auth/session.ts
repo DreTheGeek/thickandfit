@@ -55,7 +55,7 @@ export const COACH_ROLES: Role[] = ['coach', 'assistant_coach', 'operator'];
 
 // Where to send a freshly-authenticated user. Coaches/operators go to the app home;
 // subscribers/free go to onboarding until they've completed it, then the dashboard.
-// NEVER returns '/' (the marketing landing) — an authed user should land in the app.
+// NEVER returns '/' (the marketing landing): an authed user should land in the app.
 export async function homePathForUser(userId: string, role: Role): Promise<string> {
   if (COACH_ROLES.includes(role)) return '/coach';
   const svc = createServiceClient();
