@@ -3,6 +3,7 @@
 // challenge leaderboard. The feed is fast: posts + a handful of bulk lookups, no N+1.
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { COACH_ROLES } from '@/lib/auth/session';
 import {
   REACTION_EMOJIS,
@@ -28,14 +29,14 @@ function initialsFor(name: string): string {
 
 type ProfileRow = { id: string; full_name: string | null; role: string };
 
-async function loadAuthors(
-  sb: Awaited<ReturnType<typeof createClient>>,
-  ids: string[],
-): Promise<Map<string, FeedAuthor>> {
+async function loadAuthors(ids: string[]): Promise<Map<string, FeedAuthor>> {
   const map = new Map<string, FeedAuthor>();
   const unique = [...new Set(ids)].filter(Boolean);
   if (unique.length === 0) return map;
-  const { data } = await sb.from('profiles').select('id, full_name, role').in('id', unique);
+  // Author display names are non-sensitive, but profiles SELECT is now owner-or-coach (RLS), so a
+  // subscriber cannot read other members' rows via their session client. Hydrate via the service
+  // client: the post ids are already company-scoped by the feed's RLS read above.
+  const { data } = await createServiceClient().from('profiles').select('id, full_name, role').in('id', unique);
   for (const p of (data ?? []) as ProfileRow[]) {
     const name = p.full_name?.trim() || 'Member';
     map.set(p.id, {
@@ -102,7 +103,7 @@ export async function getCommunity(viewerId: string): Promise<CommunityData> {
     }
   }
 
-  const authors = await loadAuthors(sb, posts.map((p) => p.author_profile_id));
+  const authors = await loadAuthors(posts.map((p) => p.author_profile_id));
 
   function toFeedPost(p: PostRow): FeedPost {
     const bucket = reactionsByPost.get(p.id);
@@ -166,7 +167,7 @@ async function getActiveChallenge(
     .order('progress', { ascending: false });
   const participants = (partRows ?? []) as { profile_id: string; progress: number }[];
 
-  const authors = await loadAuthors(sb, participants.map((p) => p.profile_id));
+  const authors = await loadAuthors(participants.map((p) => p.profile_id));
   const leaders: LeaderRow[] = participants.slice(0, LEADER_LIMIT).map((p) => {
     const a = authors.get(p.profile_id) ?? fallbackAuthor(p.profile_id);
     return {
@@ -207,7 +208,7 @@ export async function getComments(postId: string): Promise<FeedComment[]> {
     .eq('post_id', postId)
     .order('created_at', { ascending: true });
   const rows = (data ?? []) as { id: string; profile_id: string; body: string; created_at: string }[];
-  const authors = await loadAuthors(sb, rows.map((r) => r.profile_id));
+  const authors = await loadAuthors(rows.map((r) => r.profile_id));
   return rows.map((r) => ({
     id: r.id,
     author: authors.get(r.profile_id) ?? fallbackAuthor(r.profile_id),
