@@ -8,8 +8,7 @@ import { Skeleton } from '@/components/states/skeleton';
 import { ErrorState } from '@/components/states/error-state';
 import { EmptyState } from '@/components/states/empty-state';
 import { ListRow } from '@/components/ui/list-row';
-import { Tag } from '@/components/ui/badge';
-import { Icon, PlayIcon } from '@/components/ui/icons';
+import { Icon } from '@/components/ui/icons';
 
 type Exercise = {
   id: string;
@@ -37,6 +36,7 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
   const [equipment, setEquipment] = useState('');
   const [items, setItems] = useState<Exercise[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'idle'>('loading');
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -55,7 +55,7 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
         if (e?.name !== 'AbortError') setState('error');
       });
     return () => ctrl.abort();
-  }, [q, muscle, equipment]);
+  }, [q, muscle, equipment, reloadKey]);
 
   const select =
     'border border-line bg-surface px-3 py-2.5 text-[13px] text-ink outline-none focus:border-ink';
@@ -108,7 +108,7 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
           ))}
         </div>
       ) : state === 'error' ? (
-        <ErrorState onRetry={() => setQ((s) => s)} />
+        <ErrorState onRetry={() => setReloadKey((k) => k + 1)} />
       ) : items.length === 0 ? (
         <EmptyState title={t('noResults')} message={t('noResultsBody')} />
       ) : (
@@ -119,25 +119,14 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
               divider={i < items.length - 1}
               leading={
                 <div
-                  className="relative flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[10px]"
+                  className="h-[46px] w-[46px] flex-none rounded-[10px]"
                   style={{ background: 'linear-gradient(135deg,#3a3a3a,#111)' }}
-                >
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-bg/90">
-                    <PlayIcon size={9} className="text-ink" />
-                  </div>
-                </div>
+                />
               }
               title={(locale === 'es' && ex.name_es) || ex.name_en}
               sub={[ex.muscle_group, ex.equipment, ex.difficulty]
                 .filter(Boolean)
                 .join(' · ')}
-              trailing={
-                ex.video_mux_id ? (
-                  <Tag outlined={false} className="bg-accent text-white">
-                    {t('demo')}
-                  </Tag>
-                ) : undefined
-              }
             />
           ))}
         </div>

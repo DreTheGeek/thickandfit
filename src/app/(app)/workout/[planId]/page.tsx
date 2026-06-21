@@ -19,11 +19,14 @@ type SessionExercise = {
 
 export default async function WorkoutPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ planId: string }>;
+  searchParams: Promise<{ day?: string }>;
 }): Promise<ReactElement> {
   const ctx = await requireAuth();
   const { planId } = await params;
+  const { day: dayParam } = await searchParams;
   const locale = await getLocale();
 
   const supabase = createServiceClient();
@@ -45,7 +48,14 @@ export default async function WorkoutPage({
     );
   }
 
-  const session = program.sessions[0];
+  // Clamp the requested day index into range so multi-day programs reach days 2..N
+  // and a bad/out-of-range ?day= value safely falls back to the first session.
+  const parsedDay = Number(dayParam);
+  const dayIndex =
+    Number.isInteger(parsedDay) && parsedDay >= 0 && parsedDay < program.sessions.length
+      ? parsedDay
+      : 0;
+  const session = program.sessions[dayIndex];
   const exList = session.exercises as SessionExercise[];
   const ids = exList.map((e) => e.exercise_id);
 

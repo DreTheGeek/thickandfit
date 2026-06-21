@@ -21,8 +21,13 @@ type SessionExercise = {
   reps: number | null;
 };
 
-export default async function WorkoutsPage(): Promise<ReactElement> {
+export default async function WorkoutsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ day?: string }>;
+}): Promise<ReactElement> {
   const ctx = await requireAuth();
+  const { day: dayParam } = await searchParams;
   const locale = await getLocale();
 
   let program: ActivitiesProgram | null = null;
@@ -37,7 +42,15 @@ export default async function WorkoutsPage(): Promise<ReactElement> {
 
     if (plan) {
       const full = await getProgram(ctx.companyId, plan.id);
-      const session = full?.sessions[0];
+      const sessions = full?.sessions ?? [];
+      // Clamp the requested day into range so days 2..N are reachable and a bad value
+      // safely falls back to day 1.
+      const parsedDay = Number(dayParam);
+      const dayIndex =
+        Number.isInteger(parsedDay) && parsedDay >= 0 && parsedDay < sessions.length
+          ? parsedDay
+          : 0;
+      const session = sessions[dayIndex];
       let exercises: ActivitiesProgram['exercises'] = [];
 
       if (session) {
@@ -67,9 +80,14 @@ export default async function WorkoutsPage(): Promise<ReactElement> {
         name: (locale === 'es' && plan.name_es) || plan.name_en,
         week: 1,
         totalWeeks: plan.weeks,
-        day: 1,
-        totalDays: full?.sessions.length ?? 1,
+        day: dayIndex + 1,
+        totalDays: sessions.length || 1,
         pct: 0,
+        days: sessions.map((s, i) => ({
+          index: i,
+          label: s.day_label || `Day ${i + 1}`,
+        })),
+        activeDay: dayIndex,
         exercises,
       };
     }

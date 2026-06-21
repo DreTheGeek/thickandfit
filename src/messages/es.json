@@ -81,7 +81,10 @@
       "todo": "Por hacer",
       "morningWorkout": "Entreno de la mañana",
       "logBreakfast": "Registrar desayuno",
-      "drinkWater": "Tomar agua"
+      "drinkWater": "Tomar agua",
+      "setupPendingTitle": "Configuración de cuenta pendiente",
+      "setupPendingBody": "Estamos terminando de configurar tu cuenta. Esto suele tardar solo un momento. Contáctanos si no se resuelve pronto.",
+      "setupPendingCta": "Contactar soporte"
     },
     "activities": {
       "title": "Actividades",

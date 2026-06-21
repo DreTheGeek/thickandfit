@@ -81,7 +81,10 @@
       "todo": "Things to do",
       "morningWorkout": "Morning Workout",
       "logBreakfast": "Log Breakfast",
-      "drinkWater": "Drink Water"
+      "drinkWater": "Drink Water",
+      "setupPendingTitle": "Account setup pending",
+      "setupPendingBody": "We're finishing setting up your account. This usually takes just a moment. Reach out if it doesn't clear up shortly.",
+      "setupPendingCta": "Contact support"
     },
     "activities": {
       "title": "Activities",

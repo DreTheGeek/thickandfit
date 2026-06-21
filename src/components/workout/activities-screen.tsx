@@ -3,6 +3,7 @@
 // assigned plan + today's session; Library embeds the exercise browser; History
 // lists logged workouts. Re-skinned to the design-handoff prototype.
 import { useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { Segmented } from '@/components/ui/segmented';
@@ -24,6 +25,8 @@ export type ActivitiesProgram = {
   day: number;
   totalDays: number;
   pct: number;
+  days: { index: number; label: string }[];
+  activeDay: number;
   exercises: { id: string; name: string; sub: string; hasDemo: boolean; done: boolean }[];
 };
 export type HistoryItem = {
@@ -88,13 +91,36 @@ export function ActivitiesScreen({
               </div>
             </HeroCard>
 
+            {program.days.length > 1 && (
+              <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
+                {program.days.map((d) => {
+                  const active = d.index === program.activeDay;
+                  return (
+                    <Link
+                      key={d.index}
+                      href={`/workouts?day=${d.index}`}
+                      scroll={false}
+                      className={[
+                        'tf-press flex-none whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-medium',
+                        active
+                          ? 'bg-ink text-white'
+                          : 'border border-line text-soft',
+                      ].join(' ')}
+                    >
+                      {d.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
             <SectionTitle className="mb-2.5 mt-[22px]">
               {t('todaysWorkout')}
             </SectionTitle>
             {program.exercises.map((ex, i) => (
               <ListRow
                 key={ex.id + i}
-                href={`/workout/${program.planId}`}
+                href={`/workout/${program.planId}?day=${program.activeDay}`}
                 divider={i < program.exercises.length - 1}
                 leading={<ExerciseThumb hasDemo={ex.hasDemo} />}
                 title={ex.name}
@@ -103,7 +129,11 @@ export function ActivitiesScreen({
               />
             ))}
 
-            <ButtonLink href={`/workout/${program.planId}`} size="block" className="mt-6">
+            <ButtonLink
+              href={`/workout/${program.planId}?day=${program.activeDay}`}
+              size="block"
+              className="mt-6"
+            >
               {t('startWorkout')}
             </ButtonLink>
           </>
