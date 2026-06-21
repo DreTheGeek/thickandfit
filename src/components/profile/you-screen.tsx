@@ -60,8 +60,8 @@ export async function YouScreen({
     sub?: string;
     soon?: boolean;
   }[] = [
-    { key: 'photos', icon: 'camera', label: t('myPhotos'), href: '/progress', soon: true },
-    { key: 'measurements', icon: 'ruler', label: t('measurements'), href: '/progress', soon: true },
+    { key: 'photos', icon: 'camera', label: t('myPhotos'), href: '/progress' },
+    { key: 'measurements', icon: 'ruler', label: t('measurements'), href: '/progress' },
     { key: 'program', icon: 'clipboard', label: t('myProgram'), href: '/workouts' },
     { key: 'account', icon: 'gear', label: t('accountSettings'), href: '/account' },
     { key: 'help', icon: 'help', label: t('help'), href: 'mailto:hello@teamthickandfit.com' },
