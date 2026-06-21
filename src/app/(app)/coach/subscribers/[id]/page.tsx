@@ -1,7 +1,7 @@
 // Coach view of one subscriber. Coach-guarded + company-scoped. Real Overview + Workouts.
 import type { ReactElement } from 'react';
 import { notFound } from 'next/navigation';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { fetchHistory } from '@/lib/workout/logging';
@@ -19,6 +19,7 @@ export default async function CoachSubscriberPage({
   const ctx = await requireCoach();
   const { id } = await params;
   const locale = await getLocale();
+  const t = await getTranslations('app.coach');
   if (!ctx.companyId) notFound();
 
   const supabase = createServiceClient();
@@ -37,6 +38,8 @@ export default async function CoachSubscriberPage({
       .select('plan:plan_id (name_en, name_es)')
       .eq('profile_id', id)
       .eq('company_id', ctx.companyId)
+      .order('assigned_at', { ascending: false })
+      .limit(1)
       .maybeSingle(),
     fetchHistory(ctx.companyId, id),
     // Total workout count via a head-only COUNT (history is capped at 20 for display only).
@@ -57,7 +60,7 @@ export default async function CoachSubscriberPage({
   const days = Math.max(0, Math.round((new Date().getTime() - created.getTime()) / 86400_000));
 
   const data: ProfileData = {
-    name: (profile.full_name ?? profile.email).trim(),
+    name: (profile.full_name ?? profile.email ?? '').trim() || t('noName'),
     email: profile.email,
     memberSince: fmtDate.format(created),
     role: profile.role,
@@ -66,7 +69,7 @@ export default async function CoachSubscriberPage({
     workouts: workoutCount ?? history.length,
     days,
     calories: targets?.calories ?? null,
-    macros: targets
+    macros: targets?.macros
       ? { p: targets.macros.protein_g, c: targets.macros.carbs_g, f: targets.macros.fat_g }
       : null,
     programName: planObj ? (locale === 'es' && planObj.name_es) || planObj.name_en : null,

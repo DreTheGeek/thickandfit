@@ -441,6 +441,8 @@
       "ledgerGross": "Gross",
       "ledgerCoach": "Your take",
       "ledgerTotal": "Running total",
+      "ledgerTruncated": "Showing the most recent transactions only. Older entries are not loaded, so the running total is hidden.",
+      "listTruncated": "Showing the first {n} clients. The list is capped, so totals and filters reflect a partial view.",
       "noTransactions": "No payments recorded.",
       "engMealPlans": "Meal plans",
       "engCheckins": "Check-ins",

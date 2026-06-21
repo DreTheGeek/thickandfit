@@ -152,30 +152,39 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
           {detail.ledger.length === 0 ? (
             <p className="px-4 py-12 text-center text-sm text-faint">{t('noTransactions')}</p>
           ) : (
-            <table className="w-full border-collapse text-[13px]">
-              <thead>
-                <tr className="border-b border-line bg-warm/40 text-left text-[10px] uppercase tracking-[1px] text-faint">
-                  <th className="px-4 py-2.5 font-semibold">{t('ledgerDate')}</th>
-                  <th className="px-4 py-2.5 font-semibold">{t('ledgerCategory')}</th>
-                  <th className="px-4 py-2.5 text-right font-semibold">{t('ledgerGross')}</th>
-                  <th className="hidden px-4 py-2.5 text-right font-semibold sm:table-cell">{t('ledgerCoach')}</th>
-                  <th className="hidden px-4 py-2.5 text-right font-semibold md:table-cell">{t('ledgerTotal')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detail.ledger.map((e, i) => (
-                  <tr key={i} className="border-b border-divider last:border-0">
-                    <td className="px-4 py-2.5 text-soft">{fmtDate(e.date, locale)}</td>
-                    <td className="px-4 py-2.5 capitalize">
-                      <span className={e.category === 'refund' ? 'text-alert-ink' : 'text-soft'}>{e.category ?? '-'}</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-medium tabular-nums">{formatCents(e.grossCents, e.currency, locale, 2)}</td>
-                    <td className="hidden px-4 py-2.5 text-right tabular-nums text-soft sm:table-cell">{formatCents(e.coachCents, e.currency, locale, 2)}</td>
-                    <td className="hidden px-4 py-2.5 text-right tabular-nums text-faint md:table-cell">{formatCents(e.runningCents, e.currency, locale, 2)}</td>
+            <>
+              {detail.ledgerTruncated && (
+                <p className="border-b border-line bg-warm/40 px-4 py-2.5 text-[12px] text-muted">{t('ledgerTruncated')}</p>
+              )}
+              <table className="w-full border-collapse text-[13px]">
+                <thead>
+                  <tr className="border-b border-line bg-warm/40 text-left text-[10px] uppercase tracking-[1px] text-faint">
+                    <th className="px-4 py-2.5 font-semibold">{t('ledgerDate')}</th>
+                    <th className="px-4 py-2.5 font-semibold">{t('ledgerCategory')}</th>
+                    <th className="px-4 py-2.5 text-right font-semibold">{t('ledgerGross')}</th>
+                    <th className="hidden px-4 py-2.5 text-right font-semibold sm:table-cell">{t('ledgerCoach')}</th>
+                    {!detail.ledgerTruncated && (
+                      <th className="hidden px-4 py-2.5 text-right font-semibold md:table-cell">{t('ledgerTotal')}</th>
+                    )}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {detail.ledger.map((e, i) => (
+                    <tr key={i} className="border-b border-divider last:border-0">
+                      <td className="px-4 py-2.5 text-soft">{fmtDate(e.date, locale)}</td>
+                      <td className="px-4 py-2.5 capitalize">
+                        <span className={e.category === 'refund' ? 'text-alert-ink' : 'text-soft'}>{e.category ?? '-'}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-medium tabular-nums">{formatCents(e.grossCents, e.currency, locale, 2)}</td>
+                      <td className="hidden px-4 py-2.5 text-right tabular-nums text-soft sm:table-cell">{formatCents(e.coachCents, e.currency, locale, 2)}</td>
+                      {!detail.ledgerTruncated && (
+                        <td className="hidden px-4 py-2.5 text-right tabular-nums text-faint md:table-cell">{formatCents(e.runningCents, e.currency, locale, 2)}</td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </div>
       )}

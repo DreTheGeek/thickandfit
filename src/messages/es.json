@@ -441,6 +441,8 @@
       "ledgerGross": "Bruto",
       "ledgerCoach": "Tu parte",
       "ledgerTotal": "Total acumulado",
+      "ledgerTruncated": "Mostrando solo las transacciones mas recientes. Las entradas anteriores no se cargaron, por lo que el total acumulado esta oculto.",
+      "listTruncated": "Mostrando los primeros {n} clientes. La lista esta limitada, por lo que los totales y filtros reflejan una vista parcial.",
       "noTransactions": "Sin pagos registrados.",
       "engMealPlans": "Planes de comida",
       "engCheckins": "Check-ins",

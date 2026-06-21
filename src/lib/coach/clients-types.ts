@@ -72,7 +72,11 @@ export type ClientsPage = {
   pageSize: number;
   facets: ClientFacets;
   totalAll: number;
+  // True when the underlying read hit the in-memory cap, so totalAll/facets are a partial view.
+  listTruncated: boolean;
 };
+
+export const CLIENT_ROWS_CAP = 2000;
 
 export type SavedSegment = {
   id: string;
@@ -144,8 +148,13 @@ export type ClientDetail = {
     goalIntensity: string | null;
   } | null;
   ledger: LedgerEntry[];
+  // True when the txn read hit its cap: the ledger is windowed, so the running-balance column is
+  // not anchored to a true zero start and must be hidden rather than shown with wrong values.
+  ledgerTruncated: boolean;
   files: ClientFile[];
 };
+
+export const LEDGER_TXN_CAP = 1000;
 
 export type ClientFile = { category: string | null; url: string; bytes: number | null };
 

@@ -52,7 +52,7 @@ export default async function CoachSubscribersPage(): Promise<ReactElement> {
 
     rows = profileRows.map((p) => ({
       id: p.id,
-      name: (p.full_name ?? p.email).trim(),
+      name: (p.full_name ?? p.email ?? '').trim() || t('noName'),
       email: p.email,
       role: p.role,
       legacy: p.is_legacy_client,

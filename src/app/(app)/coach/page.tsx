@@ -224,7 +224,7 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
       <Card className="mb-4">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-[20px]">{t('secSegments')}</h2>
-          <Link href="/coach/subscribers" className="text-[12px] font-semibold text-muted hover:text-ink">
+          <Link href="/coach/clients" className="text-[12px] font-semibold text-muted hover:text-ink">
             {t('viewClients')}
           </Link>
         </div>
