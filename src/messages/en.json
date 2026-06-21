@@ -653,6 +653,7 @@
       "memberSince": "Member since {date}",
       "workouts": "Workouts",
       "weekStreak": "Week Streak",
+      "dayStreak": "Day Streak",
       "progress": "Progress",
       "yourGoal": "Your Goal",
       "there": "there",
@@ -674,6 +675,18 @@
       "weightSaved": "Weight logged - keep it up",
       "weightError": "Could not save. Try again.",
       "aiCoach": "AI Coach"
+    },
+    "gamification": {
+      "dayStreak": "day streak",
+      "keepItUp": "Keep it going",
+      "startToday": "Start your streak today",
+      "nextMilestone": "Next milestone at {days} days",
+      "longest": "Longest",
+      "freezes": "freezes",
+      "freezeHelp": "A freeze bridges one missed day so your streak survives.",
+      "badges": "Badges",
+      "earnedOf": "{earned} of {total}",
+      "locked": "Locked"
     },
     "progress": {
       "title": "Progress Photos",

@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { Avatar } from '@/components/ui/avatar';
@@ -28,6 +28,7 @@ export async function YouScreen({
   goal,
   latestLb,
   latestWeightDate,
+  children,
 }: {
   name: string;
   membership: string;
@@ -38,6 +39,7 @@ export async function YouScreen({
   goal: GoalSummary | null;
   latestLb: number | null;
   latestWeightDate: string | null;
+  children?: ReactNode;
 }): Promise<ReactElement> {
   const t = await getTranslations('app.you');
   const c = await getTranslations('app.common');
@@ -91,7 +93,7 @@ export async function YouScreen({
       {/* Stat band */}
       <div className="mb-[22px] flex border border-divider">
         <Stat value={String(workoutCount)} label={t('workouts')} divider />
-        <Stat value={String(streakWeeks)} label={t('weekStreak')} divider />
+        <Stat value={String(streakWeeks)} label={t('dayStreak')} divider />
         <Stat
           value={progressLbs === 0 ? '0' : `${progressLbs > 0 ? '+' : ''}${progressLbs}`}
           label={`lbs ${t('progress')}`}
@@ -142,6 +144,9 @@ export async function YouScreen({
           </div>
         </Card>
       )}
+
+      {/* Gamification: streak ring + freeze indicator + badge grid */}
+      {children}
 
       {/* Weight log */}
       <WeightLogCard latestLb={latestLb} recordedOn={latestWeightDate} />

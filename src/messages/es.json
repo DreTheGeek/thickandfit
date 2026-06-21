@@ -653,6 +653,7 @@
       "memberSince": "Miembro desde {date}",
       "workouts": "Entrenos",
       "weekStreak": "Racha semanal",
+      "dayStreak": "Racha diaria",
       "progress": "Progreso",
       "yourGoal": "Tu Meta",
       "there": "logrado",
@@ -674,6 +675,18 @@
       "weightSaved": "Peso registrado - sigue asi",
       "weightError": "No se pudo guardar. Intenta de nuevo.",
       "aiCoach": "Entrenadora IA"
+    },
+    "gamification": {
+      "dayStreak": "dias seguidos",
+      "keepItUp": "Sigue asi",
+      "startToday": "Comienza tu racha hoy",
+      "nextMilestone": "Proxima meta a los {days} dias",
+      "longest": "Mayor",
+      "freezes": "congelaciones",
+      "freezeHelp": "Una congelacion cubre un dia perdido para que tu racha sobreviva.",
+      "badges": "Insignias",
+      "earnedOf": "{earned} de {total}",
+      "locked": "Bloqueada"
     },
     "progress": {
       "title": "Fotos de Progreso",

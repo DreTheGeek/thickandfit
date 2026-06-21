@@ -4,6 +4,9 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { YouScreen, type GoalSummary } from '@/components/profile/you-screen';
+import { recomputeGamification } from '@/lib/gamification/engine';
+import { StreakBadges } from '@/components/gamification/streak-badges';
+import type { GamificationSnapshot } from '@/lib/gamification/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +61,20 @@ export default async function YouPage(): Promise<ReactElement> {
   const lwRow = latestWeight as { weight_kg: number; recorded_on: string } | null;
   const latestLb = lwRow ? Math.round(Number(lwRow.weight_kg) * KG_TO_LB * 10) / 10 : null;
 
+  // Recompute streak + badges on load (idempotent). Returns the snapshot and any keys earned
+  // this load so the client can pop confetti exactly once.
+  let gamification: GamificationSnapshot | null = null;
+  let newlyEarnedKeys: string[] = [];
+  if (ctx.companyId) {
+    try {
+      const result = await recomputeGamification(ctx.userId, ctx.companyId);
+      gamification = result.snapshot;
+      newlyEarnedKeys = result.newlyEarnedKeys;
+    } catch (e) {
+      console.error('you: recomputeGamification', e instanceof Error ? e.message : e);
+    }
+  }
+
   let goal: GoalSummary | null = null;
   let progressLbs = 0;
   if (answers?.weightKg && answers?.goalWeightKg) {
@@ -76,11 +93,15 @@ export default async function YouPage(): Promise<ReactElement> {
       membership={membership}
       memberSince={memberSince}
       workoutCount={count ?? 0}
-      streakWeeks={0}
+      streakWeeks={gamification?.streak.currentStreak ?? 0}
       progressLbs={progressLbs}
       goal={goal}
       latestLb={latestLb}
       latestWeightDate={lwRow?.recorded_on ?? null}
-    />
+    >
+      {gamification != null && (
+        <StreakBadges snapshot={gamification} newlyEarnedKeys={newlyEarnedKeys} />
+      )}
+    </YouScreen>
   );
 }
