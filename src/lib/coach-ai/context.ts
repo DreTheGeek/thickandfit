@@ -248,6 +248,10 @@ export function renderContextBlock(ctx: CoachContext): string {
     noWeight: es ? 'sin registros de peso' : 'no weight logged',
     insights: es ? 'Notas del entrenador' : 'Coach notes',
     protein: es ? 'proteina' : 'protein',
+    plateau: es ? 'ESTANCAMIENTO' : 'PLATEAU',
+    plateauNote: es
+      ? 'el peso lleva {days} dias estable (cambio {delta}kg). Aborda esto de forma proactiva: valida, normaliza y sugiere un siguiente paso (refeed, recalcular metas o ajustar entreno).'
+      : 'weight has been flat for {days} days (change {delta}kg). Proactively address this: validate, normalize, and suggest a next step (a refeed, recomputing targets, or adjusting training).',
   };
 
   const lines: string[] = [];
@@ -278,6 +282,19 @@ export function renderContextBlock(ctx: CoachContext): string {
     lines.push(`${L.weight}: ${ctx.weight.latestLb} lb (${ctx.weight.latestKg}kg)${trend}`);
   } else {
     lines.push(`${L.weight}: ${L.noWeight}`);
+  }
+
+  // Plateau: surface it as its own prominent, instruction-bearing line so the coach addresses it
+  // proactively rather than waiting for the member to bring it up. Read defensively from the payload.
+  const plateau = (ctx.insights?.plateau ?? null) as
+    | { status?: string; days_flat?: number; delta_kg?: number | null }
+    | null;
+  if (plateau?.status === 'plateau') {
+    const days = String(num(plateau.days_flat));
+    const delta = plateau.delta_kg === null || plateau.delta_kg === undefined ? '~0' : String(plateau.delta_kg);
+    lines.push(
+      `${L.plateau}: ${L.plateauNote.replace('{days}', days).replace('{delta}', delta)}`,
+    );
   }
 
   if (ctx.insights && Object.keys(ctx.insights).length) {

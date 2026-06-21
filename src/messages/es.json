@@ -88,6 +88,7 @@
       "comingSoonBody": "Esto viene en camino. Lo estamos construyendo ahora.",
       "soon": "Pronto",
       "back": "Atrás",
+      "dismiss": "Descartar",
       "notifications": "Notificaciones",
       "theme_light": "Claro",
       "theme_dark": "Oscuro",
@@ -99,6 +100,9 @@
       "checkinTitle": "Hora de tu check-in",
       "checkinBody": "Comparte tu progreso y mantén tu racha viva.",
       "checkinCta": "Iniciar Check-in",
+      "plateauTitle": "Parece un estancamiento",
+      "plateauBody": "Tu peso se ha mantenido igual por {days} dias. Es una fase normal y podemos ajustar tu plan para que vuelvas a avanzar.",
+      "plateauCta": "Habla con tu coach",
       "todo": "Por hacer",
       "morningWorkout": "Entreno de la mañana",
       "logBreakfast": "Registrar desayuno",
@@ -867,7 +871,9 @@
       },
       "copy": {
         "broadcast.title": "Nuevo anuncio",
-        "broadcast.body": "{name} publico un anuncio en la comunidad."
+        "broadcast.body": "{name} publico un anuncio en la comunidad.",
+        "plateau.title": "Vamos a avanzar",
+        "plateau.body": "Tu peso se ha mantenido igual por {days} dias. Es normal y lo podemos ajustar. Toca para hablarlo con tu coach."
       }
     }
   }

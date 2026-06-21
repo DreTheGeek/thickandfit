@@ -7,6 +7,7 @@ export type NotificationType =
   | 'system'
   | 'streak'
   | 'checkin'
+  | 'plateau'
   | 'coach_message';
 
 export type AppNotification = {

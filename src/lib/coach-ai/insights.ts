@@ -10,6 +10,8 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { embedText, toVectorLiteral, embeddingsConfigured } from '@/lib/coach-ai/embeddings';
+import { createNotification } from '@/lib/notifications/create';
+import { notifText } from '@/lib/notifications/i18n';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -20,11 +22,36 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const KG_TO_LB = 2.20462;
 const WINDOW_DAYS = 30;
 
+// --- Plateau detection thresholds ------------------------------------------------------------
+// A plateau = weight flat (|delta| < band) over a span of at least MIN_DAYS, backed by at least
+// MIN_ENTRIES weigh-ins, while the member is still active (logging food or workouts). Tuned to be
+// conservative so we never nag someone who is genuinely still trending.
+const PLATEAU_BAND_KG = 0.5; // |newest - oldest| must be under this to count as "flat"
+const PLATEAU_MIN_DAYS = 14; // the flat window must span at least this many days
+const PLATEAU_MIN_ENTRIES = 4; // ...with at least this many weigh-ins inside it
+const PLATEAU_LOOKBACK_DAYS = 21; // we evaluate the most recent ~3 weeks of weigh-ins
+const PLATEAU_MIN_ACTIVITY = 4; // member must have >= this many logged-or-workout days recently to count as "active"
+
 export type CoachingFlag = {
   // A short machine-stable code (e.g. 'low_protein', 'missed_workouts', 'plateau') the UI/coach
   // can branch on, plus a one-line bilingual-neutral human note for display.
   code: string;
   note: string;
+};
+
+// Deterministic weight-plateau detection result. Stored as a structured field in the payload so
+// the dashboard banner + the coach context can both read it without re-deriving. status === 'plateau'
+// means the member's weight has been flat (within PLATEAU_BAND_KG) over >= PLATEAU_MIN_DAYS days
+// with >= PLATEAU_MIN_ENTRIES weigh-ins while still active. No AI needed; pure math over weight_entries.
+export type PlateauStatus = 'none' | 'plateau';
+
+export type PlateauInsight = {
+  status: PlateauStatus;
+  days_flat: number; // span in days between the oldest + newest entry in the flat window (0 when none)
+  delta_kg: number | null; // newest minus oldest over the flat window (null when none)
+  entries: number; // number of weigh-ins in the flat window
+  // A short machine-stable suggestion code the UI/coach can branch on (e.g. 'refeed_or_recompute').
+  suggestion: string | null;
 };
 
 // The open-shaped insight payload stored in user_insights.payload. buildCoachContext reads this
@@ -43,6 +70,7 @@ export type InsightPayload = {
   on_pace: boolean | null;
   projected_goal_date: string | null; // YYYY-MM-DD or null
   coaching_flags: CoachingFlag[];
+  plateau: PlateauInsight; // deterministic plateau detection (always present; status 'none' when not flat)
 };
 
 export type InsightResult =
@@ -177,6 +205,82 @@ function rollUp(food: FoodLogRow[], weight: WeightRow[], completions: Completion
     latestWeightKg,
     weightRows: weightSorted,
   };
+}
+
+// --- Deterministic plateau detection ---------------------------------------------------------
+// No AI: pure math over the rollup. Evaluates the 14-day and 21-day windows; flags a plateau when
+// the most recent window is flat (|delta| < band) over >= MIN_DAYS, has >= MIN_ENTRIES weigh-ins,
+// and the member is still active (>= MIN_ACTIVITY of logged days + workout days). We prefer the
+// 14-day window and widen to 21 days if 14 alone lacks enough entries.
+function detectPlateau(roll: Rollup): PlateauInsight {
+  const none: PlateauInsight = { status: 'none', days_flat: 0, delta_kg: null, entries: 0, suggestion: null };
+
+  // Newest-first weigh-ins, normalized to {date, kg}. rollUp already sorted weightRows newest-first.
+  const entries = roll.weightRows
+    .map((w) => ({ date: w.recorded_on.slice(0, 10), kg: num(w.weight_kg) }))
+    .filter((w) => w.date && Number.isFinite(w.kg));
+  if (entries.length < PLATEAU_MIN_ENTRIES) return none;
+
+  // Member must still be active; a plateau on someone who stopped logging is not a coaching moment.
+  const active = roll.loggedDays30 + roll.workoutDays30 >= PLATEAU_MIN_ACTIVITY;
+  if (!active) return none;
+
+  const evaluateWindow = (cutDays: number): PlateauInsight | null => {
+    const cut = isoDaysAgo(cutDays);
+    const inWindow = entries.filter((w) => w.date >= cut);
+    if (inWindow.length < PLATEAU_MIN_ENTRIES) return null;
+
+    const newest = inWindow[0]; // newest first
+    const oldest = inWindow[inWindow.length - 1];
+    const daysFlat = Math.round(
+      (Date.parse(`${newest.date}T00:00:00Z`) - Date.parse(`${oldest.date}T00:00:00Z`)) / 86_400_000,
+    );
+    if (daysFlat < PLATEAU_MIN_DAYS) return null;
+
+    const delta = Math.round((newest.kg - oldest.kg) * 10) / 10;
+    if (Math.abs(delta) >= PLATEAU_BAND_KG) return null;
+
+    return {
+      status: 'plateau',
+      days_flat: daysFlat,
+      delta_kg: delta,
+      entries: inWindow.length,
+      suggestion: 'refeed_or_recompute',
+    };
+  };
+
+  // Prefer the tighter 14-day signal; fall back to the 21-day window if 14 lacks enough entries.
+  return evaluateWindow(PLATEAU_MIN_DAYS) ?? evaluateWindow(PLATEAU_LOOKBACK_DAYS) ?? none;
+}
+
+// Read the member's most recent insight snapshot from a PRIOR day and report whether it already had
+// an active plateau. Used to fire the nudge only on the transition into a plateau (not every night).
+// Excludes today's row (we may have already upserted it). Returns false on any error/no data.
+async function wasPlateauPreviously(
+  sb: ReturnType<typeof createServiceClient>,
+  profileId: string,
+): Promise<boolean> {
+  const { data } = await sb
+    .from('user_insights')
+    .select('payload')
+    .eq('profile_id', profileId)
+    .neq('generated_at', todayUtc())
+    .order('generated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const payload = (data?.payload ?? null) as { plateau?: { status?: string } } | null;
+  return payload?.plateau?.status === 'plateau';
+}
+
+// Deliver the bilingual plateau nudge to one subscriber. Copy is static (no AI) and localized at
+// send time via the notification i18n catalog, linking to the AI coach chat to discuss next steps.
+async function notifyPlateau(sub: ActiveSubscriber, plateau: PlateauInsight): Promise<void> {
+  await createNotification(sub.companyId, sub.profileId, {
+    type: 'plateau',
+    title: notifText(sub.locale, 'plateau.title'),
+    body: notifText(sub.locale, 'plateau.body', { days: String(plateau.days_flat) }),
+    link: '/coach-chat',
+  });
 }
 
 // --- AI narrative extraction (claude-sonnet-4-6) ---------------------------------------------
@@ -438,8 +542,28 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
   const roll = rollUp(food, weight, completions);
   const targets = onbRes.data?.computed_targets ?? null;
 
+  // Deterministic plateau detection (no AI). Computed before the AI call so it is always present.
+  const plateau = detectPlateau(roll);
+
   const ai = await extractNarrative(sub, roll, targets);
   if (ai) void logUsage(sub, ai.usage);
+
+  // Merge a deterministic 'plateau' coaching_flag into whatever the AI returned (de-duped by code),
+  // so the coach context surfaces it even when the AI step is skipped/unkeyed.
+  const aiFlags = ai?.narrative.coaching_flags ?? [];
+  const coaching_flags: CoachingFlag[] =
+    plateau.status === 'plateau' && !aiFlags.some((f) => f.code === 'plateau')
+      ? [
+          {
+            code: 'plateau',
+            note:
+              sub.locale === 'es'
+                ? `Peso estable (${plateau.days_flat} dias). Considera un refeed o recalcular metas.`
+                : `Weight flat for ${plateau.days_flat} days. Consider a refeed or recomputing targets.`,
+          },
+          ...aiFlags,
+        ].slice(0, 4)
+      : aiFlags;
 
   const payload: InsightPayload = {
     ai: Boolean(ai),
@@ -454,8 +578,13 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
     streak_breaker_pattern: ai?.narrative.streak_breaker_pattern ?? null,
     on_pace: ai?.narrative.on_pace ?? null,
     projected_goal_date: ai?.narrative.projected_goal_date ?? null,
-    coaching_flags: ai?.narrative.coaching_flags ?? [],
+    coaching_flags,
+    plateau,
   };
+
+  // Was the member already in a plateau as of their previous snapshot? If so this is not "newly
+  // detected" and we must not re-nudge them every night. We read the most recent OTHER row.
+  const wasPlateau = await wasPlateauPreviously(sb, sub.profileId);
 
   const { error } = await sb
     .from('user_insights')
@@ -464,6 +593,16 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
       { onConflict: 'profile_id,generated_at' },
     );
   if (error) return { status: 'error' };
+
+  // Newly-detected plateau -> one encouraging bilingual nudge linking to the coach chat. Best-effort:
+  // a notification failure must not fail the insight write (already persisted above).
+  if (plateau.status === 'plateau' && !wasPlateau) {
+    try {
+      await notifyPlateau(sub, plateau);
+    } catch {
+      // Nudge is best-effort enrichment; the insight is already saved.
+    }
+  }
 
   // Layer 3 RAG: embed recent day summaries + backfill message embeddings. Fully key-gated (no-op
   // without OPENROUTER_API_KEY); failures here must not fail the insight write, so they are isolated.
