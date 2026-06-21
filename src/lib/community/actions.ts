@@ -7,6 +7,7 @@ import { COACH_ROLES } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { getComments } from '@/lib/community/feed';
 import { REACTION_EMOJIS, type FeedComment } from '@/lib/community/types';
+import { notifyBroadcast } from '@/lib/notifications/triggers';
 
 export type CommunityResult = { ok: boolean; error?: string };
 
@@ -38,6 +39,25 @@ export async function createPostAction(input: unknown): Promise<CommunityResult>
     console.error('createPostAction:', error.message);
     return { ok: false, error: 'insert_failed' };
   }
+
+  // Real trigger: a coach broadcast notifies every other member (in-app + best-effort push).
+  // Fire-and-forget so posting never blocks on the fan-out.
+  if (isBroadcast) {
+    const { data: author } = await sb
+      .from('profiles')
+      .select('full_name')
+      .eq('id', ctx.userId)
+      .maybeSingle();
+    const authorName = (author as { full_name: string | null } | null)?.full_name ?? 'Your coach';
+    void notifyBroadcast({
+      companyId: ctx.companyId,
+      authorProfileId: ctx.userId,
+      authorName,
+    }).then(undefined, (e: unknown) =>
+      console.error('createPostAction notifyBroadcast:', e instanceof Error ? e.message : e),
+    );
+  }
+
   revalidatePath('/community');
   return { ok: true };
 }

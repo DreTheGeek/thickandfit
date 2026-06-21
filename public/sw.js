@@ -65,3 +65,42 @@ self.addEventListener('fetch', (event) => {
 
   // Everything else (APIs, etc.): straight to network, never cached.
 });
+
+// ---------------------------------------------------------------------------------------------
+// Web Push. The server (sendPush) posts a JSON body { title, body, url }. We render a system
+// notification. Tapping it focuses an open app tab (or opens one) at the notification's link.
+// All of this is inert unless the user has subscribed, which only happens when VAPID is set.
+// ---------------------------------------------------------------------------------------------
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (_e) {
+    payload = { title: 'Thick & Fit', body: event.data ? event.data.text() : '' };
+  }
+  const title = payload.title || 'Thick & Fit';
+  const options = {
+    body: payload.body || '',
+    icon: '/assets/images/apple-touch-icon.jpg',
+    badge: '/assets/images/apple-touch-icon.jpg',
+    data: { url: payload.url || '/notifications' },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/notifications';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.navigate(targetUrl).catch(() => {});
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+      return undefined;
+    }),
+  );
+});

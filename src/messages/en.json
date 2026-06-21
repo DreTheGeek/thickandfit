@@ -796,6 +796,31 @@
       "weightTrend": "Weight trend",
       "noInsights": "Not enough data yet. Keep logging and your coach will have plenty to say.",
       "notConfigured": "Insights turn on once your AI coach is configured."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": "Broadcasts, replies, and reminders. Tap one to jump straight to it.",
+      "bell": "Notifications",
+      "bellWithCount": "Notifications, {count} unread",
+      "count": "{n, plural, =0 {No notifications} one {# notification} other {# notifications}}",
+      "markAll": "Mark all read",
+      "empty": "You're all caught up. New broadcasts and replies will land here.",
+      "justNow": "Just now",
+      "minutesAgo": "{n}m ago",
+      "hoursAgo": "{n}h ago",
+      "daysAgo": "{n}d ago",
+      "push": {
+        "title": "Push notifications",
+        "subtitle": "Get a heads-up even when the app is closed.",
+        "on": "Push is on for this device.",
+        "blocked": "Push is blocked. Enable it in your browser settings.",
+        "enable": "Turn on",
+        "disable": "Turn off"
+      },
+      "copy": {
+        "broadcast.title": "New broadcast",
+        "broadcast.body": "{name} posted a broadcast to the community."
+      }
     }
   }
 }

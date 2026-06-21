@@ -796,6 +796,31 @@
       "weightTrend": "Tendencia de peso",
       "noInsights": "Aun no hay suficientes datos. Sigue registrando y tu coach tendra mucho que decir.",
       "notConfigured": "Los analisis se activan cuando tu entrenadora con IA este configurada."
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "subtitle": "Anuncios, respuestas y recordatorios. Toca uno para ir directo.",
+      "bell": "Notificaciones",
+      "bellWithCount": "Notificaciones, {count} sin leer",
+      "count": "{n, plural, =0 {Sin notificaciones} one {# notificacion} other {# notificaciones}}",
+      "markAll": "Marcar todo leido",
+      "empty": "Estas al dia. Los nuevos anuncios y respuestas apareceran aqui.",
+      "justNow": "Ahora mismo",
+      "minutesAgo": "hace {n}m",
+      "hoursAgo": "hace {n}h",
+      "daysAgo": "hace {n}d",
+      "push": {
+        "title": "Notificaciones push",
+        "subtitle": "Recibe un aviso aunque la app este cerrada.",
+        "on": "Push activado en este dispositivo.",
+        "blocked": "Push esta bloqueado. Actívalo en los ajustes del navegador.",
+        "enable": "Activar",
+        "disable": "Desactivar"
+      },
+      "copy": {
+        "broadcast.title": "Nuevo anuncio",
+        "broadcast.body": "{name} publico un anuncio en la comunidad."
+      }
     }
   }
 }

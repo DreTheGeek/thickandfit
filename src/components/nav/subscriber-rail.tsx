@@ -7,6 +7,7 @@ import type { ReactElement } from 'react';
 import { Wordmark } from '@/components/ui/wordmark';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { signOutAction } from '@/lib/auth/actions';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 
 type Tab = {
   key: 'today' | 'community' | 'activities' | 'nutrition' | 'you';
@@ -35,7 +36,13 @@ function isHidden(path: string): boolean {
 }
 
 /** Desktop/tablet (lg+) left nav rail for the subscriber app. */
-export function SubscriberRail(): ReactElement | null {
+export function SubscriberRail({
+  initialUnread = 0,
+  profileId = '',
+}: {
+  initialUnread?: number;
+  profileId?: string;
+}): ReactElement | null {
   const pathname = usePathname();
   const t = useTranslations('app.nav');
   const c = useTranslations('app.common');
@@ -43,10 +50,13 @@ export function SubscriberRail(): ReactElement | null {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
-      <div className="flex h-16 items-center px-6">
+      <div className="flex h-16 items-center justify-between px-6">
         <Link href="/dashboard">
           <Wordmark height={22} />
         </Link>
+        {profileId ? (
+          <NotificationBell initialUnread={initialUnread} profileId={profileId} />
+        ) : null}
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 p-3">
         {TABS.map((tab) => {
