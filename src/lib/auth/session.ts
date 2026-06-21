@@ -17,6 +17,21 @@ export async function getSessionUser() {
 }
 
 export async function resolveAuth(req?: Request): Promise<AuthContext | null> {
+  // CSRF defense-in-depth: reject a cookie-credentialed mutating request whose Origin does not match
+  // the Host. Bearer/API clients are server-to-server and send no Origin, so they pass; GET/HEAD and
+  // same-origin app fetches pass. SameSite=Lax cookies + the JSON content-type are the primary guards.
+  if (req && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    const origin = req.headers.get('origin');
+    if (origin) {
+      const host = req.headers.get('host');
+      try {
+        if (!host || new URL(origin).host !== host) return null;
+      } catch {
+        return null;
+      }
+    }
+  }
+
   const bearer = req?.headers.get('authorization') ?? '';
   const token = bearer.toLowerCase().startsWith('bearer ') ? bearer.slice(7).trim() : null;
 
@@ -39,11 +54,21 @@ export async function resolveAuth(req?: Request): Promise<AuthContext | null> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('company_id, role')
     .eq('id', user.id)
     .maybeSingle();
+  if (!profile) {
+    // The user is authenticated (getUser verified the JWT). If the user-client profile read missed
+    // (transient RLS/replication lag), fall back to the service client so a valid session is not
+    // bounced to sign-in. This is the login-bounce class of bug; reading one's own profile is safe.
+    ({ data: profile } = await createServiceClient()
+      .from('profiles')
+      .select('company_id, role')
+      .eq('id', user.id)
+      .maybeSingle());
+  }
   return profile ? { userId: user.id, companyId: profile.company_id, role: profile.role as Role } : null;
 }
 
@@ -55,7 +80,7 @@ export const COACH_ROLES: Role[] = ['coach', 'assistant_coach', 'operator'];
 
 // Where to send a freshly-authenticated user. Coaches/operators go to the app home;
 // subscribers/free go to onboarding until they've completed it, then the dashboard.
-// NEVER returns '/' (the marketing landing) — an authed user should land in the app.
+// NEVER returns '/' (the marketing landing): an authed user should land in the app.
 export async function homePathForUser(userId: string, role: Role): Promise<string> {
   if (COACH_ROLES.includes(role)) return '/coach';
   const svc = createServiceClient();

@@ -5,7 +5,7 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* ==========================================================================
-   Thick & Fit — design tokens (light monochrome system, per design handoff)
+   Thick & Fit: design tokens (light monochrome system, per design handoff)
    The product is monochrome. Green (--color-accent) is FUNCTIONAL ONLY:
    completion, streaks, live/active indicators, positive deltas. Never decorative.
    Raw palette lives in :root (light) + [data-theme="dark"] (dark); @theme maps to it.
@@ -69,7 +69,7 @@
   --color-accent: var(--c-accent);
   --color-accent-ink: var(--c-accent-ink);
 
-  /* legacy brand alias — marketing landing only (do-not-redesign). Same green, static. */
+  /* legacy brand alias, marketing landing only (do-not-redesign). Same green, static. */
   --color-olive: #5ebe62;
   --color-olive-600: #4aa550;
 
@@ -80,7 +80,7 @@
   --color-alert-ink: var(--c-alert-ink);
   --color-warning: var(--c-warning);
 
-  /* macro ring (nutrition) — static, readable on both themes */
+  /* macro ring (nutrition): static, readable on both themes */
   --color-macro-protein: #2a9d8f;
   --color-macro-carbs: #e9a23b;
   --color-macro-fat: #5ebe62;

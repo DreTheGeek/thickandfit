@@ -1,0 +1,13 @@
+# Supabase local/deploy config. The two edge functions authenticate themselves (resend-webhook via
+# the Svix signature, run-ai-eval via CRON_SECRET or a SHA-256 API key) NOT via a Supabase Auth JWT.
+# Without verify_jwt=false the platform would 401 their own legitimate callers before the handler runs
+# (a webhook 401 is invisible in function logs). Declaring it here makes the deploy reproducible
+# instead of relying on a one-time `supabase functions deploy --no-verify-jwt` flag.
+
+project_id = "cpwesaeyhklmjbqppeah"
+
+[functions.resend-webhook]
+verify_jwt = false
+
+[functions.run-ai-eval]
+verify_jwt = false

@@ -11,6 +11,7 @@ type Tab = {
   href: string;
   icon: IconName;
   match: (path: string) => boolean;
+  soon?: boolean;
 };
 
 const TABS: Tab[] = [
@@ -61,7 +62,15 @@ export function BottomNav(): ReactElement | null {
               active ? 'text-ink' : 'text-faint/90',
             ].join(' ')}
           >
-            <Icon name={tab.icon} size={18} />
+            <span className="relative">
+              <Icon name={tab.icon} size={18} />
+              {tab.soon && (
+                <span
+                  aria-hidden
+                  className="absolute -right-1.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-accent"
+                />
+              )}
+            </span>
             <span className="text-[10px]">{t(tab.key)}</span>
           </Link>
         );

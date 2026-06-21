@@ -176,6 +176,7 @@
       "continue": "Continue",
       "back": "Back",
       "seePlan": "See my plan",
+      "saveError": "We could not save your plan. Please check your connection and try again.",
       "toCheckout": "Continue to checkout",
       "projected": "Projected {from} → {to} lb over 12 weeks"
     },
@@ -223,6 +224,7 @@
       "navHome": "Home",
       "navClients": "Clients",
       "navLeads": "Leads",
+      "navBroadcasts": "Broadcasts",
       "navInbox": "Inbox",
       "navCommunity": "Community",
       "navLibrary": "Library",

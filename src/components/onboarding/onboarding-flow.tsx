@@ -20,6 +20,7 @@ export function OnboardingFlow(): ReactElement {
   const t = useTranslations('app.onboarding');
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   const [goal, setGoal] = useState<Goal>('lose');
   const [sex, setSex] = useState<OnboardingInput['sex']>('female');
@@ -49,13 +50,25 @@ export function OnboardingFlow(): ReactElement {
 
   async function submit(): Promise<void> {
     setBusy(true);
-    await fetch('/api/onboarding/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    }).catch(() => {});
-    setBusy(false);
-    setStep(3);
+    setSaveError(false);
+    try {
+      const res = await fetch('/api/onboarding/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        // Do NOT advance to the "plan ready" screen on a failed save, or the user sees a plan that
+        // was never persisted and the dashboard re-prompts them to onboard (a confusing loop).
+        setSaveError(true);
+        return;
+      }
+      setStep(3);
+    } catch {
+      setSaveError(true);
+    } finally {
+      setBusy(false);
+    }
   }
 
   const selectCls =
@@ -163,6 +176,12 @@ export function OnboardingFlow(): ReactElement {
             <PlanRow label={t('planCheck')} value={t('planCheckV')} />
           </div>
         </>
+      )}
+
+      {step === 2 && saveError && (
+        <p role="alert" className="mt-5 text-[13px] leading-[1.5] text-red-500">
+          {t('saveError')}
+        </p>
       )}
 
       {/* Footer */}

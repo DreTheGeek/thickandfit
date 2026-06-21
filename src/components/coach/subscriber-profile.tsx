@@ -29,7 +29,7 @@ type TabKey =
   | 'overview' | 'nutrition' | 'workouts' | 'community'
   | 'progress' | 'messages' | 'billing' | 'notes';
 
-// Only tabs backed by real data — no empty placeholder tabs.
+// Only tabs backed by real data, no empty placeholder tabs.
 const TABS: TabKey[] = ['overview', 'workouts'];
 const TAB_LABEL: Record<TabKey, string> = {
   overview: 'tabOverview', nutrition: 'tabNutrition', workouts: 'tabWorkouts', community: 'tabCommunity',

@@ -1,6 +1,6 @@
 // System coverage map: the single source of truth for "what should work, what connects to what,
 // and what action produces what reaction." Doubles as a QA / bug-testing checklist. Client-safe
-// (pure data). Keep statuses honest — this is the contract the App Health Coverage tab renders.
+// (pure data). Keep statuses honest; this is the contract the App Health Coverage tab renders.
 
 export type CoverageStatus = 'live' | 'partial' | 'planned';
 
