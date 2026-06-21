@@ -19,11 +19,11 @@ export default function ApiDocsPage() {
       <h2 className="mt-8 text-xl font-semibold">REST</h2>
       <ul className="mt-2 space-y-1 text-sm">
         <li>
-          <code>GET /api/v1/ping</code> — health check, no auth. Returns{' '}
+          <code>GET /api/v1/ping</code>: health check, no auth. Returns{' '}
           <code>{'{ ok, data }'}</code>.
         </li>
         <li>
-          <code>GET /api/v1/me</code> — Bearer API key. Returns the key&apos;s company scope. 401 on
+          <code>GET /api/v1/me</code>: Bearer API key. Returns the key&apos;s company scope. 401 on
           missing/invalid key.
         </li>
       </ul>
@@ -36,10 +36,10 @@ export default function ApiDocsPage() {
       </p>
       <ul className="mt-2 space-y-1 text-sm">
         <li>
-          <code>get_company</code> — the authenticated key&apos;s company.
+          <code>get_company</code>: the authenticated key&apos;s company.
         </li>
         <li>
-          <code>list_recent_api_usage</code> — recent API usage for the company.
+          <code>list_recent_api_usage</code>: recent API usage for the company.
         </li>
       </ul>
     </main>

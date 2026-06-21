@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { Wordmark } from '@/components/ui/wordmark';
 import { Icon, type IconName } from '@/components/ui/icons';
+import { Tag } from '@/components/ui/badge';
 import { signOutAction } from '@/lib/auth/actions';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 
@@ -14,6 +15,7 @@ type Tab = {
   href: string;
   icon: IconName;
   match: (p: string) => boolean;
+  soon?: boolean;
 };
 
 const TABS: Tab[] = [
@@ -73,6 +75,11 @@ export function SubscriberRail({
             >
               <Icon name={tab.icon} size={18} />
               {t(tab.key)}
+              {tab.soon && (
+                <span className="ml-auto">
+                  <Tag>{c('soon')}</Tag>
+                </span>
+              )}
             </Link>
           );
         })}

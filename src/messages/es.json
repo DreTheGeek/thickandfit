@@ -176,6 +176,7 @@
       "continue": "Continuar",
       "back": "Atrás",
       "seePlan": "Ver mi plan",
+      "saveError": "No pudimos guardar tu plan. Revisa tu conexión e inténtalo de nuevo.",
       "toCheckout": "Ir al pago",
       "projected": "Proyección {from} → {to} lb en 12 semanas"
     },
@@ -223,6 +224,7 @@
       "navHome": "Inicio",
       "navClients": "Clientes",
       "navLeads": "Prospectos",
+      "navBroadcasts": "Difusiones",
       "navInbox": "Mensajes",
       "navCommunity": "Comunidad",
       "navLibrary": "Biblioteca",
@@ -665,8 +667,8 @@
       "assignToPlaceholder": "Nadie",
       "completedWorkout": "Completó un entrenamiento",
       "lenusId": "ID de Lenus",
-      "ledgerTruncated": "Mostrando solo las transacciones mas recientes. Las entradas anteriores no se cargaron, por lo que el total acumulado esta oculto.",
-      "listTruncated": "Mostrando los primeros {n} clientes. La lista esta limitada, por lo que los totales y filtros reflejan una vista parcial."
+      "ledgerTruncated": "Mostrando solo las transacciones más recientes. Las entradas anteriores no se cargaron, por lo que el total acumulado está oculto.",
+      "listTruncated": "Mostrando los primeros {n} clientes. La lista está limitada, por lo que los totales y filtros reflejan una vista parcial."
     },
     "you": {
       "title": "Tú",

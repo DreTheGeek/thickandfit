@@ -22,6 +22,11 @@ const passwordSchema = z.object({ password: z.string().min(8) });
 const INVALID_CREDENTIALS = 'Enter a valid email and a password of at least 8 characters.';
 const INVALID_EMAIL = 'Enter a valid email address.';
 const INVALID_PASSWORD = 'Password must be at least 8 characters.';
+// Sanitized, non-enumerating messages. The raw Supabase error is logged server-side, never returned
+// to the client (would leak "User already registered" / rate-limit internals -> account enumeration).
+const SIGNIN_FAILED = 'Invalid email or password. Please try again.';
+const SIGNUP_FAILED = 'Could not complete sign-up. Please try again.';
+const UPDATE_PASSWORD_FAILED = 'Could not update your password. Please try again.';
 
 async function origin(): Promise<string> {
   const h = await headers();
@@ -38,7 +43,10 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   const { email, password } = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('signInAction:', error.message);
+    return { error: SIGNIN_FAILED };
+  }
   // Route by role + onboarding state, reusing the just-authenticated client.
   const {
     data: { user },
@@ -69,7 +77,10 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     password,
     options: { emailRedirectTo: `${await origin()}/auth/callback` },
   });
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('signUpAction:', error.message);
+    return { error: SIGNUP_FAILED };
+  }
   return { sent: true };
 }
 
@@ -99,7 +110,10 @@ export async function updatePasswordAction(_prev: AuthState, formData: FormData)
   if (!user) return { error: 'Your reset link has expired. Request a new one.' };
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('updatePasswordAction:', error.message);
+    return { error: UPDATE_PASSWORD_FAILED };
+  }
 
   const { data: profile } = await supabase
     .from('profiles')

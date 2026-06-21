@@ -4,6 +4,8 @@ export const metadata: Metadata = {
   title: 'About | Thick & Fit',
   description:
     'Thick & Fit is the bilingual fitness coaching app built for women who are done settling for platforms that were never made for them.',
+  // Unlinked pre-launch page that references internal positioning; keep it out of the index for now.
+  robots: { index: false, follow: false },
 };
 
 export default function AboutPage() {
@@ -195,8 +197,8 @@ export default function AboutPage() {
               {[
                 { stat: '562K', label: 'Instagram followers' },
                 { stat: '256', label: 'Paying clients migrating from Lenus' },
-                { stat: '$16,798', label: 'Current monthly recurring revenue' },
-                { stat: '2', label: 'Languages. Full database depth in both.' },
+                { stat: 'EN/ES', label: 'Bilingual. Full database depth in both.' },
+                { stat: '24/7', label: 'AI coach in her voice (coming soon)' },
               ].map(({ stat, label }) => (
                 <div key={label} className="border border-neutral-200 p-4">
                   <p className="text-3xl font-black">{stat}</p>
@@ -279,8 +281,8 @@ export default function AboutPage() {
             ))}
           </div>
           <p className="mt-8 text-sm text-neutral-600">
-            256 clients migrating from Lenus keep their original pricing ($129-$369/mo) and are
-            never subject to rev-share calculations. Grandfathered rates are permanent.
+            Clients migrating from Lenus keep their original pricing and are never subject to
+            rev-share calculations. Grandfathered rates are permanent.
           </p>
         </div>
       </section>
@@ -317,8 +319,8 @@ export default function AboutPage() {
               <p className="mb-2 font-bold uppercase tracking-tight">Kaldr Tech</p>
               <p className="text-sm leading-relaxed text-neutral-600">
                 LaSean Pickens leads engineering. Next.js 16, Supabase, OpenRouter, Stripe
-                Connect, Mux, Vercel. Multi-tenant from day one. Security-first. Built to
-                white-label, not just to ship.
+                Connect, Mux, Vercel. Single-tenant today, architected to white-label later.
+                Security-first. Built to last, not just to ship.
               </p>
             </div>
           </div>

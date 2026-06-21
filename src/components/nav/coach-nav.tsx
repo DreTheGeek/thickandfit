@@ -8,8 +8,9 @@ import type { ReactElement } from 'react';
 import { signOutAction } from '@/lib/auth/actions';
 import { Wordmark } from '@/components/ui/wordmark';
 import { Icon, type IconName } from '@/components/ui/icons';
+import { Tag } from '@/components/ui/badge';
 
-type NavItem = { key: string; href: string; icon: IconName };
+type NavItem = { key: string; href: string; icon: IconName; soon?: boolean };
 type NavSection = { headerKey: string; items: NavItem[] };
 
 // Admin portal IA, reorganized from Lenus's flat "Toolbox" into clear sections.
@@ -20,17 +21,18 @@ const SECTIONS: NavSection[] = [
     items: [
       { key: 'navClients', href: '/coach/clients', icon: 'user' },
       { key: 'navLeads', href: '/coach/leads', icon: 'funnel' },
-      { key: 'navInbox', href: '/coach/inbox', icon: 'chat' },
-      { key: 'navCommunity', href: '/coach/community', icon: 'community' },
+      { key: 'navBroadcasts', href: '/coach/broadcasts', icon: 'bolt', soon: true },
+      { key: 'navInbox', href: '/coach/inbox', icon: 'chat', soon: true },
+      { key: 'navCommunity', href: '/coach/community', icon: 'community', soon: true },
     ],
   },
   {
     headerKey: 'bucketTraining',
     items: [
       { key: 'programs', href: '/coach/programs', icon: 'clipboard' },
-      { key: 'toolTrainingTemplates', href: '/coach/tool/training-templates', icon: 'grid' },
+      { key: 'toolTrainingTemplates', href: '/coach/tool/training-templates', icon: 'grid', soon: true },
       { key: 'toolExercises', href: '/coach/exercises', icon: 'dumbbell' },
-      { key: 'toolExerciseBlocks', href: '/coach/tool/exercise-blocks', icon: 'dumbbell' },
+      { key: 'toolExerciseBlocks', href: '/coach/tool/exercise-blocks', icon: 'dumbbell', soon: true },
     ],
   },
   {
@@ -39,27 +41,27 @@ const SECTIONS: NavSection[] = [
       { key: 'toolRecipes', href: '/coach/tool/recipes', icon: 'nutrition' },
       { key: 'toolRecipeBooks', href: '/coach/tool/recipe-books', icon: 'book' },
       { key: 'toolMealPlans', href: '/coach/tool/meal-plans', icon: 'nutrition' },
-      { key: 'toolIngredients', href: '/coach/tool/ingredients', icon: 'nutrition' },
+      { key: 'toolIngredients', href: '/coach/tool/ingredients', icon: 'nutrition', soon: true },
     ],
   },
   {
     headerKey: 'bucketContent',
     items: [
       { key: 'forms', href: '/coach/forms', icon: 'file' },
-      { key: 'toolHabits', href: '/coach/tool/habits', icon: 'check' },
-      { key: 'toolContentCollections', href: '/coach/tool/content-collections', icon: 'book' },
-      { key: 'toolMediaLibrary', href: '/coach/tool/media-library', icon: 'camera' },
-      { key: 'toolBenefits', href: '/coach/tool/benefits', icon: 'bookmark' },
+      { key: 'toolHabits', href: '/coach/tool/habits', icon: 'check', soon: true },
+      { key: 'toolContentCollections', href: '/coach/tool/content-collections', icon: 'book', soon: true },
+      { key: 'toolMediaLibrary', href: '/coach/tool/media-library', icon: 'camera', soon: true },
+      { key: 'toolBenefits', href: '/coach/tool/benefits', icon: 'bookmark', soon: true },
     ],
   },
   {
     headerKey: 'bucketProducts',
     items: [
-      { key: 'toolProducts', href: '/coach/tool/products', icon: 'card' },
-      { key: 'toolAutomations', href: '/coach/tool/automations', icon: 'bolt' },
-      { key: 'toolFlows', href: '/coach/tool/flows', icon: 'pulse' },
-      { key: 'toolTags', href: '/coach/tool/tags', icon: 'bookmark' },
-      { key: 'toolSocial', href: '/coach/tool/social', icon: 'community' },
+      { key: 'toolProducts', href: '/coach/tool/products', icon: 'card', soon: true },
+      { key: 'toolAutomations', href: '/coach/tool/automations', icon: 'bolt', soon: true },
+      { key: 'toolFlows', href: '/coach/tool/flows', icon: 'pulse', soon: true },
+      { key: 'toolTags', href: '/coach/tool/tags', icon: 'bookmark', soon: true },
+      { key: 'toolSocial', href: '/coach/tool/social', icon: 'community', soon: true },
     ],
   },
   {
@@ -131,6 +133,11 @@ export function CoachNav({ onNavigate }: { onNavigate?: () => void }): ReactElem
                     >
                       <Icon name={it.icon} size={16} />
                       {t(it.key)}
+                      {it.soon && (
+                        <span className="ml-auto">
+                          <Tag>{c('soon')}</Tag>
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

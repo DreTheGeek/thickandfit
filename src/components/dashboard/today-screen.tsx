@@ -24,8 +24,8 @@ export type WeekDay = { key: string; label: string; day: number; isToday: boolea
 
 export function TodayScreen({
   name,
-  dateLabel,
-  weekDays,
+  dateLabel: dateLabelInit,
+  weekDays: weekDaysInit,
   initial,
 }: {
   name: string;
@@ -55,6 +55,33 @@ export function TodayScreen({
     if (plateauKey) window.localStorage.setItem(plateauKey, '1');
     setPlateauDismissed(true);
   }
+
+  // The server computes the date strip in UTC, which mislabels "today" for the LATAM evening audience
+  // (UTC-5/-6). SSR uses the server props as a stable placeholder (no hydration drift); after mount we
+  // recompute from the browser's local timezone so the date label + highlighted day are correct.
+  const [dateLabel, setDateLabel] = useState(dateLabelInit);
+  const [weekDays, setWeekDays] = useState(weekDaysInit);
+  useEffect(() => {
+    const now = new Date();
+    setDateLabel(
+      new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric' }).format(now),
+    );
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay());
+    const narrow = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+    setWeekDays(
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        return {
+          key: String(i),
+          label: narrow.format(d),
+          day: d.getDate(),
+          isToday: d.toDateString() === now.toDateString(),
+        };
+      }),
+    );
+  }, [locale]);
 
   async function refresh(): Promise<void> {
     setState('loading');
@@ -120,7 +147,7 @@ export function TodayScreen({
           title={t('today.setupPendingTitle')}
           message={t('today.setupPendingBody')}
           action={
-            <ButtonLink href="/messages" size="md">
+            <ButtonLink href="mailto:hello@teamthickandfit.com" size="md">
               {t('today.setupPendingCta')}
             </ButtonLink>
           }

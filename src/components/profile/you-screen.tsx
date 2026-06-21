@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icons';
+import { Tag } from '@/components/ui/badge';
 import { ListRow } from '@/components/ui/list-row';
 import { ProgressBar } from '@/components/ui/ring';
 import { PageTitle } from '@/components/ui/section';
@@ -51,15 +52,21 @@ export async function YouScreen({
       .map((p) => p[0]?.toUpperCase())
       .join('') || undefined;
 
-  const menu: { key: string; icon: IconName; label: string; href: string; sub?: string }[] =
-    [
-      { key: 'aiCoach', icon: 'sparkles', label: t('aiCoach'), href: '/coach-chat' },
-      { key: 'photos', icon: 'camera', label: t('myPhotos'), href: '/progress' },
-      { key: 'measurements', icon: 'ruler', label: t('measurements'), href: '/progress' },
-      { key: 'program', icon: 'clipboard', label: t('myProgram'), href: '/workouts' },
-      { key: 'account', icon: 'gear', label: t('accountSettings'), href: '/account' },
-      { key: 'help', icon: 'help', label: t('help'), href: '/account' },
-    ];
+  const menu: {
+    key: string;
+    icon: IconName;
+    label: string;
+    href: string;
+    sub?: string;
+    soon?: boolean;
+  }[] = [
+    { key: 'aiCoach', icon: 'sparkles', label: t('aiCoach'), href: '/coach-chat' },
+    { key: 'photos', icon: 'camera', label: t('myPhotos'), href: '/progress' },
+    { key: 'measurements', icon: 'ruler', label: t('measurements'), href: '/progress' },
+    { key: 'program', icon: 'clipboard', label: t('myProgram'), href: '/workouts' },
+    { key: 'account', icon: 'gear', label: t('accountSettings'), href: '/account' },
+    { key: 'help', icon: 'help', label: t('help'), href: 'mailto:hello@teamthickandfit.com' },
+  ];
 
   return (
     <div className="px-[22px] pb-7 pt-3">
@@ -159,7 +166,12 @@ export async function YouScreen({
             href={m.href}
             divider={i < menu.length - 1}
             leading={<Icon name={m.icon} size={18} />}
-            title={<span className="font-medium">{m.label}</span>}
+            title={
+              <span className="flex items-center gap-2 font-medium">
+                {m.label}
+                {m.soon && <Tag>{c('soon')}</Tag>}
+              </span>
+            }
             trailing={<Icon name="chevronRight" size={16} className="text-line" />}
           />
         ))}

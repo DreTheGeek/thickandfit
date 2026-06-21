@@ -6,6 +6,8 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 
 const BASE = 'https://services.leadconnectorhq.com';
+// One GHL credential, two historical names. Prefer TOKEN, fall back to KEY (matches lib/ghl/client.ts).
+const GHL_TOKEN = process.env.GHL_API_TOKEN ?? process.env.GHL_API_KEY;
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 const nn = <T>(v: T | '' | null | undefined): T | null => (v === '' || v == null ? null : v);
 
@@ -43,7 +45,7 @@ type GhlOpp = {
 
 function ghlHeaders(): HeadersInit {
   return {
-    Authorization: `Bearer ${process.env.GHL_API_TOKEN}`,
+    Authorization: `Bearer ${GHL_TOKEN}`,
     Version: '2021-07-28',
     Accept: 'application/json',
   };
@@ -66,7 +68,7 @@ async function ghlGet(pathname: string): Promise<Record<string, unknown>> {
 /** Sync GHL pipelines + opportunities into the given company. */
 export async function syncGhlPipelines(companyId: string): Promise<SyncResult> {
   const loc = process.env.GHL_LOCATION_ID;
-  if (!process.env.GHL_API_TOKEN || !loc) {
+  if (!GHL_TOKEN || !loc) {
     return { ok: false, pipelines: 0, stages: 0, opportunities: 0, linked: 0, unmatched: 0, error: 'ghl_not_configured' };
   }
   const sb = createServiceClient();

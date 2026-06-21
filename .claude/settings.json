@@ -1,10 +1,53 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
+      "Task",
+      "Workflow",
+      "WebSearch",
+      "WebFetch",
+      "Read",
+      "Memory",
+      "Monitor",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "NotebookEdit",
+      "Bash(*)",
+      "mcp__*",
+      "Skill(gsd:new-project)",
+      "Skill(gsd:new-project:*)",
+      "Skill(gsd:new-milestone)",
+      "Skill(gsd:new-milestone:*)",
+      "Skill(gsd:map-codebase)",
+      "Skill(gsd:map-codebase:*)",
+      "Skill(gsd:plan-phase)",
+      "Skill(gsd:plan-phase:*)",
+      "Skill(gsd:execute-phase)",
+      "Skill(gsd:execute-phase:*)",
+      "Skill(gsd:progress)",
+      "Skill(gsd:progress:*)",
+      "Skill(gsd:verify-work)",
+      "Skill(gsd:verify-work:*)",
+      "Skill(ralph-loop:ralph-loop)",
+      "Skill(ralph-loop:ralph-loop:*)",
       "Skill(launchproof:onboard)",
       "Skill(launchproof:onboard:*)",
       "Skill(launchproof:static)",
-      "Skill(launchproof:static:*)"
+      "Skill(launchproof:static:*)",
+      "Skill(launchproof:run)",
+      "Skill(launchproof:run:*)",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "mcp__claude_ai_Vercel__get_project",
+      "mcp__claude_ai_Vercel__search_vercel_documentation",
+      "mcp__claude_ai_Vercel__get_runtime_logs",
+      "mcp__claude_ai_Vercel__deploy_to_vercel",
+      "mcp__claude_ai_Vercel__get_deployment"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\dre\\.claude\\projects\\c--Users-dre-OneDrive-Desktop-Kaldr-Tech-Website-Building-thickandfit\\memory"
     ]
   }
 }

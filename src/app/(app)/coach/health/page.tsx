@@ -1,4 +1,4 @@
-// Coach App Health — real service probes, live data counts, automation + deploy info, and the
+// Coach App Health: real service probes, live data counts, automation + deploy info, and the
 // system coverage checklist (action -> reaction). No fabricated status lights.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
