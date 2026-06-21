@@ -144,6 +144,7 @@
       "continue": "Continuar",
       "back": "Atrás",
       "seePlan": "Ver mi plan",
+      "saveError": "No pudimos guardar tu plan. Revisa tu conexión e inténtalo de nuevo.",
       "toCheckout": "Ir al pago",
       "projected": "Proyección {from} → {to} lb en 12 semanas"
     },
