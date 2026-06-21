@@ -131,7 +131,7 @@ export function TodayScreen({
           title={t('today.setupPendingTitle')}
           message={t('today.setupPendingBody')}
           action={
-            <ButtonLink href="/messages" size="md">
+            <ButtonLink href="mailto:hello@teamthickandfit.com" size="md">
               {t('today.setupPendingCta')}
             </ButtonLink>
           }

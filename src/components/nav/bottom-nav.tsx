@@ -11,11 +11,12 @@ type Tab = {
   href: string;
   icon: IconName;
   match: (path: string) => boolean;
+  soon?: boolean;
 };
 
 const TABS: Tab[] = [
   { key: 'today', href: '/dashboard', icon: 'calendar', match: (p) => p === '/dashboard' },
-  { key: 'chat', href: '/messages', icon: 'chat', match: (p) => p.startsWith('/messages') },
+  { key: 'chat', href: '/messages', icon: 'chat', match: (p) => p.startsWith('/messages'), soon: true },
   {
     key: 'activities',
     href: '/workouts',
@@ -26,7 +27,7 @@ const TABS: Tab[] = [
       p.startsWith('/workout/') ||
       p.startsWith('/history'),
   },
-  { key: 'nutrition', href: '/nutrition', icon: 'nutrition', match: (p) => p.startsWith('/nutrition') },
+  { key: 'nutrition', href: '/nutrition', icon: 'nutrition', match: (p) => p.startsWith('/nutrition'), soon: true },
   {
     key: 'you',
     href: '/you',
@@ -61,7 +62,15 @@ export function BottomNav(): ReactElement | null {
               active ? 'text-ink' : 'text-faint/90',
             ].join(' ')}
           >
-            <Icon name={tab.icon} size={18} />
+            <span className="relative">
+              <Icon name={tab.icon} size={18} />
+              {tab.soon && (
+                <span
+                  aria-hidden
+                  className="absolute -right-1.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-accent"
+                />
+              )}
+            </span>
             <span className="text-[10px]">{t(tab.key)}</span>
           </Link>
         );

@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { Wordmark } from '@/components/ui/wordmark';
 import { Icon, type IconName } from '@/components/ui/icons';
+import { Tag } from '@/components/ui/badge';
 import { signOutAction } from '@/lib/auth/actions';
 
 type Tab = {
@@ -13,11 +14,12 @@ type Tab = {
   href: string;
   icon: IconName;
   match: (p: string) => boolean;
+  soon?: boolean;
 };
 
 const TABS: Tab[] = [
   { key: 'today', href: '/dashboard', icon: 'calendar', match: (p) => p === '/dashboard' },
-  { key: 'chat', href: '/messages', icon: 'chat', match: (p) => p.startsWith('/messages') },
+  { key: 'chat', href: '/messages', icon: 'chat', match: (p) => p.startsWith('/messages'), soon: true },
   {
     key: 'activities',
     href: '/workouts',
@@ -25,7 +27,7 @@ const TABS: Tab[] = [
     match: (p) =>
       p.startsWith('/workouts') || p.startsWith('/exercises') || p.startsWith('/workout/') || p.startsWith('/history'),
   },
-  { key: 'nutrition', href: '/nutrition', icon: 'nutrition', match: (p) => p.startsWith('/nutrition') },
+  { key: 'nutrition', href: '/nutrition', icon: 'nutrition', match: (p) => p.startsWith('/nutrition'), soon: true },
   { key: 'you', href: '/you', icon: 'user', match: (p) => p.startsWith('/you') || p.startsWith('/progress') || p.startsWith('/account') },
 ];
 
@@ -63,6 +65,11 @@ export function SubscriberRail(): ReactElement | null {
             >
               <Icon name={tab.icon} size={18} />
               {t(tab.key)}
+              {tab.soon && (
+                <span className="ml-auto">
+                  <Tag>{c('soon')}</Tag>
+                </span>
+              )}
             </Link>
           );
         })}
