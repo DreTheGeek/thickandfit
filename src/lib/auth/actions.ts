@@ -5,8 +5,11 @@ import { headers } from 'next/headers';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { homePathForUser, type Role } from '@/lib/auth/session';
+import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 
 export type AuthState = { error?: string; sent?: boolean };
+
+const TOO_MANY = 'Too many attempts. Please wait a minute and try again.';
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -19,6 +22,11 @@ const passwordSchema = z.object({ password: z.string().min(8) });
 const INVALID_CREDENTIALS = 'Enter a valid email and a password of at least 8 characters.';
 const INVALID_EMAIL = 'Enter a valid email address.';
 const INVALID_PASSWORD = 'Password must be at least 8 characters.';
+// Sanitized, non-enumerating messages. The raw Supabase error is logged server-side, never returned
+// to the client (would leak "User already registered" / rate-limit internals -> account enumeration).
+const SIGNIN_FAILED = 'Invalid email or password. Please try again.';
+const SIGNUP_FAILED = 'Could not complete sign-up. Please try again.';
+const UPDATE_PASSWORD_FAILED = 'Could not update your password. Please try again.';
 
 async function origin(): Promise<string> {
   const h = await headers();
@@ -31,10 +39,14 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
     password: formData.get('password'),
   });
   if (!parsed.success) return { error: INVALID_CREDENTIALS };
+  if (!(await checkRateLimit(await clientIp(), 'auth-signin', 5, 60))) return { error: TOO_MANY };
   const { email, password } = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('signInAction:', error.message);
+    return { error: SIGNIN_FAILED };
+  }
   // Route by role + onboarding state, reusing the just-authenticated client.
   const {
     data: { user },
@@ -57,6 +69,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     password: formData.get('password'),
   });
   if (!parsed.success) return { error: INVALID_CREDENTIALS };
+  if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60))) return { error: TOO_MANY };
   const { email, password } = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
@@ -64,13 +77,17 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     password,
     options: { emailRedirectTo: `${await origin()}/auth/callback` },
   });
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('signUpAction:', error.message);
+    return { error: SIGNUP_FAILED };
+  }
   return { sent: true };
 }
 
 export async function requestResetAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const parsed = emailSchema.safeParse({ email: formData.get('email') });
   if (!parsed.success) return { error: INVALID_EMAIL };
+  if (!(await checkRateLimit(await clientIp(), 'auth-reset', 3, 60))) return { error: TOO_MANY };
   const supabase = await createClient();
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${await origin()}/auth/callback?next=/auth/reset-password`,
@@ -93,7 +110,10 @@ export async function updatePasswordAction(_prev: AuthState, formData: FormData)
   if (!user) return { error: 'Your reset link has expired. Request a new one.' };
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
-  if (error) return { error: error.message };
+  if (error) {
+    console.error('updatePasswordAction:', error.message);
+    return { error: UPDATE_PASSWORD_FAILED };
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
