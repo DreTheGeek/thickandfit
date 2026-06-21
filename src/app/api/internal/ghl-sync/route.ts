@@ -24,5 +24,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     status: result.ok ? 'success' : 'error',
     detail: result,
   });
+
+  // Maintenance, folded into this daily cron to stay under the Hobby 2-cron cap: prune rate_limit_log
+  // rows older than an hour (limiter windows are <= 60s, so anything older is dead weight).
+  void sb
+    .from('rate_limit_log')
+    .delete()
+    .lt('hit_at', new Date(Date.now() - 3_600_000).toISOString());
+
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });
 }
