@@ -130,7 +130,7 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
                     className={['flex items-center gap-3 py-2.5', i < Math.min(5, data.history.length) - 1 ? 'border-b border-divider' : ''].join(' ')}
                   >
                     <CompletionCheck done size={20} />
-                    <span className="flex-1 text-[13px]">Completed a workout</span>
+                    <span className="flex-1 text-[13px]">{t('completedWorkout')}</span>
                     <span className="text-[12px] text-faint">{h.date}</span>
                   </div>
                 ))}

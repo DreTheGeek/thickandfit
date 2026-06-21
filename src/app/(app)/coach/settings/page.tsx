@@ -63,7 +63,7 @@ export default async function CoachSettingsPage(): Promise<ReactElement> {
   const totals = coverageTotals();
   const memberSince = profile?.created_at
     ? new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }).format(new Date(profile.created_at))
-    : '—';
+    : '-';
 
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
@@ -99,8 +99,8 @@ export default async function CoachSettingsPage(): Promise<ReactElement> {
 
         {/* Workspace */}
         <Card title={t('settingsBusiness')}>
-          <Row label={t('workspaceName')} value={company?.name ?? '—'} />
-          <Row label={t('workspaceSlug')} value={<span className="font-mono text-[12px]">{company?.slug ?? '—'}</span>} />
+          <Row label={t('workspaceName')} value={company?.name ?? '-'} />
+          <Row label={t('workspaceSlug')} value={<span className="font-mono text-[12px]">{company?.slug ?? '-'}</span>} />
           <Row label={t('teamSizeLabel')} value={teamRows.length} />
         </Card>
 

@@ -15,7 +15,7 @@ export default async function CoachHealthPage(): Promise<ReactElement> {
   const locale = await getLocale();
   if (!ctx.companyId) return <div className="p-8 text-sm text-muted">{t('noData')}</div>;
 
-  const health = await getSystemHealth(ctx.companyId);
+  const health = await getSystemHealth(ctx.companyId, locale);
   const degraded = health.services.some((s) => s.status === 'down');
 
   return (
@@ -33,7 +33,7 @@ export default async function CoachHealthPage(): Promise<ReactElement> {
       </div>
       <p className="mb-6 text-[13px] text-faint">{t('healthCheckedLive')}</p>
 
-      <HealthView health={health} locale={locale} />
+      <HealthView health={health} />
     </div>
   );
 }

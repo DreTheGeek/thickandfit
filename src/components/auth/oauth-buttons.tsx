@@ -1,5 +1,6 @@
 'use client';
-// Google + Apple. Server action builds the provider redirect (needs provider config in Supabase).
+// Google OAuth. Server action builds the provider redirect (needs provider config in Supabase).
+// Apple is intentionally hidden on main: the provider is not wired yet (see Gap Log #1).
 import { useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
@@ -20,14 +21,6 @@ export function OAuthButtons(): ReactElement {
         className={btnClass}
       >
         {t('continueGoogle')}
-      </button>
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => start(() => signInWithOAuthAction('apple'))}
-        className={btnClass}
-      >
-        {t('continueApple')}
       </button>
     </div>
   );

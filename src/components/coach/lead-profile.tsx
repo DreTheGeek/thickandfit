@@ -112,7 +112,7 @@ export function LeadProfile({
             <RailRow label={t('colStage')} value={detail.stageName ?? '-'} />
             <RailRow label={t('facetSource')} value={detail.source ?? '-'} />
             {detail.status === 'lost' && detail.lostReason && <RailRow label={t('lostReasonLabel')} value={detail.lostReason} />}
-            <RailRow label={t('colCreated')} value={fmtDate(detail.createdAt, locale)} />
+            <RailRow label={t('colCreated')} value={<span suppressHydrationWarning>{fmtDate(detail.createdAt, locale)}</span>} />
           </div>
         </aside>
 
@@ -127,7 +127,7 @@ export function LeadProfile({
                   <span className="text-soft">
                     {e.field}: <span className="font-medium text-ink">{e.to ?? '-'}</span>
                   </span>
-                  <span className="text-faint">{fmtDate(e.at, locale)}</span>
+                  <span className="text-faint" suppressHydrationWarning>{fmtDate(e.at, locale)}</span>
                 </div>
               ))}
             </div>

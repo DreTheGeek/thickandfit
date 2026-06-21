@@ -118,6 +118,25 @@ export async function markTemplate(companyId: string, planId: string) {
 
 export async function assignProgram(companyId: string, planId: string, profileId: string) {
   const supabase = createServiceClient();
+
+  // Ownership guard: never trust client-supplied ids. The plan and the target
+  // profile must both belong to this company before we upsert the assignment.
+  const { data: plan } = await supabase
+    .from('plans')
+    .select('id')
+    .eq('id', planId)
+    .eq('company_id', companyId)
+    .maybeSingle();
+  if (!plan) throw new Error('Plan not found');
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', profileId)
+    .eq('company_id', companyId)
+    .maybeSingle();
+  if (!profile) throw new Error('Profile not found');
+
   await supabase
     .from('plan_assignments')
     .upsert({ company_id: companyId, plan_id: planId, profile_id: profileId }, { onConflict: 'plan_id,profile_id' });

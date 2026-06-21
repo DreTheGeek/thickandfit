@@ -3,10 +3,14 @@
 // never from searchParams. Transaction totals come from denormalized lifetime_paid_cents, never an
 // unscoped txn select. Pure types + constants live in clients-types.ts (client-safe); re-exported.
 import 'server-only';
+import { getTranslations } from 'next-intl/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { deriveStanding } from '@/lib/coach/standing';
 import {
+  CLIENT_ROWS_CAP,
+  LEDGER_TXN_CAP,
   NONE_KEY,
+  clampPage,
   type ClientDetail,
   type ClientFacets,
   type ClientFilters,
@@ -62,10 +66,10 @@ function initialsOf(first: string | null, last: string | null, fallback: string)
   return (i || fallback[0] || '?').toUpperCase();
 }
 
-function mapRow(c: ContactRowRaw): ClientRow {
+function mapRow(c: ContactRowRaw, noName: string): ClientRow {
   const sub = one(c.client_subscriptions);
   const tags: TagLite[] = (c.contact_tags ?? []).map((t) => one(t.tag)).filter((t): t is TagLite => t != null);
-  const name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || 'Unknown';
+  const name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || noName;
   const startedAt = sub?.started_at ?? null;
   return {
     id: c.id,
@@ -93,7 +97,7 @@ function mapRow(c: ContactRowRaw): ClientRow {
   };
 }
 
-async function loadClientRows(companyId: string): Promise<ClientRow[]> {
+async function loadClientRows(companyId: string): Promise<{ rows: ClientRow[]; truncated: boolean }> {
   const sb = createServiceClient();
   const { data, error } = await sb
     .from('contacts')
@@ -104,9 +108,13 @@ async function loadClientRows(companyId: string): Promise<ClientRow[]> {
     )
     .eq('company_id', companyId)
     .eq('type', 'client')
-    .limit(2000);
+    .limit(CLIENT_ROWS_CAP);
   if (error) throw new Error(`loadClientRows: ${error.message}`);
-  return ((data ?? []) as unknown as ContactRowRaw[]).map(mapRow);
+  const t = await getTranslations('app.coach');
+  const noName = t('noName');
+  const raw = (data ?? []) as unknown as ContactRowRaw[];
+  // If we read exactly the cap, the list is windowed: totals/facets are a partial view, so flag it.
+  return { rows: raw.map((c) => mapRow(c, noName)), truncated: raw.length >= CLIENT_ROWS_CAP };
 }
 
 type FacetKey = 'q' | 'standing' | 'status' | 'health' | 'product' | 'lang' | 'owner' | 'tags' | 'cohort' | 'legacy';
@@ -182,17 +190,19 @@ function computeFacets(rows: ClientRow[], f: ClientFilters): ClientFacets {
 }
 
 export async function getClientsPage(companyId: string, filters: ClientFilters): Promise<ClientsPage> {
-  const all = await loadClientRows(companyId);
+  const { rows: all, truncated } = await loadClientRows(companyId);
   const filtered = all.filter((r) => matches(r, filters, null));
   const sorted = sortRows(filtered, filters.sort, filters.dir);
-  const start = (filters.page - 1) * filters.pageSize;
+  const page = clampPage(filters.page, filtered.length, filters.pageSize);
+  const start = (page - 1) * filters.pageSize;
   return {
     rows: sorted.slice(start, start + filters.pageSize),
     total: filtered.length,
-    page: filters.page,
+    page,
     pageSize: filters.pageSize,
     facets: computeFacets(all, filters),
     totalAll: all.length,
+    listTruncated: truncated,
   };
 }
 
@@ -275,10 +285,11 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     .eq('company_id', companyId)
     .eq('contact_id', contactId)
     .order('occurred_at', { ascending: false })
-    .limit(1000);
+    .limit(LEDGER_TXN_CAP);
   const txns = (txnData ?? []) as { occurred_at: string | null; category: string | null; gross_cents: number | null; coach_cents: number | null; currency: string | null }[];
-  // If we hit the cap the ledger is windowed, so it cannot back a money total.
-  const ledgerTruncated = txns.length >= 1000;
+  // If we hit the cap the ledger is windowed, so it cannot back a money total and the running
+  // balance is not anchored to a true zero start. Flag it; the UI hides the running-balance column.
+  const ledgerTruncated = txns.length >= LEDGER_TXN_CAP;
   let running = txns.reduce((acc, t) => acc + Number(t.gross_cents ?? 0), 0);
   const ledgerTotalCents = running;
   const ledger: LedgerEntry[] = txns.map((t) => {
@@ -288,7 +299,9 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
       grossCents: Number(t.gross_cents ?? 0),
       coachCents: Number(t.coach_cents ?? 0),
       currency: t.currency ?? 'USD',
-      runningCents: running,
+      // When truncated the cumulative figure is wrong (missing older rows), so zero it out; the
+      // UI suppresses the column entirely rather than render a misleading value.
+      runningCents: ledgerTruncated ? 0 : running,
     };
     running -= Number(t.gross_cents ?? 0);
     return entry;
@@ -330,7 +343,8 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     bytes: f.bytes,
   }));
 
-  const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || 'Unknown';
+  const t = await getTranslations('app.coach');
+  const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || t('noName');
   const startedAt = sub?.started_at ?? null;
   const tenureDays = startedAt
     ? Math.max(0, Math.round((Date.parse(sub?.ended_at ?? new Date().toISOString()) - Date.parse(startedAt)) / 86400000))
@@ -383,6 +397,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
         }
       : null,
     ledger,
+    ledgerTruncated,
     files,
   };
 }

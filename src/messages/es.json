@@ -11,7 +11,9 @@
     "uiLanguage": "Idioma de la interfaz",
     "contentLanguage": "Idioma del contenido",
     "english": "Inglés",
-    "spanish": "Español"
+    "spanish": "Español",
+    "errorTitle": "Algo salió mal",
+    "errorBody": "Algo salió mal. Inténtalo de nuevo."
   },
   "nav": {
     "home": "Inicio",
@@ -44,7 +46,13 @@
     "resetCta": "Enviar enlace",
     "resetSent": "Si ese correo existe, te enviaremos un enlace.",
     "checkEmail": "Revisa tu correo para confirmar tu cuenta.",
-    "or": "o"
+    "or": "o",
+    "newPasswordTitle": "Crea una contraseña nueva",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirma la contraseña",
+    "updatePasswordCta": "Actualizar contraseña",
+    "oauthError": "No pudimos iniciar tu sesión con ese proveedor. Inténtalo de nuevo o usa el correo.",
+    "authError": "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo."
   },
   "app": {
     "nav": {
@@ -52,7 +60,8 @@
       "community": "Comunidad",
       "activities": "Actividades",
       "nutrition": "Nutrición",
-      "you": "Tú"
+      "you": "Tú",
+      "chat": "Chat"
     },
     "community": {
       "title": "Comunidad",
@@ -106,7 +115,10 @@
       "todo": "Por hacer",
       "morningWorkout": "Entreno de la mañana",
       "logBreakfast": "Registrar desayuno",
-      "drinkWater": "Tomar agua"
+      "drinkWater": "Tomar agua",
+      "setupPendingTitle": "Configuración de cuenta pendiente",
+      "setupPendingBody": "Estamos terminando de configurar tu cuenta. Esto suele tardar solo un momento. Contáctanos si no se resuelve pronto.",
+      "setupPendingCta": "Contactar soporte"
     },
     "activities": {
       "title": "Actividades",
@@ -197,7 +209,8 @@
         "increase_weight": "Sube el peso",
         "hold": "Mantén firme",
         "deload": "Baja la carga"
-      }
+      },
+      "untitled": "Ejercicio"
     },
     "coach": {
       "overview": "Resumen",
@@ -648,7 +661,12 @@
       "recipeFavorited": "En favoritas",
       "recipeUnfavorite": "Quitar de favoritas",
       "ingredientVerified": "Coincidencia verificada",
-      "ingredientConfidence": "{pct}% de confianza"
+      "ingredientConfidence": "{pct}% de confianza",
+      "assignToPlaceholder": "Nadie",
+      "completedWorkout": "Completó un entrenamiento",
+      "lenusId": "ID de Lenus",
+      "ledgerTruncated": "Mostrando solo las transacciones mas recientes. Las entradas anteriores no se cargaron, por lo que el total acumulado esta oculto.",
+      "listTruncated": "Mostrando los primeros {n} clientes. La lista esta limitada, por lo que los totales y filtros reflejan una vista parcial."
     },
     "you": {
       "title": "Tú",
@@ -678,7 +696,8 @@
       "saving": "Guardando",
       "weightSaved": "Peso registrado - sigue asi",
       "weightError": "No se pudo guardar. Intenta de nuevo.",
-      "aiCoach": "Entrenadora IA"
+      "aiCoach": "Entrenadora IA",
+      "progressLbs": "lbs Progreso"
     },
     "gamification": {
       "dayStreak": "dias seguidos",
@@ -875,6 +894,11 @@
         "plateau.title": "Vamos a avanzar",
         "plateau.body": "Tu peso se ha mantenido igual por {days} dias. Es normal y lo podemos ajustar. Toca para hablarlo con tu coach."
       }
+    },
+    "forms": {
+      "submit": "Enviar",
+      "success": "Gracias. Tu respuesta fue registrada.",
+      "error": "No se pudo enviar."
     }
   }
 }

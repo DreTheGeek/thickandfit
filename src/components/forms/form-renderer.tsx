@@ -2,6 +2,7 @@
 // Client-facing form renderer. Renders each field type and submits to /api/forms/[id]/submit.
 import { useState } from 'react';
 import type { FormEvent, ReactElement } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 
 type Field = { id: string; type: string; label_en: string; label_es?: string; required: boolean };
@@ -16,6 +17,8 @@ export function FormRenderer({
   formId: string;
   fields: Field[];
 }): ReactElement {
+  const t = useTranslations('app.forms');
+  const locale = useLocale();
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [state, setState] = useState<'idle' | 'loading' | 'error' | 'success'>('idle');
 
@@ -34,9 +37,7 @@ export function FormRenderer({
 
   if (state === 'success') {
     return (
-      <p className="rounded-xl bg-warm px-4 py-3 text-sm text-soft">
-        Thank you. Your response was recorded.
-      </p>
+      <p className="rounded-xl bg-warm px-4 py-3 text-sm text-soft">{t('success')}</p>
     );
   }
 
@@ -45,7 +46,7 @@ export function FormRenderer({
       {fields.map((f) => (
         <label key={f.id} className="flex flex-col gap-1.5 text-sm">
           <span className="font-medium">
-            {f.label_en}
+            {(locale === 'es' && f.label_es) || f.label_en}
             {f.required ? ' *' : ''}
           </span>
           {f.type === 'multiline' ? (
@@ -58,9 +59,9 @@ export function FormRenderer({
         </label>
       ))}
       <Button type="submit" size="block" disabled={state === 'loading'} className="mt-1">
-        Submit
+        {t('submit')}
       </Button>
-      {state === 'error' ? <p className="text-sm text-alert-ink">Could not submit.</p> : null}
+      {state === 'error' ? <p className="text-sm text-alert-ink">{t('error')}</p> : null}
     </form>
   );
 }

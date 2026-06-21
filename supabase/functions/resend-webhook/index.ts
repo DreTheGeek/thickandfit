@@ -7,7 +7,8 @@ const webhookSecret = Deno.env.get('RESEND_WEBHOOK_SECRET')!;
 
 type ResendEvent = {
   type: string;
-  data?: { email?: string; to?: string[] };
+  // Resend includes the provider message id (email_id) on delivery events.
+  data?: { email?: string; to?: string[]; email_id?: string };
 };
 
 Deno.serve(async (req: Request) => {
@@ -27,12 +28,27 @@ Deno.serve(async (req: Request) => {
   }
 
   const email = event.data?.to?.[0] ?? event.data?.email ?? null;
+  const providerMessageId = event.data?.email_id ?? null;
   const supabase = serviceClient();
 
   if ((event.type === 'email.bounced' || event.type === 'email.complained') && email) {
     const reason = event.type === 'email.bounced' ? 'bounced' : 'complained';
+    // Suppression is intentionally global: a hard bounce / complaint for an address
+    // applies across all tenants, so the suppression list is keyed by email only.
     await supabase.from('email_suppression_list').upsert({ email, reason }, { onConflict: 'email' });
-    await supabase.from('email_send_log').update({ status: reason }).eq('to_email', email);
+
+    // The send-log update is tenant-scoped. Resend gives us the provider message id,
+    // which maps to exactly one log row (one company). Update by that when present so we
+    // never flip another tenant's identical to_email. Fall back to the global match only
+    // when the message id is absent (legacy/partial payloads).
+    if (providerMessageId) {
+      await supabase
+        .from('email_send_log')
+        .update({ status: reason })
+        .eq('provider_message_id', providerMessageId);
+    } else {
+      await supabase.from('email_send_log').update({ status: reason }).eq('to_email', email);
+    }
   }
 
   return apiSuccess({ received: true, type: event.type });

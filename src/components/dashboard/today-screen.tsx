@@ -36,9 +36,9 @@ export function TodayScreen({
   const t = useTranslations('app');
   const locale = useLocale();
   const [summary, setSummary] = useState<DashboardSummary | null>(initial);
-  const [state, setState] = useState<'idle' | 'loading' | 'error'>(
-    initial ? 'idle' : 'error',
-  );
+  // A null summary is a companyless / not-yet-provisioned session, not a fetch error.
+  // Start idle and surface a dedicated "account setup pending" state below.
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   // Plateau banner dismissal. We key the dismissed flag by the plateau span so a freshly-extended
   // plateau re-surfaces the banner instead of staying hidden forever. Persisted in localStorage so
@@ -103,11 +103,28 @@ export function TodayScreen({
     );
   }
 
-  if (state === 'error' || !summary) {
+  if (state === 'error') {
     return (
       <div className="px-[22px] pb-7 pt-3">
         {header}
         <ErrorState onRetry={refresh} />
+      </div>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <div className="px-[22px] pb-7 pt-3">
+        {header}
+        <FirstRunState
+          title={t('today.setupPendingTitle')}
+          message={t('today.setupPendingBody')}
+          action={
+            <ButtonLink href="/messages" size="md">
+              {t('today.setupPendingCta')}
+            </ButtonLink>
+          }
+        />
       </div>
     );
   }

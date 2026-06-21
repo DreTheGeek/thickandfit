@@ -3,14 +3,6 @@
 // the design-handoff prototype. Same engine the API stores; weight collected in lb,
 // converted to kg for the metric prediction engine.
 import { useMemo, useState } from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts';
 import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { computePlan, type OnboardingInput } from '@/lib/onboarding/prediction';
@@ -50,7 +42,7 @@ export function OnboardingFlow(): ReactElement {
     [sex, age, heightCm, weightLbs, goalLbs, activity, goal],
   );
   const plan = useMemo(() => computePlan(input), [input]);
-  const chart = useMemo(
+  const chart = useMemo<CurvePoint[]>(
     () => plan.curve.map((p) => ({ week: p.week, lb: Math.round(p.weightKg * LB_PER_KG) })),
     [plan],
   );
@@ -137,15 +129,8 @@ export function OnboardingFlow(): ReactElement {
         <>
           <h2 className="tf-display mb-5 text-[34px]">{t('predictTitle')}</h2>
           <div className="rounded-[18px] bg-warm p-[22px]">
-            <div className="h-[150px] w-full">
-              <ResponsiveContainer>
-                <LineChart data={chart} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                  <XAxis dataKey="week" tick={{ fontSize: 11 }} stroke="#bbb" />
-                  <YAxis domain={['dataMin - 4', 'dataMax + 4']} width={28} tick={{ fontSize: 11 }} stroke="#bbb" />
-                  <ReferenceLine y={Math.round(goalLbs)} stroke="#5EBE62" strokeDasharray="4 4" />
-                  <Line type="monotone" dataKey="lb" stroke="#0f0f0f" strokeWidth={2.5} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="w-full">
+              <PredictionChart data={chart} goalLb={Math.round(goalLbs)} />
             </div>
             <div className="mt-1.5 flex justify-between text-[12px] text-muted">
               <span>
@@ -252,5 +237,62 @@ function PlanRow({ label, value }: { label: string; value: string }): ReactEleme
       <div className="text-[12px] uppercase tracking-[1px] text-faint">{label}</div>
       <div className="mt-1 font-semibold">{value}</div>
     </div>
+  );
+}
+
+type CurvePoint = { week: number; lb: number };
+
+// Pure-SVG weight-prediction line chart. recharts renders blank on React 19, so this scales
+// via viewBox with no JS measurement. Dashed olive line marks the goal weight.
+function PredictionChart({ data, goalLb }: { data: CurvePoint[]; goalLb: number }): ReactElement {
+  const W = 320;
+  const H = 150;
+  const padL = 30;
+  const padR = 10;
+  const padT = 10;
+  const padB = 22;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const n = data.length;
+  const values = [...data.map((d) => d.lb), goalLb];
+  const min = Math.min(...values) - 4;
+  const max = Math.max(...values) + 4;
+  const span = Math.max(1, max - min);
+  const x = (i: number): number => (n <= 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW);
+  const y = (v: number): number => padT + plotH - ((v - min) / span) * plotH;
+  const line = data.map((d, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(d.lb).toFixed(1)}`).join(' ');
+  const ticks = [min, (min + max) / 2, max];
+  const labelEvery = Math.max(1, Math.ceil(n / 6));
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
+      {ticks.map((tk, i) => (
+        <g key={i}>
+          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--color-divider)" strokeWidth={1} />
+          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="9" fill="var(--color-faint)">
+            {Math.round(tk)}
+          </text>
+        </g>
+      ))}
+
+      <line
+        x1={padL}
+        x2={W - padR}
+        y1={y(goalLb)}
+        y2={y(goalLb)}
+        stroke="#5EBE62"
+        strokeWidth={1.5}
+        strokeDasharray="4 4"
+      />
+      <path d={line} fill="none" stroke="#0f0f0f" strokeWidth={2.5} />
+
+      {data.map((d, i) =>
+        i % labelEvery === 0 || i === n - 1 ? (
+          <text key={`w${i}`} x={x(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="var(--color-faint)">
+            {d.week}
+          </text>
+        ) : null,
+      )}
+    </svg>
   );
 }

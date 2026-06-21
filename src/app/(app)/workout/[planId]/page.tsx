@@ -20,11 +20,14 @@ type SessionExercise = {
 
 export default async function WorkoutPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ planId: string }>;
+  searchParams: Promise<{ day?: string }>;
 }): Promise<ReactElement> {
   const ctx = await requireAuth();
   const { planId } = await params;
+  const { day: dayParam } = await searchParams;
   const locale = await getLocale();
 
   const supabase = createServiceClient();
@@ -46,7 +49,14 @@ export default async function WorkoutPage({
     );
   }
 
-  const session = program.sessions[0];
+  // Clamp the requested day index into range so multi-day programs reach days 2..N
+  // and a bad/out-of-range ?day= value safely falls back to the first session.
+  const parsedDay = Number(dayParam);
+  const dayIndex =
+    Number.isInteger(parsedDay) && parsedDay >= 0 && parsedDay < program.sessions.length
+      ? parsedDay
+      : 0;
+  const session = program.sessions[dayIndex];
   const exList = session.exercises as SessionExercise[];
   const ids = exList.map((e) => e.exercise_id);
 
@@ -62,6 +72,8 @@ export default async function WorkoutPage({
     (muscles ?? []).map((m) => [m.key, locale === 'es' ? (m.label_es ?? m.label_en) : m.label_en]),
   );
 
+  const tEx = await getTranslations('app.exercise');
+
   // Progressive-overload recommendation per exercise from the client's recent set history.
   const recLocale = locale === 'es' ? 'es' : 'en';
   const overloadByExercise = ctx.companyId
@@ -70,19 +82,18 @@ export default async function WorkoutPage({
         ctx.userId,
         exList.map((e) => ({
           exerciseId: e.exercise_id,
-          name: (locale === 'es' && byId.get(e.exercise_id)?.name_es) || byId.get(e.exercise_id)?.name_en || 'Exercise',
+          name: (locale === 'es' && byId.get(e.exercise_id)?.name_es) || byId.get(e.exercise_id)?.name_en || tEx('untitled'),
           reps: e.reps,
         })),
         recLocale,
       )
     : new Map();
-
   const playerExercises: PlayerExercise[] = exList.map((e) => {
     const meta = byId.get(e.exercise_id);
     const hint = overloadByExercise.get(e.exercise_id) ?? null;
     return {
       exercise_id: e.exercise_id,
-      name: (locale === 'es' && meta?.name_es) || meta?.name_en || 'Exercise',
+      name: (locale === 'es' && meta?.name_es) || meta?.name_en || tEx('untitled'),
       sets: e.sets,
       reps: e.reps,
       weight: e.weight,

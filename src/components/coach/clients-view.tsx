@@ -51,9 +51,15 @@ export function ClientsView({
 }): ReactElement {
   const [showFilters, setShowFilters] = useState(false);
   const { pending } = useClientFilterUrl();
+  const t = useTranslations('app.coach');
 
   return (
     <div className="flex flex-col gap-4">
+      {page.listTruncated && (
+        <p className="rounded-2xl border border-line bg-warm/40 px-4 py-2.5 text-[12px] text-muted">
+          {t('listTruncated', { n: page.totalAll })}
+        </p>
+      )}
       <ClientsSmartLists filters={filters} saved={segments} />
       <ClientsToolbar
         filters={filters}

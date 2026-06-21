@@ -128,7 +128,7 @@ export function ClientProfile({
             <RailRow label={t('sourceLabel')} value={<span className="capitalize">{detail.source ?? '-'}</span>} />
             {detail.isLegacy && <RailRow label={t('legacy')} value={detail.legacySource ?? 'lenus'} />}
             {detail.wasLead && <RailRow label={t('navLeads')} value={t('yes')} />}
-            {detail.lenusId && <RailRow label="Lenus ID" value={<span className="font-mono text-[11px]">{detail.lenusId}</span>} />}
+            {detail.lenusId && <RailRow label={t('lenusId')} value={<span className="font-mono text-[11px]">{detail.lenusId}</span>} />}
           </div>
         </aside>
 

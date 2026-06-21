@@ -1,7 +1,7 @@
 // Activities hub. Requires auth. Resolves the assigned program + today's session
 // + logged history, then the client screen switches Program / Library / History.
 import type { ReactElement } from 'react';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { getAssignedPlans, getProgram } from '@/lib/programs/engine';
 import { fetchHistory } from '@/lib/workout/logging';
@@ -21,9 +21,15 @@ type SessionExercise = {
   reps: number | null;
 };
 
-export default async function WorkoutsPage(): Promise<ReactElement> {
+export default async function WorkoutsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ day?: string }>;
+}): Promise<ReactElement> {
   const ctx = await requireAuth();
+  const { day: dayParam } = await searchParams;
   const locale = await getLocale();
+  const tEx = await getTranslations('app.exercise');
 
   let program: ActivitiesProgram | null = null;
   let history: HistoryItem[] = [];
@@ -37,7 +43,15 @@ export default async function WorkoutsPage(): Promise<ReactElement> {
 
     if (plan) {
       const full = await getProgram(ctx.companyId, plan.id);
-      const session = full?.sessions[0];
+      const sessions = full?.sessions ?? [];
+      // Clamp the requested day into range so days 2..N are reachable and a bad value
+      // safely falls back to day 1.
+      const parsedDay = Number(dayParam);
+      const dayIndex =
+        Number.isInteger(parsedDay) && parsedDay >= 0 && parsedDay < sessions.length
+          ? parsedDay
+          : 0;
+      const session = sessions[dayIndex];
       let exercises: ActivitiesProgram['exercises'] = [];
 
       if (session) {
@@ -54,7 +68,7 @@ export default async function WorkoutsPage(): Promise<ReactElement> {
           const reps = e.reps != null ? ` x ${e.reps}` : '';
           return {
             id: e.exercise_id,
-            name: (locale === 'es' && meta?.name_es) || meta?.name_en || 'Exercise',
+            name: (locale === 'es' && meta?.name_es) || meta?.name_en || tEx('untitled'),
             sub: `${e.sets ?? '-'}${reps}`,
             hasDemo: Boolean(meta?.video_mux_id),
             done: false,
@@ -67,9 +81,14 @@ export default async function WorkoutsPage(): Promise<ReactElement> {
         name: (locale === 'es' && plan.name_es) || plan.name_en,
         week: 1,
         totalWeeks: plan.weeks,
-        day: 1,
-        totalDays: full?.sessions.length ?? 1,
+        day: dayIndex + 1,
+        totalDays: sessions.length || 1,
         pct: 0,
+        days: sessions.map((s, i) => ({
+          index: i,
+          label: s.day_label || `Day ${i + 1}`,
+        })),
+        activeDay: dayIndex,
         exercises,
       };
     }

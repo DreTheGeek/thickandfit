@@ -96,7 +96,7 @@ export async function YouScreen({
         <Stat value={String(streakWeeks)} label={t('dayStreak')} divider />
         <Stat
           value={progressLbs === 0 ? '0' : `${progressLbs > 0 ? '+' : ''}${progressLbs}`}
-          label={`lbs ${t('progress')}`}
+          label={t('progressLbs')}
           accent={progressLbs < 0}
         />
       </div>

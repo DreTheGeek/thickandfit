@@ -30,7 +30,7 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
     .maybeSingle();
 
   const targets = (onb?.computed_targets as Targets | null) ?? null;
-  const macros = targets
+  const macros = targets?.macros
     ? {
         calories: targets.calories,
         protein_g: targets.macros.protein_g,

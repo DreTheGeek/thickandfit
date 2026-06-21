@@ -25,7 +25,11 @@ export async function GET(req: Request) {
     ? query.or(`company_id.is.null,company_id.eq.${ctx.companyId}`)
     : query.is('company_id', null);
 
-  if (q) query = query.ilike('name_en', `%${q}%`);
+  if (q) {
+    // Escape LIKE metacharacters so user input can't act as a wildcard / injection.
+    const safeQ = q.replace(/[%_\\]/g, (c) => `\\${c}`);
+    query = query.ilike('name_en', `%${safeQ}%`);
+  }
   if (muscle) query = query.eq('muscle_group', muscle);
   if (equipment) query = query.eq('equipment', equipment);
   if (difficulty) query = query.eq('difficulty', difficulty);

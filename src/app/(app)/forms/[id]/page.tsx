@@ -1,6 +1,6 @@
 // Client form page. Requires auth; the form must be published and assigned to this client.
 import type { ReactElement } from 'react';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { getForm } from '@/lib/forms/engine';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -35,9 +35,12 @@ export default async function ClientFormPage({
     );
   }
 
+  const locale = await getLocale();
+  const title = (locale === 'es' && loaded.form.title_es) || loaded.form.title_en;
+
   return (
     <div className="px-[22px] pb-7 pt-5">
-      <h1 className="tf-display mb-6 text-[30px]">{loaded.form.title_en}</h1>
+      <h1 className="tf-display mb-6 text-[30px]">{title}</h1>
       <FormRenderer formId={id} fields={loaded.fields} />
     </div>
   );

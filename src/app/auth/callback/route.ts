@@ -6,10 +6,17 @@ import { homePathForUser, type Role } from '@/lib/auth/session';
 
 export const dynamic = 'force-dynamic';
 
+// Only allow same-origin relative paths (e.g. "/dashboard"). Rejects "//evil.com",
+// "https://evil.com", and any non-root-relative value to block open redirects.
+function safeNext(next: string | null): string | null {
+  if (!next) return null;
+  return /^\/(?!\/)/.test(next) ? next : null;
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next');
+  const next = safeNext(searchParams.get('next'));
 
   if (code) {
     const supabase = await createClient();

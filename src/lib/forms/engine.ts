@@ -84,6 +84,25 @@ export async function publishForm(companyId: string, formId: string) {
 
 export async function assignForm(companyId: string, formId: string, profileId: string) {
   const supabase = createServiceClient();
+
+  // Ownership guard: never trust client-supplied ids. The form and the target
+  // profile must both belong to this company before we upsert the assignment.
+  const { data: form } = await supabase
+    .from('forms')
+    .select('id')
+    .eq('id', formId)
+    .eq('company_id', companyId)
+    .maybeSingle();
+  if (!form) throw new Error('Form not found');
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', profileId)
+    .eq('company_id', companyId)
+    .maybeSingle();
+  if (!profile) throw new Error('Profile not found');
+
   await supabase
     .from('form_assignments')
     .upsert({ company_id: companyId, form_id: formId, profile_id: profileId }, { onConflict: 'form_id,profile_id' });

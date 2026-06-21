@@ -49,19 +49,30 @@ function tally(rows: { v: string | null }[]): Bucket[] {
 
 export async function getBusinessOverview(companyId: string): Promise<BusinessOverview> {
   const sb = createServiceClient();
+  // Bound every raw select so a runaway dataset can never silently hit PostgREST's default row
+  // cap (which would skew these business metrics). The monthly_revenue read is a pre-aggregated
+  // view, so it stays unbounded by design.
+  const ROW_CAP = 20000;
   const [subsRes, clientsRes, leadsRes, txnRes, tagRes] = await Promise.all([
     sb
       .from('client_subscriptions')
       .select('status, billing_health, grandfathered_price_cents, product_type, started_at')
-      .eq('company_id', companyId),
-    sb.from('contacts').select('was_lead').eq('company_id', companyId).eq('type', 'client'),
-    sb.from('contacts').select('lead_stage, lost_reason').eq('company_id', companyId).eq('type', 'lead'),
+      .eq('company_id', companyId)
+      .limit(ROW_CAP),
+    sb.from('contacts').select('was_lead').eq('company_id', companyId).eq('type', 'client').limit(ROW_CAP),
+    sb.from('contacts').select('lead_stage, lost_reason').eq('company_id', companyId).eq('type', 'lead').limit(ROW_CAP),
     sb
       .from('monthly_revenue')
       .select('month, gross_cents, coach_cents')
       .eq('company_id', companyId)
       .order('month', { ascending: true }),
-    sb.from('contact_tags').select('tag:tags(slug, label, category, color)').eq('company_id', companyId),
+    // Tag counts must reflect CLIENT contacts only; lead tags would inflate the client tag stats.
+    sb
+      .from('contact_tags')
+      .select('tag:tags(slug, label, category, color), contact:contacts!inner(type)')
+      .eq('company_id', companyId)
+      .eq('contact.type', 'client')
+      .limit(ROW_CAP),
   ]);
 
   type SubRow = {
@@ -77,6 +88,7 @@ export async function getBusinessOverview(companyId: string): Promise<BusinessOv
   const months = (txnRes.data ?? []) as { month: string; gross_cents: number | null; coach_cents: number | null }[];
   const tagRows = (tagRes.data ?? []) as {
     tag: { slug: string; label: string; category: string; color: string } | { slug: string; label: string; category: string; color: string }[] | null;
+    contact?: { type: string } | { type: string }[] | null;
   }[];
 
   // Subscriptions / clients
@@ -115,8 +127,10 @@ export async function getBusinessOverview(companyId: string): Promise<BusinessOv
     const st = l.lead_stage ?? '';
     return st !== 'Won' && st !== 'Lost';
   }).length;
-  const totalEverLeads = leads.length + convertedFromLeads;
-  const winRatePct = totalEverLeads > 0 ? Math.round((wonLeads / totalEverLeads) * 100) : 0;
+  // Win rate = won / (won + lost), matching the leads board. Open/in-progress leads are excluded
+  // so the percentage reflects decided outcomes only (otherwise it drifts from the board's number).
+  const decidedLeads = wonLeads + lostLeads;
+  const winRatePct = decidedLeads > 0 ? Math.round((wonLeads / decidedLeads) * 100) : 0;
 
   // Revenue (aggregated in the DB via the monthly_revenue view; avoids PostgREST row caps)
   let lifetimeGrossCents = 0;

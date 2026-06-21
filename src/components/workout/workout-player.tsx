@@ -5,7 +5,7 @@
 // confetti -> persist (PRD-12). The exact things competitors got wrong.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { Icon } from '@/components/ui/icons';
 import { UnderlineTabs } from '@/components/ui/tabs';
@@ -33,7 +33,10 @@ export type PlayerExercise = {
   video_mux_id: string | null;
   overload: OverloadHint | null;
 };
-type Substitute = { exercise: { id: string; name_en: string } | null; reason_tag: string | null };
+type Substitute = {
+  exercise: { id: string; name_en: string; name_es: string | null } | null;
+  reason_tag: string | null;
+};
 type LoggedSet = {
   exercise_id: string;
   set_number: number;
@@ -74,6 +77,9 @@ export function WorkoutPlayer({
   exercises: PlayerExercise[];
 }): ReactElement {
   const t = useTranslations('app.exercise');
+  const locale = useLocale();
+  const subName = (s: Substitute): string =>
+    (locale === 'es' && s.exercise?.name_es) || s.exercise?.name_en || t('untitled');
   const router = useRouter();
   const { pieces, fire } = useConfetti();
 
@@ -148,16 +154,17 @@ export function WorkoutPlayer({
   const chooseSub = useCallback(
     (s: Substitute): void => {
       if (!s.exercise) return;
+      const name = subName(s);
       setExercises((list) =>
         list.map((item, i) =>
-          i === idx
-            ? { ...item, exercise_id: s.exercise!.id, name: s.exercise!.name_en }
-            : item,
+          i === idx ? { ...item, exercise_id: s.exercise!.id, name } : item,
         ),
       );
       setSubsOpen(false);
     },
-    [idx],
+    // subName is recreated each render; locale/t drive its output.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [idx, locale],
   );
 
   const finish = useCallback(async (): Promise<void> => {
@@ -389,7 +396,7 @@ export function WorkoutPlayer({
                       onClick={() => chooseSub(s)}
                       className="tf-press flex w-full items-center justify-between border-b border-divider py-2 text-left text-[14px] last:border-0"
                     >
-                      <span>{s.exercise?.name_en}</span>
+                      <span>{subName(s)}</span>
                       {s.reason_tag && (
                         <span className="text-[12px] text-faint">{s.reason_tag}</span>
                       )}

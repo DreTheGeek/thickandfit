@@ -26,6 +26,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const result = await submitResponse(ctx.companyId, (await params).id, ctx.userId, parsed.data.answers);
     return apiSuccess(result, 201);
   } catch (e) {
-    return apiError(e instanceof Error ? e.message : 'Could not submit', 400);
+    // Never leak internal error detail to the client. Log server-side, return a fixed message.
+    console.error('[forms/submit] submitResponse failed', e);
+    return apiError('Could not submit form', 400);
   }
 }

@@ -11,7 +11,9 @@
     "uiLanguage": "Interface language",
     "contentLanguage": "Content language",
     "english": "English",
-    "spanish": "Spanish"
+    "spanish": "Spanish",
+    "errorTitle": "Something went wrong",
+    "errorBody": "Something went wrong. Please try again."
   },
   "nav": {
     "home": "Home",
@@ -44,7 +46,13 @@
     "resetCta": "Send reset link",
     "resetSent": "If that email exists, a reset link is on its way.",
     "checkEmail": "Check your email to confirm your account.",
-    "or": "or"
+    "or": "or",
+    "newPasswordTitle": "Set a new password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "updatePasswordCta": "Update password",
+    "oauthError": "We could not sign you in with that provider. Try again or use email.",
+    "authError": "Something went wrong signing you in. Please try again."
   },
   "app": {
     "nav": {
@@ -52,7 +60,8 @@
       "community": "Community",
       "activities": "Activities",
       "nutrition": "Nutrition",
-      "you": "You"
+      "you": "You",
+      "chat": "Chat"
     },
     "community": {
       "title": "Community",
@@ -106,7 +115,10 @@
       "todo": "Things to do",
       "morningWorkout": "Morning Workout",
       "logBreakfast": "Log Breakfast",
-      "drinkWater": "Drink Water"
+      "drinkWater": "Drink Water",
+      "setupPendingTitle": "Account setup pending",
+      "setupPendingBody": "We're finishing setting up your account. This usually takes just a moment. Reach out if it doesn't clear up shortly.",
+      "setupPendingCta": "Contact support"
     },
     "activities": {
       "title": "Activities",
@@ -197,7 +209,8 @@
         "increase_weight": "Add weight",
         "hold": "Hold steady",
         "deload": "Deload"
-      }
+      },
+      "untitled": "Exercise"
     },
     "coach": {
       "overview": "Overview",
@@ -578,7 +591,7 @@
       "colReaction": "Reaction",
       "healthOperational": "All systems operational",
       "healthDegraded": "Degraded",
-      "healthCheckedLive": "Checked live just now — real probes against the database and integrations, not static lights.",
+      "healthCheckedLive": "Checked live just now: real probes against the database and integrations, not static lights.",
       "coverageIntro": "Every capability, what it connects to, and what action triggers what reaction. Use it as a build + QA checklist.",
       "settingsAccount": "Account",
       "settingsAppearance": "Appearance & language",
@@ -648,7 +661,12 @@
       "recipeFavorited": "Favorited",
       "recipeUnfavorite": "Remove from favorites",
       "ingredientVerified": "Verified match",
-      "ingredientConfidence": "{pct}% match confidence"
+      "ingredientConfidence": "{pct}% match confidence",
+      "assignToPlaceholder": "No one",
+      "completedWorkout": "Completed a workout",
+      "lenusId": "Lenus ID",
+      "ledgerTruncated": "Showing the most recent transactions only. Older entries are not loaded, so the running total is hidden.",
+      "listTruncated": "Showing the first {n} clients. The list is capped, so totals and filters reflect a partial view."
     },
     "you": {
       "title": "You",
@@ -678,7 +696,8 @@
       "saving": "Saving",
       "weightSaved": "Weight logged - keep it up",
       "weightError": "Could not save. Try again.",
-      "aiCoach": "AI Coach"
+      "aiCoach": "AI Coach",
+      "progressLbs": "lbs Progress"
     },
     "gamification": {
       "dayStreak": "day streak",
@@ -875,6 +894,11 @@
         "plateau.title": "Let's break through",
         "plateau.body": "Your weight has held steady for {days} days. That is normal, and we can adjust. Tap to talk it through with your coach."
       }
+    },
+    "forms": {
+      "submit": "Submit",
+      "success": "Thank you. Your response was recorded.",
+      "error": "Could not submit."
     }
   }
 }

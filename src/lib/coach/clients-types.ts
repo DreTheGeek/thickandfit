@@ -72,7 +72,11 @@ export type ClientsPage = {
   pageSize: number;
   facets: ClientFacets;
   totalAll: number;
+  // True when the underlying read hit the in-memory cap, so totalAll/facets are a partial view.
+  listTruncated: boolean;
 };
+
+export const CLIENT_ROWS_CAP = 2000;
 
 export type SavedSegment = {
   id: string;
@@ -144,8 +148,13 @@ export type ClientDetail = {
     goalIntensity: string | null;
   } | null;
   ledger: LedgerEntry[];
+  // True when the txn read hit its cap: the ledger is windowed, so the running-balance column is
+  // not anchored to a true zero start and must be hidden rather than shown with wrong values.
+  ledgerTruncated: boolean;
   files: ClientFile[];
 };
+
+export const LEDGER_TXN_CAP = 1000;
 
 export type ClientFile = { category: string | null; url: string; bytes: number | null };
 
@@ -180,6 +189,17 @@ export function parseClientFilters(raw: Record<string, string | string[] | undef
     pageSize: Math.min(100, Math.max(10, Math.floor(Number(raw.pageSize)) || 50)),
     segment: typeof raw.segment === 'string' ? raw.segment : null,
   };
+}
+
+/**
+ * Clamp a requested page to the valid range for a known result count. parseClientFilters only
+ * floors the page to >= 1 because the total is unknown at parse time; once a data layer knows the
+ * total it must clamp to min(page, max(1, totalPages)) so an out-of-range page (e.g. after filters
+ * shrink the result set) shows the last real page instead of an empty slice.
+ */
+export function clampPage(page: number, total: number, pageSize: number): number {
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+  return Math.min(Math.max(1, Math.floor(page) || 1), totalPages);
 }
 
 export type SegmentPreset = { slug: string; labelKey: string; filter: Partial<ClientFilters> };
