@@ -52,7 +52,8 @@
     "updatePasswordCta": "Actualizar contraseña",
     "oauthError": "No pudimos iniciar tu sesión con ese proveedor. Inténtalo de nuevo o usa el correo.",
     "authError": "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo.",
-    "or": "o"
+    "or": "o",
+    "agreeNotice": "Al crear una cuenta, aceptas nuestros Términos de Servicio y Política de Privacidad."
   },
   "app": {
     "nav": {

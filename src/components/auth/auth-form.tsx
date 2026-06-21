@@ -47,6 +47,9 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }): ReactElemen
       <Button type="submit" size="block" disabled={pending} className="mt-1">
         {pending ? '…' : mode === 'sign-in' ? t('signIn') : t('signUp')}
       </Button>
+      {mode === 'sign-up' && (
+        <p className="mt-1 text-center text-[12px] leading-[1.5] text-faint">{t('agreeNotice')}</p>
+      )}
     </form>
   );
 }

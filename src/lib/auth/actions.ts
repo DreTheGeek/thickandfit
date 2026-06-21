@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { homePathForUser, type Role } from '@/lib/auth/session';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
+import { recordSignupConsent } from '@/lib/legal/consent';
 
 export type AuthState = { error?: string; sent?: boolean };
 
@@ -72,7 +73,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60))) return { error: TOO_MANY };
   const { email, password } = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { emailRedirectTo: `${await origin()}/auth/callback` },
@@ -80,6 +81,11 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   if (error) {
     console.error('signUpAction:', error.message);
     return { error: SIGNUP_FAILED };
+  }
+  // Capture timestamped Terms + Privacy consent for the new user (anti-get-sued). Fire-and-forget.
+  if (data.user) {
+    const h = await headers();
+    void recordSignupConsent(data.user.id, await clientIp(), h.get('user-agent'));
   }
   return { sent: true };
 }
