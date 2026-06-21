@@ -11,8 +11,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!ctx.companyId) return apiError('No company scope', 400);
 
   const sp = new URL(req.url).searchParams;
-  const min = Number(sp.get('min') ?? 8);
-  const max = Number(sp.get('max') ?? 12);
+  // Number('') is 0 and Number('abc') is NaN, both bypass the ?? default. Guard with isFinite.
+  const parseRep = (raw: string | null, fallback: number): number => {
+    const n = Number(raw);
+    return Number.isFinite(n) && raw !== null && raw !== '' ? n : fallback;
+  };
+  const min = parseRep(sp.get('min'), 8);
+  const max = parseRep(sp.get('max'), 12);
 
   const result = await recommendForExercise(ctx.companyId, ctx.userId, (await params).id, { min, max });
   return apiSuccess(result);
