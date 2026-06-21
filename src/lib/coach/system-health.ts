@@ -140,13 +140,11 @@ export async function getSystemHealth(companyId: string, locale = 'en'): Promise
       key: 'crm_sync',
       name: 'CRM sync (GoHighLevel)',
       category: 'integration',
-      // the sync route reads GHL_API_TOKEN; the waitlist client reads GHL_API_KEY
+      // Both the sync and the waitlist client now accept GHL_API_TOKEN or GHL_API_KEY (TOKEN preferred).
       status: has('GHL_API_TOKEN', 'GHL_API_KEY') && has('GHL_LOCATION_ID') ? 'configured' : 'planned',
-      detail: has('GHL_API_TOKEN')
+      detail: has('GHL_API_TOKEN', 'GHL_API_KEY')
         ? 'Token + location set · daily auto-sync'
-        : has('GHL_API_KEY')
-          ? 'GHL_API_KEY set but the sync expects GHL_API_TOKEN'
-          : 'GHL token not set',
+        : 'GHL token not set',
     },
     {
       key: 'ai',

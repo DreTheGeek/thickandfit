@@ -2,7 +2,9 @@
 // it in the waitlist drip workflow. Returns the contact id so success can be confirmed (not silent).
 import 'server-only';
 
-const apiKey = process.env.GHL_API_KEY;
+// One GHL credential, two historical names. Read TOKEN first, fall back to KEY, so whichever the
+// operator set works for both the waitlist drip (here) and the pipeline sync (coach/ghl-sync.ts).
+const apiKey = process.env.GHL_API_TOKEN ?? process.env.GHL_API_KEY;
 const locationId = process.env.GHL_LOCATION_ID;
 const dripWorkflowId = process.env.GHL_WAITLIST_WORKFLOW_ID;
 const BASE = 'https://services.leadconnectorhq.com';
