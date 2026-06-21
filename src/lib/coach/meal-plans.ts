@@ -2,6 +2,7 @@
 // filter/sort/paginate in memory. Pure types in meal-plans-types.ts (re-exported).
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { clampPage } from '@/lib/coach/clients-types';
 import type { MealGroupLite, MealPlanDetail, MealPlanFilters, MealPlanRow, MealPlansPage } from '@/lib/coach/meal-plans-types';
 
 export * from '@/lib/coach/meal-plans-types';
@@ -67,11 +68,12 @@ export async function getMealPlansPage(companyId: string, filters: MealPlanFilte
         return (a.clientName ?? '').localeCompare(b.clientName ?? '') * mul;
     }
   });
-  const start = (filters.page - 1) * filters.pageSize;
+  const page = clampPage(filters.page, filtered.length, filters.pageSize);
+  const start = (page - 1) * filters.pageSize;
   return {
     rows: filtered.slice(start, start + filters.pageSize),
     total: filtered.length,
-    page: filters.page,
+    page,
     pageSize: filters.pageSize,
     totalAll: all.length,
   };

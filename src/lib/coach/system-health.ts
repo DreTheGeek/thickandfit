@@ -19,7 +19,7 @@ export type DataCount = { key: string; label: string; value: number };
 export type SystemHealth = {
   services: ServiceCheck[];
   data: DataCount[];
-  automation: { ghlLastSync: string | null; ghlCron: string };
+  automation: { ghlLastSync: string | null; ghlLastSyncLabel: string; ghlCron: string };
   deploy: { commit: string | null; env: string; region: string | null };
   checkedAtIso: string;
 };
@@ -48,7 +48,17 @@ async function safeCount(
   }
 }
 
-export async function getSystemHealth(companyId: string): Promise<SystemHealth> {
+// Format a timestamp on the SERVER so the rendered string is identical on server and client.
+// Formatting an Intl date/time in a client component causes UTC (server) vs local-TZ (client)
+// text mismatches and a React #418 hydration crash.
+function fmtSyncServer(iso: string | null, locale: string): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(d);
+}
+
+export async function getSystemHealth(companyId: string, locale = 'en'): Promise<SystemHealth> {
   const sb = createServiceClient();
 
   // Core: actually probe the database with a trivial scoped count.
@@ -72,7 +82,7 @@ export async function getSystemHealth(companyId: string): Promise<SystemHealth> 
     safeCount(sb, 'opportunities', companyId, { status: 'open' }),
     safeCount(sb, 'recipes', companyId),
     safeCount(sb, 'meal_plans', companyId),
-    safeCount(sb, 'programs', companyId),
+    safeCount(sb, 'plans', companyId),
   ]);
 
   // App accounts (profiles aren't company-scoped the same way; count by role).
@@ -203,7 +213,7 @@ export async function getSystemHealth(companyId: string): Promise<SystemHealth> 
   return {
     services,
     data,
-    automation: { ghlLastSync, ghlCron: '0 6 * * * (daily)' },
+    automation: { ghlLastSync, ghlLastSyncLabel: fmtSyncServer(ghlLastSync, locale), ghlCron: '0 6 * * * (daily)' },
     deploy: {
       commit: process.env.VERCEL_GIT_COMMIT_SHA ? process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7) : null,
       env: process.env.VERCEL_ENV ?? 'development',

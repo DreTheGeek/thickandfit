@@ -3,7 +3,7 @@
 // recipes-types.ts (re-exported).
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
-import type { Bucket } from '@/lib/coach/clients-types';
+import { clampPage, type Bucket } from '@/lib/coach/clients-types';
 import {
   HIGH_PROTEIN_G,
   type RecipeBookCard,
@@ -101,7 +101,8 @@ export async function getRecipesPage(companyId: string, filters: RecipeFilters, 
     }
   });
 
-  const start = (filters.page - 1) * filters.pageSize;
+  const page = clampPage(filters.page, filtered.length, filters.pageSize);
+  const start = (page - 1) * filters.pageSize;
   const facets: RecipeFacets = {
     category: tally(all.filter((r) => matches(r, filters, 'category', sx(r.id))).map((r) => ({ key: r.category }))),
     book: tally(all.filter((r) => matches(r, filters, 'book', sx(r.id))).map((r) => ({ key: r.bookName }))),
@@ -111,7 +112,7 @@ export async function getRecipesPage(companyId: string, filters: RecipeFilters, 
   return {
     rows: filtered.slice(start, start + filters.pageSize),
     total: filtered.length,
-    page: filters.page,
+    page,
     pageSize: filters.pageSize,
     facets,
     totalAll: all.length,

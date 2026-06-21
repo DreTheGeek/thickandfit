@@ -7,6 +7,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { deriveStanding } from '@/lib/coach/standing';
 import {
   NONE_KEY,
+  clampPage,
   type ClientDetail,
   type ClientFacets,
   type ClientFilters,
@@ -185,11 +186,12 @@ export async function getClientsPage(companyId: string, filters: ClientFilters):
   const all = await loadClientRows(companyId);
   const filtered = all.filter((r) => matches(r, filters, null));
   const sorted = sortRows(filtered, filters.sort, filters.dir);
-  const start = (filters.page - 1) * filters.pageSize;
+  const page = clampPage(filters.page, filtered.length, filters.pageSize);
+  const start = (page - 1) * filters.pageSize;
   return {
     rows: sorted.slice(start, start + filters.pageSize),
     total: filtered.length,
-    page: filters.page,
+    page,
     pageSize: filters.pageSize,
     facets: computeFacets(all, filters),
     totalAll: all.length,

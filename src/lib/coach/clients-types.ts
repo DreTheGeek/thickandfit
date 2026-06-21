@@ -182,6 +182,17 @@ export function parseClientFilters(raw: Record<string, string | string[] | undef
   };
 }
 
+/**
+ * Clamp a requested page to the valid range for a known result count. parseClientFilters only
+ * floors the page to >= 1 because the total is unknown at parse time; once a data layer knows the
+ * total it must clamp to min(page, max(1, totalPages)) so an out-of-range page (e.g. after filters
+ * shrink the result set) shows the last real page instead of an empty slice.
+ */
+export function clampPage(page: number, total: number, pageSize: number): number {
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+  return Math.min(Math.max(1, Math.floor(page) || 1), totalPages);
+}
+
 export type SegmentPreset = { slug: string; labelKey: string; filter: Partial<ClientFilters> };
 export const SEGMENT_PRESETS: SegmentPreset[] = [
   { slug: 'all', labelKey: 'segAllClients', filter: {} },

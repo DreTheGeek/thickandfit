@@ -27,21 +27,30 @@ export default async function CoachSubscribersPage(): Promise<ReactElement> {
   let rows: CoachSubscriber[] = [];
   if (ctx.companyId) {
     const supabase = createServiceClient();
-    const [{ data: profiles }, { data: logs }] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id, full_name, email, role, is_legacy_client, ui_locale, created_at')
-        .eq('company_id', ctx.companyId)
-        .in('role', ['subscriber', 'free'])
-        .order('created_at', { ascending: false }),
-      supabase.from('workout_logs').select('profile_id').eq('company_id', ctx.companyId),
-    ]);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, role, is_legacy_client, ui_locale, created_at')
+      .eq('company_id', ctx.companyId)
+      .in('role', ['subscriber', 'free'])
+      .order('created_at', { ascending: false });
 
-    const counts = new Map<string, number>();
-    for (const l of logs ?? []) counts.set(l.profile_id, (counts.get(l.profile_id) ?? 0) + 1);
+    // Per-profile workout counts via head-only COUNT queries (DB-side aggregate). This avoids
+    // pulling the entire workout_logs table into app memory just to tally rows per profile.
+    const profileRows = (profiles ?? []) as ProfileRow[];
+    const countPairs = await Promise.all(
+      profileRows.map(async (p): Promise<[string, number]> => {
+        const { count } = await supabase
+          .from('workout_logs')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', ctx.companyId!)
+          .eq('profile_id', p.id);
+        return [p.id, count ?? 0];
+      }),
+    );
+    const counts = new Map<string, number>(countPairs);
     const fmt = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' });
 
-    rows = ((profiles ?? []) as ProfileRow[]).map((p) => ({
+    rows = profileRows.map((p) => ({
       id: p.id,
       name: (p.full_name ?? p.email).trim(),
       email: p.email,

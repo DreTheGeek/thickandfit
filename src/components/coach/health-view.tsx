@@ -27,20 +27,13 @@ function StatusDot({ status, label }: { status: ServiceStatus | CoverageStatus; 
   );
 }
 
-function fmtSync(iso: string | null, locale: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(d);
-}
-
-export function HealthView({ health, locale }: { health: SystemHealth; locale: string }): ReactElement {
+export function HealthView({ health }: { health: SystemHealth }): ReactElement {
   const t = useTranslations('app.coach');
   const [tab, setTab] = useState<Tab>('status');
   const [cov, setCov] = useState<CoverageStatus | 'all'>('all');
 
   const totals = useMemo(() => coverageTotals(), []);
-  const filtered = useMemo(() => coverageByArea(cov === 'all' ? undefined : undefined).map((g) => ({ area: g.area, items: g.items.filter((i) => cov === 'all' || i.status === cov) })).filter((g) => g.items.length > 0), [cov]);
+  const filtered = useMemo(() => coverageByArea().map((g) => ({ area: g.area, items: g.items.filter((i) => cov === 'all' || i.status === cov) })).filter((g) => g.items.length > 0), [cov]);
 
   const sLabel = (s: ServiceStatus | CoverageStatus): string =>
     s === 'operational' ? t('statusOperational')
@@ -103,7 +96,7 @@ export function HealthView({ health, locale }: { health: SystemHealth; locale: s
               <h2 className="mb-3 text-[12px] font-semibold uppercase tracking-[1px] text-faint">{t('healthAutomation')}</h2>
               <div className="flex items-center justify-between border-b border-divider py-2 text-[13px]">
                 <span className="text-faint">{t('lastSync')}</span>
-                <span className="font-medium">{fmtSync(health.automation.ghlLastSync, locale)}</span>
+                <span className="font-medium">{health.automation.ghlLastSyncLabel}</span>
               </div>
               <div className="flex items-center justify-between py-2 text-[13px]">
                 <span className="text-faint">{t('cronSchedule')}</span>

@@ -30,7 +30,7 @@ export default async function CoachSubscriberPage({
 
   if (!profile || profile.company_id !== ctx.companyId) notFound();
 
-  const [{ data: onb }, { data: assignment }, history] = await Promise.all([
+  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }] = await Promise.all([
     supabase.from('onboarding_responses').select('computed_targets').eq('profile_id', id).maybeSingle(),
     supabase
       .from('plan_assignments')
@@ -39,6 +39,12 @@ export default async function CoachSubscriberPage({
       .eq('company_id', ctx.companyId)
       .maybeSingle(),
     fetchHistory(ctx.companyId, id),
+    // Total workout count via a head-only COUNT (history is capped at 20 for display only).
+    supabase
+      .from('workout_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', ctx.companyId)
+      .eq('profile_id', id),
   ]);
 
   const targets = (onb?.computed_targets ?? null) as Targets | null;
@@ -57,7 +63,7 @@ export default async function CoachSubscriberPage({
     role: profile.role,
     locale: profile.ui_locale,
     legacy: profile.is_legacy_client,
-    workouts: history.length,
+    workouts: workoutCount ?? history.length,
     days,
     calories: targets?.calories ?? null,
     macros: targets
