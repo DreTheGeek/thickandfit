@@ -3,7 +3,7 @@
 // Subscriber "Today" home. Four UI states (loading / error / first-run / content),
 // restyled to the design-handoff prototype. Date strip is computed server-side and
 // passed in to avoid hydration drift.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
@@ -24,8 +24,8 @@ export type WeekDay = { key: string; label: string; day: number; isToday: boolea
 
 export function TodayScreen({
   name,
-  dateLabel,
-  weekDays,
+  dateLabel: dateLabelInit,
+  weekDays: weekDaysInit,
   initial,
 }: {
   name: string;
@@ -39,6 +39,33 @@ export function TodayScreen({
   // A null summary is a companyless / not-yet-provisioned session, not a fetch error.
   // Start idle and surface a dedicated "account setup pending" state below.
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  // The server computes the date strip in UTC, which mislabels "today" for the LATAM evening audience
+  // (UTC-5/-6). SSR uses the server props as a stable placeholder (no hydration drift); after mount we
+  // recompute from the browser's local timezone so the date label + highlighted day are correct.
+  const [dateLabel, setDateLabel] = useState(dateLabelInit);
+  const [weekDays, setWeekDays] = useState(weekDaysInit);
+  useEffect(() => {
+    const now = new Date();
+    setDateLabel(
+      new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric' }).format(now),
+    );
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay());
+    const narrow = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+    setWeekDays(
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        return {
+          key: String(i),
+          label: narrow.format(d),
+          day: d.getDate(),
+          isToday: d.toDateString() === now.toDateString(),
+        };
+      }),
+    );
+  }, [locale]);
 
   async function refresh(): Promise<void> {
     setState('loading');
