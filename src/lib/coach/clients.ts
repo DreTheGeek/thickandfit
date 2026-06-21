@@ -3,6 +3,7 @@
 // never from searchParams. Transaction totals come from denormalized lifetime_paid_cents, never an
 // unscoped txn select. Pure types + constants live in clients-types.ts (client-safe); re-exported.
 import 'server-only';
+import { getTranslations } from 'next-intl/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { deriveStanding } from '@/lib/coach/standing';
 import {
@@ -63,10 +64,10 @@ function initialsOf(first: string | null, last: string | null, fallback: string)
   return (i || fallback[0] || '?').toUpperCase();
 }
 
-function mapRow(c: ContactRowRaw): ClientRow {
+function mapRow(c: ContactRowRaw, noName: string): ClientRow {
   const sub = one(c.client_subscriptions);
   const tags: TagLite[] = (c.contact_tags ?? []).map((t) => one(t.tag)).filter((t): t is TagLite => t != null);
-  const name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || 'Unknown';
+  const name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || noName;
   const startedAt = sub?.started_at ?? null;
   return {
     id: c.id,
@@ -107,7 +108,9 @@ async function loadClientRows(companyId: string): Promise<ClientRow[]> {
     .eq('type', 'client')
     .limit(2000);
   if (error) throw new Error(`loadClientRows: ${error.message}`);
-  return ((data ?? []) as unknown as ContactRowRaw[]).map(mapRow);
+  const t = await getTranslations('app.coach');
+  const noName = t('noName');
+  return ((data ?? []) as unknown as ContactRowRaw[]).map((c) => mapRow(c, noName));
 }
 
 type FacetKey = 'q' | 'standing' | 'status' | 'health' | 'product' | 'lang' | 'owner' | 'tags' | 'cohort' | 'legacy';
@@ -332,7 +335,8 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     bytes: f.bytes,
   }));
 
-  const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || 'Unknown';
+  const t = await getTranslations('app.coach');
+  const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || t('noName');
   const startedAt = sub?.started_at ?? null;
   const tenureDays = startedAt
     ? Math.max(0, Math.round((Date.parse(sub?.ended_at ?? new Date().toISOString()) - Date.parse(startedAt)) / 86400000))

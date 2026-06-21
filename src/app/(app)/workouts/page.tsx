@@ -1,7 +1,7 @@
 // Activities hub. Requires auth. Resolves the assigned program + today's session
 // + logged history, then the client screen switches Program / Library / History.
 import type { ReactElement } from 'react';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { getAssignedPlans, getProgram } from '@/lib/programs/engine';
 import { fetchHistory } from '@/lib/workout/logging';
@@ -29,6 +29,7 @@ export default async function WorkoutsPage({
   const ctx = await requireAuth();
   const { day: dayParam } = await searchParams;
   const locale = await getLocale();
+  const tEx = await getTranslations('app.exercise');
 
   let program: ActivitiesProgram | null = null;
   let history: HistoryItem[] = [];
@@ -67,7 +68,7 @@ export default async function WorkoutsPage({
           const reps = e.reps != null ? ` x ${e.reps}` : '';
           return {
             id: e.exercise_id,
-            name: (locale === 'es' && meta?.name_es) || meta?.name_en || 'Exercise',
+            name: (locale === 'es' && meta?.name_es) || meta?.name_en || tEx('untitled'),
             sub: `${e.sets ?? '-'}${reps}`,
             hasDemo: Boolean(meta?.video_mux_id),
             done: false,

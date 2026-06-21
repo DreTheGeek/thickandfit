@@ -184,7 +184,7 @@ export function ProgramBuilder({
         <div className="mt-6 flex flex-wrap items-center gap-2.5 border-t border-line pt-6">
           <span className="text-[12px] font-semibold uppercase tracking-[1px] text-faint">{t('assignTo')}</span>
           <select className={input} value={assignTo} onChange={(e) => setAssignTo(e.target.value)}>
-            <option value="">—</option>
+            <option value="">{t('assignToPlaceholder')}</option>
             {subscribers.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}

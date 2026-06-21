@@ -7,6 +7,8 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "tryAgain": "Intentar de nuevo",
+    "errorTitle": "Algo salió mal",
+    "errorBody": "Algo salió mal. Inténtalo de nuevo.",
     "language": "Idioma",
     "uiLanguage": "Idioma de la interfaz",
     "contentLanguage": "Idioma del contenido",
@@ -163,7 +165,13 @@
       "niceWork": "¡Bien hecho, quedó registrado!",
       "demo": "Demo",
       "noCues": "Sigue las indicaciones de tu coach para este movimiento.",
-      "targetMuscle": "Músculo objetivo"
+      "targetMuscle": "Músculo objetivo",
+      "untitled": "Ejercicio"
+    },
+    "forms": {
+      "submit": "Enviar",
+      "success": "Gracias. Tu respuesta fue registrada.",
+      "error": "No se pudo enviar."
     },
     "coach": {
       "overview": "Resumen",
@@ -295,6 +303,7 @@
       "makeTemplate": "Guardar como plantilla",
       "assign": "Asignar",
       "assignTo": "Asignar a un suscriptor",
+      "assignToPlaceholder": "Nadie",
       "addDay": "Agregar día de entreno",
       "addExercise": "Agregar ejercicio",
       "removeDay": "Quitar día",
@@ -372,6 +381,8 @@
       "statusCanceled": "Cancelado",
       "statusChurned": "Perdido",
       "statusUnknown": "Desconocido",
+      "completedWorkout": "Completó un entrenamiento",
+      "lenusId": "ID de Lenus",
       "standingHealthy": "Saludable",
       "standingAtRisk": "En riesgo",
       "standingChurned": "Perdido",
@@ -582,6 +593,7 @@
       "workouts": "Entrenos",
       "weekStreak": "Racha semanal",
       "progress": "Progreso",
+      "progressLbs": "lbs Progreso",
       "yourGoal": "Tu Meta",
       "there": "logrado",
       "start": "Inicio",

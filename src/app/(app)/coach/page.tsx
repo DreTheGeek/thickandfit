@@ -7,15 +7,36 @@ import { requireCoach } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { getBusinessOverview, type Bucket, type TagStat } from '@/lib/coach/overview';
 import { RevenueChart } from '@/components/coach/revenue-chart';
+import { formatCents } from '@/components/coach/money';
 import { Eyebrow } from '@/components/ui/section';
 import { Icon } from '@/components/ui/icons';
 
 export const dynamic = 'force-dynamic';
 
-const money = (cents: number): string => `$${Math.round(cents / 100).toLocaleString('en-US')}`;
+type Translate = (key: string) => string;
 
-/** Turn data keys (OnHold, priceWasTooHigh, past_due) into readable labels. */
-function humanize(key: string): string {
+// Known enum keys (subscription statuses + tag categories) get a real translation; any other
+// data-derived key (lead stages, lost reasons, product types from the import) falls back to a
+// title-cased, de-snaked version so nothing renders blank.
+const STATUS_LABEL: Record<string, string> = {
+  active: 'statusActive',
+  past_due: 'statusPastDue',
+  unpaid: 'statusUnpaid',
+  canceled: 'statusCanceled',
+  churned: 'statusChurned',
+};
+const CATEGORY_LABEL: Record<string, string> = {
+  program: 'catProgram',
+  tier: 'catTier',
+  health: 'catHealth',
+  service: 'catService',
+  lifecycle: 'catLifecycle',
+  language: 'catLanguage',
+  special: 'catSpecial',
+  custom: 'catCustom',
+};
+
+function fallbackLabel(key: string): string {
   const spaced = key
     .replace(/_/g, ' ')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -24,13 +45,19 @@ function humanize(key: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-function BarList({ rows, accent }: { rows: Bucket[]; accent?: boolean }): ReactElement {
+/** Resolve a data key to a label, preferring a translated enum value over title-casing. */
+function labelFor(t: Translate, key: string): string {
+  const mapped = STATUS_LABEL[key] ?? CATEGORY_LABEL[key];
+  return mapped ? t(mapped) : fallbackLabel(key);
+}
+
+function BarList({ rows, accent, t }: { rows: Bucket[]; accent?: boolean; t: Translate }): ReactElement {
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <div className="flex flex-col gap-2.5">
       {rows.map((r) => (
         <div key={r.key} className="flex items-center gap-3">
-          <span className="w-32 shrink-0 truncate text-[13px] text-soft">{humanize(r.key)}</span>
+          <span className="w-32 shrink-0 truncate text-[13px] text-soft">{labelFor(t, r.key)}</span>
           <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-warm">
             <span
               className={['block h-2.5 rounded-full', accent ? 'bg-accent' : 'bg-ink'].join(' ')}
@@ -65,6 +92,7 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
   if (!ctx.companyId) {
     return <div className="p-8 text-sm text-muted">{t('emptyOverview')}</div>;
   }
+  const money = (cents: number): string => formatCents(cents, 'USD', locale, 0);
   const o = await getBusinessOverview(ctx.companyId);
   const revenuePoints = o.revenueByMonth.map((m) => ({
     label: m.label,
@@ -167,7 +195,7 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
         <Card>
           <h2 className="mb-4 font-display text-[20px]">{t('secPipeline')}</h2>
           {o.pipeline.length > 0 ? (
-            <BarList rows={o.pipeline} accent />
+            <BarList rows={o.pipeline} accent t={t} />
           ) : (
             <p className="py-8 text-center text-sm text-faint">{t('emptyOverview')}</p>
           )}
@@ -184,11 +212,11 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>
           <h2 className="mb-4 font-display text-[20px]">{t('secClientStatus')}</h2>
-          <BarList rows={o.statusBreakdown} />
+          <BarList rows={o.statusBreakdown} t={t} />
         </Card>
         <Card>
           <h2 className="mb-4 font-display text-[20px]">{t('secByProduct')}</h2>
-          <BarList rows={o.productBreakdown} accent />
+          <BarList rows={o.productBreakdown} accent t={t} />
         </Card>
       </div>
 
@@ -204,7 +232,7 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
           {o.tagGroups.map((g) => (
             <div key={g.category}>
               <div className="mb-2 text-[10px] font-semibold uppercase tracking-[1.5px] text-faint">
-                {humanize(g.category)}
+                {labelFor(t, g.category)}
               </div>
               <div className="flex flex-wrap gap-2">
                 {g.tags.map((tag: TagStat) => (
@@ -228,7 +256,7 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
       {o.lostReasons.length > 0 && (
         <Card>
           <h2 className="mb-4 font-display text-[20px]">{t('secLostReasons')}</h2>
-          <BarList rows={o.lostReasons} />
+          <BarList rows={o.lostReasons} t={t} />
         </Card>
       )}
     </div>

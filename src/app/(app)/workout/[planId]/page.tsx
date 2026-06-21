@@ -71,11 +71,12 @@ export default async function WorkoutPage({
     (muscles ?? []).map((m) => [m.key, locale === 'es' ? (m.label_es ?? m.label_en) : m.label_en]),
   );
 
+  const tEx = await getTranslations('app.exercise');
   const playerExercises: PlayerExercise[] = exList.map((e) => {
     const meta = byId.get(e.exercise_id);
     return {
       exercise_id: e.exercise_id,
-      name: (locale === 'es' && meta?.name_es) || meta?.name_en || 'Exercise',
+      name: (locale === 'es' && meta?.name_es) || meta?.name_en || tEx('untitled'),
       sets: e.sets,
       reps: e.reps,
       weight: e.weight,

@@ -111,11 +111,11 @@ export function HealthView({ health }: { health: SystemHealth }): ReactElement {
               </div>
               <div className="flex items-center justify-between border-b border-divider py-2 text-[13px]">
                 <span className="text-faint">{t('deployCommit')}</span>
-                <span className="font-mono text-[12px]">{health.deploy.commit ?? '—'}</span>
+                <span className="font-mono text-[12px]">{health.deploy.commit ?? '-'}</span>
               </div>
               <div className="flex items-center justify-between py-2 text-[13px]">
                 <span className="text-faint">{t('deployRegion')}</span>
-                <span className="font-medium">{health.deploy.region ?? '—'}</span>
+                <span className="font-medium">{health.deploy.region ?? '-'}</span>
               </div>
             </div>
           </section>

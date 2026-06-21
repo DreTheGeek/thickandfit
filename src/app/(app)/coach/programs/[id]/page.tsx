@@ -1,6 +1,6 @@
 // Program builder page. Coach-guarded. id === 'new' starts blank, otherwise loads the program.
 import type { ReactElement } from 'react';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { getProgram } from '@/lib/programs/engine';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -23,6 +23,7 @@ export default async function ProgramBuilderPage({
   const ctx = await requireCoach();
   const { id } = await params;
   const locale = await getLocale();
+  const tEx = await getTranslations('app.exercise');
   const supabase = createServiceClient();
 
   let initial: BuilderInitial = { nameEn: '', nameEs: '', weeks: 4, days: [] };
@@ -54,7 +55,7 @@ export default async function ProgramBuilderPage({
             label: s.day_label,
             exercises: (s.exercises as SessionExercise[]).map((e) => ({
               exercise_id: e.exercise_id,
-              name: nameById.get(e.exercise_id) ?? 'Exercise',
+              name: nameById.get(e.exercise_id) ?? tEx('untitled'),
               sets: e.sets ?? 3,
               reps: e.reps ?? 10,
               rest: e.rest_sec ?? 60,

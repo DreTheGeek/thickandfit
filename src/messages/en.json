@@ -7,6 +7,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "tryAgain": "Try again",
+    "errorTitle": "Something went wrong",
+    "errorBody": "Something went wrong. Please try again.",
     "language": "Language",
     "uiLanguage": "Interface language",
     "contentLanguage": "Content language",
@@ -163,7 +165,13 @@
       "niceWork": "Nice work, that's logged.",
       "demo": "Demo",
       "noCues": "Follow your coach's cues for this movement.",
-      "targetMuscle": "Target muscle"
+      "targetMuscle": "Target muscle",
+      "untitled": "Exercise"
+    },
+    "forms": {
+      "submit": "Submit",
+      "success": "Thank you. Your response was recorded.",
+      "error": "Could not submit."
     },
     "coach": {
       "overview": "Overview",
@@ -295,6 +303,7 @@
       "makeTemplate": "Save as template",
       "assign": "Assign",
       "assignTo": "Assign to a subscriber",
+      "assignToPlaceholder": "No one",
       "addDay": "Add Workout Day",
       "addExercise": "Add Exercise",
       "removeDay": "Remove day",
@@ -372,6 +381,8 @@
       "statusCanceled": "Canceled",
       "statusChurned": "Churned",
       "statusUnknown": "Unknown",
+      "completedWorkout": "Completed a workout",
+      "lenusId": "Lenus ID",
       "standingHealthy": "Healthy",
       "standingAtRisk": "At risk",
       "standingChurned": "Churned",
@@ -544,7 +555,7 @@
       "colReaction": "Reaction",
       "healthOperational": "All systems operational",
       "healthDegraded": "Degraded",
-      "healthCheckedLive": "Checked live just now — real probes against the database and integrations, not static lights.",
+      "healthCheckedLive": "Checked live just now: real probes against the database and integrations, not static lights.",
       "coverageIntro": "Every capability, what it connects to, and what action triggers what reaction. Use it as a build + QA checklist.",
       "settingsAccount": "Account",
       "settingsAppearance": "Appearance & language",
@@ -582,6 +593,7 @@
       "workouts": "Workouts",
       "weekStreak": "Week Streak",
       "progress": "Progress",
+      "progressLbs": "lbs Progress",
       "yourGoal": "Your Goal",
       "there": "there",
       "start": "Start",
