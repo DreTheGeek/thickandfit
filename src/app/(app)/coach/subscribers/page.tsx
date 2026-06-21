@@ -34,20 +34,18 @@ export default async function CoachSubscribersPage(): Promise<ReactElement> {
       .in('role', ['subscriber', 'free'])
       .order('created_at', { ascending: false });
 
-    // Per-profile workout counts via head-only COUNT queries (DB-side aggregate). This avoids
-    // pulling the entire workout_logs table into app memory just to tally rows per profile.
+    // Per-profile workout counts in ONE round trip (was N+1: a COUNT per subscriber). Fetch the
+    // company's workout_logs profile_ids once and tally in memory. If the log volume ever grows large,
+    // move this to a grouped-aggregate RPC; at the current scale one indexed read is cheaper than N.
     const profileRows = (profiles ?? []) as ProfileRow[];
-    const countPairs = await Promise.all(
-      profileRows.map(async (p): Promise<[string, number]> => {
-        const { count } = await supabase
-          .from('workout_logs')
-          .select('id', { count: 'exact', head: true })
-          .eq('company_id', ctx.companyId!)
-          .eq('profile_id', p.id);
-        return [p.id, count ?? 0];
-      }),
-    );
-    const counts = new Map<string, number>(countPairs);
+    const { data: logRows } = await supabase
+      .from('workout_logs')
+      .select('profile_id')
+      .eq('company_id', ctx.companyId);
+    const counts = new Map<string, number>();
+    for (const row of (logRows ?? []) as { profile_id: string | null }[]) {
+      if (row.profile_id) counts.set(row.profile_id, (counts.get(row.profile_id) ?? 0) + 1);
+    }
     const fmt = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' });
 
     rows = profileRows.map((p) => ({
