@@ -22,6 +22,10 @@ export default async function CoachLeadsPage({
   }
   const filters = parseLeadFilters(await searchParams);
   const [board, lastSync] = await Promise.all([getPipelineBoard(ctx.companyId, filters), getLastSync(ctx.companyId)]);
+  // Format the timestamp on the server (avoids a client TZ hydration mismatch / React #418).
+  const lastSyncLabel = lastSync
+    ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(lastSync))
+    : null;
 
   return (
     <div className="w-full px-5 py-8 sm:px-8 lg:py-10">
@@ -30,7 +34,7 @@ export default async function CoachLeadsPage({
           <Eyebrow>{t('navLeads')}</Eyebrow>
           <PageTitle className="mt-1">{t('leadsTitle')}</PageTitle>
         </div>
-        <SyncNowButton lastSync={lastSync} locale={locale} />
+        <SyncNowButton lastSyncLabel={lastSyncLabel} />
       </div>
       <LeadsView board={board} filters={filters} locale={locale} />
     </div>
