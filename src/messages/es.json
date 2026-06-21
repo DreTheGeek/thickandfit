@@ -672,7 +672,8 @@
       "save": "Guardar",
       "saving": "Guardando",
       "weightSaved": "Peso registrado - sigue asi",
-      "weightError": "No se pudo guardar. Intenta de nuevo."
+      "weightError": "No se pudo guardar. Intenta de nuevo.",
+      "aiCoach": "Entrenadora IA"
     },
     "nutrition": {
       "title": "Nutrición",
@@ -769,6 +770,18 @@
         "noCompany": "La cuenta no está lista.",
         "generic": "Algo salió mal. Inténtalo de nuevo."
       }
+    },
+    "coachChat": {
+      "title": "Coach",
+      "statusOnline": "Tu entrenadora con IA en la voz de Stephanie",
+      "statusOffline": "Aun no configurada",
+      "placeholder": "Preguntale lo que quieras a tu coach...",
+      "send": "Enviar",
+      "thinking": "La coach esta escribiendo",
+      "error": "Algo salio mal. Intentalo de nuevo.",
+      "notConfigured": "Tu entrenadora con IA todavia no esta configurada. Vuelve pronto, estara lista en breve.",
+      "emptyTitle": "Saluda a tu coach",
+      "emptyBody": "Pregunta sobre tus entrenamientos, nutricion o como alcanzar tu meta. Conoce tu progreso."
     }
   }
 }

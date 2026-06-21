@@ -672,7 +672,8 @@
       "save": "Save",
       "saving": "Saving",
       "weightSaved": "Weight logged - keep it up",
-      "weightError": "Could not save. Try again."
+      "weightError": "Could not save. Try again.",
+      "aiCoach": "AI Coach"
     },
     "nutrition": {
       "title": "Nutrition",
@@ -769,6 +770,18 @@
         "noCompany": "Account not ready.",
         "generic": "Something went wrong. Please try again."
       }
+    },
+    "coachChat": {
+      "title": "Coach",
+      "statusOnline": "Your AI coach in Stephanie's voice",
+      "statusOffline": "Not configured yet",
+      "placeholder": "Ask your coach anything...",
+      "send": "Send",
+      "thinking": "Coach is typing",
+      "error": "Something went wrong. Please try again.",
+      "notConfigured": "Your AI coach is not configured yet. Check back soon, she will be ready shortly.",
+      "emptyTitle": "Say hi to your coach",
+      "emptyBody": "Ask about your workouts, nutrition, or how to hit your goal. She knows your progress."
     }
   }
 }
