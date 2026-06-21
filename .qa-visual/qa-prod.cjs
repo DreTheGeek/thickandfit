@@ -1,0 +1,25 @@
+const path = require('path');
+const puppeteer = require(path.join(process.env.HOME || process.env.USERPROFILE, '.launchproof/runtime/node_modules/puppeteer-core'));
+const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const BASE = 'https://thicknfit.kaldrtech.com';
+const OUT = path.join(__dirname, 'admin');
+(async () => {
+  const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox'] });
+  const p = await b.newPage();
+  await p.setViewport({ width: 1440, height: 950, deviceScaleFactor: 1 });
+  await p.goto(`${BASE}/auth/sign-in`, { waitUntil: 'networkidle2', timeout: 60000 });
+  await p.type('input[name=email]', 'sample.casey@thickandfit.test');
+  await p.type('input[name=password]', 'TFSample2026!');
+  await Promise.all([p.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {}), p.click('button[type=submit]')]);
+  await new Promise((r) => setTimeout(r, 2500));
+  await p.goto(`${BASE}/coach`, { waitUntil: 'networkidle2' });
+  await new Promise((r) => setTimeout(r, 2000));
+  await p.screenshot({ path: path.join(OUT, 'prod-coach.png') });
+  console.log('prod-coach @', p.url());
+  await p.goto(`${BASE}/coach/tool/recipes`, { waitUntil: 'networkidle2' });
+  await new Promise((r) => setTimeout(r, 2500));
+  await p.screenshot({ path: path.join(OUT, 'prod-recipes.png') });
+  console.log('prod-recipes @', p.url());
+  await b.close();
+  console.log('done');
+})().catch((e) => { console.error('FATAL', e.message); process.exit(1); });

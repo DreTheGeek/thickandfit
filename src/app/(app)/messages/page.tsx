@@ -1,9 +1,10 @@
-// The "messages"/inbox slot is the subscriber's AI coach chat. Canonical route is /coach-chat;
-// this redirect keeps any existing inbox links pointing at the live chat.
-import { redirect } from 'next/navigation';
+import type { ReactElement } from 'react';
+import { getTranslations } from 'next-intl/server';
+import { ComingSoon } from '@/components/app/coming-soon';
 
 export const dynamic = 'force-dynamic';
 
-export default function MessagesPage(): never {
-  redirect('/coach-chat');
+export default async function MessagesPage(): Promise<ReactElement> {
+  const t = await getTranslations('app.nav');
+  return <ComingSoon title={t('chat')} />;
 }

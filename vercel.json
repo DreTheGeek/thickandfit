@@ -4,10 +4,6 @@
     {
       "path": "/api/internal/ghl-sync",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/internal/generate-insights",
-      "schedule": "0 7 * * *"
     }
   ]
 }
