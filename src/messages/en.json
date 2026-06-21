@@ -782,6 +782,20 @@
       "notConfigured": "Your AI coach is not configured yet. Check back soon, she will be ready shortly.",
       "emptyTitle": "Say hi to your coach",
       "emptyBody": "Ask about your workouts, nutrition, or how to hit your goal. She knows your progress."
+    },
+    "coachInsights": {
+      "title": "Your weekly read",
+      "subtitle": "What your coach noticed in your last 30 days",
+      "bestPattern": "What's working",
+      "worstPattern": "What to watch",
+      "streakBreaker": "What breaks your streak",
+      "onPaceYes": "You're on pace for your goal",
+      "onPaceNo": "A little off pace, let's adjust",
+      "projectedDate": "Projected to hit your goal",
+      "avgMacros7d": "7-day average",
+      "weightTrend": "Weight trend",
+      "noInsights": "Not enough data yet. Keep logging and your coach will have plenty to say.",
+      "notConfigured": "Insights turn on once your AI coach is configured."
     }
   }
 }

@@ -782,6 +782,20 @@
       "notConfigured": "Tu entrenadora con IA todavia no esta configurada. Vuelve pronto, estara lista en breve.",
       "emptyTitle": "Saluda a tu coach",
       "emptyBody": "Pregunta sobre tus entrenamientos, nutricion o como alcanzar tu meta. Conoce tu progreso."
+    },
+    "coachInsights": {
+      "title": "Tu resumen semanal",
+      "subtitle": "Lo que tu coach noto en tus ultimos 30 dias",
+      "bestPattern": "Lo que esta funcionando",
+      "worstPattern": "Lo que hay que cuidar",
+      "streakBreaker": "Lo que rompe tu racha",
+      "onPaceYes": "Vas en ritmo para tu meta",
+      "onPaceNo": "Un poco fuera de ritmo, vamos a ajustar",
+      "projectedDate": "Fecha proyectada para tu meta",
+      "avgMacros7d": "Promedio de 7 dias",
+      "weightTrend": "Tendencia de peso",
+      "noInsights": "Aun no hay suficientes datos. Sigue registrando y tu coach tendra mucho que decir.",
+      "notConfigured": "Los analisis se activan cuando tu entrenadora con IA este configurada."
     }
   }
 }
