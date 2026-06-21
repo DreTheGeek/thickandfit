@@ -665,7 +665,14 @@
       "myProgram": "My Program",
       "accountSettings": "Account Settings",
       "help": "Help & Support",
-      "settings": "Settings"
+      "settings": "Settings",
+      "logWeight": "Log your weight",
+      "weightPlaceholder": "Enter weight",
+      "lastLogged": "Last: {weight} on {date}",
+      "save": "Save",
+      "saving": "Saving",
+      "weightSaved": "Weight logged - keep it up",
+      "weightError": "Could not save. Try again."
     },
     "nutrition": {
       "title": "Nutrition",

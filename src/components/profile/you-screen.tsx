@@ -8,6 +8,7 @@ import { ListRow } from '@/components/ui/list-row';
 import { ProgressBar } from '@/components/ui/ring';
 import { PageTitle } from '@/components/ui/section';
 import { signOutAction } from '@/lib/auth/actions';
+import { WeightLogCard } from '@/components/profile/weight-log-card';
 
 export type GoalSummary = {
   startLbs: number;
@@ -25,6 +26,8 @@ export async function YouScreen({
   streakWeeks,
   progressLbs,
   goal,
+  latestLb,
+  latestWeightDate,
 }: {
   name: string;
   membership: string;
@@ -33,6 +36,8 @@ export async function YouScreen({
   streakWeeks: number;
   progressLbs: number;
   goal: GoalSummary | null;
+  latestLb: number | null;
+  latestWeightDate: string | null;
 }): Promise<ReactElement> {
   const t = await getTranslations('app.you');
   const c = await getTranslations('app.common');
@@ -136,6 +141,9 @@ export async function YouScreen({
           </div>
         </Card>
       )}
+
+      {/* Weight log */}
+      <WeightLogCard latestLb={latestLb} recordedOn={latestWeightDate} />
 
       {/* Menu */}
       <div>
