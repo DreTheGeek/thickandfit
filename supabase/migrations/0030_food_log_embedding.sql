@@ -1,4 +1,4 @@
--- 0030 PHASE 2 — Layer 3 vector memory / RAG for the subscriber AI coach.
+-- 0030 PHASE 2: Layer 3 vector memory / RAG for the subscriber AI coach.
 -- The nightly insight engine writes a natural-language summary of each recent day's food_log and
 -- embeds it; the chat route embeds the member's question and retrieves the most semantically similar
 -- past records (their own coach_messages + day summaries) to inject as context before calling Haiku.

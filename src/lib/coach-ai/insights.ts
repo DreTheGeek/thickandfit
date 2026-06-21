@@ -9,6 +9,7 @@
 // improves and the table is populated. tsc + build pass with no key; nothing throws.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { embedText, toVectorLiteral, embeddingsConfigured } from '@/lib/coach-ai/embeddings';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -307,6 +308,110 @@ async function logUsage(sub: ActiveSubscriber, usage: Usage): Promise<void> {
   });
 }
 
+// --- Layer 3: vector memory backfill (RAG) ---------------------------------------------------
+// All embedding work below is key-gated via embeddings.ts (embedText returns null when unkeyed).
+// These functions are safe to call always; they no-op without an OPENROUTER_API_KEY.
+
+const EMBED_DAYS = 7; // embed the most recent N days' summaries each night (keeps the batch small)
+const EMBED_MESSAGES_PER_RUN = 40; // cap message backfill per subscriber per run
+
+// A short, natural-language recap of one day, suitable for embedding + later human display. English
+// is fine here: the embedding model is multilingual enough for retrieval, and the coach reading the
+// snippet re-expresses it in the member's language. Numbers come straight from the deterministic
+// rollup (never invented).
+export function buildDaySummary(
+  day: { date: string; kcal: number; proteinG: number; carbG: number; fatG: number },
+  goal: string | null,
+): string {
+  const goalPart = goal ? ` Goal: ${goal}.` : '';
+  return (
+    `On ${day.date} the member logged ${day.kcal} kcal: ` +
+    `${day.proteinG}g protein, ${day.carbG}g carbs, ${day.fatG}g fat.${goalPart}`
+  );
+}
+
+type FoodLogIdRow = { id: string; log_date: string; logged_at: string };
+
+// For one subscriber: write a day-summary + embedding onto one representative food_log row per
+// recent day (the latest logged_at that day). Idempotent-ish: we only (re)embed rows whose
+// log_summary is null, so re-runs do not re-spend tokens. Returns the count of days embedded.
+async function embedRecentDaySummaries(
+  sb: ReturnType<typeof createServiceClient>,
+  sub: ActiveSubscriber,
+  days: Rollup['days'],
+): Promise<number> {
+  if (!embeddingsConfigured() || days.length === 0) return 0;
+
+  const sinceEmbed = isoDaysAgo(EMBED_DAYS);
+  const recent = days.filter((d) => d.date >= sinceEmbed).slice(0, EMBED_DAYS);
+  if (recent.length === 0) return 0;
+
+  // Pull candidate rows (id + date) for the recent window, only those not yet summarized.
+  const { data } = await sb
+    .from('food_log')
+    .select('id, log_date, logged_at')
+    .eq('profile_id', sub.profileId)
+    .gte('log_date', sinceEmbed)
+    .is('log_summary', null)
+    .order('logged_at', { ascending: false });
+  const rows = (data ?? []) as FoodLogIdRow[];
+  if (rows.length === 0) return 0;
+
+  // One representative row per day: the first (latest logged_at) we see for each date.
+  const repByDate = new Map<string, string>();
+  for (const r of rows) {
+    if (!repByDate.has(r.log_date)) repByDate.set(r.log_date, r.id);
+  }
+
+  let embedded = 0;
+  for (const day of recent) {
+    const rowId = repByDate.get(day.date);
+    if (!rowId) continue;
+    const summary = buildDaySummary(day, sub.goal);
+    const vec = await embedText(summary);
+    if (!vec) continue;
+    const { error } = await sb
+      .from('food_log')
+      .update({ log_summary: summary, embedding: toVectorLiteral(vec) })
+      .eq('id', rowId);
+    if (!error) embedded += 1;
+  }
+  return embedded;
+}
+
+type MessageEmbedRow = { id: string; content: string };
+
+// Backfill embeddings on this subscriber's coach_messages that lack one (capped per run). Lets the
+// chat RAG recall older conversations the moment the key is added, without a one-shot mega-batch.
+async function embedMissingMessages(
+  sb: ReturnType<typeof createServiceClient>,
+  sub: ActiveSubscriber,
+): Promise<number> {
+  if (!embeddingsConfigured()) return 0;
+
+  const { data } = await sb
+    .from('coach_messages')
+    .select('id, content')
+    .eq('profile_id', sub.profileId)
+    .is('embedding', null)
+    .order('created_at', { ascending: false })
+    .limit(EMBED_MESSAGES_PER_RUN);
+  const rows = (data ?? []) as MessageEmbedRow[];
+  if (rows.length === 0) return 0;
+
+  let embedded = 0;
+  for (const r of rows) {
+    const vec = await embedText(r.content);
+    if (!vec) continue;
+    const { error } = await sb
+      .from('coach_messages')
+      .update({ embedding: toVectorLiteral(vec) })
+      .eq('id', r.id);
+    if (!error) embedded += 1;
+  }
+  return embedded;
+}
+
 // --- Per-subscriber entry point --------------------------------------------------------------
 // Builds the payload for one subscriber and upserts it. Idempotent: conflicts on
 // (profile_id, generated_at) replace today's row instead of stacking duplicates.
@@ -359,6 +464,15 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
       { onConflict: 'profile_id,generated_at' },
     );
   if (error) return { status: 'error' };
+
+  // Layer 3 RAG: embed recent day summaries + backfill message embeddings. Fully key-gated (no-op
+  // without OPENROUTER_API_KEY); failures here must not fail the insight write, so they are isolated.
+  try {
+    await embedRecentDaySummaries(sb, sub, roll.days);
+    await embedMissingMessages(sb, sub);
+  } catch {
+    // Embedding is best-effort enrichment; the insight row is already persisted above.
+  }
 
   return { status: 'ok', ai: Boolean(ai), payload };
 }

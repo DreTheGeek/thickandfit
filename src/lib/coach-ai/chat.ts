@@ -10,6 +10,7 @@ import 'server-only';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { buildCoachContext, renderContextBlock, type CoachLocale } from '@/lib/coach-ai/context';
+import { embedText, retrieveMemories, renderMemoryBlock } from '@/lib/coach-ai/embeddings';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -45,7 +46,8 @@ const PERSONA_EN = [
   'Voice and rules:',
   '- Be warm, motivating, and direct. Celebrate wins. Never shame. Keep replies short and practical.',
   '- Answer in the member\'s language. If they write in Spanish, reply in Spanish; otherwise English.',
-  '- Ground every claim in the member context provided below. Do not invent numbers, weights, or logs.',
+  '- Ground every claim in the member context and any relevant past records provided below. Do not invent numbers, weights, or logs.',
+  '- When relevant member memories are shown, use them to recall past meals and conversations naturally; do not quote them verbatim or mention "memories".',
   '- If the context is empty for something (no food logged, no weight), say so kindly and nudge them to log.',
   '- You are not a doctor. For medical, injury, pregnancy, or eating-disorder concerns, recommend they',
   '  consult a licensed professional, and never give medical diagnoses or prescriptions.',
@@ -59,7 +61,8 @@ const PERSONA_ES = [
   'Voz y reglas:',
   '- Se calida, motivadora y directa. Celebra los logros. Nunca avergUences. Respuestas cortas y practicas.',
   '- Responde en el idioma de la miembro. Si escribe en espanol, responde en espanol; si no, en ingles.',
-  '- Basa cada afirmacion en el contexto de la miembro de abajo. No inventes numeros, pesos ni registros.',
+  '- Basa cada afirmacion en el contexto de la miembro y en los registros pasados relevantes de abajo. No inventes numeros, pesos ni registros.',
+  '- Cuando se muestren recuerdos relevantes de la miembro, usalos para recordar comidas y conversaciones pasadas con naturalidad; no los cites textualmente ni menciones "recuerdos".',
   '- Si falta algun dato (sin comidas o sin peso registrado), dilo con amabilidad e invitala a registrar.',
   '- No eres medica. Para temas medicos, lesiones, embarazo o trastornos alimenticios, recomienda',
   '  consultar a un profesional licenciado; nunca des diagnosticos ni recetas medicas.',
@@ -79,6 +82,7 @@ type ApiMessage =
 // (marked for prompt caching) and a dynamic context part (the live member data).
 function buildMessages(
   contextBlock: string,
+  memoryBlock: string,
   locale: CoachLocale,
   history: { role: ChatRole; content: string }[],
   userMessage: string,
@@ -86,13 +90,19 @@ function buildMessages(
   const es = locale === 'es';
   const contextHeader = es ? 'Contexto de la miembro (datos en vivo):' : 'Member context (live data):';
 
+  // Dynamic per-member text part: the live context, plus (when RAG found anything) the most
+  // relevant past records for this question. memoryBlock is '' when unkeyed or no hits.
+  const dynamicText = memoryBlock
+    ? `${contextHeader}\n${contextBlock}\n\n${memoryBlock}`
+    : `${contextHeader}\n${contextBlock}`;
+
   const system: ApiMessage = {
     role: 'system',
     content: [
       // Static persona: cache this across turns. Anthropic/OpenRouter honors cache_control.
       { type: 'text', text: persona(locale), cache_control: { type: 'ephemeral' } },
-      // Dynamic per-member context: not cached (changes per member / per day).
-      { type: 'text', text: `${contextHeader}\n${contextBlock}` },
+      // Dynamic per-member context + retrieved memories: not cached (changes per member / question).
+      { type: 'text', text: dynamicText },
     ],
   };
 
@@ -167,8 +177,15 @@ export async function streamChat(
   // Persist the user's turn first so it is never lost, even if the model call fails.
   await persistMessage(companyId, profileId, 'user', request.message);
 
+  // RAG (Layer 3): embed the question and recall this member's most relevant past records
+  // (their own coach_messages + embedded food_log day summaries), then inject the top 5 into the
+  // context. Fully key-gated inside embeddings.ts: returns [] when unkeyed, so chat works without it.
+  const queryVec = await embedText(request.message);
+  const memories = queryVec ? await retrieveMemories(profileId, queryVec, 5) : [];
+  const memoryBlock = renderMemoryBlock(memories, locale);
+
   const contextBlock = renderContextBlock(ctx);
-  const messages = buildMessages(contextBlock, locale, ctx.recentMessages, request.message);
+  const messages = buildMessages(contextBlock, memoryBlock, locale, ctx.recentMessages, request.message);
 
   let upstream: Response;
   try {
