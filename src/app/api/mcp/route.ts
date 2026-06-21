@@ -33,7 +33,7 @@ function rpcError(id: RpcId, code: number, message: string): Response {
   return Response.json({ jsonrpc: '2.0', id, error: { code, message } });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<Response> {
   let body: { id?: RpcId; method?: string; params?: Record<string, unknown> } | null = null;
   try {
     body = await req.json();
@@ -74,7 +74,9 @@ export async function POST(req: Request) {
       return rpcResult(id, { content: [{ type: 'text', text: JSON.stringify(data) }] });
     }
     if (name === 'list_recent_api_usage') {
-      const limit = Math.min(Number(args.limit ?? 20), 100);
+      // Guard against a non-numeric limit ("abc" -> NaN -> .limit(NaN)); clamp to [1, 100].
+      const raw = Number(args.limit ?? 20);
+      const limit = Number.isFinite(raw) ? Math.min(Math.max(1, Math.trunc(raw)), 100) : 20;
       const { data } = await supabase
         .from('api_usage_log')
         .select('route, method, status_code, latency_ms, created_at')

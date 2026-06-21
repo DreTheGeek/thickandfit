@@ -17,6 +17,14 @@ export function bearerFrom(req: Request): string | null {
   return header.toLowerCase().startsWith('bearer ') ? header.slice(7).trim() : null;
 }
 
+/** Constant-time string compare (for shared secrets like CRON_SECRET). */
+export function safeEqual(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  return ab.length === bb.length && timingSafeEqual(ab, bb);
+}
+
 export async function validateApiKey(rawKey: string | null): Promise<ApiKeyContext | null> {
   if (!rawKey) return null;
   const prefix = rawKey.slice(0, KEY_PREFIX_LEN);
