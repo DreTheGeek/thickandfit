@@ -3,6 +3,7 @@ import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { saveProgramSchema, saveProgram } from '@/lib/programs/engine';
 import { createServiceClient } from '@/lib/supabase/service';
+import { logCoachAction } from '@/lib/coach/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,14 @@ export async function POST(req: Request) {
   if (!parsed.success) return apiError('Invalid input', 422);
 
   const result = await saveProgram(ctx.companyId, ctx.userId, parsed.data);
+  logCoachAction(createServiceClient(), {
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    entityType: 'plan',
+    entityId: result.planId,
+    action: parsed.data.id ? 'update' : 'create',
+    newState: { name_en: parsed.data.name_en, weeks: parsed.data.weeks, sessions: parsed.data.sessions.length },
+  });
   return apiSuccess(result, 201);
 }
 

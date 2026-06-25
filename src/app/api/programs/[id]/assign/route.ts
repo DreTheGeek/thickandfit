@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { assignProgram } from '@/lib/programs/engine';
+import { createServiceClient } from '@/lib/supabase/service';
+import { logCoachAction } from '@/lib/coach/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +25,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const parsed = schema.safeParse(body);
   if (!parsed.success) return apiError('Invalid input', 422);
 
-  const result = await assignProgram(ctx.companyId, (await params).id, parsed.data.profile_id);
+  const planId = (await params).id;
+  const result = await assignProgram(ctx.companyId, planId, parsed.data.profile_id);
+  logCoachAction(createServiceClient(), {
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    entityType: 'plan',
+    entityId: planId,
+    action: 'assign',
+    newState: { profile_id: parsed.data.profile_id },
+  });
   return apiSuccess(result);
 }
