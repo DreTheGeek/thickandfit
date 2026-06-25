@@ -7,8 +7,19 @@ import { createServiceClient } from '@/lib/supabase/service';
 
 export async function clientIp(): Promise<string> {
   const h = await headers();
+  // Prefer the platform-set x-real-ip: on Vercel this is the true client IP and a caller cannot forge
+  // it. The FIRST x-forwarded-for token is client-controllable (an attacker prepends a fake IP and the
+  // real one is appended last), so trusting [0] let callers rotate the header to land each request in
+  // a fresh bucket and dodge every rate limit. Fall back to the LAST XFF hop (the trusted, edge-
+  // appended client), never the first.
+  const realIp = h.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
   const fwd = h.get('x-forwarded-for');
-  return (fwd ? fwd.split(',')[0].trim() : '') || h.get('x-real-ip') || 'unknown';
+  if (fwd) {
+    const hops = fwd.split(',').map((p) => p.trim()).filter(Boolean);
+    if (hops.length) return hops[hops.length - 1];
+  }
+  return 'unknown';
 }
 
 /** Returns true if the action is allowed, false if rate-limited. Records the hit when allowed. */
