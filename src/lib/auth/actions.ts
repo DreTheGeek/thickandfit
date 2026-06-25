@@ -137,7 +137,18 @@ export async function signInWithOAuthAction(provider: 'google' | 'apple'): Promi
     options: { redirectTo: `${await origin()}/auth/callback` },
   });
   if (error) {
-    redirect('/auth/sign-in?error=oauth');
+    // Return to the page that initiated OAuth (sign-in OR sign-up), not a hardcoded sign-in -- a
+    // failed OAuth started from the sign-up page used to bounce the user to sign-in.
+    const h = await headers();
+    const referer = h.get('referer');
+    let dest = '/auth/sign-in';
+    try {
+      const u = referer ? new URL(referer) : null;
+      if (u && u.host === h.get('host') && u.pathname.startsWith('/auth/')) dest = u.pathname;
+    } catch {
+      // keep the sign-in default
+    }
+    redirect(`${dest}?error=oauth`);
   }
   if (data?.url) redirect(data.url);
 }
