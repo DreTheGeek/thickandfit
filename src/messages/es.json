@@ -53,7 +53,7 @@
     "oauthError": "No pudimos iniciar tu sesión con ese proveedor. Inténtalo de nuevo o usa el correo.",
     "authError": "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo.",
     "or": "o",
-    "agreeNotice": "Al crear una cuenta, aceptas nuestros Términos de Servicio y Política de Privacidad."
+    "agreeNotice": "Al crear una cuenta, aceptas nuestros <terms>Términos de Servicio</terms> y <privacy>Política de Privacidad</privacy>."
   },
   "app": {
     "nav": {

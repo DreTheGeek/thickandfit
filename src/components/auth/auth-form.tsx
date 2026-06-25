@@ -2,7 +2,8 @@
 // Email/password sign-in or sign-up. useActionState (React 19). States via pending/error/sent.
 import { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { ReactElement } from 'react';
+import Link from 'next/link';
+import type { ReactElement, ReactNode } from 'react';
 import { signInAction, signUpAction, type AuthState } from '@/lib/auth/actions';
 import { Button } from '@/components/ui/button';
 
@@ -48,7 +49,20 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }): ReactElemen
         {pending ? '…' : mode === 'sign-in' ? t('signIn') : t('signUp')}
       </Button>
       {mode === 'sign-up' && (
-        <p className="mt-1 text-center text-[12px] leading-[1.5] text-faint">{t('agreeNotice')}</p>
+        <p className="mt-1 text-center text-[12px] leading-[1.5] text-faint">
+          {t.rich('agreeNotice', {
+            terms: (chunks: ReactNode) => (
+              <Link href="/terms" className="underline underline-offset-2 hover:text-ink">
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks: ReactNode) => (
+              <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
       )}
     </form>
   );
