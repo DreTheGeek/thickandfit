@@ -92,13 +92,14 @@ export function TodayScreen({
   const header = (
     <div className="mb-[18px] flex items-center justify-between">
       <Wordmark height={20} />
-      <Link
-        href="/messages"
-        aria-label={t('common.notifications')}
-        className="tf-press flex h-[34px] w-[34px] items-center justify-center border border-line"
+      {/* Notifications are a later phase. Render the bell as a non-interactive placeholder rather than
+          linking it to the /messages Coming-Soon stub -- a dead-end tap on the home screen. */}
+      <span
+        aria-hidden
+        className="flex h-[34px] w-[34px] items-center justify-center border border-line text-faint opacity-50"
       >
         <Icon name="bell" size={18} />
-      </Link>
+      </span>
     </div>
   );
 
