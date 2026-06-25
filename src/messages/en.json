@@ -147,6 +147,7 @@
       "seePlan": "See my plan",
       "saveError": "We could not save your plan. Please check your connection and try again.",
       "toCheckout": "Continue to checkout",
+      "toDashboard": "Go to my dashboard",
       "projected": "Projected {from} → {to} lb over 12 weeks"
     },
     "exercise": {

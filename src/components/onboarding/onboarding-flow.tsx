@@ -202,8 +202,11 @@ export function OnboardingFlow(): ReactElement {
           </Button>
         )}
         {step === 3 && (
-          <ButtonLink href="/checkout" size="block">
-            {t('toCheckout')}
+          // Onboarding is already persisted (step 2 submit), so the user is fully onboarded. Send
+          // them INTO the app, not to /checkout -- billing is deferred (PRD-05/06) and /checkout is a
+          // ComingSoon stub, which would dead-end the new-user golden path.
+          <ButtonLink href="/dashboard" size="block">
+            {t('toDashboard')}
           </ButtonLink>
         )}
       </div>

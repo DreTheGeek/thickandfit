@@ -147,6 +147,7 @@
       "seePlan": "Ver mi plan",
       "saveError": "No pudimos guardar tu plan. Revisa tu conexión e inténtalo de nuevo.",
       "toCheckout": "Ir al pago",
+      "toDashboard": "Ir a mi panel",
       "projected": "Proyección {from} → {to} lb en 12 semanas"
     },
     "exercise": {
