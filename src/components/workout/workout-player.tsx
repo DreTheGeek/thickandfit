@@ -5,13 +5,22 @@
 // confetti -> persist (PRD-12). The exact things competitors got wrong.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { Icon } from '@/components/ui/icons';
 import { UnderlineTabs } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Tag } from '@/components/ui/badge';
 import { Confetti, useConfetti } from '@/components/ui/confetti';
+
+// Mux video player, loaded client-only (it's a web component; ssr:false avoids hydration issues).
+const MuxPlayer = dynamic(() => import('@mux/mux-player-react'), { ssr: false });
+
+function fmtClock(totalSec: number): string {
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 export type PlayerExercise = {
   exercise_id: string;
@@ -83,8 +92,16 @@ export function WorkoutPlayer({
   const [subsOpen, setSubsOpen] = useState(false);
   const [subs, setSubs] = useState<Substitute[] | null>(null);
   const [finished, setFinished] = useState(false);
+  const [elapsed, setElapsed] = useState(0); // total workout seconds, counts up from start
   const logged = useRef<LoggedSet[]>([]);
   const wakeRef = useRef<WakeLockSentinel | null>(null);
+
+  // Elapsed workout clock: tick every second until the session is finished.
+  useEffect(() => {
+    if (finished) return undefined;
+    const id = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(id);
+  }, [finished]);
 
   const ex = exercises[idx];
   const totalSets = ex?.sets ?? 1;
@@ -228,7 +245,7 @@ export function WorkoutPlayer({
         className="relative flex h-[300px] flex-none items-center justify-center"
         style={{ background: 'linear-gradient(150deg,#2c2c2c,#0c0c0c)' }}
       >
-        <div className="absolute inset-x-4 top-3.5 flex items-center justify-between text-white">
+        <div className="absolute inset-x-4 top-3.5 z-10 flex items-center justify-between text-white">
           <button
             type="button"
             onClick={() => router.push('/workouts')}
@@ -243,18 +260,21 @@ export function WorkoutPlayer({
               {idx + 1} / {exercises.length} · {dayLabel}
             </div>
           </div>
-          <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-black/40 text-white">
-            ···
+          {/* Total elapsed workout time. */}
+          <div className="flex h-[34px] min-w-[34px] items-center justify-center rounded-full bg-black/40 px-2.5 text-[13px] font-semibold tabular-nums text-white">
+            {fmtClock(elapsed)}
           </div>
         </div>
-        <div className="text-white/50">
-          <Icon name="dumbbell" size={90} strokeWidth={1.5} />
-        </div>
-        {ex.video_mux_id != null && (
-          <div className="absolute bottom-3.5 right-4">
-            <Tag outlined={false} className="bg-white/15 text-white">
-              {t('demo')}
-            </Tag>
+        {ex.video_mux_id ? (
+          <MuxPlayer
+            playbackId={ex.video_mux_id}
+            streamType="on-demand"
+            accentColor="#5EBE62"
+            className="absolute inset-0 h-full w-full"
+          />
+        ) : (
+          <div className="text-white/50">
+            <Icon name="dumbbell" size={90} strokeWidth={1.5} />
           </div>
         )}
       </div>
