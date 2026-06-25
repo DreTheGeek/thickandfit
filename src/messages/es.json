@@ -117,6 +117,8 @@
       "goalGain": "Ganar músculo",
       "goalMaintain": "Mantener y tonificar",
       "aboutTitle": "Sobre ti",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Tu nombre",
       "sex": "Sexo",
       "female": "Mujer",
       "male": "Hombre",

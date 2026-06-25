@@ -22,6 +22,7 @@ export function OnboardingFlow(): ReactElement {
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
+  const [firstName, setFirstName] = useState('');
   const [goal, setGoal] = useState<Goal>('lose');
   const [sex, setSex] = useState<OnboardingInput['sex']>('female');
   const [age, setAge] = useState(30);
@@ -55,7 +56,7 @@ export function OnboardingFlow(): ReactElement {
       const res = await fetch('/api/onboarding/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
+        body: JSON.stringify({ ...input, firstName: firstName.trim() }),
       });
       if (!res.ok) {
         // Do NOT advance to the "plan ready" screen on a failed save, or the user sees a plan that
@@ -104,6 +105,16 @@ export function OnboardingFlow(): ReactElement {
         <>
           <h2 className="tf-display mb-6 text-[38px]">{t('aboutTitle')}</h2>
           <div className="flex flex-col gap-3.5">
+            <Field label={t('firstName')}>
+              <input
+                type="text"
+                autoComplete="given-name"
+                className={selectCls}
+                placeholder={t('firstNamePlaceholder')}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </Field>
             <Field label={t('sex')}>
               <select className={selectCls} value={sex} onChange={(e) => setSex(e.target.value as OnboardingInput['sex'])}>
                 <option value="female">{t('female')}</option>
@@ -192,7 +203,11 @@ export function OnboardingFlow(): ReactElement {
           </Button>
         )}
         {step < 2 && (
-          <Button size="block" onClick={() => setStep((s) => s + 1)}>
+          <Button
+            size="block"
+            disabled={step === 1 && firstName.trim() === ''}
+            onClick={() => setStep((s) => s + 1)}
+          >
             {t('continue')}
           </Button>
         )}
