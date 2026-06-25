@@ -120,6 +120,8 @@
       "aboutTitle": "Sobre ti",
       "firstName": "Nombre",
       "firstNamePlaceholder": "Tu nombre",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Tu apellido",
       "sex": "Sexo",
       "female": "Mujer",
       "male": "Hombre",

@@ -120,6 +120,8 @@
       "aboutTitle": "About you",
       "firstName": "First name",
       "firstNamePlaceholder": "Your first name",
+      "lastName": "Last name",
+      "lastNamePlaceholder": "Your last name",
       "sex": "Sex",
       "female": "Female",
       "male": "Male",
