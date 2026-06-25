@@ -182,9 +182,14 @@ export function TodayScreen({
           <p className="mb-4 mt-2.5 text-[13px] leading-[1.5] text-white/65">
             {t('today.checkinBody')}
           </p>
-          <ButtonLink href="/checkin" variant="light" size="sm">
-            {t('today.checkinCta')}
-          </ButtonLink>
+          <div className="flex items-center gap-3">
+            <ButtonLink href="/checkin" variant="light" size="sm">
+              {t('today.checkinCta')}
+            </ButtonLink>
+            <span className="inline-flex items-center border border-white/25 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[1px] text-white/70">
+              {t('common.soon')}
+            </span>
+          </div>
         </div>
         <div
           className="h-[104px] w-[84px] flex-none rounded-xl bg-cover"
