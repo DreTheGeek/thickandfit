@@ -32,5 +32,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     .delete()
     .lt('hit_at', new Date(Date.now() - 3_600_000).toISOString());
 
-  return NextResponse.json(result, { status: result.ok ? 200 : 500 });
+  // The full result (including any raw upstream error string) is persisted to cron_job_log.detail
+  // above; don't echo the raw error back in the HTTP response.
+  const body = result.ok
+    ? result
+    : {
+        ok: false as const,
+        pipelines: result.pipelines,
+        stages: result.stages,
+        opportunities: result.opportunities,
+        linked: result.linked,
+        unmatched: result.unmatched,
+      };
+  return NextResponse.json(body, { status: result.ok ? 200 : 500 });
 }
