@@ -42,6 +42,14 @@ export default function Home() {
     <>
       {/* Webflow CSS loads ONLY on the landing page so it never restyles the app/auth UI. */}
       <link rel="stylesheet" href="/assets/css/webflow.css" />
+      {/* Unstack the header nav: the lifted Webflow markup left .navbar_button-wrap as display:block,
+          so LOG IN + START YOUR JOURNEY stacked vertically. Lay them out in a row at every width. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html:
+            '.navbar_button-wrap{display:flex !important;align-items:center;justify-content:flex-end;gap:10px;width:auto !important}.navbar_button-wrap>*{flex:none !important;white-space:nowrap !important}',
+        }}
+      />
       {parts ? (
         <>
           <div dangerouslySetInnerHTML={{ __html: parts.before }} />
