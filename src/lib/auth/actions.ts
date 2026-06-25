@@ -1,7 +1,7 @@
 'use server';
 // Auth server actions (useActionState-compatible). Backed by Supabase Auth via the SSR client.
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { homePathForUser, type Role } from '@/lib/auth/session';
@@ -56,9 +56,20 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, ui_locale, content_locale')
       .eq('id', user.id)
       .maybeSingle();
+    // Apply the user's saved language so the app loads in their preference on any device.
+    if (profile?.ui_locale === 'en' || profile?.ui_locale === 'es') {
+      const store = await cookies();
+      const oneYear = 60 * 60 * 24 * 365;
+      store.set('ui_locale', profile.ui_locale, { path: '/', maxAge: oneYear, sameSite: 'lax' });
+      const content =
+        profile.content_locale === 'en' || profile.content_locale === 'es'
+          ? profile.content_locale
+          : profile.ui_locale;
+      store.set('content_locale', content, { path: '/', maxAge: oneYear, sameSite: 'lax' });
+    }
     dest = await homePathForUser(user.id, (profile?.role as Role) ?? 'subscriber');
   }
   redirect(dest);

@@ -1,5 +1,6 @@
 // Onboarding submit: compute the prediction + targets, store one row per profile.
 import { z } from 'zod';
+import { cookies } from 'next/headers';
 import { resolveAuth } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { onboardingInputSchema, computePlan } from '@/lib/onboarding/prediction';
@@ -7,9 +8,12 @@ import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
-// The prediction stats plus the display name captured in the wizard (used to greet the user).
+const ONE_YEAR = 60 * 60 * 24 * 365;
+
+// The prediction stats plus the display name + preferred language captured in the wizard.
 const submitSchema = onboardingInputSchema.extend({
   firstName: z.string().trim().min(1).max(60).optional(),
+  language: z.enum(['en', 'es']).optional(),
 });
 
 export async function POST(req: Request) {
@@ -40,9 +44,22 @@ export async function POST(req: Request) {
     { onConflict: 'profile_id' },
   );
 
-  // Persist the captured display name so the app can greet the user by name.
-  if (parsed.data.firstName) {
-    await supabase.from('profiles').update({ full_name: parsed.data.firstName }).eq('id', ctx.userId);
+  // Persist the captured display name + preferred language to the profile.
+  const profileUpdate: Record<string, string> = {};
+  if (parsed.data.firstName) profileUpdate.full_name = parsed.data.firstName;
+  if (parsed.data.language) {
+    profileUpdate.ui_locale = parsed.data.language;
+    profileUpdate.content_locale = parsed.data.language;
+  }
+  if (Object.keys(profileUpdate).length > 0) {
+    await supabase.from('profiles').update(profileUpdate).eq('id', ctx.userId);
+  }
+
+  // Apply the chosen language immediately via cookies so the dashboard loads in it.
+  if (parsed.data.language) {
+    const store = await cookies();
+    store.set('ui_locale', parsed.data.language, { path: '/', maxAge: ONE_YEAR, sameSite: 'lax' });
+    store.set('content_locale', parsed.data.language, { path: '/', maxAge: ONE_YEAR, sameSite: 'lax' });
   }
 
   return apiSuccess({ plan });
