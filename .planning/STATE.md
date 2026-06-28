@@ -21,10 +21,15 @@ no-OPENROUTER-key state) + AI endpoints rate-limited; WP4 text-to-macro (reuses 
 "Snap your meal" modal).
 Bugs fixed en route: dotted i18n keys (next-intl INVALID_KEY); subscriber app failing to render in dev (CSP
 needed unsafe-eval + wss for realtime); notification-bell realtime channel ordering.
-REMAINING: WP3 finish (knowledge builder, plan-gen, AI safety/disclaimer); WP5 habits; WP6 check-ins; WP7 coach
-console (inbox/billing&renewals/create-challenge/community); WP8 mid-ticket; WP9 nav trim; WP10 legal/account
-(disclaimer, GDPR delete/export); WP11 pg_cron + notif triggers + timezone; WP12 Sentry/PostHog/404/headers;
-WP13 Mux video import + bilingual ES + 256-client invite/history; WP14 ship.
+ALSO DONE since (committed, verified): WP5 habits (0036 habits + habit_logs, dashboard check-off persists);
+WP10 part 1 GDPR account deletion (/account danger zone, cascade-delete); WP12 part 1 bilingual 404 page.
+REMAINING: WP3 finish (knowledge builder, plan-gen, AI safety/disclaimer); WP10 finish (medical disclaimer at
+onboarding, auto-renewal disclosure, data export, account-page email/pw/notif-prefs); WP6 check-ins (wire form
+builder; /checkin + dashboard "START CHECK-IN" are stubs); WP7 coach console (inbox Realtime / billing&renewals
+view / create-challenge / coach community); WP8 mid-ticket (coaching_assignments + approval_queue); WP9 nav trim
+(after WP7); WP11 pg_cron + notif triggers + per-user timezone; WP12 finish (Sentry/PostHog wiring, security
+headers verify, perf/a11y); WP13 Mux video import + bilingual ES exercise names + 256-client invite/history; WP14 ship.
+Next migration number: 0037. The "Snap your meal" modal hosts both photo + text-to-macro.
 Env not yet connected (plug-in-last, like the plan's completeness principle): live Stripe, OPENROUTER_API_KEY,
 Sentry/PostHog, Twilio, Mux. Test note: `sample.sam` is comped (profiles.comp_access_until) for subscriber QA.
 Last activity: 2026-06-28, WP0-4 + WP3 core built, verified, committed.
