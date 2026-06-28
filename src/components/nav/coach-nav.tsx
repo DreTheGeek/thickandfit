@@ -34,6 +34,16 @@ const SECTIONS: NavSection[] = [
     ],
   },
   {
+    // Mid-ticket coaching (WP8). drafts = assistant-facing; approvals + assignments are approver-facing
+    // and redirect non-approvers at the page level (requireApprover), so the links are role-agnostic.
+    headerKey: 'navMidTicket',
+    items: [
+      { key: 'navDrafts', href: '/coach/drafts', icon: 'file' },
+      { key: 'navApprovals', href: '/coach/approvals', icon: 'clipboard' },
+      { key: 'navAssignments', href: '/coach/assignments', icon: 'user' },
+    ],
+  },
+  {
     headerKey: 'bucketTraining',
     items: [
       { key: 'programs', href: '/coach/programs', icon: 'clipboard' },
