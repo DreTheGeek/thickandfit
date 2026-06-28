@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { getLocale } from 'next-intl/server';
 import { resolveAuth } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 import { analyzeMealPhoto } from '@/lib/nutrition/photo';
 
 export const runtime = 'nodejs';
@@ -29,6 +30,11 @@ export async function POST(req: Request): Promise<Response> {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
+
+  // Cost control: vision calls are the priciest AI path; cap per user to bound spend (fails open).
+  if (!(await checkRateLimit(ctx.userId, 'nutrition-photo', 40, 3600))) {
+    return apiError('Too many photo scans right now. Please try again shortly.', 429);
+  }
 
   let raw: unknown;
   try {

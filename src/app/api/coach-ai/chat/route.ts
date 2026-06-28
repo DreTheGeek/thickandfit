@@ -7,6 +7,7 @@
 // body ({ ok: false, status: 'notConfigured', message }). It never crashes without the key.
 import { resolveAuth } from '@/lib/auth/session';
 import { apiError } from '@/lib/api/auth';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 import { chatRequestSchema, streamChat } from '@/lib/coach-ai/chat';
 
 export const runtime = 'nodejs';
@@ -17,6 +18,11 @@ export async function POST(req: Request): Promise<Response> {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
+
+  // Cost control: cap AI chat turns per user so OpenRouter spend cannot run away (fails open).
+  if (!(await checkRateLimit(ctx.userId, 'coach-ai-chat', 30, 300))) {
+    return apiError('You are sending messages too fast. Please wait a moment.', 429);
+  }
 
   let raw: unknown;
   try {
