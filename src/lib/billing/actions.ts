@@ -21,6 +21,22 @@ export type BillingState = { error?: string; ok?: boolean; checkoutUrl?: string 
 
 const CONSENT_VERSION = '2026-06';
 
+type Tier = 'low' | 'mid';
+
+// Tier -> Stripe price id. Low falls back to the legacy single STRIPE_PRICE_ID so existing config
+// keeps working. Mid-ticket ($200-300) is coach-assigned; high-ticket is Phase 3.
+function priceForTier(tier: Tier): string | undefined {
+  const low = process.env.STRIPE_PRICE_LOW ?? process.env.STRIPE_PRICE_ID ?? undefined;
+  const mid = process.env.STRIPE_PRICE_MID ?? undefined;
+  return tier === 'mid' ? mid : low;
+}
+
+// Optional free trial, configured per offer. 0/unset = charge immediately.
+function trialDays(): number {
+  const n = Number(process.env.STRIPE_TRIAL_DAYS ?? '');
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
 async function origin(): Promise<string> {
   const h = await headers();
   return h.get('origin') ?? `https://${h.get('host') ?? 'app.teamthickandfit.com'}`;
@@ -39,13 +55,14 @@ async function clientMeta(): Promise<{ ip: string | null; ua: string | null }> {
  */
 export async function startCheckoutAction(
   _prev: BillingState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<BillingState> {
   const ctx = await requireAuth();
   if (!ctx.companyId) return { error: 'noCompany' };
   if (!isStripeConfigured()) return { error: 'notConfigured' };
 
-  const priceId = process.env.STRIPE_PRICE_ID;
+  const tier: Tier = String(formData.get('tier') ?? 'low') === 'mid' ? 'mid' : 'low';
+  const priceId = priceForTier(tier);
   if (!priceId) return { error: 'notConfigured' };
 
   const supabase = await createClient();
@@ -88,6 +105,7 @@ export async function startCheckoutAction(
     cancelUrl: `${base}/account/billing?checkout=cancelled`,
     profileId: ctx.userId,
     companyId: ctx.companyId,
+    trialDays: trialDays(),
   });
   if (!session.ok || !session.data.url) return { error: 'stripeError' };
   return { ok: true, checkoutUrl: session.data.url };

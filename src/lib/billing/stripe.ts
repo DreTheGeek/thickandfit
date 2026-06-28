@@ -110,7 +110,10 @@ export async function createCheckoutSession(args: {
   cancelUrl: string;
   profileId: string;
   companyId: string;
+  /** Optional free-trial length in days; omitted/0 means charge immediately. */
+  trialDays?: number;
 }): Promise<StripeResult<StripeCheckoutSession>> {
+  const trial = args.trialDays && args.trialDays > 0 ? Math.floor(args.trialDays) : undefined;
   return stripeRequest<StripeCheckoutSession>('POST', '/checkout/sessions', {
     mode: 'subscription',
     customer: args.customerId,
@@ -120,6 +123,8 @@ export async function createCheckoutSession(args: {
     // 3D Secure: let Stripe Radar request it when the card supports it.
     payment_method_options: { card: { request_three_d_secure: 'automatic' } },
     subscription_data: {
+      // encodeForm drops undefined, so no trial key is sent when trial is unset.
+      trial_period_days: trial,
       metadata: { profile_id: args.profileId, company_id: args.companyId },
     },
     metadata: { profile_id: args.profileId, company_id: args.companyId },
