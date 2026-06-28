@@ -137,6 +137,17 @@ export default async function BillingPage(): Promise<ReactElement> {
         </div>
       ) : null}
 
+      {/* Standing subscription terms: auto-renewal summary + cancel + refund policy. Always visible,
+          not just at the consent moment (ROSCA + California ARL: retained, accessible terms). */}
+      <div className="mt-7 border-t border-divider pt-5">
+        <h2 className="mb-3 text-[12px] uppercase tracking-[2px] text-faint">
+          {t('subscriptionTerms')}
+        </h2>
+        <p className="text-[12px] leading-relaxed text-soft">{t('autoRenewSummary')}</p>
+        <p className="mt-2 text-[12px] leading-relaxed text-soft">{t('cancelPolicy')}</p>
+        <p className="mt-2 text-[12px] leading-relaxed text-soft">{t('refundPolicy')}</p>
+      </div>
+
       <p className="mt-6 text-center text-[12px] leading-relaxed text-faint">{t('honestNote')}</p>
     </div>
   );

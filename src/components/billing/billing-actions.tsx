@@ -50,6 +50,9 @@ function SubscribeButton({ t }: { t: ReturnType<typeof useTranslations> }): Reac
       >
         {pending ? '…' : t('subscribeCta')}
       </button>
+      {/* Auto-renewal disclosure: clear and conspicuous, in visual proximity to the consent button
+          (ROSCA + California ARL). Submitting subscribes you and is recorded as your consent. */}
+      <p className="mt-2.5 text-[11px] leading-relaxed text-faint">{t('autoRenewDisclosure')}</p>
       {errorMessage(t, state.error) ? (
         <p className="mt-2 text-[12px] text-alert">{errorMessage(t, state.error)}</p>
       ) : null}

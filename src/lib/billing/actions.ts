@@ -71,18 +71,32 @@ export async function startCheckoutAction(
   } = await supabase.auth.getUser();
   if (!user?.email) return { error: 'noEmail' };
 
-  // Capture consent first (so even an abandoned checkout has the agreement on record).
+  // Capture consent first (so even an abandoned checkout has the agreement on record). Two rows:
+  // the general billing consent, and a DISTINCT auto-renewal-disclosure acknowledgement for a clean
+  // audit trail (ROSCA + California ARL: proof the user saw the auto-renew terms before the charge).
+  // consent_captures.consent_type has no CHECK, so the new type needs no migration.
   const { ip, ua } = await clientMeta();
   const svc = createServiceClient();
-  await svc.from('consent_captures').insert({
-    company_id: ctx.companyId,
-    user_id: ctx.userId,
-    consent_type: 'billing',
-    consent_version: CONSENT_VERSION,
-    accepted: true,
-    ip_address: ip,
-    user_agent: ua,
-  });
+  await svc.from('consent_captures').insert([
+    {
+      company_id: ctx.companyId,
+      user_id: ctx.userId,
+      consent_type: 'billing',
+      consent_version: CONSENT_VERSION,
+      accepted: true,
+      ip_address: ip,
+      user_agent: ua,
+    },
+    {
+      company_id: ctx.companyId,
+      user_id: ctx.userId,
+      consent_type: 'auto_renewal_disclosure',
+      consent_version: CONSENT_VERSION,
+      accepted: true,
+      ip_address: ip,
+      user_agent: ua,
+    },
+  ]);
 
   // Reuse an existing customer id if we have one.
   const existing = await getSubscriptionForProfile(ctx.userId);
