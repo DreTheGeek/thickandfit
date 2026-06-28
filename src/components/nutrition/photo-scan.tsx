@@ -4,7 +4,7 @@ import { useRef, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
-import { logPhotoFoodAction } from '@/lib/nutrition/diary-actions';
+import { logPhotoFoodAction, parseTextToMacroAction } from '@/lib/nutrition/diary-actions';
 import { MEAL_SLOTS, type MealSlot } from '@/lib/nutrition/macros';
 
 // Client-safe mirror of the server pipeline's response shape (server module is server-only).
@@ -51,6 +51,7 @@ export function PhotoScan(): ReactElement {
   const [slot, setSlot] = useState<MealSlot>('lunch');
   const [logged, setLogged] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
+  const [desc, setDesc] = useState('');
 
   function reset(): void {
     setPreview(null);
@@ -58,7 +59,29 @@ export function PhotoScan(): ReactElement {
     setCandidates([]);
     setLogged({});
     setBusy(null);
+    setDesc('');
     if (fileRef.current) fileRef.current.value = '';
+  }
+
+  // Text-to-macro: parse a natural-language description into the same candidate review flow as photo.
+  async function onDescribe(): Promise<void> {
+    const text = desc.trim();
+    if (text.length < 2) return;
+    setPreview(null);
+    setPhase('analyzing');
+    setCandidates([]);
+    setLogged({});
+    try {
+      const data = (await parseTextToMacroAction(text)) as ApiResult;
+      if (data.status === 'ok') {
+        setCandidates(data.candidates);
+        setPhase('review');
+      } else {
+        setPhase(data.status);
+      }
+    } catch {
+      setPhase('error');
+    }
   }
 
   async function onFile(file: File): Promise<void> {
@@ -178,14 +201,32 @@ export function PhotoScan(): ReactElement {
             )}
 
             {phase === 'idle' && (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="tf-press flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-10 text-faint hover:border-ink hover:text-ink"
-              >
-                <Icon name="camera" size={28} />
-                <span className="text-[13px] font-medium">{t('photoTakeOrUpload')}</span>
-              </button>
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="tf-press flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-8 text-faint hover:border-ink hover:text-ink"
+                >
+                  <Icon name="camera" size={28} />
+                  <span className="text-[13px] font-medium">{t('photoTakeOrUpload')}</span>
+                </button>
+                <p className="text-center text-[11px] uppercase tracking-wide text-faint">{t('textScanOr')}</p>
+                <textarea
+                  value={desc}
+                  onChange={(e) => setDesc(e.target.value)}
+                  rows={2}
+                  placeholder={t('textScanPlaceholder')}
+                  className="w-full resize-none rounded-2xl border border-line bg-bg p-3 text-[14px] outline-none placeholder:text-faint focus:border-ink"
+                />
+                <button
+                  type="button"
+                  onClick={() => void onDescribe()}
+                  disabled={desc.trim().length < 2}
+                  className="tf-press w-full rounded-full bg-ink py-2.5 text-[13px] font-semibold text-bg disabled:opacity-40"
+                >
+                  {t('textScanCta')}
+                </button>
+              </div>
             )}
 
             {phase === 'analyzing' && (

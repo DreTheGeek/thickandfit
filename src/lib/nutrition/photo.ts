@@ -193,10 +193,12 @@ async function effectiveGramsForFood(
   return Math.round(grams / factor);
 }
 
-// Full pipeline: predict -> match -> scale. Pure orchestration; safe to call without an API key.
-export async function analyzeMealPhoto(image: string, locale: string): Promise<PhotoResult> {
-  const items = await predictItems(image);
-  if (items === null) return apiKey ? { status: 'error' } : { status: 'notConfigured' };
+// Resolve predicted items (from a photo OR a text description) against the foods corpus and scale
+// macros with cooked/uncooked conversion. Shared by analyzeMealPhoto + the text-to-macro pipeline.
+export async function resolvePredictedItems(
+  items: PredictedItem[],
+  locale: string,
+): Promise<PhotoResult> {
   if (items.length === 0) return { status: 'noFood' };
 
   const sb = await createClient();
@@ -212,7 +214,7 @@ export async function analyzeMealPhoto(image: string, locale: string): Promise<P
     const macros = macrosForGrams(food, effGrams);
     candidates.push({
       predictedName: item.name,
-      // Report the grams the user weighs/sees (the photo estimate), not the raw-equivalent.
+      // Report the grams the user weighs/sees (the estimate), not the raw-equivalent.
       grams: item.grams,
       confidence: item.confidence,
       matched: true,
@@ -227,4 +229,11 @@ export async function analyzeMealPhoto(image: string, locale: string): Promise<P
   );
 
   return { status: 'ok', candidates, totals };
+}
+
+// Full photo pipeline: predict -> resolve. Pure orchestration; safe to call without an API key.
+export async function analyzeMealPhoto(image: string, locale: string): Promise<PhotoResult> {
+  const items = await predictItems(image);
+  if (items === null) return apiKey ? { status: 'error' } : { status: 'notConfigured' };
+  return resolvePredictedItems(items, locale);
 }

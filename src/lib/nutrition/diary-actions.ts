@@ -7,11 +7,28 @@ import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite } from '@/lib/nutrition/macros';
 import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
+import { analyzeMealText } from '@/lib/nutrition/text-parse';
+import { checkRateLimit } from '@/lib/security/rate-limit';
+import type { PhotoResult } from '@/lib/nutrition/photo';
 
 export async function searchFoodsAction(query: string): Promise<FoodLite[]> {
   await requireAuth();
   const locale = await getLocale();
   return searchFoods(query, locale);
+}
+
+const TextMealInput = z.string().trim().min(2).max(500);
+
+// Text-to-macro: parse a natural-language meal description into confidence-scored, macro-scaled
+// candidates (reuses the photo-to-macro resolve pipeline). The nutrition page is entitlement-gated.
+export async function parseTextToMacroAction(text: unknown): Promise<PhotoResult> {
+  const parsed = TextMealInput.safeParse(text);
+  if (!parsed.success) return { status: 'error' };
+  const ctx = await requireAuth();
+  // Cost control: cap text-to-macro AI parses per user so OpenRouter spend stays bounded (fails open).
+  if (!(await checkRateLimit(ctx.userId, 'text-to-macro', 30, 300))) return { status: 'error' };
+  const locale = await getLocale();
+  return analyzeMealText(parsed.data, locale);
 }
 
 const BarcodeInput = z.string().trim().min(4).max(32).regex(/^[0-9\s-]+$/);
@@ -42,7 +59,7 @@ const LogInput = z.object({
   mealSlot: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
   grams: z.number().positive().max(5000),
   portionId: z.string().uuid().nullable().optional(),
-  source: z.enum(['search', 'barcode']).optional(),
+  source: z.enum(['search', 'barcode', 'text']).optional(),
 });
 
 export type LogResult = { ok: boolean; error?: string };
