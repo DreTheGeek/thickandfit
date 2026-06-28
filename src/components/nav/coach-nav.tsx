@@ -30,6 +30,7 @@ const SECTIONS: NavSection[] = [
       { key: 'navBroadcasts', href: '/coach/broadcasts', icon: 'bolt', soon: true },
       { key: 'navInbox', href: '/coach/inbox', icon: 'chat', soon: true },
       { key: 'navCommunity', href: '/coach/community', icon: 'community', soon: true },
+      { key: 'navChallenges', href: '/coach/challenges', icon: 'community' },
     ],
   },
   {
