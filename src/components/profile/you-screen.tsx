@@ -61,6 +61,7 @@ export async function YouScreen({
     soon?: boolean;
   }[] = [
     { key: 'aiCoach', icon: 'sparkles', label: t('aiCoach'), href: '/coach-chat' },
+    { key: 'messages', icon: 'chat', label: t('messages'), href: '/inbox' },
     { key: 'photos', icon: 'camera', label: t('myPhotos'), href: '/progress' },
     { key: 'measurements', icon: 'ruler', label: t('measurements'), href: '/progress' },
     { key: 'program', icon: 'clipboard', label: t('myProgram'), href: '/workouts' },
