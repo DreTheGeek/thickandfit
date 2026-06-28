@@ -224,6 +224,10 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
   const planJsonb = {
     name: parsed.name,
     generated_by: 'ai',
+    // The model's intended macro grams, kept for reference. The meal_plans.protein_g/carb_g/fat_g
+    // columns are GENERATED from calorie_goal + split_*_pct, so they may differ by a gram or two; this
+    // preserves what the model actually intended.
+    targetMacros: { proteinG: parsed.protein_g, carbG: parsed.carb_g, fatG: parsed.fat_g },
     mealGroups: parsed.meal_groups.map((g) => ({
       name: g.name,
       numberOfMeals: g.number_of_meals,
@@ -232,6 +236,10 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
     caveat: planCaveat(input.locale),
   };
 
+  // NOTE: meal_plans.protein_g / carb_g / fat_g are GENERATED ALWAYS columns, computed by Postgres
+  // from calorie_goal * split_*_pct (protein/carb at 4 kcal/g, fat at 9). We must NOT write them
+  // directly (the insert would error). We instead drive them through calorie_goal + the normalized
+  // split percentages, which reproduce the model's gram targets as closely as the formula allows.
   const { data: inserted, error } = await sb
     .from('meal_plans')
     .insert({
@@ -239,9 +247,6 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
       contact_id: input.contactId ?? null,
       name: parsed.name,
       calorie_goal: parsed.calorie_goal,
-      protein_g: parsed.protein_g,
-      carb_g: parsed.carb_g,
-      fat_g: parsed.fat_g,
       split_protein_pct: split.protein,
       split_carb_pct: split.carb,
       split_fat_pct: split.fat,
