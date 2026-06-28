@@ -67,6 +67,22 @@ export function TodayScreen({
     );
   }, [locale]);
 
+  // Plateau banner dismissal. We key the dismissed flag by the plateau span so a freshly-extended
+  // plateau re-surfaces the banner instead of staying hidden forever. Persisted in localStorage so
+  // a dismissal survives navigation/refresh. Hydration-safe: starts hidden, reveals after mount.
+  const plateau = summary?.plateau ?? null;
+  const plateauKey = plateau ? `tf:plateau-dismissed:${plateau.daysFlat}` : null;
+  const [plateauDismissed, setPlateauDismissed] = useState(true);
+  useEffect(() => {
+    if (!plateauKey) return;
+    setPlateauDismissed(window.localStorage.getItem(plateauKey) === '1');
+  }, [plateauKey]);
+
+  function dismissPlateau(): void {
+    if (plateauKey) window.localStorage.setItem(plateauKey, '1');
+    setPlateauDismissed(true);
+  }
+
   async function refresh(): Promise<void> {
     setState('loading');
     try {
@@ -173,6 +189,38 @@ export function TodayScreen({
 
       <h1 className="tf-display text-[34px]">{greeting}</h1>
       <p className="mt-1.5 text-[14px] text-faint">{dateLabel}</p>
+
+      {/* Plateau nudge: dismissible, only when the latest insight flags an active plateau. */}
+      {plateau && !plateauDismissed ? (
+        <Card className="mt-5 flex items-start gap-3 p-[18px]">
+          <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent/15 text-accent">
+            <Icon name="pulse" size={18} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="tf-display text-[18px] leading-[1.1]">
+              {t('today.plateauTitle')}
+            </div>
+            <p className="mt-1.5 text-[13px] leading-[1.5] text-faint">
+              {t('today.plateauBody', { days: plateau.daysFlat })}
+            </p>
+            <Link
+              href="/coach-chat"
+              className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent"
+            >
+              {t('today.plateauCta')}
+              <Icon name="chevronRight" size={14} />
+            </Link>
+          </div>
+          <button
+            type="button"
+            onClick={dismissPlateau}
+            aria-label={t('common.dismiss')}
+            className="tf-press -mr-1 -mt-1 flex h-7 w-7 flex-none items-center justify-center text-faint"
+          >
+            <Icon name="x" size={16} />
+          </button>
+        </Card>
+      ) : null}
 
       {/* Check-in prompt */}
       <Card dark className="mt-5 flex items-center gap-4 p-[22px]">
