@@ -7,6 +7,14 @@ import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { ackHealth } from '@/lib/billing/entitlement';
+
+// Record acceptance of the health / assumption-of-risk disclaimer, then continue into the app.
+export async function acceptHealthAction(): Promise<void> {
+  const ctx = await requireAuth();
+  await ackHealth(ctx.userId);
+  redirect('/dashboard');
+}
 
 export async function deleteAccountAction(): Promise<void> {
   const ctx = await requireAuth();

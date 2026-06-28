@@ -32,3 +32,20 @@ export async function revokeCompAccess(profileId: string): Promise<void> {
   const svc = createServiceClient();
   await svc.from('profiles').update({ comp_access_until: null }).eq('id', profileId);
 }
+
+/** True once the client has accepted the health / assumption-of-risk disclaimer. */
+export async function hasAckedHealth(profileId: string): Promise<boolean> {
+  const svc = createServiceClient();
+  const { data } = await svc
+    .from('profiles')
+    .select('health_ack_at')
+    .eq('id', profileId)
+    .maybeSingle();
+  return Boolean((data as { health_ack_at: string | null } | null)?.health_ack_at);
+}
+
+/** Record the client's health-disclaimer acceptance (timestamped). */
+export async function ackHealth(profileId: string): Promise<void> {
+  const svc = createServiceClient();
+  await svc.from('profiles').update({ health_ack_at: new Date().toISOString() }).eq('id', profileId);
+}

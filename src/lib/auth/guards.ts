@@ -2,7 +2,7 @@
 import 'server-only';
 import { redirect } from 'next/navigation';
 import { resolveAuth, hasRole, COACH_ROLES, type AuthContext } from '@/lib/auth/session';
-import { isEntitled } from '@/lib/billing/entitlement';
+import { isEntitled, hasAckedHealth } from '@/lib/billing/entitlement';
 
 export async function requireAuth(): Promise<AuthContext> {
   const ctx = await resolveAuth();
@@ -22,6 +22,8 @@ export async function requireCoach(): Promise<AuthContext> {
 export async function requireEntitled(): Promise<AuthContext> {
   const ctx = await requireAuth();
   if (hasRole(ctx.role, COACH_ROLES)) return ctx;
-  if (await isEntitled(ctx.userId)) return ctx;
-  redirect('/checkout');
+  if (!(await isEntitled(ctx.userId))) redirect('/checkout');
+  // Health / assumption-of-risk disclaimer must be accepted before any training content.
+  if (!(await hasAckedHealth(ctx.userId))) redirect('/disclaimer');
+  return ctx;
 }

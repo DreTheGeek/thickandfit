@@ -817,6 +817,13 @@
       "photoNoFood": "We could not spot any food in that photo. Try a clearer shot.",
       "photoError": "Something went wrong reading that photo. Please try again."
     },
+    "disclaimer": {
+      "title": "Before you begin",
+      "p1": "Thick & Fit provides fitness and nutrition guidance for general wellness. It is not medical advice and is not a substitute for care from a licensed healthcare provider.",
+      "p2": "Consult your doctor before starting any exercise or nutrition program, especially if you are pregnant, nursing, or have a medical condition. Stop and seek help if you feel pain, dizziness, or shortness of breath.",
+      "p3": "By continuing, you confirm you are at least 18, are participating voluntarily, and accept the risks of physical activity.",
+      "accept": "I understand and accept"
+    },
     "checkin": {
       "title": "Check-in",
       "subtitle": "Your coach uses these to track your progress.",
