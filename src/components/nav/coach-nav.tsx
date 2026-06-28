@@ -15,7 +15,13 @@ type NavSection = { headerKey: string; items: NavItem[] };
 
 // Admin portal IA, reorganized from Lenus's flat "Toolbox" into clear sections.
 const SECTIONS: NavSection[] = [
-  { headerKey: 'overview', items: [{ key: 'navHome', href: '/coach', icon: 'home' }] },
+  {
+    headerKey: 'overview',
+    items: [
+      { key: 'navHome', href: '/coach', icon: 'home' },
+      { key: 'navBilling', href: '/coach/billing', icon: 'card' },
+    ],
+  },
   {
     headerKey: 'navClients',
     items: [
