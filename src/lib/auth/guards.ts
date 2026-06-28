@@ -1,7 +1,7 @@
 // Page-level auth guards (redirect on failure). For app pages, not API routes.
 import 'server-only';
 import { redirect } from 'next/navigation';
-import { resolveAuth, hasRole, COACH_ROLES, type AuthContext } from '@/lib/auth/session';
+import { resolveAuth, hasRole, COACH_ROLES, APPROVER_ROLES, type AuthContext } from '@/lib/auth/session';
 import { isEntitled, hasAckedHealth } from '@/lib/billing/entitlement';
 
 export async function requireAuth(): Promise<AuthContext> {
@@ -14,6 +14,18 @@ export async function requireCoach(): Promise<AuthContext> {
   const ctx = await requireAuth();
   // Authed non-coaches belong in the app, not the marketing landing.
   if (!hasRole(ctx.role, COACH_ROLES)) redirect('/dashboard');
+  return ctx;
+}
+
+// The mid-ticket "last-eyes" gate (PRD-30, WP8). requireCoach admits assistant_coach (COACH_ROLES
+// includes it), so it CANNOT guard the approve / assignment paths: an assistant must never approve
+// their own draft. requireApprover admits coach + operator ONLY. This is the single enforcement point
+// that stands between an assistant's draft and a client; an assistant_coach is redirected to their own
+// drafts inbox BEFORE any publish code runs. RLS is not the gate here (is_coach() includes assistant
+// and the coach app uses the BYPASSRLS service client), so this server-side role check is the real one.
+export async function requireApprover(): Promise<AuthContext> {
+  const ctx = await requireAuth();
+  if (!hasRole(ctx.role, APPROVER_ROLES)) redirect('/coach/drafts');
   return ctx;
 }
 

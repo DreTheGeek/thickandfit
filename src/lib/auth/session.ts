@@ -78,6 +78,11 @@ export function hasRole(role: Role, allowed: Role[]): boolean {
 
 export const COACH_ROLES: Role[] = ['coach', 'assistant_coach', 'operator'];
 
+// The approval / assignment authority: coach + operator ONLY, EXCLUDING assistant_coach. This is the
+// app-layer reflection of the is_approver() SQL helper (0041). An assistant_coach may DRAFT but never
+// APPROVE their own work, so the mid-ticket "last-eyes" gate must check this set, not COACH_ROLES.
+export const APPROVER_ROLES: Role[] = ['coach', 'operator'];
+
 // Where to send a freshly-authenticated user. Coaches/operators go to the app home;
 // subscribers/free go to onboarding until they've completed it, then the dashboard.
 // NEVER returns '/' (the marketing landing): an authed user should land in the app.
