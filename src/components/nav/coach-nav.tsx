@@ -8,12 +8,13 @@ import type { ReactElement } from 'react';
 import { signOutAction } from '@/lib/auth/actions';
 import { Wordmark } from '@/components/ui/wordmark';
 import { Icon, type IconName } from '@/components/ui/icons';
-import { Tag } from '@/components/ui/badge';
 
-type NavItem = { key: string; href: string; icon: IconName; soon?: boolean };
+type NavItem = { key: string; href: string; icon: IconName };
 type NavSection = { headerKey: string; items: NavItem[] };
 
-// Admin portal IA, reorganized from Lenus's flat "Toolbox" into clear sections.
+// Admin portal IA, reorganized from Lenus's flat "Toolbox" into clear sections. Trimmed to shipped
+// routes only (WP9): Phase-3 admin tooling is kept out of the product entirely rather than badged
+// "soon", so every visible item routes to a real, data-bound screen.
 const SECTIONS: NavSection[] = [
   {
     headerKey: 'overview',
@@ -27,7 +28,6 @@ const SECTIONS: NavSection[] = [
     items: [
       { key: 'navClients', href: '/coach/clients', icon: 'user' },
       { key: 'navLeads', href: '/coach/leads', icon: 'funnel' },
-      { key: 'navBroadcasts', href: '/coach/broadcasts', icon: 'bolt', soon: true },
       { key: 'navInbox', href: '/coach/inbox', icon: 'chat' },
       { key: 'navCommunity', href: '/coach/community', icon: 'community' },
       { key: 'navChallenges', href: '/coach/challenges', icon: 'community' },
@@ -37,9 +37,7 @@ const SECTIONS: NavSection[] = [
     headerKey: 'bucketTraining',
     items: [
       { key: 'programs', href: '/coach/programs', icon: 'clipboard' },
-      { key: 'toolTrainingTemplates', href: '/coach/tool/training-templates', icon: 'grid', soon: true },
       { key: 'toolExercises', href: '/coach/exercises', icon: 'dumbbell' },
-      { key: 'toolExerciseBlocks', href: '/coach/tool/exercise-blocks', icon: 'dumbbell', soon: true },
     ],
   },
   {
@@ -48,28 +46,11 @@ const SECTIONS: NavSection[] = [
       { key: 'toolRecipes', href: '/coach/tool/recipes', icon: 'nutrition' },
       { key: 'toolRecipeBooks', href: '/coach/tool/recipe-books', icon: 'book' },
       { key: 'toolMealPlans', href: '/coach/tool/meal-plans', icon: 'nutrition' },
-      { key: 'toolIngredients', href: '/coach/tool/ingredients', icon: 'nutrition', soon: true },
     ],
   },
   {
     headerKey: 'bucketContent',
-    items: [
-      { key: 'forms', href: '/coach/forms', icon: 'file' },
-      { key: 'toolHabits', href: '/coach/tool/habits', icon: 'check', soon: true },
-      { key: 'toolContentCollections', href: '/coach/tool/content-collections', icon: 'book', soon: true },
-      { key: 'toolMediaLibrary', href: '/coach/tool/media-library', icon: 'camera', soon: true },
-      { key: 'toolBenefits', href: '/coach/tool/benefits', icon: 'bookmark', soon: true },
-    ],
-  },
-  {
-    headerKey: 'bucketProducts',
-    items: [
-      { key: 'toolProducts', href: '/coach/tool/products', icon: 'card', soon: true },
-      { key: 'toolAutomations', href: '/coach/tool/automations', icon: 'bolt', soon: true },
-      { key: 'toolFlows', href: '/coach/tool/flows', icon: 'pulse', soon: true },
-      { key: 'toolTags', href: '/coach/tool/tags', icon: 'bookmark', soon: true },
-      { key: 'toolSocial', href: '/coach/tool/social', icon: 'community', soon: true },
-    ],
+    items: [{ key: 'forms', href: '/coach/forms', icon: 'file' }],
   },
   {
     headerKey: 'navSettings',
@@ -140,11 +121,6 @@ export function CoachNav({ onNavigate }: { onNavigate?: () => void }): ReactElem
                     >
                       <Icon name={it.icon} size={16} />
                       {t(it.key)}
-                      {it.soon && (
-                        <span className="ml-auto">
-                          <Tag>{c('soon')}</Tag>
-                        </span>
-                      )}
                     </Link>
                   );
                 })}
