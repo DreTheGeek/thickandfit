@@ -42,17 +42,28 @@ ORCHESTRATION (NEW, per user "build it all using gsd and ralph loops with resear
 research-then-execute loop. Phase 1 ran 6 gsd-phase-researcher agents -> .planning/research/wpNN-*.md + the synthesized
 .planning/research/EXECUTION-ROADMAP.md (migration numbers 0039-0042 assigned, shared-file conflict map, dependency
 order WP11->WP12->WP3->WP8->WP10->WP13). Phase 2 = per-WP gsd-executor builds (background) + MY in-browser/SQL
-launchproof verification before each is accepted. WP12 executor running now (Sentry/PostHog/headers/global-error,
-NO migration). Migration ladder from roadmap: 0039 WP11(done), 0040 WP3 coach_knowledge, 0041 WP8 mid-ticket,
-0042 WP13 legacy_claim; WP10 needs no migration (notification_preferences already exists 0001).
-REMAINING: WP12 (in progress), WP3 finish (knowledge/plan-gen/safety), WP8 mid-ticket (NEEDS a seeded assistant_coach
-account first), WP10 finish (auto-renewal disclosure, data export, account email/pw/notif-prefs; also fix app.common.cancel
-i18n bug), WP13 Mux import + ES exercise names + 256-client invite/history, WP14 ship.
-Next migration number: 0040. The "Snap your meal" modal hosts both photo + text-to-macro.
-Env not yet connected (plug-in-last, like the plan's completeness principle): live Stripe, OPENROUTER_API_KEY,
-Sentry/PostHog, Twilio, Mux, VAPID push keys, CRON_SECRET (Vercel). Test note: `sample.sam` is comped + now
-health-acked for subscriber QA; sam tz reset to America/New_York after the WP11 Kiritimati test.
-Last activity: 2026-06-28, WP0-9 + WP11 done; research-driven Ralph loop executing WP12 next.
+launchproof verification before each is accepted. Migration ladder from roadmap: 0039 WP11(done), 0040 WP3(done),
+0041 WP8 mid-ticket, 0042 WP13 legacy_claim; WP10 needs no migration (notification_preferences already exists 0001).
+WP12 COMPLETE + verified (no migration; @sentry/nextjs + posthog-js; src/instrumentation*.ts + sentry.{server,edge}.config
++ posthog-pageview; global-error now bilingual via ui_locale cookie + Sentry capture; next.config withSentryConfig +
+CSP widened for *.posthog.com/*.sentry.io/*.ingest.sentry.io. Verified: 5 headers+HSTS live, build green WITHOUT keys).
+WP3 COMPLETE + verified (mig 0040 coach_knowledge vector(1536) + match_coach_knowledge RPC, RLS 29/29; knowledge.ts
+chunk->embed->store graceful null-embedding; safety.ts; plan-gen.ts MEAL PLANS ONLY; chat Layer-4 knowledge block;
+/coach/settings/knowledge page + /api/coach-ai/plan; in-chat AI disclaimer banner; navKnowledge link). Verified:
+knowledge ingest store/list/RLS-read path renders "Macro Philosophy 2 chunks not embedded yet"; disclaimer banner +
+notConfigured state render on /coach-chat. BUGS FIXED: meal_plans macro cols are GENERATED (executor); ES disclaimer
+accents (me, f13e4f3). LESSON: a dev server left running while executors edit client components goes STALE ("module
+factory is not available" false errors); RESTART dev clean (kill PID on :3000 + rm -rf .next + pnpm dev) before each
+verification pass. WP8 executor running now (mid-ticket 0041; bypass-block = the marquee check). Assistant seeded:
+sample.dani@thickandfit.test = assistant_coach (id 71e13451-fabf-4e2d-a346-57a69dd8bd65, company c0ffee00, pw TFSample2026!).
+REMAINING: WP8 (in progress), WP10 finish (auto-renewal disclosure, data export, account email/pw/notif-prefs; also fix
+app.common.cancel i18n bug per roadmap), WP13 Mux + ES exercise names + 256-client invite/history (+ full ES-accent
+audit), WP14 ship.
+Next migration number: 0041 (WP8). The "Snap your meal" modal hosts both photo + text-to-macro.
+Env not yet connected (plug-in-last): live Stripe, OPENROUTER_API_KEY, Sentry DSN + PostHog key, Twilio, Mux, VAPID
+push keys, CRON_SECRET (Vercel). Test note: `sample.sam` comped + health-acked; sam tz America/New_York. Dev server
+currently on :3000 (btc3s8v21).
+Last activity: 2026-06-28, WP11/WP12/WP3 done + verified; Ralph loop executing WP8.
 
 ## PRD-12 result (commit 01e4482)
 - 3 tables: workout_logs (completion_pct/enjoyment/effort), set_logs (per-set reps/weight/difficulty, indexed for overload), workout_completion_history. RLS tenant.
