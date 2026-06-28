@@ -939,7 +939,15 @@
         "broadcastTitle": "New broadcast",
         "broadcastBody": "{name} posted a broadcast to the community.",
         "plateauTitle": "Let's break through",
-        "plateauBody": "Your weight has held steady for {days} days. That is normal, and we can adjust. Tap to talk it through with your coach."
+        "plateauBody": "Your weight has held steady for {days} days. That is normal, and we can adjust. Tap to talk it through with your coach.",
+        "renewalTitle": "Your membership renews soon",
+        "renewalBody": "Your plan renews on {date}. Nothing to do. Tap to review your billing.",
+        "compExpiringTitle": "Your free access is ending",
+        "compExpiringBody": "Your complimentary access ends on {date}. Subscribe to keep your workouts, nutrition, and coach.",
+        "checkinDueTitle": "Time for your check-in",
+        "checkinDueBody": "Your coach is waiting on \"{title}\". Tap to fill it out.",
+        "reminderTitle": "Log today before you wrap up",
+        "reminderBody": "A quick log keeps your streak alive and your coach in the loop. Tap to open today."
       }
     },
     "forms": {

@@ -939,7 +939,15 @@
         "broadcastTitle": "Nuevo anuncio",
         "broadcastBody": "{name} publico un anuncio en la comunidad.",
         "plateauTitle": "Vamos a avanzar",
-        "plateauBody": "Tu peso se ha mantenido igual por {days} dias. Es normal y lo podemos ajustar. Toca para hablarlo con tu coach."
+        "plateauBody": "Tu peso se ha mantenido igual por {days} dias. Es normal y lo podemos ajustar. Toca para hablarlo con tu coach.",
+        "renewalTitle": "Tu membresia se renueva pronto",
+        "renewalBody": "Tu plan se renueva el {date}. No tienes que hacer nada. Toca para revisar tu facturacion.",
+        "compExpiringTitle": "Tu acceso gratis esta por terminar",
+        "compExpiringBody": "Tu acceso de cortesia termina el {date}. Suscribete para conservar tus entrenamientos, tu nutricion y tu coach.",
+        "checkinDueTitle": "Es hora de tu check-in",
+        "checkinDueBody": "Tu coach esta esperando \"{title}\". Toca para completarlo.",
+        "reminderTitle": "Registra tu dia antes de terminar",
+        "reminderBody": "Un registro rapido mantiene viva tu racha y a tu coach al tanto. Toca para abrir tu dia de hoy."
       }
     },
     "forms": {

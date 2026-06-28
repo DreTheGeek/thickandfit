@@ -8,7 +8,10 @@ export type NotificationType =
   | 'streak'
   | 'checkin'
   | 'plateau'
-  | 'coach_message';
+  | 'coach_message'
+  | 'renewal'
+  | 'comp_expiring'
+  | 'reminder';
 
 export type AppNotification = {
   id: string;
