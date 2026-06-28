@@ -1,4 +1,9 @@
 {
+  "notFound": {
+    "title": "Esta página no existe",
+    "body": "El enlace puede estar roto, o la página se movió.",
+    "cta": "Volver al inicio"
+  },
   "common": {
     "appName": "Thick & Fit",
     "signIn": "Iniciar sesión",

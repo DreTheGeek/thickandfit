@@ -1,4 +1,9 @@
 {
+  "notFound": {
+    "title": "This page does not exist",
+    "body": "The link may be broken, or the page may have moved.",
+    "cta": "Back to home"
+  },
   "common": {
     "appName": "Thick & Fit",
     "signIn": "Sign in",
