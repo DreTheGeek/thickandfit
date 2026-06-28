@@ -31,8 +31,11 @@ export function NotificationBell({
 
   useEffect(() => {
     const sb = createClient();
+    // Unique topic per mount: avoids reusing an already-subscribed channel when the effect
+    // re-runs (React Strict Mode double-mount in dev, or a fast nav remount), which would throw
+    // "cannot add postgres_changes callbacks after subscribe()".
     const channel = sb
-      .channel(`notifications:${profileId}`)
+      .channel(`notifications:${profileId}:${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {

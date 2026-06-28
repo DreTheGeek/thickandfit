@@ -3,15 +3,17 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
-// Security headers on every response (CLAUDE.md mandate). The CSP now declares an explicit
+// Security headers on every response (CLAUDE.md mandate). The CSP declares an explicit
 // script/style/img/connect policy. unsafe-inline is required for Next's inline runtime + Mux player;
-// Mux is allowlisted for scripts and connections, Supabase + R2 for data/media fetches.
+// Mux is allowlisted for scripts and connections, Supabase (incl. wss for Realtime) + R2 for data/media.
+const isDev = process.env.NODE_ENV !== 'production';
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://*.mux.com",
+  // Dev only: React/Turbopack need 'unsafe-eval' for dev-mode RSC features. Production never uses eval.
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://*.mux.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://*.supabase.co https://*.r2.dev https://*.mux.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.r2.dev https://*.mux.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
