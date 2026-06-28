@@ -56,6 +56,7 @@ const SECTIONS: NavSection[] = [
     headerKey: 'navSettings',
     items: [
       { key: 'navSettings', href: '/coach/settings', icon: 'gear' },
+      { key: 'navKnowledge', href: '/coach/settings/knowledge', icon: 'sparkles' },
       { key: 'appHealth', href: '/coach/health', icon: 'pulse' },
     ],
   },

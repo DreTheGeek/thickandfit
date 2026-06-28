@@ -144,6 +144,13 @@ export function CoachChat({
 
       {/* Messages */}
       <div className="tf-scroll flex-1 space-y-3 px-4 py-5">
+        {/* Informational AI safety disclaimer. The member already accepted the assumption-of-risk /
+            health disclaimer (profiles.health_ack_at, 0038) before reaching any training content, so
+            this is a standing reminder, not a second ack. Bilingual via next-intl. */}
+        <div className="rounded-xl border border-line bg-warm/40 px-3.5 py-2.5 text-[11.5px] leading-snug text-muted">
+          <span className="font-semibold text-ink">{t('disclaimerTitle')}</span> {t('disclaimerBody')}
+        </div>
+
         {notConfigured && (
           <div className="mx-auto max-w-[80%] rounded-2xl bg-surface px-4 py-3 text-center text-[13px] text-muted shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
             {t('notConfigured')}
