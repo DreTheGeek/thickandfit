@@ -30,14 +30,29 @@ messages + coach community view w/ broadcast composer). WP9 COMPLETE (coach nav 
 "soon" dead links removed, verified clean). WP10 medical disclaimer DONE (0038 health_ack_at + /disclaimer gate
 in requireEntitled; bilingual; timestamped acceptance). NOTE: every subscriber now hits /disclaimer once before
 app access; for sam QA, set profiles.health_ack_at via sql.cjs.
-REMAINING: WP3 finish (knowledge builder, plan-gen, AI safety/disclaimer); WP10 finish (auto-renewal disclosure,
-data export, account-page email/pw/notif-prefs); WP8 mid-ticket (coaching_assignments + approval_queue, mig 0039);
-WP11 pg_cron + notif triggers + per-user timezone; WP12 finish (Sentry/PostHog wiring, security headers verify,
-perf/a11y); WP13 Mux video import + bilingual ES exercise names + 256-client invite/history; WP14 ship.
-Next migration number: 0039. The "Snap your meal" modal hosts both photo + text-to-macro.
+WP11 COMPLETE + verified (mig 0039 profiles.timezone + reminder_hour; localDay() helper + IANA-validation
+trigger + tz-aware safety-net triggers on food_log/weight_entries; local-day fix across diary/habits/gamification;
+notification GENERATORS in src/lib/notifications/generators.ts + 3 CRON_SECRET-gated routes /api/internal/notify-*;
+cron.schedule registration DEFERRED to supabase/deploy/cron-register.sql, NOT applied = needs prod URL + CRON_SECRET).
+Verified: DB safety-net wrote local day 2026-06-29 for a Kiritimati user while UTC=06-28; check-in generator selects
+sam. BUG FOUND + FIXED in verification: generator filtered form_responses on created_at (col is submitted_at) =>
+silently re-nudged answered members; fixed + added error guard (commit b7f571f).
+
+ORCHESTRATION (NEW, per user "build it all using gsd and ralph loops with research"): remaining WPs driven by a
+research-then-execute loop. Phase 1 ran 6 gsd-phase-researcher agents -> .planning/research/wpNN-*.md + the synthesized
+.planning/research/EXECUTION-ROADMAP.md (migration numbers 0039-0042 assigned, shared-file conflict map, dependency
+order WP11->WP12->WP3->WP8->WP10->WP13). Phase 2 = per-WP gsd-executor builds (background) + MY in-browser/SQL
+launchproof verification before each is accepted. WP12 executor running now (Sentry/PostHog/headers/global-error,
+NO migration). Migration ladder from roadmap: 0039 WP11(done), 0040 WP3 coach_knowledge, 0041 WP8 mid-ticket,
+0042 WP13 legacy_claim; WP10 needs no migration (notification_preferences already exists 0001).
+REMAINING: WP12 (in progress), WP3 finish (knowledge/plan-gen/safety), WP8 mid-ticket (NEEDS a seeded assistant_coach
+account first), WP10 finish (auto-renewal disclosure, data export, account email/pw/notif-prefs; also fix app.common.cancel
+i18n bug), WP13 Mux import + ES exercise names + 256-client invite/history, WP14 ship.
+Next migration number: 0040. The "Snap your meal" modal hosts both photo + text-to-macro.
 Env not yet connected (plug-in-last, like the plan's completeness principle): live Stripe, OPENROUTER_API_KEY,
-Sentry/PostHog, Twilio, Mux. Test note: `sample.sam` is comped (profiles.comp_access_until) for subscriber QA.
-Last activity: 2026-06-28, WP0-4 + WP3 core built, verified, committed.
+Sentry/PostHog, Twilio, Mux, VAPID push keys, CRON_SECRET (Vercel). Test note: `sample.sam` is comped + now
+health-acked for subscriber QA; sam tz reset to America/New_York after the WP11 Kiritimati test.
+Last activity: 2026-06-28, WP0-9 + WP11 done; research-driven Ralph loop executing WP12 next.
 
 ## PRD-12 result (commit 01e4482)
 - 3 tables: workout_logs (completion_pct/enjoyment/effort), set_logs (per-set reps/weight/difficulty, indexed for overload), workout_completion_history. RLS tenant.
