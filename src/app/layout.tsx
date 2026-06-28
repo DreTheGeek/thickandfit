@@ -10,6 +10,8 @@ import { AndroidInstallButton } from "@/components/pwa/android-install-button";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { Providers } from "@/components/providers";
+import { Suspense } from "react";
+import { PostHogPageview } from "@/lib/monitoring/posthog-pageview";
 
 const gulamsCondensed = localFont({
   src: "../../public/assets/fonts/a0274ead7b73.woff2",
@@ -88,7 +90,12 @@ export default async function RootLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers>{children}</Providers>
+          <Providers>
+            <Suspense fallback={null}>
+              <PostHogPageview />
+            </Suspense>
+            {children}
+          </Providers>
         </NextIntlClientProvider>
         <SwRegister />
         <IOSInstallBanner />
