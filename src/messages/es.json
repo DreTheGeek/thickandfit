@@ -814,6 +814,13 @@
       "photoNoFood": "No pudimos identificar comida en esa foto. Intenta una toma mas clara.",
       "photoError": "Algo salio mal al leer esa foto. Intenta de nuevo."
     },
+    "account": {
+      "dangerZone": "Zona de peligro",
+      "deleteAccount": "Eliminar cuenta",
+      "deleteConfirmBody": "Esto elimina permanentemente tu cuenta y todos tus datos: entrenamientos, registros de nutrición, fotos de progreso y mensajes. No se puede deshacer.",
+      "deleting": "Eliminando...",
+      "deleteConfirmCta": "Sí, eliminar todo"
+    },
     "billing": {
       "title": "Facturación",
       "back": "Atrás",

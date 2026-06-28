@@ -814,6 +814,13 @@
       "photoNoFood": "We could not spot any food in that photo. Try a clearer shot.",
       "photoError": "Something went wrong reading that photo. Please try again."
     },
+    "account": {
+      "dangerZone": "Danger zone",
+      "deleteAccount": "Delete account",
+      "deleteConfirmBody": "This permanently deletes your account and all of your data: workouts, nutrition logs, progress photos, and messages. This cannot be undone.",
+      "deleting": "Deleting...",
+      "deleteConfirmCta": "Yes, delete everything"
+    },
     "billing": {
       "title": "Billing",
       "back": "Back",

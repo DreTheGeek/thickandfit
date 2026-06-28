@@ -9,6 +9,7 @@ import { LanguageToggle } from '@/components/i18n/language-toggle';
 import { Icon } from '@/components/ui/icons';
 import { PageTitle } from '@/components/ui/section';
 import { signOutAction } from '@/lib/auth/actions';
+import { DeleteAccount } from '@/components/account/delete-account';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,13 @@ export default async function AccountPage(): Promise<ReactElement> {
           {t('common.signOut')}
         </button>
       </form>
+
+      <div className="mt-10 border-t border-divider pt-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
+          {t('account.dangerZone')}
+        </p>
+        <DeleteAccount />
+      </div>
     </div>
   );
 }
