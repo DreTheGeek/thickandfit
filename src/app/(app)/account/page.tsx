@@ -1,5 +1,5 @@
-// Account settings (Phase 1: language preferences + sign out). Fuller billing /
-// cancel flows arrive with Stripe (PRD-05).
+// Account settings hub: language, security (change email / password), notification preferences,
+// billing link, data export, sign out, and the delete danger zone.
 import type { ReactElement } from 'react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
@@ -10,18 +10,30 @@ import { Icon } from '@/components/ui/icons';
 import { PageTitle } from '@/components/ui/section';
 import { signOutAction } from '@/lib/auth/actions';
 import { DeleteAccount } from '@/components/account/delete-account';
+import { ChangeEmail } from '@/components/account/change-email';
+import { ChangePassword } from '@/components/account/change-password';
+import { NotificationPrefs } from '@/components/account/notification-prefs';
+import { ExportData } from '@/components/account/export-data';
+import { readMyNotificationPrefs } from '@/lib/account/notification-preferences';
 
 export const dynamic = 'force-dynamic';
+
+function SectionLabel({ children }: { children: string }): ReactElement {
+  return (
+    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[2px] text-faint">{children}</p>
+  );
+}
 
 export default async function AccountPage(): Promise<ReactElement> {
   const ctx = await requireAuth();
   const t = await getTranslations('app');
   const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('ui_locale, content_locale')
-    .eq('id', ctx.userId)
-    .maybeSingle();
+  const [{ data: profile }, { data: userData }, notifPrefs] = await Promise.all([
+    supabase.from('profiles').select('ui_locale, content_locale').eq('id', ctx.userId).maybeSingle(),
+    supabase.auth.getUser(),
+    readMyNotificationPrefs(),
+  ]);
+  const currentEmail = userData.user?.email ?? '';
 
   return (
     <div className="px-[22px] pb-7 pt-3">
@@ -37,15 +49,41 @@ export default async function AccountPage(): Promise<ReactElement> {
         contentLocale={profile?.content_locale ?? 'en'}
       />
 
+      {/* Security: change email + password */}
+      <div className="mt-8 border-t border-divider pt-6">
+        <SectionLabel>{t('account.security')}</SectionLabel>
+        <p className="text-[12px] font-semibold uppercase tracking-[2px] text-muted">
+          {t('account.changeEmail')}
+        </p>
+        <ChangeEmail currentEmail={currentEmail} />
+        <p className="mt-6 text-[12px] font-semibold uppercase tracking-[2px] text-muted">
+          {t('account.changePassword')}
+        </p>
+        <ChangePassword />
+      </div>
+
+      {/* Notification preferences */}
+      <div className="mt-8 border-t border-divider pt-6">
+        <SectionLabel>{t('account.notifications')}</SectionLabel>
+        <NotificationPrefs initial={notifPrefs} />
+      </div>
+
+      {/* Billing */}
       <Link
         href="/account/billing"
-        className="tf-press mt-6 flex items-center justify-between border border-line px-4 py-3.5"
+        className="tf-press mt-8 flex items-center justify-between border border-line px-4 py-3.5"
       >
         <span className="text-[12px] font-semibold uppercase tracking-[2px] text-muted">
           {t('billing.title')}
         </span>
         <Icon name="chevronRight" size={18} className="text-faint" />
       </Link>
+
+      {/* Data export */}
+      <div className="mt-8 border-t border-divider pt-6">
+        <SectionLabel>{t('account.yourData')}</SectionLabel>
+        <ExportData />
+      </div>
 
       <form action={signOutAction} className="mt-8">
         <button
@@ -57,9 +95,7 @@ export default async function AccountPage(): Promise<ReactElement> {
       </form>
 
       <div className="mt-10 border-t border-divider pt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
-          {t('account.dangerZone')}
-        </p>
+        <SectionLabel>{t('account.dangerZone')}</SectionLabel>
         <DeleteAccount />
       </div>
     </div>

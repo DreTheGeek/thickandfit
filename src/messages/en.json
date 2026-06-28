@@ -106,6 +106,8 @@
       "back": "Back",
       "dismiss": "Dismiss",
       "notifications": "Notifications",
+      "cancel": "Cancel",
+      "save": "Save",
       "theme_light": "Light",
       "theme_dark": "Dark",
       "theme_system": "System"
@@ -894,7 +896,45 @@
       "deleteAccount": "Delete account",
       "deleteConfirmBody": "This permanently deletes your account and all of your data: workouts, nutrition logs, progress photos, and messages. This cannot be undone.",
       "deleting": "Deleting...",
-      "deleteConfirmCta": "Yes, delete everything"
+      "deleteConfirmCta": "Yes, delete everything",
+      "security": "Security",
+      "changeEmail": "Change email",
+      "changeEmailCta": "Send confirmation",
+      "currentEmailLabel": "Current email: {email}",
+      "newEmail": "New email address",
+      "emailChangePending": "Almost there. We sent a confirmation link to both your current and your new email address. Your email changes only after you confirm from both inboxes.",
+      "changePassword": "Change password",
+      "changePasswordCta": "Update password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "passwordChanged": "Your password has been updated.",
+      "notifications": "Notifications",
+      "notifLockedNote": "Billing and payment notices, and all emails, are always on. We will never let a failed payment or a legal notice slip past you.",
+      "yourData": "Your data",
+      "exportData": "Download my data",
+      "exportBody": "Get a copy of everything we hold for you: profile, workouts, nutrition logs, check-ins, messages, and billing history, as one JSON file. Progress photos are included as links, not image files.",
+      "exportPending": "Preparing your file...",
+      "exportError": "We could not build your export. Please try again.",
+      "channel": {
+        "push": "Push",
+        "email": "Email"
+      },
+      "category": {
+        "community": "Community",
+        "coach": "Coach messages",
+        "reminders": "Reminders",
+        "billing": "Billing"
+      },
+      "error": {
+        "invalidPassword": "Enter a current password and a new password of at least 8 characters.",
+        "passwordMismatch": "The new passwords do not match.",
+        "passwordUpdateFailed": "Could not update your password. Check your current password and try again.",
+        "invalidEmail": "Enter a valid email address.",
+        "emailUpdateFailed": "Could not start the email change. Please try again.",
+        "rateLimited": "Too many attempts. Please wait a minute and try again.",
+        "generic": "Something went wrong. Please try again."
+      }
     },
     "billing": {
       "title": "Billing",
@@ -916,6 +956,11 @@
       "reasonNone": "Prefer not to say",
       "reasonPlaceholder": "Tell us more (optional)",
       "honestNote": "No hidden fees. No retention traps. Cancel any time in one tap.",
+      "autoRenewDisclosure": "This is an automatically renewing subscription. By subscribing you agree to be charged the plan price shown at checkout, then automatically each billing period, until you cancel. Cancel any time from this billing page in one tap.",
+      "subscriptionTerms": "Subscription terms",
+      "autoRenewSummary": "Your subscription renews automatically each billing period. We charge the same plan price each period until you cancel, and we show your next charge amount and date above before it happens.",
+      "cancelPolicy": "Cancel any time, in one tap, right here. When you cancel, your plan stays active through the end of the period you already paid for, and you are never charged again.",
+      "refundPolicy": "Already-paid periods are non-refundable, since you keep full access through the end of any period you were charged for. If you were billed in error, contact support and we will make it right.",
       "status": {
         "trialing": "Trialing",
         "active": "Active",

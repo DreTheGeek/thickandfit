@@ -106,6 +106,8 @@
       "back": "Atrás",
       "dismiss": "Descartar",
       "notifications": "Notificaciones",
+      "cancel": "Cancelar",
+      "save": "Guardar",
       "theme_light": "Claro",
       "theme_dark": "Oscuro",
       "theme_system": "Sistema"
@@ -894,7 +896,45 @@
       "deleteAccount": "Eliminar cuenta",
       "deleteConfirmBody": "Esto elimina permanentemente tu cuenta y todos tus datos: entrenamientos, registros de nutrición, fotos de progreso y mensajes. No se puede deshacer.",
       "deleting": "Eliminando...",
-      "deleteConfirmCta": "Sí, eliminar todo"
+      "deleteConfirmCta": "Sí, eliminar todo",
+      "security": "Seguridad",
+      "changeEmail": "Cambiar correo",
+      "changeEmailCta": "Enviar confirmación",
+      "currentEmailLabel": "Correo actual: {email}",
+      "newEmail": "Nuevo correo electrónico",
+      "emailChangePending": "Casi listo. Enviamos un enlace de confirmación a tu correo actual y al nuevo. Tu correo cambia solo después de que confirmes desde ambas bandejas de entrada.",
+      "changePassword": "Cambiar contraseña",
+      "changePasswordCta": "Actualizar contraseña",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar nueva contraseña",
+      "passwordChanged": "Tu contraseña se ha actualizado.",
+      "notifications": "Notificaciones",
+      "notifLockedNote": "Los avisos de facturación y de pago, y todos los correos, están siempre activos. Nunca dejaremos que se te escape un pago fallido o un aviso legal.",
+      "yourData": "Tus datos",
+      "exportData": "Descargar mis datos",
+      "exportBody": "Obtén una copia de todo lo que guardamos de ti: perfil, entrenamientos, registros de nutrición, seguimientos, mensajes e historial de facturación, en un solo archivo JSON. Las fotos de progreso se incluyen como enlaces, no como archivos de imagen.",
+      "exportPending": "Preparando tu archivo...",
+      "exportError": "No pudimos crear tu exportación. Inténtalo de nuevo.",
+      "channel": {
+        "push": "Push",
+        "email": "Correo"
+      },
+      "category": {
+        "community": "Comunidad",
+        "coach": "Mensajes del coach",
+        "reminders": "Recordatorios",
+        "billing": "Facturación"
+      },
+      "error": {
+        "invalidPassword": "Ingresa tu contraseña actual y una nueva de al menos 8 caracteres.",
+        "passwordMismatch": "Las nuevas contraseñas no coinciden.",
+        "passwordUpdateFailed": "No pudimos actualizar tu contraseña. Verifica tu contraseña actual e inténtalo de nuevo.",
+        "invalidEmail": "Ingresa un correo electrónico válido.",
+        "emailUpdateFailed": "No pudimos iniciar el cambio de correo. Inténtalo de nuevo.",
+        "rateLimited": "Demasiados intentos. Espera un minuto e inténtalo de nuevo.",
+        "generic": "Algo salió mal. Inténtalo de nuevo."
+      }
     },
     "billing": {
       "title": "Facturación",
@@ -916,6 +956,11 @@
       "reasonNone": "Prefiero no decir",
       "reasonPlaceholder": "Cuéntanos más (opcional)",
       "honestNote": "Sin cargos ocultos. Sin trampas de retención. Cancela cuando quieras con un toque.",
+      "autoRenewDisclosure": "Esta es una suscripción de renovación automática. Al suscribirte aceptas que se te cobre el precio del plan que aparece al pagar, y luego automáticamente cada período de facturación, hasta que canceles. Cancela cuando quieras desde esta página de facturación con un solo toque.",
+      "subscriptionTerms": "Términos de la suscripción",
+      "autoRenewSummary": "Tu suscripción se renueva automáticamente cada período de facturación. Cobramos el mismo precio del plan cada período hasta que canceles, y te mostramos el monto y la fecha de tu próximo cargo arriba antes de que ocurra.",
+      "cancelPolicy": "Cancela cuando quieras, con un solo toque, aquí mismo. Cuando cancelas, tu plan sigue activo hasta el final del período que ya pagaste, y nunca se te vuelve a cobrar.",
+      "refundPolicy": "Los períodos ya pagados no son reembolsables, ya que conservas el acceso completo hasta el final de cualquier período por el que se te cobró. Si se te cobró por error, contacta a soporte y lo corregiremos.",
       "status": {
         "trialing": "En prueba",
         "active": "Activo",

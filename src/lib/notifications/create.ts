@@ -4,7 +4,29 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { sendPush } from '@/lib/notifications/push';
+import { isPushAllowed } from '@/lib/account/notification-preferences';
+import { categoryForNotificationType } from '@/lib/account/notification-preferences-shared';
 import type { NotificationPayload } from '@/lib/notifications/types';
+
+// Fire a web push only if the recipient hasn't muted that category's push channel. The in-app
+// row is always written; only the push is suppressed. Billing/transactional always delivers.
+async function maybePush(
+  profileId: string,
+  payload: NotificationPayload,
+  context: string,
+): Promise<void> {
+  try {
+    const allowed = await isPushAllowed(profileId, categoryForNotificationType(payload.type));
+    if (!allowed) return;
+    await sendPush(profileId, {
+      title: payload.title,
+      body: payload.body,
+      url: payload.link ?? '/notifications',
+    });
+  } catch (e: unknown) {
+    console.error(`${context} push:`, e instanceof Error ? e.message : e);
+  }
+}
 
 /**
  * Deliver a notification to one member.
@@ -30,15 +52,8 @@ export async function createNotification(
     return;
   }
 
-  // Best-effort push. No-op when VAPID keys are absent.
-  void sendPush(profileId, {
-    title: payload.title,
-    body: payload.body,
-    url: payload.link ?? '/notifications',
-  }).then(
-    () => undefined,
-    (e: unknown) => console.error('createNotification push:', e instanceof Error ? e.message : e),
-  );
+  // Best-effort push, gated on the recipient's notification preferences. No-op when VAPID keys absent.
+  void maybePush(profileId, payload, 'createNotification');
 }
 
 /**
@@ -67,14 +82,6 @@ export async function createNotificationsBulk(
   }
 
   for (const r of recipients) {
-    void sendPush(r.profileId, {
-      title: r.payload.title,
-      body: r.payload.body,
-      url: r.payload.link ?? '/notifications',
-    }).then(
-      () => undefined,
-      (e: unknown) =>
-        console.error('createNotificationsBulk push:', e instanceof Error ? e.message : e),
-    );
+    void maybePush(r.profileId, r.payload, 'createNotificationsBulk');
   }
 }
