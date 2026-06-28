@@ -12,14 +12,22 @@ community, mid-ticket, plus launch-readiness: paywall, legal, monitoring, schedu
 
 ## Current Position
 
-Phase: Phase 2 launch build IN PROGRESS on `phase-2`. WP0 (branch stabilization) done 2026-06-27: merged
-`main` into `phase-2` (27 Phase-1 launch fixes carried in), `pnpm build` green, RLS isolation 28/28 passed,
-stale `system-map.ts` statuses corrected (billing/community/photo-macro now live, push partial).
-Plan: executing the 14-WP plan. Next up: WP1 payments (test mode) then WP2 entitlement/paywall.
-Built on phase-2 before this merge: nutrition wedge (diary, cooked/uncooked, barcode, photo-to-macro), Stripe
-billing (test mode), community + challenges, gamification, progress photos, notification infra, recipes.
-AI coach (text) staged on `phase-3`, restored in WP3. Live Stripe account connection is the deliberate last step.
-Last activity: 2026-06-27, WP0 merge + verify (build green, RLS 28/28).
+Phase: Phase 2 launch build IN PROGRESS on `phase-2`, executing the 14-WP plan (~/.claude/plans + LAUNCH-PLAN.md).
+DONE + verified in-browser (committed): WP0 stabilize (merge main, build green, RLS 28/28); WP1 payments (tier
+ladder STRIPE_PRICE_LOW/MID + trial; live Stripe is the last step); WP2 entitlement/paywall (comped-full +
+pay-to-enter, profiles.comp_access_until, requireEntitled on gated pages, verified non-entitled->/checkout +
+comped->access); WP3 AI coach RESTORED (revert of 1402144; chat/insights/RAG; entitlement-gated; graceful
+no-OPENROUTER-key state) + AI endpoints rate-limited; WP4 text-to-macro (reuses photo resolve pipeline; in the
+"Snap your meal" modal).
+Bugs fixed en route: dotted i18n keys (next-intl INVALID_KEY); subscriber app failing to render in dev (CSP
+needed unsafe-eval + wss for realtime); notification-bell realtime channel ordering.
+REMAINING: WP3 finish (knowledge builder, plan-gen, AI safety/disclaimer); WP5 habits; WP6 check-ins; WP7 coach
+console (inbox/billing&renewals/create-challenge/community); WP8 mid-ticket; WP9 nav trim; WP10 legal/account
+(disclaimer, GDPR delete/export); WP11 pg_cron + notif triggers + timezone; WP12 Sentry/PostHog/404/headers;
+WP13 Mux video import + bilingual ES + 256-client invite/history; WP14 ship.
+Env not yet connected (plug-in-last, like the plan's completeness principle): live Stripe, OPENROUTER_API_KEY,
+Sentry/PostHog, Twilio, Mux. Test note: `sample.sam` is comped (profiles.comp_access_until) for subscriber QA.
+Last activity: 2026-06-28, WP0-4 + WP3 core built, verified, committed.
 
 ## PRD-12 result (commit 01e4482)
 - 3 tables: workout_logs (completion_pct/enjoyment/effort), set_logs (per-set reps/weight/difficulty, indexed for overload), workout_completion_history. RLS tenant.
