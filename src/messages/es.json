@@ -900,9 +900,9 @@
       "error": "Algo salio mal. Intentalo de nuevo.",
       "notConfigured": "Tu entrenadora con IA todavia no esta configurada. Vuelve pronto, estara lista en breve.",
       "emptyTitle": "Saluda a tu coach",
-      "emptyBody": "Pregunta sobre tus entrenamientos, nutricion o como alcanzar tu meta. Conoce tu progreso.",
-      "disclaimerTitle": "Entrenadora con IA, no es una profesional medica.",
-      "disclaimerBody": "Ofrece orientacion general de fitness y nutricion, no consejo medico. Para lesiones, embarazo, condiciones medicas o trastornos alimenticios, consulta a un profesional licenciado."
+      "emptyBody": "Pregunta sobre tus entrenamientos, nutrición o cómo alcanzar tu meta. Conoce tu progreso.",
+      "disclaimerTitle": "Entrenadora con IA, no es una profesional médica.",
+      "disclaimerBody": "Ofrece orientación general de fitness y nutrición, no consejo médico. Para lesiones, embarazo, condiciones médicas o trastornos alimenticios, consulta a un profesional licenciado."
     },
     "coachKnowledge": {
       "pageTitle": "Base de Conocimiento IA",
