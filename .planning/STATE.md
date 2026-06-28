@@ -56,14 +56,28 @@ accents (me, f13e4f3). LESSON: a dev server left running while executors edit cl
 factory is not available" false errors); RESTART dev clean (kill PID on :3000 + rm -rf .next + pnpm dev) before each
 verification pass. WP8 executor running now (mid-ticket 0041; bypass-block = the marquee check). Assistant seeded:
 sample.dani@thickandfit.test = assistant_coach (id 71e13451-fabf-4e2d-a346-57a69dd8bd65, company c0ffee00, pw TFSample2026!).
-REMAINING: WP8 (in progress), WP10 finish (auto-renewal disclosure, data export, account email/pw/notif-prefs; also fix
-app.common.cancel i18n bug per roadmap), WP13 Mux + ES exercise names + 256-client invite/history (+ full ES-accent
-audit), WP14 ship.
-Next migration number: 0041 (WP8). The "Snap your meal" modal hosts both photo + text-to-macro.
-Env not yet connected (plug-in-last): live Stripe, OPENROUTER_API_KEY, Sentry DSN + PostHog key, Twilio, Mux, VAPID
-push keys, CRON_SECRET (Vercel). Test note: `sample.sam` comped + health-acked; sam tz America/New_York. Dev server
-currently on :3000 (btc3s8v21).
-Last activity: 2026-06-28, WP11/WP12/WP3 done + verified; Ralph loop executing WP8.
+ALL FEATURE WPs DONE + verified (WP0-13). WP8 (0041 mid-ticket) verified: bypass-block proven at the DB layer
+(approval_queue has SELECT+INSERT policies, NO UPDATE policy; is_approver() = coach/operator only; INSERT WITH CHECK
+forces status=pending + drafted_by=auth.uid()) + draft->approve->publish writes the real messages row (sender=drafter);
+no bugs. WP10 (no migration; 0043 email-sync trigger added) verified: /account hub (Security email/pw, Notifications
+matrix w/ billing+email locked-on, Download-my-data, Danger zone) + /account/billing ARL auto-renew disclosure + cancel/
+refund terms; export allowlist redacts security/audit/push secrets; FIXED a completeness gap (added messages table to
+the export, commit). WP13 (0042 claim_legacy_contact SECURITY DEFINER RPC) verified: claim RPC (claimed->idempotent->
+tenant-safe, executor-proven) + ES search now matches name_es + 35 ES-accent fixes + photo-import mechanics; Mux pipeline
++ webhook + real-invite batch BUILT but launch-gated (need MUX/Resend/OpenRouter keys + Stephanie go-ahead). WP14 ship
+gate: clean `pnpm build` PASS (all WPs compile for prod); RLS isolation 31/31; no service-role key in client code; 9
+migrations 0035-0043 applied.
+6 BUGS CAUGHT + FIXED in verification (typecheck-invisible): WP11 created_at->submitted_at over-notify; WP3 GENERATED
+macro cols + ES accents; WP10 messages missing from export; plus the stale-dev-chunk false-error diagnosis.
+SHIP STEPS REMAINING (gated on the user + external keys, NOT autonomous): connect external accounts (live Stripe +
+prices, OPENROUTER_API_KEY, Sentry DSN + PostHog key, Mux token+webhook secret + 369 demo manifest, Resend verified
+domain, VAPID push, CRON_SECRET in Vercel, Twilio); run the launch-gated jobs (cron-register.sql, the 256-client invite
+batch, AI ES bulk-fill + human review, Mux import); then ship Phase 1 to prod first, merge phase-2->main, vercel deploy
+--prod. Optional pre-ship: /audit (Fort Knox) + full launchproof:run across all 3 roles.
+Next migration number: 0044. The "Snap your meal" modal hosts both photo + text-to-macro.
+Test note: `sample.sam` comped + health-acked; sam tz America/New_York. Seeded sample.dani = assistant_coach for WP8 QA.
+Last activity: 2026-06-28, ALL feature WPs (0-13) done + verified via research-driven Ralph loop; prod build green; ship
+gated on external keys.
 
 ## PRD-12 result (commit 01e4482)
 - 3 tables: workout_logs (completion_pct/enjoyment/effort), set_logs (per-set reps/weight/difficulty, indexed for overload), workout_completion_history. RLS tenant.
