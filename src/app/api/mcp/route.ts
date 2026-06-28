@@ -3,6 +3,7 @@
 // so a key can never cross-tenant read (RLS enforced at the calling-key scope).
 import { validateApiKey, bearerFrom } from '@/lib/api/auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,16 @@ function rpcError(id: RpcId, code: number, message: string): Response {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // Throttle by IP before any auth/DB work. Both the unauthenticated surface (initialize/tools/list)
+  // and the tools/call key check perform DB work, so without a limiter a caller could brute-force API
+  // keys or DoS the endpoint a request at a time. 60/min/IP is ample for legitimate automation.
+  if (!(await checkRateLimit(`mcp:${await clientIp()}`, 'mcp', 60, 60))) {
+    return Response.json(
+      { jsonrpc: '2.0', id: null, error: { code: -32029, message: 'Rate limited' } },
+      { status: 429 },
+    );
+  }
+
   let body: { id?: RpcId; method?: string; params?: Record<string, unknown> } | null = null;
   try {
     body = await req.json();

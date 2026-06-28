@@ -1,11 +1,12 @@
 'use server';
 // Auth server actions (useActionState-compatible). Backed by Supabase Auth via the SSR client.
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { homePathForUser, type Role } from '@/lib/auth/session';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
+import { recordSignupConsent } from '@/lib/legal/consent';
 
 export type AuthState = { error?: string; sent?: boolean };
 
@@ -55,9 +56,20 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, ui_locale, content_locale')
       .eq('id', user.id)
       .maybeSingle();
+    // Apply the user's saved language so the app loads in their preference on any device.
+    if (profile?.ui_locale === 'en' || profile?.ui_locale === 'es') {
+      const store = await cookies();
+      const oneYear = 60 * 60 * 24 * 365;
+      store.set('ui_locale', profile.ui_locale, { path: '/', maxAge: oneYear, sameSite: 'lax' });
+      const content =
+        profile.content_locale === 'en' || profile.content_locale === 'es'
+          ? profile.content_locale
+          : profile.ui_locale;
+      store.set('content_locale', content, { path: '/', maxAge: oneYear, sameSite: 'lax' });
+    }
     dest = await homePathForUser(user.id, (profile?.role as Role) ?? 'subscriber');
   }
   redirect(dest);
@@ -72,7 +84,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60))) return { error: TOO_MANY };
   const { email, password } = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { emailRedirectTo: `${await origin()}/auth/callback` },
@@ -80,6 +92,11 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   if (error) {
     console.error('signUpAction:', error.message);
     return { error: SIGNUP_FAILED };
+  }
+  // Capture timestamped Terms + Privacy consent for the new user (anti-get-sued). Fire-and-forget.
+  if (data.user) {
+    const h = await headers();
+    void recordSignupConsent(data.user.id, await clientIp(), h.get('user-agent'));
   }
   return { sent: true };
 }
@@ -131,7 +148,18 @@ export async function signInWithOAuthAction(provider: 'google' | 'apple'): Promi
     options: { redirectTo: `${await origin()}/auth/callback` },
   });
   if (error) {
-    redirect('/auth/sign-in?error=oauth');
+    // Return to the page that initiated OAuth (sign-in OR sign-up), not a hardcoded sign-in -- a
+    // failed OAuth started from the sign-up page used to bounce the user to sign-in.
+    const h = await headers();
+    const referer = h.get('referer');
+    let dest = '/auth/sign-in';
+    try {
+      const u = referer ? new URL(referer) : null;
+      if (u && u.host === h.get('host') && u.pathname.startsWith('/auth/')) dest = u.pathname;
+    } catch {
+      // keep the sign-in default
+    }
+    redirect(`${dest}?error=oauth`);
   }
   if (data?.url) redirect(data.url);
 }

@@ -35,19 +35,27 @@ Deno.serve(async (req: Request) => {
     const reason = event.type === 'email.bounced' ? 'bounced' : 'complained';
     // Suppression is intentionally global: a hard bounce / complaint for an address
     // applies across all tenants, so the suppression list is keyed by email only.
-    await supabase.from('email_suppression_list').upsert({ email, reason }, { onConflict: 'email' });
+    const { error: suppressErr } = await supabase
+      .from('email_suppression_list')
+      .upsert({ email, reason }, { onConflict: 'email' });
 
     // The send-log update is tenant-scoped. Resend gives us the provider message id,
     // which maps to exactly one log row (one company). Update by that when present so we
     // never flip another tenant's identical to_email. Fall back to the global match only
     // when the message id is absent (legacy/partial payloads).
-    if (providerMessageId) {
-      await supabase
-        .from('email_send_log')
-        .update({ status: reason })
-        .eq('provider_message_id', providerMessageId);
-    } else {
-      await supabase.from('email_send_log').update({ status: reason }).eq('to_email', email);
+    const { error: logErr } = providerMessageId
+      ? await supabase
+          .from('email_send_log')
+          .update({ status: reason })
+          .eq('provider_message_id', providerMessageId)
+      : await supabase.from('email_send_log').update({ status: reason }).eq('to_email', email);
+
+    // Surface storage failures with a non-2xx so Resend retries, instead of silently dropping a
+    // suppression (which would let us keep emailing a complained address -> spam-trap / deliverability
+    // damage). A 0-row update is not an error here; only a real DB failure sets .error.
+    if (suppressErr || logErr) {
+      console.error('resend-webhook write failed', suppressErr?.message, logErr?.message);
+      return apiError('Storage error', 500);
     }
   }
 

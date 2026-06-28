@@ -1,13 +1,19 @@
-// Internal API + MCP docs (Build Profile D: internal use only).
-// Role-gating to coach/operator lands with PRD-04 (auth + RBAC); this is the content surface.
+// Internal API + MCP docs (Build Profile D: internal use only). This page describes the internal
+// REST/MCP surface and its auth scheme, so it is gated to coach/operator: noindex alone stops
+// crawlers, not humans, and an unauthenticated visitor should not see the internal architecture.
 import type { Metadata } from 'next';
+import type { ReactElement } from 'react';
+import { requireCoach } from '@/lib/auth/guards';
 
 export const metadata: Metadata = {
   title: 'Internal API & MCP, Thick & Fit',
   robots: { index: false, follow: false },
 };
 
-export default function ApiDocsPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function ApiDocsPage(): Promise<ReactElement> {
+  await requireCoach();
   return (
     <main className="mx-auto max-w-2xl px-6 py-12 text-black">
       <h1 className="text-3xl font-bold uppercase tracking-tight">Internal API and MCP</h1>

@@ -42,6 +42,22 @@ export default function Home() {
     <>
       {/* Webflow CSS loads ONLY on the landing page so it never restyles the app/auth UI. */}
       <link rel="stylesheet" href="/assets/css/webflow.css" />
+      {/* Header nav fix. The lifted Webflow markup (a) left .navbar_button-wrap as display:block so the
+          LOG IN + START YOUR JOURNEY buttons stacked vertically, and (b) let the logo SVG (width:auto)
+          collapse so it overran the LOG IN button on phones. Lay the buttons in a row, give the logo a
+          stable contained size, and scale the buttons down on small screens so nothing overlaps. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html:
+            '.navbar_logo-container{flex:0 0 auto !important}' +
+            '.navbar_logo-link svg{height:18px !important;width:auto !important;display:block}' +
+            '.navbar_button-wrap{display:flex !important;align-items:center;justify-content:flex-end;gap:8px !important;width:auto !important}' +
+            '.navbar_button-wrap>*{flex:0 0 auto !important;white-space:nowrap !important}' +
+            '@media(max-width:520px){.navbar_button-wrap>a:first-child{font-size:10px !important;padding:7px 11px !important}.navbar_button-wrap .button_custom,.navbar_button-wrap .button_custom *{font-size:9px !important;letter-spacing:0.04em !important}}' +
+            '@media(max-width:375px){.navbar_button-wrap{gap:6px !important}.navbar_button-wrap .button_custom,.navbar_button-wrap .button_custom *{font-size:8px !important}}' +
+            '@media(max-width:344px){.navbar_button-wrap .button_custom,.navbar_button-wrap .button_custom *{font-size:7px !important}}',
+        }}
+      />
       {parts ? (
         <>
           <div dangerouslySetInnerHTML={{ __html: parts.before }} />

@@ -24,5 +24,25 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     status: result.ok ? 'success' : 'error',
     detail: result,
   });
-  return NextResponse.json(result, { status: result.ok ? 200 : 500 });
+
+  // Maintenance, folded into this daily cron to stay under the Hobby 2-cron cap: prune rate_limit_log
+  // rows older than an hour (limiter windows are <= 60s, so anything older is dead weight).
+  void sb
+    .from('rate_limit_log')
+    .delete()
+    .lt('hit_at', new Date(Date.now() - 3_600_000).toISOString());
+
+  // The full result (including any raw upstream error string) is persisted to cron_job_log.detail
+  // above; don't echo the raw error back in the HTTP response.
+  const body = result.ok
+    ? result
+    : {
+        ok: false as const,
+        pipelines: result.pipelines,
+        stages: result.stages,
+        opportunities: result.opportunities,
+        linked: result.linked,
+        unmatched: result.unmatched,
+      };
+  return NextResponse.json(body, { status: result.ok ? 200 : 500 });
 }

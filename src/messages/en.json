@@ -52,7 +52,9 @@
     "confirmPassword": "Confirm password",
     "updatePasswordCta": "Update password",
     "oauthError": "We could not sign you in with that provider. Try again or use email.",
-    "authError": "Something went wrong signing you in. Please try again."
+    "authError": "Something went wrong signing you in. Please try again.",
+    "or": "or",
+    "agreeNotice": "By creating an account, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>."
   },
   "app": {
     "nav": {
@@ -143,18 +145,29 @@
     },
     "onboarding": {
       "stepOf": "Step {step} of {total}",
+      "languageQuestion": "What language do you speak?",
       "goalTitle": "What's your goal?",
       "goalLose": "Lose fat",
       "goalGain": "Build muscle",
       "goalMaintain": "Maintain & tone",
       "aboutTitle": "About you",
+      "firstName": "First name",
+      "firstNamePlaceholder": "Your first name",
+      "lastName": "Last name",
+      "lastNamePlaceholder": "Your last name",
       "sex": "Sex",
       "female": "Female",
       "male": "Male",
       "age": "Age",
+      "units": "Units",
+      "imperial": "Imperial",
+      "metric": "Metric",
       "heightCm": "Height (cm)",
+      "heightFtIn": "Height (ft, in)",
       "weightLbs": "Weight (lb)",
+      "weightKg": "Weight (kg)",
       "goalWeightLbs": "Goal weight (lb)",
+      "goalWeightKg": "Goal weight (kg)",
       "activity": "Activity",
       "actSedentary": "Sedentary",
       "actLight": "Lightly active",
@@ -178,6 +191,7 @@
       "seePlan": "See my plan",
       "saveError": "We could not save your plan. Please check your connection and try again.",
       "toCheckout": "Continue to checkout",
+      "toDashboard": "Go to my dashboard",
       "projected": "Projected {from} → {to} lb over 12 weeks"
     },
     "exercise": {

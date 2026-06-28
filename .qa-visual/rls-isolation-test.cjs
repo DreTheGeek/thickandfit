@@ -60,6 +60,31 @@ async function rest(table, select, token) {
     else console.log(`  ok    ${table}: 0 rows (blocked)`);
   }
 
+  // Write isolation: a subscriber must NOT be able to write privileged tables via PostgREST. The
+  // companies row is the tenant root (40+ tables cascade-delete from it), so a writable companies
+  // row = one-request full-tenant wipe. We probe with a NO-OP update (name := current name) and
+  // expect 0 rows back; any echoed row means write is reachable (regression of 0029).
+  checks++;
+  const co = await rest('companies', 'id,name', sam.token);
+  if (!co.rows.length) {
+    console.log('  ok    companies write: company not visible to subscriber');
+  } else {
+    const { id, name } = co.rows[0];
+    const w = await fetch(`${URL}/rest/v1/companies?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { apikey: ANON, Authorization: `Bearer ${sam.token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ name }),
+    });
+    let echoed = [];
+    try { echoed = await w.json(); } catch { echoed = []; }
+    if (w.ok && Array.isArray(echoed) && echoed.length > 0) {
+      console.log(`  LEAK  companies write: subscriber UPDATEd the tenant root (status ${w.status}) -> cascade-wipe vector`);
+      fails++;
+    } else {
+      console.log(`  ok    companies write: blocked (status ${w.status}, 0 rows)`);
+    }
+  }
+
   console.log(`\n${checks - fails}/${checks} isolation checks passed.`);
   if (fails > 0) { console.error(`FAIL: ${fails} RLS isolation leak(s).`); process.exit(1); }
   console.log('PASS: tenant/user isolation holds.');

@@ -52,7 +52,9 @@
     "confirmPassword": "Confirma la contraseña",
     "updatePasswordCta": "Actualizar contraseña",
     "oauthError": "No pudimos iniciar tu sesión con ese proveedor. Inténtalo de nuevo o usa el correo.",
-    "authError": "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo."
+    "authError": "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo.",
+    "or": "o",
+    "agreeNotice": "Al crear una cuenta, aceptas nuestros <terms>Términos de Servicio</terms> y <privacy>Política de Privacidad</privacy>."
   },
   "app": {
     "nav": {
@@ -143,18 +145,29 @@
     },
     "onboarding": {
       "stepOf": "Paso {step} de {total}",
+      "languageQuestion": "¿Qué idioma hablas?",
       "goalTitle": "¿Cuál es tu meta?",
       "goalLose": "Bajar grasa",
       "goalGain": "Ganar músculo",
       "goalMaintain": "Mantener y tonificar",
       "aboutTitle": "Sobre ti",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Tu nombre",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Tu apellido",
       "sex": "Sexo",
       "female": "Mujer",
       "male": "Hombre",
       "age": "Edad",
+      "units": "Unidades",
+      "imperial": "Imperial",
+      "metric": "Métrico",
       "heightCm": "Estatura (cm)",
+      "heightFtIn": "Estatura (ft, in)",
       "weightLbs": "Peso (lb)",
+      "weightKg": "Peso (kg)",
       "goalWeightLbs": "Peso meta (lb)",
+      "goalWeightKg": "Peso meta (kg)",
       "activity": "Actividad",
       "actSedentary": "Sedentaria",
       "actLight": "Poco activa",
@@ -178,6 +191,7 @@
       "seePlan": "Ver mi plan",
       "saveError": "No pudimos guardar tu plan. Revisa tu conexión e inténtalo de nuevo.",
       "toCheckout": "Ir al pago",
+      "toDashboard": "Ir a mi panel",
       "projected": "Proyección {from} → {to} lb en 12 semanas"
     },
     "exercise": {

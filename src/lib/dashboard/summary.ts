@@ -32,11 +32,24 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
       }
     : null;
 
+  // Surface the most-recently assigned program so the dashboard reflects it (the /workouts tab
+  // already reads the assignment; the home row was previously stubbed to null).
+  const { data: assignment } = await supabase
+    .from('plan_assignments')
+    .select('plan:plan_id (name_en)')
+    .eq('company_id', companyId)
+    .eq('profile_id', userId)
+    .order('assigned_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const plan = assignment?.plan as { name_en: string } | { name_en: string }[] | null | undefined;
+  const planName = Array.isArray(plan) ? plan[0]?.name_en : plan?.name_en;
+
   return {
     hasOnboarded: Boolean(onb),
     macros,
     streak: 0, // workout logging lands in PRD-12
-    todaysWorkout: null, // program builder / player land in PRD-10/11
+    todaysWorkout: planName ? { name: planName } : null,
     recentActivity: [], // community feed lands in Phase 2
   };
 }

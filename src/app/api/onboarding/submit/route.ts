@@ -1,10 +1,22 @@
 // Onboarding submit: compute the prediction + targets, store one row per profile.
+import { z } from 'zod';
+import { cookies } from 'next/headers';
 import { resolveAuth } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { onboardingInputSchema, computePlan } from '@/lib/onboarding/prediction';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
+
+const ONE_YEAR = 60 * 60 * 24 * 365;
+
+// The prediction stats plus the required first + last name and preferred language captured in the
+// wizard. First and last name are mandatory (the business requires the client's full legal name).
+const submitSchema = onboardingInputSchema.extend({
+  firstName: z.string().trim().min(1).max(60),
+  lastName: z.string().trim().min(1).max(60),
+  language: z.enum(['en', 'es']).optional(),
+});
 
 export async function POST(req: Request) {
   const ctx = await resolveAuth(req);
@@ -17,7 +29,7 @@ export async function POST(req: Request) {
   } catch {
     return apiError('Invalid JSON');
   }
-  const parsed = onboardingInputSchema.safeParse(body);
+  const parsed = submitSchema.safeParse(body);
   if (!parsed.success) return apiError('Invalid input', 422);
 
   const plan = computePlan(parsed.data);
@@ -33,6 +45,23 @@ export async function POST(req: Request) {
     },
     { onConflict: 'profile_id' },
   );
+
+  // Persist the captured full name (first + last) + preferred language to the profile.
+  const profileUpdate: Record<string, string> = {
+    full_name: `${parsed.data.firstName} ${parsed.data.lastName}`,
+  };
+  if (parsed.data.language) {
+    profileUpdate.ui_locale = parsed.data.language;
+    profileUpdate.content_locale = parsed.data.language;
+  }
+  await supabase.from('profiles').update(profileUpdate).eq('id', ctx.userId);
+
+  // Apply the chosen language immediately via cookies so the dashboard loads in it.
+  if (parsed.data.language) {
+    const store = await cookies();
+    store.set('ui_locale', parsed.data.language, { path: '/', maxAge: ONE_YEAR, sameSite: 'lax' });
+    store.set('content_locale', parsed.data.language, { path: '/', maxAge: ONE_YEAR, sameSite: 'lax' });
+  }
 
   return apiSuccess({ plan });
 }
