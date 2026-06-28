@@ -1,0 +1,50 @@
+'use server';
+
+// Legacy-claim server action (WP13). Runs once after a legacy client sets their password from the
+// invite link and lands on /claim. It:
+//   1. Calls the claim_legacy_contact() SECURITY DEFINER RPC (0042), which reconciles auth.uid() with
+//      the unclaimed legacy contact by email within the tenant (no-op for a genuinely new signup).
+//   2. If a contact was claimed, kicks off that client's progress-photo import (their Lenus media).
+// Both steps are idempotent: re-running claims nothing new and imports no duplicates.
+import { requireAuth } from '@/lib/auth/guards';
+import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { importLegacyPhotos } from '@/lib/legacy/photo-import';
+
+export type ClaimResult =
+  | { status: 'claimed'; photosImported: number }
+  | { status: 'not_legacy' } // signed in fine, but no legacy contact to claim (new user)
+  | { status: 'error' };
+
+export async function claimLegacyAction(): Promise<ClaimResult> {
+  const ctx = await requireAuth();
+
+  // The claim runs through the SSR (RLS-bound) client so the RPC sees auth.uid(); the function is
+  // SECURITY DEFINER and self-scopes to the caller, so this is safe.
+  const sb = await createClient();
+  const { data, error } = await sb.rpc('claim_legacy_contact');
+  if (error) {
+    console.error('claimLegacyAction rpc:', error.message);
+    return { status: 'error' };
+  }
+
+  const result = (data ?? {}) as { claimed?: boolean; lenus_id?: string | null };
+  if (!result.claimed) return { status: 'not_legacy' };
+
+  // Claimed: import this client's Lenus progress photos into their private gallery. The import uses
+  // the service client (it reads the admin-only lenus schema and writes the private bucket).
+  let photosImported = 0;
+  if (ctx.companyId) {
+    const svc = createServiceClient();
+    const { data: profile } = await svc
+      .from('profiles')
+      .select('lenus_profile_id')
+      .eq('id', ctx.userId)
+      .maybeSingle();
+    const lenusId = (profile?.lenus_profile_id as string | null) ?? result.lenus_id ?? null;
+    const imp = await importLegacyPhotos(ctx.userId, ctx.companyId, lenusId);
+    photosImported = imp.imported;
+  }
+
+  return { status: 'claimed', photosImported };
+}
