@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import Link from 'next/link';
 import { requireCoach } from '@/lib/auth/guards';
 import { getThreads, getThread } from '@/lib/messages/messages';
+import { markThreadReadAction } from '@/lib/messages/message-actions';
 import { MessageThread } from '@/components/messages/message-thread';
 
 export const dynamic = 'force-dynamic';
@@ -13,8 +14,11 @@ export default async function CoachInboxPage({
   searchParams: Promise<{ c?: string }>;
 }): Promise<ReactElement> {
   const ctx = await requireCoach();
-  const threads = ctx.companyId ? await getThreads(ctx.companyId) : [];
   const sp = await searchParams;
+  // Opening a client's thread clears its unread badge (mark their messages read before we read the
+  // thread list, so the count reflects the now-read state on this same render).
+  if (sp.c) await markThreadReadAction(sp.c);
+  const threads = ctx.companyId ? await getThreads(ctx.companyId) : [];
   const selected = sp.c ?? threads[0]?.clientId ?? null;
   const messages = selected ? await getThread(selected) : [];
 
