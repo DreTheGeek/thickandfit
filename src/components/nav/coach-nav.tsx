@@ -29,7 +29,7 @@ const SECTIONS: NavSection[] = [
       { key: 'navLeads', href: '/coach/leads', icon: 'funnel' },
       { key: 'navBroadcasts', href: '/coach/broadcasts', icon: 'bolt', soon: true },
       { key: 'navInbox', href: '/coach/inbox', icon: 'chat' },
-      { key: 'navCommunity', href: '/coach/community', icon: 'community', soon: true },
+      { key: 'navCommunity', href: '/coach/community', icon: 'community' },
       { key: 'navChallenges', href: '/coach/challenges', icon: 'community' },
     ],
   },
