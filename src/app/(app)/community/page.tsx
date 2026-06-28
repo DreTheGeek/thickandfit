@@ -3,7 +3,7 @@
 // leaderboard. Company-scoped via RLS; coaches can post broadcasts.
 import type { ReactElement } from 'react';
 import { getTranslations } from 'next-intl/server';
-import { requireAuth } from '@/lib/auth/guards';
+import { requireEntitled } from '@/lib/auth/guards';
 import { COACH_ROLES } from '@/lib/auth/session';
 import { getCommunity } from '@/lib/community/feed';
 import { PageHeader } from '@/components/ui/page-header';
@@ -12,7 +12,7 @@ import { CommunityFeed } from '@/components/community/community-feed';
 export const dynamic = 'force-dynamic';
 
 export default async function CommunityPage(): Promise<ReactElement> {
-  const ctx = await requireAuth();
+  const ctx = await requireEntitled();
   const t = await getTranslations('app.community');
   const data = await getCommunity(ctx.userId);
   const canBroadcast = COACH_ROLES.includes(ctx.role);

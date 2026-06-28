@@ -2,7 +2,7 @@
 // the Today screen handles the four states client-side.
 import type { ReactElement } from 'react';
 import { getLocale } from 'next-intl/server';
-import { requireAuth } from '@/lib/auth/guards';
+import { requireEntitled } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
 import { TodayScreen, type WeekDay } from '@/components/dashboard/today-screen';
@@ -10,7 +10,7 @@ import { TodayScreen, type WeekDay } from '@/components/dashboard/today-screen';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage(): Promise<ReactElement> {
-  const ctx = await requireAuth();
+  const ctx = await requireEntitled();
   const locale = await getLocale();
 
   const supabase = await createClient();

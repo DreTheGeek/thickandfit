@@ -2,7 +2,7 @@
 // + logged history, then the client screen switches Program / Library / History.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { requireAuth } from '@/lib/auth/guards';
+import { requireEntitled } from '@/lib/auth/guards';
 import { getAssignedPlans, getProgram } from '@/lib/programs/engine';
 import { fetchHistory } from '@/lib/workout/logging';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -26,7 +26,7 @@ export default async function WorkoutsPage({
 }: {
   searchParams: Promise<{ day?: string }>;
 }): Promise<ReactElement> {
-  const ctx = await requireAuth();
+  const ctx = await requireEntitled();
   const { day: dayParam } = await searchParams;
   const locale = await getLocale();
   const tEx = await getTranslations('app.exercise');

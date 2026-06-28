@@ -2,7 +2,7 @@
 // in-app. The push opt-in card only renders when web push is configured server-side.
 import type { ReactElement } from 'react';
 import { getTranslations } from 'next-intl/server';
-import { requireAuth } from '@/lib/auth/guards';
+import { requireEntitled } from '@/lib/auth/guards';
 import { getNotifications } from '@/lib/notifications/queries';
 import { isPushConfigured } from '@/lib/notifications/push';
 import { PageHeader } from '@/components/ui/page-header';
@@ -11,7 +11,7 @@ import { NotificationList } from '@/components/notifications/notification-list';
 export const dynamic = 'force-dynamic';
 
 export default async function NotificationsPage(): Promise<ReactElement> {
-  const ctx = await requireAuth();
+  const ctx = await requireEntitled();
   const t = await getTranslations('app.notifications');
   const items = await getNotifications(ctx.userId);
   const pushConfigured = isPushConfigured();

@@ -1,7 +1,7 @@
 // Workout player page. Requires auth; the plan must be assigned to this client.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { requireAuth } from '@/lib/auth/guards';
+import { requireEntitled } from '@/lib/auth/guards';
 import { getProgram } from '@/lib/programs/engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { WorkoutPlayer, type PlayerExercise } from '@/components/workout/workout-player';
@@ -25,7 +25,7 @@ export default async function WorkoutPage({
   params: Promise<{ planId: string }>;
   searchParams: Promise<{ day?: string }>;
 }): Promise<ReactElement> {
-  const ctx = await requireAuth();
+  const ctx = await requireEntitled();
   const { planId } = await params;
   const { day: dayParam } = await searchParams;
   const locale = await getLocale();

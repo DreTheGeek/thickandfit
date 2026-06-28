@@ -1,7 +1,7 @@
 // Subscriber "You" profile hub. Profile + stats + goal (from onboarding) + menu.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { requireAuth } from '@/lib/auth/guards';
+import { requireEntitled } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { YouScreen, type GoalSummary } from '@/components/profile/you-screen';
 import { recomputeGamification } from '@/lib/gamification/engine';
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 const KG_TO_LB = 2.20462;
 
 export default async function YouPage(): Promise<ReactElement> {
-  const ctx = await requireAuth();
+  const ctx = await requireEntitled();
   const locale = await getLocale();
   const t = await getTranslations('app.you');
   const supabase = await createClient();
