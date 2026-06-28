@@ -35,8 +35,8 @@ export async function notifyBroadcast(params: {
     const locale = asNotifLocale(m.ui_locale);
     const payload: NotificationPayload = {
       type: 'community_broadcast',
-      title: notifText(locale, 'broadcast.title'),
-      body: notifText(locale, 'broadcast.body', { name: params.authorName }),
+      title: notifText(locale, 'broadcastTitle'),
+      body: notifText(locale, 'broadcastBody', { name: params.authorName }),
       link: '/community',
     };
     return { profileId: m.id, payload };

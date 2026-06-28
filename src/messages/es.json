@@ -905,10 +905,10 @@
         "disable": "Desactivar"
       },
       "copy": {
-        "broadcast.title": "Nuevo anuncio",
-        "broadcast.body": "{name} publico un anuncio en la comunidad.",
-        "plateau.title": "Vamos a avanzar",
-        "plateau.body": "Tu peso se ha mantenido igual por {days} dias. Es normal y lo podemos ajustar. Toca para hablarlo con tu coach."
+        "broadcastTitle": "Nuevo anuncio",
+        "broadcastBody": "{name} publico un anuncio en la comunidad.",
+        "plateauTitle": "Vamos a avanzar",
+        "plateauBody": "Tu peso se ha mantenido igual por {days} dias. Es normal y lo podemos ajustar. Toca para hablarlo con tu coach."
       }
     },
     "forms": {

@@ -905,10 +905,10 @@
         "disable": "Turn off"
       },
       "copy": {
-        "broadcast.title": "New broadcast",
-        "broadcast.body": "{name} posted a broadcast to the community.",
-        "plateau.title": "Let's break through",
-        "plateau.body": "Your weight has held steady for {days} days. That is normal, and we can adjust. Tap to talk it through with your coach."
+        "broadcastTitle": "New broadcast",
+        "broadcastBody": "{name} posted a broadcast to the community.",
+        "plateauTitle": "Let's break through",
+        "plateauBody": "Your weight has held steady for {days} days. That is normal, and we can adjust. Tap to talk it through with your coach."
       }
     },
     "forms": {
