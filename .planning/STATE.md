@@ -25,8 +25,9 @@ ALSO DONE since (committed, verified): WP5 habits (0036 habits + habit_logs, das
 WP6 check-ins (/checkin lists assigned check_in forms -> /forms/[id]); WP7 parts Billing & Renewals view
 (/coach/billing, real CRM data) + Create-challenge (/coach/challenges -> community leaderboard); WP10 part 1
 GDPR account deletion (/account danger zone, cascade-delete); WP12 part 1 bilingual 404 page. Test data seeded
-for sam: 2 habits + 1 check-in form. WP7 REMAINING: coach inbox (Realtime messaging, from scratch) + coach
-community moderation view. Coach nav now has Billing + Challenges links (others still soon, trimmed in WP9).
+for sam: 2 habits + 1 check-in form. WP7 inbox DONE (0037 messages, Realtime, /coach/inbox + /inbox, verified client msg + coach reply persist).
+WP7 REMAINING: coach community moderation view only. Coach nav now has Billing + Challenges + Inbox (un-soon);
+others still soon (trimmed in WP9). Next migration: 0038.
 REMAINING: WP3 finish (knowledge builder, plan-gen, AI safety/disclaimer); WP10 finish (medical disclaimer at
 onboarding, auto-renewal disclosure, data export, account-page email/pw/notif-prefs); WP6 check-ins (wire form
 builder; /checkin + dashboard "START CHECK-IN" are stubs); WP7 coach console (inbox Realtime / billing&renewals
