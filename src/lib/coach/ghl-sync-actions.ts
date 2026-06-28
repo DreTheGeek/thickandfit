@@ -12,7 +12,23 @@ export async function runGhlSync(): Promise<SyncResult> {
   if (!ctx.companyId) {
     return { ok: false, pipelines: 0, stages: 0, opportunities: 0, linked: 0, unmatched: 0, error: 'no_company' };
   }
-  const result = await syncGhlPipelines(ctx.companyId);
+  // The GHL fetch helper throws on a non-OK response / rate limit. Never let that reach the client
+  // as an unhandled error (it would blow up the Leads page on a transient GHL hiccup); degrade to a
+  // handled failure so the button shows "sync failed" and the run is logged as an error.
+  let result: SyncResult;
+  try {
+    result = await syncGhlPipelines(ctx.companyId);
+  } catch (e) {
+    result = {
+      ok: false,
+      pipelines: 0,
+      stages: 0,
+      opportunities: 0,
+      linked: 0,
+      unmatched: 0,
+      error: e instanceof Error ? e.message : 'sync_failed',
+    };
+  }
   const sb = createServiceClient();
   logCoachAction(sb, {
     companyId: ctx.companyId,
