@@ -125,6 +125,10 @@ export async function exportMyDataAction(): Promise<ExportState> {
     .eq('profile_id', ctx.userId);
   out.progress_photos = photos ?? [];
 
+  // Direct messages in the member's own coach thread (keyed by client_id, not profile_id).
+  const { data: messages } = await svc.from('messages').select('*').eq('client_id', ctx.userId);
+  out.messages = messages ?? [];
+
   // The profile row itself (id === auth.uid()).
   const { data: profile } = await svc
     .from('profiles')
