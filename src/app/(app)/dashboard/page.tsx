@@ -5,7 +5,8 @@ import { getLocale } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
-import { getTodayHabits, todayIso } from '@/lib/habits/habits';
+import { getTodayHabits, localToday } from '@/lib/habits/habits';
+import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 import { TodayScreen, type WeekDay } from '@/components/dashboard/today-screen';
 
 export const dynamic = 'force-dynamic';
@@ -22,9 +23,10 @@ export default async function DashboardPage(): Promise<ReactElement> {
     .maybeSingle();
   const firstName = (profile?.full_name ?? '').trim().split(/\s+/)[0] ?? '';
 
+  const tz = await getProfileTimezone(ctx.userId);
   let summary: DashboardSummary | null = null;
   if (ctx.companyId) summary = await getDashboardSummary(ctx.companyId, ctx.userId);
-  const habits = ctx.companyId ? await getTodayHabits(ctx.userId, todayIso()) : [];
+  const habits = ctx.companyId ? await getTodayHabits(ctx.userId, localToday(tz)) : [];
 
   const now = new Date();
   const dateLabel = new Intl.DateTimeFormat(locale, {

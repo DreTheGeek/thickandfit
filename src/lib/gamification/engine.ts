@@ -15,6 +15,7 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createNotification } from '@/lib/notifications/create';
+import { localDay, resolveTimezone } from '@/lib/datetime/local-day';
 import type {
   Badge,
   BadgeKind,
@@ -61,11 +62,6 @@ function toBadge(b: DbBadge): Badge {
     kind: (b.kind as BadgeKind) ?? 'misc',
     sortOrder: b.sort_order,
   };
-}
-
-// A local YYYY-MM-DD for "today" in UTC, matching how log_date / recorded_on are stored.
-function utcToday(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function dateKey(value: string): string {
@@ -157,7 +153,16 @@ export async function recomputeGamification(
   companyId: string,
 ): Promise<RecomputeResult> {
   const svc = createServiceClient();
-  const today = utcToday();
+  // Anchor "today" to the member's LOCAL calendar day so streaks match the diary day they see.
+  // log_date / recorded_on are now written as the user's local day too (WP11), so the streak math
+  // and the activity rows agree.
+  const { data: tzRow } = await svc
+    .from('profiles')
+    .select('timezone')
+    .eq('id', profileId)
+    .maybeSingle();
+  const tz = resolveTimezone((tzRow as { timezone: string | null } | null)?.timezone);
+  const today = localDay(tz);
   const since = isoMinusDays(today, LOOKBACK_DAYS);
 
   // --- Gather activity (three sources) in parallel ---

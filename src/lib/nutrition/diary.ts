@@ -3,6 +3,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { localDay } from '@/lib/datetime/local-day';
 import { type DiaryDay, type DiaryEntry, type MacroTotals, type MealSlot, sumMacros } from '@/lib/nutrition/macros';
 
 const DEFAULT_TARGET: MacroTotals = { kcal: 2000, proteinG: 150, carbG: 200, fatG: 67 };
@@ -19,8 +20,12 @@ type LogRaw = {
   source: string;
 };
 
-export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+/**
+ * The user's LOCAL calendar day (YYYY-MM-DD) for their timezone. Replaces the old UTC todayIso():
+ * a US/LATAM evening logger must see the right diary day, not tomorrow's empty one.
+ */
+export function localToday(timeZone: string | null | undefined): string {
+  return localDay(timeZone);
 }
 
 export async function getDiary(userId: string, companyId: string | null, date: string): Promise<DiaryDay> {

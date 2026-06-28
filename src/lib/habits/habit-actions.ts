@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { requireAuth, requireCoach } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
-import { todayIso } from '@/lib/habits/habits';
+import { localToday } from '@/lib/habits/habits';
+import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 
 export type HabitResult = { ok: boolean; error?: string };
 
@@ -26,12 +27,14 @@ export async function toggleHabitAction(habitId: unknown, done: boolean): Promis
     .maybeSingle();
   if (!habit) return { ok: false, error: 'not_found' };
 
+  // Toggle TODAY in the user's local timezone (not UTC), matching how the dashboard reads the day.
+  const tz = await getProfileTimezone(ctx.userId);
   const { error } = await sb.from('habit_logs').upsert(
     {
       company_id: ctx.companyId,
       habit_id: parsed.data,
       profile_id: ctx.userId,
-      logged_date: todayIso(),
+      logged_date: localToday(tz),
       done,
     },
     { onConflict: 'habit_id,logged_date' },

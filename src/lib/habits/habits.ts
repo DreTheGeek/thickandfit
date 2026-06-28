@@ -2,6 +2,7 @@
 // dashboard "things to do" row. Owner/coach RLS scopes the rows; reads run on the server client.
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
+import { localDay } from '@/lib/datetime/local-day';
 
 export type TodayHabit = {
   id: string;
@@ -11,9 +12,12 @@ export type TodayHabit = {
   done: boolean;
 };
 
-// Local calendar day. Timezone-correctness (per-user tz) is handled globally in WP11.
-export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+/**
+ * The user's LOCAL calendar day (YYYY-MM-DD). WP11 made this timezone-aware: habit completion is a
+ * per-day toggle, so an evening logger must check off TODAY, not roll into tomorrow at UTC midnight.
+ */
+export function localToday(timeZone: string | null | undefined): string {
+  return localDay(timeZone);
 }
 
 /** The caller's active habits for `date`, each flagged with whether it is already done that day. */

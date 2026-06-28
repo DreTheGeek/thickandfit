@@ -9,6 +9,8 @@ import { macrosForGrams, foodStateFromName, type FoodLite } from '@/lib/nutritio
 import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
 import { analyzeMealText } from '@/lib/nutrition/text-parse';
 import { checkRateLimit } from '@/lib/security/rate-limit';
+import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
+import { localDay } from '@/lib/datetime/local-day';
 import type { PhotoResult } from '@/lib/nutrition/photo';
 
 export async function searchFoodsAction(query: string): Promise<FoodLite[]> {
@@ -83,6 +85,8 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
     parsed.data.grams,
   );
 
+  // Write the user's LOCAL day explicitly so an evening logger does not land on tomorrow (UTC).
+  const tz = await getProfileTimezone(ctx.userId);
   const { error } = await sb.from('food_log').insert({
     company_id: ctx.companyId,
     profile_id: ctx.userId,
@@ -90,6 +94,7 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
     food_id: parsed.data.foodId,
     portion_id: parsed.data.portionId ?? null,
     meal_slot: parsed.data.mealSlot,
+    log_date: localDay(tz),
     grams: parsed.data.grams,
     amount: parsed.data.grams,
     source: parsed.data.source ?? 'search',
@@ -160,12 +165,14 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
     effGrams,
   );
 
+  const tz = await getProfileTimezone(ctx.userId);
   const { error } = await sb.from('food_log').insert({
     company_id: ctx.companyId,
     profile_id: ctx.userId,
     name: parsed.data.name,
     food_id: parsed.data.foodId,
     meal_slot: parsed.data.mealSlot,
+    log_date: localDay(tz),
     grams: effGrams,
     amount: effGrams,
     source: 'photo',
