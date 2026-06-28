@@ -814,6 +814,12 @@
       "photoNoFood": "No pudimos identificar comida en esa foto. Intenta una toma mas clara.",
       "photoError": "Algo salio mal al leer esa foto. Intenta de nuevo."
     },
+    "checkin": {
+      "title": "Check-in",
+      "subtitle": "Tu coach usa esto para seguir tu progreso.",
+      "empty": "Aún no tienes check-ins asignados. Tu coach agregará uno pronto.",
+      "done": "Hecho hoy"
+    },
     "account": {
       "dangerZone": "Zona de peligro",
       "deleteAccount": "Eliminar cuenta",

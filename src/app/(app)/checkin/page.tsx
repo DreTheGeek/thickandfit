@@ -1,10 +1,55 @@
+// Subscriber check-ins: lists the published check-in forms a coach assigned to this client. Tapping
+// one opens the existing /forms/[id] renderer to fill + submit. Entitlement-gated.
 import type { ReactElement } from 'react';
-import { getLocale } from 'next-intl/server';
-import { ComingSoon } from '@/components/app/coming-soon';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { requireEntitled } from '@/lib/auth/guards';
+import { getAssignedCheckins } from '@/lib/checkins/checkins';
+import { Icon } from '@/components/ui/icons';
+import { IconTile, ListRow } from '@/components/ui/list-row';
+import { Tag } from '@/components/ui/badge';
+import { PageTitle } from '@/components/ui/section';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CheckinPage(): Promise<ReactElement> {
+  const ctx = await requireEntitled();
+  const t = await getTranslations('app.checkin');
   const locale = await getLocale();
-  return <ComingSoon title={locale === 'es' ? 'Check-In' : 'Check-In'} />;
+  const checkins = ctx.companyId ? await getAssignedCheckins(ctx.companyId, ctx.userId) : [];
+
+  return (
+    <div className="px-[22px] pb-7 pt-3">
+      <PageTitle className="mb-1">{t('title')}</PageTitle>
+      <p className="mb-5 text-[13px] text-faint">{t('subtitle')}</p>
+
+      {checkins.length === 0 ? (
+        <div className="flex min-h-[40vh] items-center justify-center rounded-2xl border border-dashed border-line px-8 text-center">
+          <p className="text-[14px] text-faint">{t('empty')}</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-line">
+          {checkins.map((c, i) => (
+            <ListRow
+              key={c.formId}
+              href={`/forms/${c.formId}`}
+              divider={i < checkins.length - 1}
+              leading={
+                <IconTile>
+                  <Icon name="file" size={18} />
+                </IconTile>
+              }
+              title={(locale === 'es' && c.titleEs) || c.titleEn}
+              trailing={
+                c.doneRecently ? (
+                  <Tag>{t('done')}</Tag>
+                ) : (
+                  <Icon name="chevronRight" size={18} className="text-faint" />
+                )
+              }
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

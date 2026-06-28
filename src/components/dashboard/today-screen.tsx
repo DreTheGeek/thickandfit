@@ -247,9 +247,6 @@ export function TodayScreen({
             <ButtonLink href="/checkin" variant="light" size="sm">
               {t('today.checkinCta')}
             </ButtonLink>
-            <span className="inline-flex items-center border border-white/25 px-3 py-1 text-[11px] font-semibold uppercase leading-none tracking-[1px] text-white/70">
-              {t('common.soon')}
-            </span>
           </div>
         </div>
         <div
