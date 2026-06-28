@@ -21,7 +21,7 @@ const OWNER = [
 const FORBIDDEN = [
   'contacts', 'client_subscriptions', 'contact_transactions', 'opportunities', 'pipelines',
   'waitlist_leads', 'api_keys', 'security_events', 'audit_log', 'saved_segments', 'plans',
-  'sessions', 'forms', 'ai_evals', 'email_send_log', 'legacy_client_snapshot',
+  'sessions', 'forms', 'ai_evals', 'email_send_log', 'legacy_client_snapshot', 'coach_knowledge',
 ];
 
 async function signIn(email) {
