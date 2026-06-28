@@ -11,6 +11,8 @@ import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { buildCoachContext, renderContextBlock, type CoachLocale } from '@/lib/coach-ai/context';
 import { embedText, retrieveMemories, renderMemoryBlock } from '@/lib/coach-ai/embeddings';
+import { retrieveKnowledge, renderKnowledgeBlock } from '@/lib/coach-ai/knowledge';
+import { SAFETY_CLAUSE_EN } from '@/lib/coach-ai/safety';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -52,6 +54,10 @@ const PERSONA_EN = [
   '- You are not a doctor. For medical, injury, pregnancy, or eating-disorder concerns, recommend they',
   '  consult a licensed professional, and never give medical diagnoses or prescriptions.',
   '- Stay on fitness, nutrition, training, recovery, and motivation. Politely redirect off-topic asks.',
+  '',
+  // Centralized safety boundaries (shared with plan-gen via safety.ts) so the medical-claim line is
+  // identical everywhere the coach speaks. Static, so it stays inside the cached persona part.
+  SAFETY_CLAUSE_EN,
 ].join('\n');
 
 const PERSONA_ES = [
@@ -67,6 +73,10 @@ const PERSONA_ES = [
   '- No eres medica. Para temas medicos, lesiones, embarazo o trastornos alimenticios, recomienda',
   '  consultar a un profesional licenciado; nunca des diagnosticos ni recetas medicas.',
   '- Mantente en fitness, nutricion, entrenamiento, recuperacion y motivacion. Redirige lo fuera de tema.',
+  '',
+  // Same centralized safety boundaries as the EN persona (English instruction is fine; the model still
+  // replies to the member in Spanish). Static, so it stays inside the cached persona part.
+  SAFETY_CLAUSE_EN,
 ].join('\n');
 
 function persona(locale: CoachLocale): string {
@@ -82,6 +92,7 @@ type ApiMessage =
 // (marked for prompt caching) and a dynamic context part (the live member data).
 function buildMessages(
   contextBlock: string,
+  knowledgeBlock: string,
   memoryBlock: string,
   locale: CoachLocale,
   history: { role: ChatRole; content: string }[],
@@ -90,11 +101,13 @@ function buildMessages(
   const es = locale === 'es';
   const contextHeader = es ? 'Contexto de la miembro (datos en vivo):' : 'Member context (live data):';
 
-  // Dynamic per-member text part: the live context, plus (when RAG found anything) the most
-  // relevant past records for this question. memoryBlock is '' when unkeyed or no hits.
-  const dynamicText = memoryBlock
-    ? `${contextHeader}\n${contextBlock}\n\n${memoryBlock}`
-    : `${contextHeader}\n${contextBlock}`;
+  // Dynamic per-member text part: the live context, then (when retrieval found anything) Stephanie's
+  // documented method for this question, then the member's own most relevant past records. Both
+  // blocks are '' when unkeyed or no hits, so this stays a clean single text part. Kept OUT of the
+  // cached persona deliberately: knowledge varies per question, so caching it would defeat the cache.
+  const dynamicText = [`${contextHeader}\n${contextBlock}`, knowledgeBlock || null, memoryBlock || null]
+    .filter(Boolean)
+    .join('\n\n');
 
   const system: ApiMessage = {
     role: 'system',
@@ -184,8 +197,21 @@ export async function streamChat(
   const memories = queryVec ? await retrieveMemories(profileId, queryVec, 5) : [];
   const memoryBlock = renderMemoryBlock(memories, locale);
 
+  // RAG (Layer 4): recall the company's documented coaching knowledge (Stephanie's voice / method)
+  // most relevant to this question, distinct from the member's own memories. Company-scoped via
+  // match_coach_knowledge. Key-gated inside knowledge.ts: returns [] when unkeyed, so chat still works.
+  const knowledge = await retrieveKnowledge(companyId, request.message, 5);
+  const knowledgeBlock = renderKnowledgeBlock(knowledge, locale);
+
   const contextBlock = renderContextBlock(ctx);
-  const messages = buildMessages(contextBlock, memoryBlock, locale, ctx.recentMessages, request.message);
+  const messages = buildMessages(
+    contextBlock,
+    knowledgeBlock,
+    memoryBlock,
+    locale,
+    ctx.recentMessages,
+    request.message,
+  );
 
   let upstream: Response;
   try {
