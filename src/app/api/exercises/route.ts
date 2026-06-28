@@ -28,7 +28,9 @@ export async function GET(req: Request) {
   if (q) {
     // Escape LIKE metacharacters so user input can't act as a wildcard / injection.
     const safeQ = q.replace(/[%_\\]/g, (c) => `\\${c}`);
-    query = query.ilike('name_en', `%${safeQ}%`);
+    // Match either language so Spanish-speaking members find exercises by their ES name
+    // (name_es is filled by WP13's es-fill; until then it is NULL and only name_en matches).
+    query = query.or(`name_en.ilike.%${safeQ}%,name_es.ilike.%${safeQ}%`);
   }
   if (muscle) query = query.eq('muscle_group', muscle);
   if (equipment) query = query.eq('equipment', equipment);
