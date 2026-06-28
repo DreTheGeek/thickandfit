@@ -170,12 +170,16 @@ export async function generateCheckinReminders(): Promise<GeneratorResult> {
   const since = new Date(Date.now() - CHECKIN_QUIET_DAYS * 86_400_000).toISOString();
   const formIds = [...new Set(rows.map((r) => r.form_id))];
   const profileIds = [...new Set(rows.map((r) => r.profile_id))];
-  const { data: resp } = await svc
+  const { data: resp, error: respError } = await svc
     .from('form_responses')
     .select('form_id, profile_id')
     .in('form_id', formIds)
     .in('profile_id', profileIds)
-    .gte('created_at', since);
+    .gte('submitted_at', since);
+  // Fail loud rather than silently treating everyone as un-answered (which would re-nudge people
+  // who just checked in). A null/errored response set must not become an empty "answered" set.
+  if (respError)
+    return { ok: false, job: 'checkins', selected: rows.length, notified: 0, error: respError.message };
   const answered = new Set(
     ((resp ?? []) as { form_id: string; profile_id: string }[]).map(
       (r) => `${r.form_id}:${r.profile_id}`,
