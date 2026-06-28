@@ -847,6 +847,7 @@
       "ofTargetKcal": "of {target} kcal",
       "kcalLeft": "{n} kcal left",
       "defaultTargetNote": "Using a default target until your coach sets one.",
+      "onboardingTargetNote": "Based on your onboarding goals. Your coach can fine-tune them.",
       "noEntriesYet": "Nothing logged yet today. Search a food to start.",
       "raw": "Raw",
       "cooked": "Cooked",

@@ -50,10 +50,13 @@ export async function getDiary(userId: string, companyId: string | null, date: s
   }));
   const totals = sumMacros(entries);
 
+  // Target priority: a coach-assigned meal plan, else the member's own onboarding-computed target,
+  // else a generic default. Onboarding computes a personalized goal, so a member who finished setup
+  // should see THEIR numbers, not a one-size-fits-all 2000.
   let target: MacroTotals = DEFAULT_TARGET;
   let targetSource: DiaryDay['targetSource'] = 'default';
+  const svc = createServiceClient();
   if (companyId) {
-    const svc = createServiceClient();
     const { data: contact } = await svc.from('contacts').select('id').eq('profile_id', userId).eq('company_id', companyId).maybeSingle();
     if (contact) {
       const { data: mp } = await svc
@@ -68,6 +71,24 @@ export async function getDiary(userId: string, companyId: string | null, date: s
         target = { kcal: plan.calorie_goal, proteinG: plan.protein_g ?? 0, carbG: plan.carb_g ?? 0, fatG: plan.fat_g ?? 0 };
         targetSource = 'meal_plan';
       }
+    }
+  }
+  if (targetSource === 'default') {
+    const { data: ob } = await svc
+      .from('onboarding_responses')
+      .select('computed_targets')
+      .eq('profile_id', userId)
+      .maybeSingle();
+    const ct = (ob as { computed_targets: { calories?: number; macros?: { protein_g?: number; carbs_g?: number; fat_g?: number } } | null } | null)
+      ?.computed_targets;
+    if (ct?.calories) {
+      target = {
+        kcal: ct.calories,
+        proteinG: ct.macros?.protein_g ?? 0,
+        carbG: ct.macros?.carbs_g ?? 0,
+        fatG: ct.macros?.fat_g ?? 0,
+      };
+      targetSource = 'onboarding';
     }
   }
 

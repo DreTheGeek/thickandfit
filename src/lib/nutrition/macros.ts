@@ -37,7 +37,7 @@ export type DiaryDay = {
   entries: DiaryEntry[];
   totals: MacroTotals;
   target: MacroTotals | null;
-  targetSource: 'meal_plan' | 'default' | null;
+  targetSource: 'meal_plan' | 'onboarding' | 'default' | null;
 };
 
 export const ZERO: MacroTotals = { kcal: 0, proteinG: 0, carbG: 0, fatG: 0 };

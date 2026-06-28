@@ -144,6 +144,9 @@ export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
           )}
         </div>
         {diary.targetSource === 'default' && <p className="mt-3 text-[11px] text-faint">{t('defaultTargetNote')}</p>}
+        {diary.targetSource === 'onboarding' && (
+          <p className="mt-3 text-[11px] text-faint">{t('onboardingTargetNote')}</p>
+        )}
       </div>
 
       {/* Photo-to-macro: the wedge. Snap a meal, confirm, log. */}

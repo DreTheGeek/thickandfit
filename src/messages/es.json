@@ -847,6 +847,7 @@
       "ofTargetKcal": "de {target} kcal",
       "kcalLeft": "{n} kcal restantes",
       "defaultTargetNote": "Usando un objetivo predeterminado hasta que tu coach lo configure.",
+      "onboardingTargetNote": "Basado en tus objetivos de configuración. Tu coach puede ajustarlos.",
       "noEntriesYet": "Aún no has registrado nada hoy. Busca un alimento para empezar.",
       "raw": "Crudo",
       "cooked": "Cocido",
