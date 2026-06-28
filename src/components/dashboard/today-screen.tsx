@@ -19,6 +19,8 @@ import { CompletionCheck } from '@/components/ui/completion';
 import { SectionTitle } from '@/components/ui/section';
 import { Tag } from '@/components/ui/badge';
 import type { DashboardSummary } from '@/lib/dashboard/summary';
+import { toggleHabitAction } from '@/lib/habits/habit-actions';
+import type { TodayHabit } from '@/lib/habits/habits';
 
 export type WeekDay = { key: string; label: string; day: number; isToday: boolean };
 
@@ -27,15 +29,25 @@ export function TodayScreen({
   dateLabel: dateLabelInit,
   weekDays: weekDaysInit,
   initial,
+  habits: habitsInit,
 }: {
   name: string;
   dateLabel: string;
   weekDays: WeekDay[];
   initial: DashboardSummary | null;
+  habits: TodayHabit[];
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
   const [summary, setSummary] = useState<DashboardSummary | null>(initial);
+  const [habits, setHabits] = useState<TodayHabit[]>(habitsInit);
+
+  // Optimistic habit check-off; revert on server failure.
+  async function toggleHabit(id: string, done: boolean): Promise<void> {
+    setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, done } : h)));
+    const res = await toggleHabitAction(id, done);
+    if (!res.ok) setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, done: !done } : h)));
+  }
   // A null summary is a companyless / not-yet-provisioned session, not a fetch error.
   // Start idle and surface a dedicated "account setup pending" state below.
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -284,27 +296,28 @@ export function TodayScreen({
         sub={workoutSub}
         trailing={<CompletionCheck done={summary.streak > 0} />}
       />
-      <ListRow
-        href="/nutrition"
-        leading={
-          <IconTile>
-            <Icon name="nutrition" size={18} />
-          </IconTile>
-        }
-        title={t('today.logBreakfast')}
-        trailing={<Tag outlined={false}>{t('common.soon')}</Tag>}
-      />
-      <ListRow
-        href="/nutrition"
-        divider={false}
-        leading={
-          <IconTile>
-            <Icon name="water" size={18} />
-          </IconTile>
-        }
-        title={t('today.drinkWater')}
-        trailing={<Tag outlined={false}>{t('common.soon')}</Tag>}
-      />
+      {habits.map((h, i) => (
+        <ListRow
+          key={h.id}
+          divider={i < habits.length - 1}
+          leading={
+            <IconTile>
+              <Icon name="check" size={18} />
+            </IconTile>
+          }
+          title={h.title}
+          trailing={
+            <button
+              type="button"
+              onClick={() => void toggleHabit(h.id, !h.done)}
+              className="tf-press"
+              aria-label={h.title}
+            >
+              <CompletionCheck done={h.done} />
+            </button>
+          }
+        />
+      ))}
     </div>
   );
 }
