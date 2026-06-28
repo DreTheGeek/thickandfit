@@ -44,7 +44,7 @@ export const COVERAGE: CoverageItem[] = [
   { area: 'Nutrition', name: 'Recipe library + filters', status: 'live', route: '/coach/tool/recipes', connects: ['recipes', 'recipe_ingredients', 'recipe_books'], action: 'Browse / filter / open a recipe', reaction: 'Image grid with macros; detail shows macro ring, ingredients, method' },
   { area: 'Nutrition', name: 'Recipe books', status: 'live', route: '/coach/tool/recipe-books', connects: ['recipe_books', 'recipes'], action: 'Open a book', reaction: 'Filters the recipe browser to that book' },
   { area: 'Nutrition', name: 'Meal plans', status: 'live', route: '/coach/tool/meal-plans', connects: ['meal_plans', 'contacts'], action: 'Search / open a plan', reaction: 'Per-client plan with calorie goal, macro split, meal groups' },
-  { area: 'Nutrition', name: 'Photo-to-macro AI logging', status: 'planned', route: null, connects: ['OpenRouter/Gemini', 'food log tables'], action: 'Snap a food photo', reaction: 'Planned: AI returns macros + cooked/uncooked conversion (the #1 differentiator)' },
+  { area: 'Nutrition', name: 'Photo-to-macro AI logging', status: 'live', route: '/nutrition', connects: ['OpenRouter/Gemini', 'foods', 'food_log'], action: 'Snap a food photo', reaction: 'AI returns foods + portions + macros + cooked/uncooked with confidence (the #1 differentiator)' },
 
   // Training
   { area: 'Training', name: 'Program builder', status: 'live', route: '/coach/programs', connects: ['programs', '/api/programs', 'exercises'], action: 'Build / save / assign a program', reaction: 'Day cards, exercise picker, sets/reps; save as template or assign' },
@@ -56,13 +56,13 @@ export const COVERAGE: CoverageItem[] = [
 
   // Comms
   { area: 'Comms', name: 'Inbox / direct messages', status: 'planned', route: '/coach/inbox', connects: ['messages table', 'Realtime'], action: 'Message a client', reaction: 'Planned (placeholder today)' },
-  { area: 'Comms', name: 'Community feed', status: 'planned', route: '/coach/community', connects: ['posts/comments tables', 'Realtime'], action: 'Post / react / comment', reaction: 'Planned (placeholder today)' },
+  { area: 'Comms', name: 'Community feed', status: 'live', route: '/community', connects: ['community_posts', 'post_reactions', 'post_comments'], action: 'Post / react / comment', reaction: 'Subscriber feed + challenge leaderboard live; coach moderation view + create-challenge in WP7' },
   { area: 'Comms', name: 'Broadcasts composer', status: 'partial', route: '/coach/broadcasts', connects: ['Resend/Twilio'], action: 'Compose a broadcast', reaction: 'Composer UI exists; send backend not wired' },
   { area: 'Comms', name: 'Email (Resend transactional)', status: 'partial', route: null, connects: ['Resend', 'Supabase Auth SMTP'], action: 'Auth / waitlist event', reaction: 'Branded templates via Supabase SMTP; broader transactional sends pending' },
-  { area: 'Comms', name: 'Push / SMS notifications', status: 'planned', route: null, connects: ['Twilio', 'Web Push', 'notification_preferences'], action: 'Trigger a notification', reaction: 'Planned' },
+  { area: 'Comms', name: 'Push / SMS notifications', status: 'partial', route: '/notifications', connects: ['notifications', 'push_subscriptions', 'Web Push'], action: 'Trigger a notification', reaction: 'In-app + web-push delivery built; scheduled triggers (reminders/expiry) + Twilio SMS in WP11/WP13' },
 
   // Billing
-  { area: 'Billing', name: 'Stripe checkout + subscriptions', status: 'planned', route: null, connects: ['Stripe Connect', 'webhook', 'client_subscriptions'], action: 'Subscribe / pay', reaction: 'Planned: Stripe Connect Standard + 3DS + webhook reconciliation' },
+  { area: 'Billing', name: 'Stripe checkout + subscriptions', status: 'live', route: '/checkout', connects: ['subscriptions', 'payments', 'webhook_events'], action: 'Subscribe / pay', reaction: 'Checkout + 3DS + webhook reconciliation built (test mode); live account connection is the last step' },
 
   // Forms / check-ins
   { area: 'Check-ins', name: 'Forms', status: 'partial', route: '/coach/forms', connects: ['forms tables'], action: 'Open / build a form', reaction: 'Basic forms surface; full builder + responses pending' },

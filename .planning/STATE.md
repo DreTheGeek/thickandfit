@@ -6,14 +6,20 @@ See: .planning/PROJECT.md (updated 2026-06-18)
 
 **Core value:** Accurate low-friction bilingual nutrition tracking must work; convert Stephanie's
 trust into a retained subscriber base.
-**Current focus:** Milestone v1.0 — Phase 1 (MVP, PRD-00-12)
+**Current focus:** Phase 2 launch build on the `phase-2` branch (nutrition wedge, billing, AI coach,
+community, mid-ticket, plus launch-readiness: paywall, legal, monitoring, scheduling). See
+`.planning/LAUNCH-PLAN.md` and the 14-WP launch-ready build plan.
 
 ## Current Position
 
-Phase: Phase 13 (Workout Logging, PRD-12) complete. ALL 13 BUILDABLE PHASES DONE + verified. AT THE GATE: phases 14-16 await human plan-review.
-Plan: GATE. Phases 14 (PRD-05 Stripe), 15 (PRD-06 pricing/firewall), 16 (PRD-00 migration) planned, awaiting human approval before code.
-Status: PRD-01,47,02,03,04,04b,04c,07,08,09,10,11,12 built and verified. 13 of 16 phases done. 36 tables. ~40 commits.
-Last activity: 2026-06-18, PRD-12: workout_logs/set_logs/completion_history, full loop proven (log->coach history->overload recommends 'increase_reps' from real data), client-vs-other 403.
+Phase: Phase 2 launch build IN PROGRESS on `phase-2`. WP0 (branch stabilization) done 2026-06-27: merged
+`main` into `phase-2` (27 Phase-1 launch fixes carried in), `pnpm build` green, RLS isolation 28/28 passed,
+stale `system-map.ts` statuses corrected (billing/community/photo-macro now live, push partial).
+Plan: executing the 14-WP plan. Next up: WP1 payments (test mode) then WP2 entitlement/paywall.
+Built on phase-2 before this merge: nutrition wedge (diary, cooked/uncooked, barcode, photo-to-macro), Stripe
+billing (test mode), community + challenges, gamification, progress photos, notification infra, recipes.
+AI coach (text) staged on `phase-3`, restored in WP3. Live Stripe account connection is the deliberate last step.
+Last activity: 2026-06-27, WP0 merge + verify (build green, RLS 28/28).
 
 ## PRD-12 result (commit 01e4482)
 - 3 tables: workout_logs (completion_pct/enjoyment/effort), set_logs (per-set reps/weight/difficulty, indexed for overload), workout_completion_history. RLS tenant.
