@@ -1074,7 +1074,11 @@
         "checkinDueTitle": "Time for your check-in",
         "checkinDueBody": "Your coach is waiting on \"{title}\". Tap to fill it out.",
         "reminderTitle": "Log today before you wrap up",
-        "reminderBody": "A quick log keeps your streak alive and your coach in the loop. Tap to open today."
+        "reminderBody": "A quick log keeps your streak alive and your coach in the loop. Tap to open today.",
+        "challengeEndedTitle": "A challenge just wrapped up",
+        "challengeEndedBody": "\"{title}\" has ended. {winner} took the crown. Tap to see the final leaderboard.",
+        "challengeWonTitle": "You won the challenge!",
+        "challengeWonBody": "You finished #1 in \"{title}\". Champion badge unlocked."
       }
     },
     "forms": {

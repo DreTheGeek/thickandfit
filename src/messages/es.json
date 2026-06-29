@@ -1074,7 +1074,11 @@
         "checkinDueTitle": "Es hora de tu check-in",
         "checkinDueBody": "Tu coach está esperando \"{title}\". Toca para completarlo.",
         "reminderTitle": "Registra tu día antes de terminar",
-        "reminderBody": "Un registro rápido mantiene viva tu racha y a tu coach al tanto. Toca para abrir tu día de hoy."
+        "reminderBody": "Un registro rápido mantiene viva tu racha y a tu coach al tanto. Toca para abrir tu día de hoy.",
+        "challengeEndedTitle": "Un reto acaba de terminar",
+        "challengeEndedBody": "\"{title}\" terminó. {winner} se llevó la corona. Toca para ver la tabla final.",
+        "challengeWonTitle": "¡Ganaste el reto!",
+        "challengeWonBody": "Terminaste #1 en \"{title}\". Insignia de campeón desbloqueada."
       }
     },
     "forms": {

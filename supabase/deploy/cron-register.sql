@@ -163,6 +163,38 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-close-challenges-daily (finalize challenges past their ends_on: award the leader the Challenge
+-- Champion badge + notify every participant, exactly once via challenges.finalized_at). Without it an
+-- ended challenge silently stops being active with no winner, no badge, no notification.
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-close-challenges-daily' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-close-challenges-daily',
+    '0 9 * * *',  -- 09:00 UTC daily
+    $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/close-challenges',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer __CRON_SECRET__',
+          'Content-Type', 'application/json'
+        ),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 60000
+      );
+    $cron$
+  );
+  raise notice 'scheduled tf-close-challenges-daily at 0 9 * * *';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-close-challenges-daily.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- Verify after apply:
 --   select jobname, schedule, active from cron.job where jobname like 'tf-%' order by jobname;
 -- Then confirm a run lands a cron_job_log row (the endpoint writes it):

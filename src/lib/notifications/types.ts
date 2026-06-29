@@ -11,7 +11,9 @@ export type NotificationType =
   | 'coach_message'
   | 'renewal'
   | 'comp_expiring'
-  | 'reminder';
+  | 'reminder'
+  | 'challenge_won'
+  | 'challenge_ended';
 
 export type AppNotification = {
   id: string;

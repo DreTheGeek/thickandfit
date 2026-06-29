@@ -263,3 +263,92 @@ export async function generateLocalTimeReminders(at: Date = new Date()): Promise
   }
   return { ok: true, job: 'reminders', selected: dueNow.length, notified };
 }
+
+// ---------------------------------------------------------------------------
+// Challenge close: finalize challenges past their ends_on (migration 0046 adds finalized_at). Awards
+// the Challenge Champion badge to the top participant by progress, notifies every participant (the
+// winner and the rest), and stamps finalized_at so each challenge is processed exactly once. Idempotent
+// via finalized_at + the user_badges (profile_id, badge_id) unique constraint.
+// ---------------------------------------------------------------------------
+type EndedChallenge = { id: string; company_id: string; title: string };
+type ChallengeParticipant = {
+  profile_id: string;
+  progress: number | string;
+  profiles: { ui_locale: string | null; full_name: string | null } | null;
+};
+
+export async function finalizeEndedChallenges(): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data, error } = await svc
+    .from('challenges')
+    .select('id, company_id, title')
+    .lt('ends_on', today)
+    .is('finalized_at', null);
+  if (error) {
+    return { ok: false, job: 'close-challenges', selected: 0, notified: 0, error: error.message };
+  }
+  const challenges = (data ?? []) as EndedChallenge[];
+  if (challenges.length === 0) return { ok: true, job: 'close-challenges', selected: 0, notified: 0 };
+
+  // The badge the winner earns (seeded in 0046). Absent only if the migration has not run.
+  const { data: badgeRow } = await svc
+    .from('badges')
+    .select('id')
+    .eq('key', 'challenge_champion')
+    .maybeSingle();
+  const badgeId = (badgeRow as { id: string } | null)?.id ?? null;
+
+  let notified = 0;
+  for (const ch of challenges) {
+    const { data: partData } = await svc
+      .from('challenge_participants')
+      .select('profile_id, progress, profiles!inner ( ui_locale, full_name )')
+      .eq('challenge_id', ch.id)
+      .order('progress', { ascending: false });
+    const participants = (partData ?? []) as unknown as ChallengeParticipant[];
+
+    // Winner = highest progress, but only if someone actually made progress.
+    const winner = participants.find((p) => Number(p.progress) > 0) ?? null;
+    const winnerName = winner?.profiles?.full_name ?? null;
+
+    // Award the champion badge (idempotent via the user_badges unique on profile_id+badge_id).
+    if (winner && badgeId) {
+      await svc.from('user_badges').upsert(
+        { company_id: ch.company_id, profile_id: winner.profile_id, badge_id: badgeId },
+        { onConflict: 'profile_id,badge_id', ignoreDuplicates: true },
+      );
+    }
+
+    // Notify every participant: the winner gets the win copy, everyone else the ended copy.
+    const recipients = participants.map((p) => {
+      const locale = asNotifLocale(p.profiles?.ui_locale);
+      const isWinner = Boolean(winner) && winner!.profile_id === p.profile_id;
+      const winnerLabel = winnerName ?? (locale === 'es' ? 'la comunidad' : 'the crew');
+      const payload: NotificationPayload = isWinner
+        ? {
+            type: 'challenge_won',
+            title: notifText(locale, 'challengeWonTitle'),
+            body: notifText(locale, 'challengeWonBody', { title: ch.title }),
+            link: '/community',
+          }
+        : {
+            type: 'challenge_ended',
+            title: notifText(locale, 'challengeEndedTitle'),
+            body: notifText(locale, 'challengeEndedBody', { title: ch.title, winner: winnerLabel }),
+            link: '/community',
+          };
+      return { profileId: p.profile_id, payload };
+    });
+    if (recipients.length > 0) {
+      await createNotificationsBulk(ch.company_id, recipients);
+      notified += recipients.length;
+    }
+
+    // Stamp finalized so the next nightly pass skips this challenge (idempotent close).
+    await svc.from('challenges').update({ finalized_at: new Date().toISOString() }).eq('id', ch.id);
+  }
+
+  return { ok: true, job: 'close-challenges', selected: challenges.length, notified };
+}
