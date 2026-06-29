@@ -18,8 +18,8 @@ const DISCLAIMER: Record<AiLocale, AiDisclaimerCopy> = {
     body: 'This coach gives general fitness and nutrition guidance based on your data. It is not medical advice. For injuries, pregnancy, medical conditions, or eating-disorder concerns, talk to a licensed professional.',
   },
   es: {
-    title: 'Entrenadora con IA, no es una profesional medica',
-    body: 'Esta entrenadora ofrece orientacion general de fitness y nutricion basada en tus datos. No es consejo medico. Para lesiones, embarazo, condiciones medicas o trastornos alimenticios, consulta a un profesional licenciado.',
+    title: 'Entrenadora con IA, no es una profesional médica',
+    body: 'Esta entrenadora ofrece orientación general de fitness y nutrición basada en tus datos. No es consejo médico. Para lesiones, embarazo, condiciones médicas o trastornos alimenticios, consulta a un profesional licenciado.',
   },
 };
 
@@ -45,6 +45,6 @@ export const SAFETY_CLAUSE_EN = [
 // carry a "consult a professional" note. Bilingual.
 export function planCaveat(locale: AiLocale): string {
   return locale === 'es'
-    ? 'Este plan es una guia general, no consejo medico. Si tienes una condicion medica, embarazo o lesion, consulta a un profesional licenciado antes de seguirlo.'
+    ? 'Este plan es una guía general, no consejo médico. Si tienes una condición médica, embarazo o lesión, consulta a un profesional licenciado antes de seguirlo.'
     : 'This plan is general guidance, not medical advice. If you have a medical condition, are pregnant, or are injured, consult a licensed professional before following it.';
 }

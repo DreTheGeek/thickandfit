@@ -196,7 +196,7 @@ export function renderKnowledgeBlock(hits: KnowledgeHit[], locale: 'en' | 'es'):
   if (!hits.length) return '';
   const header =
     locale === 'es'
-      ? "Metodo y voz de la coach Stephanie (tu fuente de verdad; usa este enfoque, no inventes):"
+      ? "Método y voz de la coach Stephanie (tu fuente de verdad; usa este enfoque, no inventes):"
       : "Coach Stephanie's documented method and voice (your source of truth; use this approach, do not invent):";
   const lines = hits.map((h) => {
     const snippet = h.content.length > 400 ? `${h.content.slice(0, 397)}...` : h.content;
