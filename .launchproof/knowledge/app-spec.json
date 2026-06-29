@@ -1,0 +1,87 @@
+[
+  {
+    "surface": "/nutrition",
+    "purpose": "log + track daily food against a macro target (the nutrition wedge)",
+    "expects": ["list", "create", "upload:photo", "search"]
+  },
+  {
+    "surface": "/progress",
+    "purpose": "track weight trend + progress photos over time",
+    "expects": ["list", "create", "upload:photo"]
+  },
+  {
+    "surface": "/community",
+    "purpose": "member feed: posts, reactions, comments, coach broadcasts, challenge leaderboard",
+    "expects": ["list", "create", "comment", "react"]
+  },
+  {
+    "surface": "/coach-chat",
+    "purpose": "AI coach chat in Stephanie's voice, grounded in her knowledge + the member's logs",
+    "expects": ["list", "create"]
+  },
+  {
+    "surface": "/inbox",
+    "purpose": "member's direct message thread with their human coach",
+    "expects": ["list", "create"]
+  },
+  {
+    "surface": "/checkin",
+    "purpose": "submit assigned check-in forms to the coach",
+    "expects": ["list", "create"]
+  },
+  {
+    "surface": "/account",
+    "purpose": "account self-service: change email/password, notification prefs, export data, delete account",
+    "expects": ["edit", "export", "delete"]
+  },
+  {
+    "surface": "/coach/clients",
+    "purpose": "the 256-client CRM with status/billing/plan/tag facets",
+    "expects": ["list", "search"]
+  },
+  {
+    "surface": "/coach/leads",
+    "purpose": "GoHighLevel leads pipeline with a manual Sync now",
+    "expects": ["list", "create"]
+  },
+  {
+    "surface": "/coach/inbox",
+    "purpose": "coach view of all client message threads (unread badges, reply)",
+    "expects": ["list", "create"]
+  },
+  {
+    "surface": "/coach/community",
+    "purpose": "coach view of the feed with a broadcast composer",
+    "expects": ["list", "create"]
+  },
+  {
+    "surface": "/coach/challenges",
+    "purpose": "author + publish community challenges to the leaderboard",
+    "expects": ["list", "create"]
+  },
+  {
+    "surface": "/coach/drafts",
+    "purpose": "assistant composes message/meal-plan drafts for assigned clients (held for approval)",
+    "expects": ["list", "create"]
+  },
+  {
+    "surface": "/coach/approvals",
+    "purpose": "approver reviews + approves/rejects assistant drafts (approve publishes to the client)",
+    "expects": ["list", "edit"]
+  },
+  {
+    "surface": "/coach/assignments",
+    "purpose": "assign assistants to clients + set monthly rate; per-assistant payout rollup",
+    "expects": ["list", "create", "edit"]
+  },
+  {
+    "surface": "/coach/settings/knowledge",
+    "purpose": "ingest Stephanie's method/voice text into the AI knowledge base (chunk + embed)",
+    "expects": ["list", "create", "delete"]
+  },
+  {
+    "surface": "/coach/billing",
+    "purpose": "MRR + renewals + failed-payment health across clients",
+    "expects": ["list"]
+  }
+]
