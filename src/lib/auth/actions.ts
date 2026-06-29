@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { headers, cookies } from 'next/headers';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { homePathForUser, type Role } from '@/lib/auth/session';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 import { recordSignupConsent } from '@/lib/legal/consent';
@@ -34,6 +35,30 @@ async function origin(): Promise<string> {
   return h.get('origin') ?? `https://${h.get('host') ?? 'app.teamthickandfit.com'}`;
 }
 
+// Security login audit (Fort Knox: who signed in, from where, success/failure). Service-role insert
+// into session_logs (insert is service-role-only). Best-effort; a logging failure never blocks login.
+async function logSignIn(
+  success: boolean,
+  opts: { userId?: string | null; companyId?: string | null; reason?: string } = {},
+): Promise<void> {
+  try {
+    const h = await headers();
+    await createServiceClient()
+      .from('session_logs')
+      .insert({
+        user_id: opts.userId ?? null,
+        company_id: opts.companyId ?? null,
+        event_type: 'login_password',
+        ip_address: await clientIp(),
+        user_agent: h.get('user-agent'),
+        success,
+        failure_reason: opts.reason ?? null,
+      });
+  } catch (e) {
+    console.error('logSignIn:', e instanceof Error ? e.message : e);
+  }
+}
+
 export async function signInAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const parsed = credentialsSchema.safeParse({
     email: formData.get('email'),
@@ -46,6 +71,7 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     console.error('signInAction:', error.message);
+    void logSignIn(false, { reason: 'bad_credentials' });
     return { error: SIGNIN_FAILED };
   }
   // Route by role + onboarding state, reusing the just-authenticated client.
@@ -56,9 +82,13 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, ui_locale, content_locale')
+      .select('role, ui_locale, content_locale, company_id')
       .eq('id', user.id)
       .maybeSingle();
+    void logSignIn(true, {
+      userId: user.id,
+      companyId: (profile as { company_id?: string | null } | null)?.company_id ?? null,
+    });
     // Apply the user's saved language so the app loads in their preference on any device.
     if (profile?.ui_locale === 'en' || profile?.ui_locale === 'es') {
       const store = await cookies();
