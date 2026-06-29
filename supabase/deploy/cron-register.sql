@@ -131,8 +131,40 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-generate-insights-nightly (AI nightly insights + streak recompute + badge awards are ALL folded
+-- into the generate-insights endpoint, so this single job populates user_insights, user_streaks, and
+-- user_badges). Without it those tables never fill.
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-generate-insights-nightly' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-generate-insights-nightly',
+    '0 8 * * *',  -- 08:00 UTC nightly
+    $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/generate-insights',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer __CRON_SECRET__',
+          'Content-Type', 'application/json'
+        ),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 120000
+      );
+    $cron$
+  );
+  raise notice 'scheduled tf-generate-insights-nightly at 0 8 * * *';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-generate-insights-nightly.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- Verify after apply:
---   select jobname, schedule, active from cron.job where jobname like 'tf-notify-%' order by jobname;
+--   select jobname, schedule, active from cron.job where jobname like 'tf-%' order by jobname;
 -- Then confirm a run lands a cron_job_log row (the endpoint writes it):
 --   select job_name, status, ran_at from public.cron_job_log
 --    where job_name in ('notify-reminders-cron','notify-renewals-cron','notify-checkins-cron')
