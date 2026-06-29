@@ -77,7 +77,6 @@ function beep(): void {
 
 export function WorkoutPlayer({
   sessionId,
-  programName,
   dayLabel,
   exercises: initialExercises,
 }: {

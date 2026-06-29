@@ -17,7 +17,6 @@ import { Icon } from '@/components/ui/icons';
 import { IconTile, ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
 import { SectionTitle } from '@/components/ui/section';
-import { Tag } from '@/components/ui/badge';
 import type { DashboardSummary } from '@/lib/dashboard/summary';
 import { toggleHabitAction } from '@/lib/habits/habit-actions';
 import type { TodayHabit } from '@/lib/habits/habits';

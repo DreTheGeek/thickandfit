@@ -24,10 +24,13 @@ export function NotificationBell({
   const pathname = usePathname();
   const [unread, setUnread] = useState(initialUnread);
 
-  // Re-seed when the server count changes across navigations.
-  useEffect(() => {
+  // Re-seed from the server count when it changes across navigations. Done during render (React's
+  // "adjusting state when a prop changes" pattern) rather than in an effect, so it never cascades.
+  const [seededFrom, setSeededFrom] = useState(initialUnread);
+  if (seededFrom !== initialUnread) {
+    setSeededFrom(initialUnread);
     setUnread(initialUnread);
-  }, [initialUnread]);
+  }
 
   useEffect(() => {
     const sb = createClient();

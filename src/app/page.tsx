@@ -40,7 +40,9 @@ const bodyScripts = scriptsManifest.body.filter((s) => !isVwoInline(s) && !isWMo
 export default function Home() {
   return (
     <>
-      {/* Webflow CSS loads ONLY on the landing page so it never restyles the app/auth UI. */}
+      {/* Webflow CSS loads ONLY on the landing page so it never restyles the app/auth UI. A link tag
+          (not a bundled CSS import) is deliberate: an import would apply globally and restyle the app. */}
+      {/* eslint-disable-next-line @next/next/no-css-tags -- scoped Webflow CSS; a global import would restyle the app */}
       <link rel="stylesheet" href="/assets/css/webflow.css" />
       {/* Header nav fix. The lifted Webflow markup (a) left .navbar_button-wrap as display:block so the
           LOG IN + START YOUR JOURNEY buttons stacked vertically, and (b) let the logo SVG (width:auto)

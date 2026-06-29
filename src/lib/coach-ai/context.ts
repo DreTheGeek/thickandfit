@@ -92,7 +92,7 @@ function rollUpDays(rows: FoodLogRow[]): DayMacro[] {
 function computeStreak(completedDays: Set<string>): number {
   let streak = 0;
   // Start from today; allow the streak to "start" yesterday if today has no log yet.
-  let cursor = new Date();
+  const cursor = new Date();
   cursor.setUTCHours(0, 0, 0, 0);
   if (!completedDays.has(cursor.toISOString().slice(0, 10))) {
     cursor.setUTCDate(cursor.getUTCDate() - 1);
@@ -107,7 +107,7 @@ function computeStreak(completedDays: Set<string>): number {
 
 export async function buildCoachContext(
   profileId: string,
-  companyId: string,
+  _companyId: string,
 ): Promise<CoachContext> {
   const sb = createServiceClient();
   const since14 = isoDaysAgo(14);

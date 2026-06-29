@@ -138,7 +138,7 @@ export function PhotoScan(): ReactElement {
   async function logAll(): Promise<void> {
     for (let i = 0; i < candidates.length; i++) {
       if (candidates[i]?.matched && !logged[i]) {
-        // eslint-disable-next-line no-await-in-loop
+         
         await logOne(i);
       }
     }
