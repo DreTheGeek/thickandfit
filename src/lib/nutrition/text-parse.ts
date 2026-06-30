@@ -6,9 +6,10 @@
 // No OPENROUTER_API_KEY => returns a clean "not configured" state. It never crashes.
 import 'server-only';
 import { resolvePredictedItems, type PredictedItem, type PhotoResult } from '@/lib/nutrition/photo';
+import { AI_MODELS } from '@/lib/ai/models';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
-const TEXT_MODEL = 'anthropic/claude-haiku-4-5';
+const TEXT_MODEL = AI_MODELS.textMacro;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 function clampConfidence(n: unknown): number {

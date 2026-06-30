@@ -15,11 +15,12 @@ import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { retrieveKnowledge } from '@/lib/coach-ai/knowledge';
 import { SAFETY_CLAUSE_EN, planCaveat } from '@/lib/coach-ai/safety';
+import { AI_MODELS } from '@/lib/ai/models';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
-// Quality tier for generation (low volume). Same model + JSON-mode pattern as the nightly insights.
-const PLAN_MODEL = 'anthropic/claude-sonnet-4-6';
+// Flagship reasoning for generation (rare, quality-critical, PCOS-aware structured JSON).
+const PLAN_MODEL = AI_MODELS.planGen;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export type PlanLocale = 'en' | 'es';

@@ -9,13 +9,15 @@
 // pass with no key and nothing throws.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { EMBED } from '@/lib/ai/models';
 
+// Embeddings ARE served by OpenRouter's /embeddings endpoint (verified live: returns a 1536-dim vector
+// for text-embedding-3-small), so this uses the same OPENROUTER_API_KEY as every other AI call. With no
+// key, embedText -> null and RAG degrades to a no-op (chat + nightly job still work, minus semantic recall).
 const apiKey = process.env.OPENROUTER_API_KEY;
 
-// text-embedding-3-small, 1536 dims, per the project AI router. Cheap + fast for both the nightly
-// batch (day summaries) and the per-turn query embedding.
-export const EMBED_MODEL = 'openai/text-embedding-3-small';
-export const EMBED_DIMS = 1536;
+export const EMBED_MODEL = EMBED.model;
+export const EMBED_DIMS = EMBED.dims;
 const OPENROUTER_EMBEDDINGS_URL = 'https://openrouter.ai/api/v1/embeddings';
 
 // A single retrieved memory: a past chat message or an embedded food_log day summary for this member.

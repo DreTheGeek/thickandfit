@@ -12,11 +12,12 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { embedText, toVectorLiteral, embeddingsConfigured } from '@/lib/coach-ai/embeddings';
 import { createNotification } from '@/lib/notifications/create';
 import { notifText } from '@/lib/notifications/i18n';
+import { AI_MODELS } from '@/lib/ai/models';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
-// Quality tier for the nightly batch extraction (low volume, runs once a day).
-const INSIGHT_MODEL = 'anthropic/claude-sonnet-4-6';
+// Cheap, reliable tier for the nightly batch extraction (runs once a day across all users).
+const INSIGHT_MODEL = AI_MODELS.insights;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 const KG_TO_LB = 2.20462;

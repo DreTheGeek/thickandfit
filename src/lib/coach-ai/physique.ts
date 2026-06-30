@@ -9,13 +9,14 @@
 // should review. Stephanie can refine the voice/philosophy through her AI Knowledge builder (passed in
 // as `knowledge`) without code changes.
 import 'server-only';
+import { AI_MODELS } from '@/lib/ai/models';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
-// No-compromise vision per the photo priority. gpt-5 ($1.25/$10, image-capable) is the model from the
-// best published macro study; progress photos are low-frequency so a flagship is cheap in aggregate.
-// Swappable + the eval decides the final pick (challengers: openai/gpt-5.4, google/gemini-3.1-pro-preview).
-export const PHYSIQUE_MODEL = 'openai/gpt-5';
+// No-compromise vision per the photo priority. Routed centrally (gpt-5: $1.25/$10, image-capable, the
+// model from the best published macro study). Progress photos are low-frequency so a flagship is cheap
+// in aggregate. The eval decides the final pick (challengers: openai/gpt-5.4, google/gemini-3.1-pro-preview).
+export const PHYSIQUE_MODEL = AI_MODELS.physique;
 
 export type PhysiqueAnalysis = {
   bfLow: number | null;

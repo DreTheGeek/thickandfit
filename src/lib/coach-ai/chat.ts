@@ -13,11 +13,12 @@ import { buildCoachContext, renderContextBlock, type CoachLocale } from '@/lib/c
 import { embedText, retrieveMemories, renderMemoryBlock } from '@/lib/coach-ai/embeddings';
 import { retrieveKnowledge, renderKnowledgeBlock } from '@/lib/coach-ai/knowledge';
 import { SAFETY_CLAUSE_EN } from '@/lib/coach-ai/safety';
+import { AI_MODELS } from '@/lib/ai/models';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
-// Fast + cheap model for the conversational coach. Volume tier per the project AI router.
-const CHAT_MODEL = 'anthropic/claude-haiku-4-5';
+// Persona-strong, cheap model for the conversational coach (voice fidelity matters most here).
+const CHAT_MODEL = AI_MODELS.chat;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // How many recent turns to replay into the model. Context already includes the last 7 days of
