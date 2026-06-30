@@ -28,6 +28,14 @@ export type ProfileData = {
   id: string;
   notes: CoachNote[];
   coachName: string;
+  physiqueReads: {
+    id: string;
+    bfLow: number | null;
+    bfHigh: number | null;
+    narrative: string;
+    flagged: boolean;
+    date: string;
+  }[];
 };
 
 type TabKey =
@@ -142,6 +150,44 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
               </div>
             )}
           </Card>
+          {data.physiqueReads.length > 0 && (
+            <Card className="p-5 md:col-span-2">
+              <Eyebrow>{t('physiqueReads')}</Eyebrow>
+              <div className="mt-2">
+                {data.physiqueReads.map((r, i) => (
+                  <div
+                    key={r.id}
+                    className={[
+                      'py-3',
+                      i < data.physiqueReads.length - 1 ? 'border-b border-divider' : '',
+                      r.flagged ? '-mx-2 mt-1 rounded-lg border-l-2 border-red-400 bg-warm px-2' : '',
+                    ].join(' ')}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[14px] font-semibold">
+                        {r.bfLow != null && r.bfHigh != null
+                          ? `~${r.bfLow}-${r.bfHigh}% ${t('physiqueBodyFat')}`
+                          : t('physiqueReads')}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2 text-[12px] text-faint">
+                        {r.flagged && (
+                          <span className="rounded-full border border-red-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[1px] text-red-600">
+                            {t('physiqueFlagged')}
+                          </span>
+                        )}
+                        {r.date}
+                      </span>
+                    </div>
+                    {r.narrative && (
+                      <p className="mt-1 text-[13px] leading-relaxed text-muted">
+                        {r.narrative.length > 220 ? `${r.narrative.slice(0, 220)}...` : r.narrative}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
           <Card className="p-5 md:col-span-2">
             <Eyebrow>{t('coachNotes')}</Eyebrow>
             <CoachNotesPanel subjectType="profile" subjectId={data.id} initial={data.notes} authorName={data.coachName} />

@@ -32,7 +32,7 @@ export default async function CoachSubscriberPage({
 
   if (!profile || profile.company_id !== ctx.companyId) notFound();
 
-  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }] =
+  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }, { data: physique }] =
     await Promise.all([
       supabase.from('onboarding_responses').select('computed_targets').eq('profile_id', id).maybeSingle(),
       supabase
@@ -52,6 +52,15 @@ export default async function CoachSubscriberPage({
         .eq('profile_id', id),
       getCoachNotes('profile', id),
       supabase.from('profiles').select('full_name, email').eq('id', ctx.userId).maybeSingle(),
+      // Recent physique reads (flagged ones surface a wellbeing follow-up here).
+      supabase
+        .from('physique_analyses')
+        .select('id, bf_low, bf_high, narrative, flagged, created_at')
+        .eq('company_id', ctx.companyId)
+        .eq('profile_id', id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(5),
     ]);
   const meRow = me as { full_name: string | null; email: string | null } | null;
 
@@ -63,6 +72,16 @@ export default async function CoachSubscriberPage({
   const fmtShort = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' });
   const created = new Date(profile.created_at);
   const days = Math.max(0, Math.round((new Date().getTime() - created.getTime()) / 86400_000));
+
+  type PhysiqueRow = { id: string; bf_low: number | null; bf_high: number | null; narrative: string | null; flagged: boolean; created_at: string };
+  const physiqueReads = ((physique as PhysiqueRow[] | null) ?? []).map((p) => ({
+    id: p.id,
+    bfLow: p.bf_low != null ? Number(p.bf_low) : null,
+    bfHigh: p.bf_high != null ? Number(p.bf_high) : null,
+    narrative: p.narrative ?? '',
+    flagged: Boolean(p.flagged),
+    date: fmtShort.format(new Date(p.created_at)),
+  }));
 
   const data: ProfileData = {
     name: (profile.full_name ?? profile.email ?? '').trim() || t('noName'),
@@ -87,6 +106,7 @@ export default async function CoachSubscriberPage({
     id,
     notes,
     coachName: meRow?.full_name ?? meRow?.email ?? 'Coach',
+    physiqueReads,
   };
 
   return <SubscriberProfile data={data} />;
