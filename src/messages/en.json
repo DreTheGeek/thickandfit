@@ -1095,7 +1095,9 @@
         "challengeEndedTitle": "A challenge just wrapped up",
         "challengeEndedBody": "\"{title}\" has ended. {winner} took the crown. Tap to see the final leaderboard.",
         "challengeWonTitle": "You won the challenge!",
-        "challengeWonBody": "You finished #1 in \"{title}\". Champion badge unlocked."
+        "challengeWonBody": "You finished #1 in \"{title}\". Champion badge unlocked.",
+        "physiqueFlagTitle": "Wellbeing check-in",
+        "physiqueFlagBody": "{name}'s physique read was flagged for a wellbeing follow-up. Tap to reach out and check in."
       }
     },
     "forms": {

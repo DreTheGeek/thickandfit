@@ -8,6 +8,7 @@ import { getLocale } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { analyzePhysique, type PhysiqueResult } from '@/lib/coach-ai/physique';
+import { notifyCoachesOfFlaggedPhysique } from '@/lib/coach-ai/physique-notify';
 
 const Input = z.object({
   imageUrl: z.string().min(1).max(15_000_000), // signed storage URL or data URL
@@ -54,6 +55,10 @@ export async function analyzePhysiqueAction(input: unknown): Promise<PhysiqueRes
     } catch (e) {
       console.error('analyzePhysiqueAction persist:', e instanceof Error ? e.message : e);
     }
+
+    // Safety loop: a flagged read pings the company's coaches so a human follows up (the member is
+    // promised exactly that). Fire-and-forget; never blocks the member's result.
+    if (a.flagged) void notifyCoachesOfFlaggedPhysique(ctx.companyId, ctx.userId);
   }
   return result;
 }

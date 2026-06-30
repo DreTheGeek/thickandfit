@@ -1,6 +1,6 @@
 # Physique Read, Safety Review for Stephanie
 
-**Status:** Built and wired, NOT live to members yet. It stays off until you sign off on the rules below.
+**Status:** APPROVED by Stephanie 2026-06-30. Ships live with Phase 2. The bounds below are the approved rules.
 **What you are approving:** the exact bounds the AI must follow when it reads a member's progress photo.
 **Time to review:** about 5 minutes. You do not need to read any code. Just react to the rules and the example.
 

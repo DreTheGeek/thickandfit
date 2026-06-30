@@ -1095,7 +1095,9 @@
         "challengeEndedTitle": "Un reto acaba de terminar",
         "challengeEndedBody": "\"{title}\" terminó. {winner} se llevó la corona. Toca para ver la tabla final.",
         "challengeWonTitle": "¡Ganaste el reto!",
-        "challengeWonBody": "Terminaste #1 en \"{title}\". Insignia de campeón desbloqueada."
+        "challengeWonBody": "Terminaste #1 en \"{title}\". Insignia de campeón desbloqueada.",
+        "physiqueFlagTitle": "Seguimiento de bienestar",
+        "physiqueFlagBody": "La lectura de {name} se marcó para un seguimiento de bienestar. Toca para escribirle y ver cómo está."
       }
     },
     "forms": {
