@@ -9,6 +9,8 @@ import { Tag, Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { CompletionCheck } from '@/components/ui/completion';
+import { CoachNotesPanel } from '@/components/coach/coach-notes-panel';
+import type { CoachNote } from '@/lib/coach/notes-actions';
 
 export type ProfileData = {
   name: string;
@@ -23,6 +25,9 @@ export type ProfileData = {
   macros: { p: number; c: number; f: number } | null;
   programName: string | null;
   history: { id: string; date: string; completionPct: number | null; enjoyment: number | null }[];
+  id: string;
+  notes: CoachNote[];
+  coachName: string;
 };
 
 type TabKey =
@@ -139,7 +144,7 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
           </Card>
           <Card className="p-5 md:col-span-2">
             <Eyebrow>{t('coachNotes')}</Eyebrow>
-            <p className="mt-2 text-[14px] text-faint">{t('noNotes')}</p>
+            <CoachNotesPanel subjectType="profile" subjectId={data.id} initial={data.notes} authorName={data.coachName} />
           </Card>
         </div>
       )}

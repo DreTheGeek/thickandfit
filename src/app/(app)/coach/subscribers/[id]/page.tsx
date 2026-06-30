@@ -6,6 +6,7 @@ import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { fetchHistory } from '@/lib/workout/logging';
 import { SubscriberProfile, type ProfileData } from '@/components/coach/subscriber-profile';
+import { getCoachNotes } from '@/lib/coach/notes-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,24 +32,28 @@ export default async function CoachSubscriberPage({
 
   if (!profile || profile.company_id !== ctx.companyId) notFound();
 
-  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }] = await Promise.all([
-    supabase.from('onboarding_responses').select('computed_targets').eq('profile_id', id).maybeSingle(),
-    supabase
-      .from('plan_assignments')
-      .select('plan:plan_id (name_en, name_es)')
-      .eq('profile_id', id)
-      .eq('company_id', ctx.companyId)
-      .order('assigned_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    fetchHistory(ctx.companyId, id),
-    // Total workout count via a head-only COUNT (history is capped at 20 for display only).
-    supabase
-      .from('workout_logs')
-      .select('id', { count: 'exact', head: true })
-      .eq('company_id', ctx.companyId)
-      .eq('profile_id', id),
-  ]);
+  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }] =
+    await Promise.all([
+      supabase.from('onboarding_responses').select('computed_targets').eq('profile_id', id).maybeSingle(),
+      supabase
+        .from('plan_assignments')
+        .select('plan:plan_id (name_en, name_es)')
+        .eq('profile_id', id)
+        .eq('company_id', ctx.companyId)
+        .order('assigned_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      fetchHistory(ctx.companyId, id),
+      // Total workout count via a head-only COUNT (history is capped at 20 for display only).
+      supabase
+        .from('workout_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', ctx.companyId)
+        .eq('profile_id', id),
+      getCoachNotes('profile', id),
+      supabase.from('profiles').select('full_name, email').eq('id', ctx.userId).maybeSingle(),
+    ]);
+  const meRow = me as { full_name: string | null; email: string | null } | null;
 
   const targets = (onb?.computed_targets ?? null) as Targets | null;
   const plan = (assignment?.plan ?? null) as { name_en: string; name_es: string | null } | { name_en: string; name_es: string | null }[] | null;
@@ -79,6 +84,9 @@ export default async function CoachSubscriberPage({
       completionPct: h.completion_pct,
       enjoyment: h.enjoyment,
     })),
+    id,
+    notes,
+    coachName: meRow?.full_name ?? meRow?.email ?? 'Coach',
   };
 
   return <SubscriberProfile data={data} />;
