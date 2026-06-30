@@ -52,27 +52,52 @@ export const COVERAGE: CoverageItem[] = [
 
   // Subscribers
   { area: 'Subscribers', name: 'Subscriber list', status: 'live', route: '/coach/subscribers', connects: ['profiles'], action: 'Search / segment subscribers', reaction: 'Filterable table of app accounts' },
-  { area: 'Subscribers', name: 'Subscriber profile (overview, workouts)', status: 'partial', route: '/coach/subscribers/[id]', connects: ['profiles', 'workout_completion_history'], action: 'Open a subscriber', reaction: 'Overview + workouts real; nutrition/community/progress/messages/billing/notes are placeholders', notes: 'Trim empty tabs to the ones with real data' },
+  { area: 'Subscribers', name: 'Subscriber profile (overview, workouts)', status: 'live', route: '/coach/subscribers/[id]', connects: ['profiles', 'plan_assignments', 'workout_logs', 'workout_completion_history'], action: 'Open a subscriber', reaction: 'Overview (assigned program, macro targets, recent activity) + full workout history from real data; empty placeholder tabs already trimmed' },
 
   // Comms
-  { area: 'Comms', name: 'Inbox / direct messages', status: 'planned', route: '/coach/inbox', connects: ['messages table', 'Realtime'], action: 'Message a client', reaction: 'Planned (placeholder today)' },
-  { area: 'Comms', name: 'Community feed', status: 'live', route: '/community', connects: ['community_posts', 'post_reactions', 'post_comments'], action: 'Post / react / comment', reaction: 'Subscriber feed + challenge leaderboard live; coach moderation view + create-challenge in WP7' },
-  { area: 'Comms', name: 'Broadcasts composer', status: 'partial', route: '/coach/broadcasts', connects: ['Resend/Twilio'], action: 'Compose a broadcast', reaction: 'Composer UI exists; send backend not wired' },
-  { area: 'Comms', name: 'Email (Resend transactional)', status: 'partial', route: null, connects: ['Resend', 'Supabase Auth SMTP'], action: 'Auth / waitlist event', reaction: 'Branded templates via Supabase SMTP; broader transactional sends pending' },
-  { area: 'Comms', name: 'Push / SMS notifications', status: 'partial', route: '/notifications', connects: ['notifications', 'push_subscriptions', 'Web Push'], action: 'Trigger a notification', reaction: 'In-app + web-push delivery built; scheduled triggers (reminders/expiry) + Twilio SMS in WP11/WP13' },
+  { area: 'Comms', name: 'Inbox / direct messages', status: 'live', route: '/coach/inbox', connects: ['conversations', 'messages', 'Realtime'], action: 'Message a client', reaction: 'Realtime two-way DM threads (coach <-> subscriber) with unread badges and mark-read' },
+  { area: 'Comms', name: 'Community feed', status: 'live', route: '/community', connects: ['community_posts', 'post_reactions', 'post_comments'], action: 'Post / react / comment / coach broadcast', reaction: 'Subscriber feed + challenge leaderboard; coach view with a broadcast composer that fans out notifications to members' },
+  { area: 'Comms', name: 'Broadcasts composer (email/SMS)', status: 'partial', route: '/coach/broadcasts', connects: ['Resend/Twilio'], action: 'Compose an email/SMS broadcast', reaction: 'Composer UI exists; send backend is Resend/Twilio-gated (in-app community broadcast already works)' },
+  { area: 'Comms', name: 'Email (Resend transactional)', status: 'partial', route: null, connects: ['Resend', 'Supabase Auth SMTP'], action: 'Auth / waitlist event', reaction: 'Branded templates via Supabase SMTP; broader transactional sends pending the Resend key' },
+  { area: 'Comms', name: 'Notifications + scheduled triggers', status: 'partial', route: '/notifications', connects: ['notifications', 'push_subscriptions', 'pg_cron', 'Web Push'], action: 'Reminder / renewal / check-in due / challenge close', reaction: 'In-app + web-push live; pg_cron generators fire reminders, renewal + comp-expiry nudges, check-in nudges and challenge close (timezone-correct). Twilio SMS still key-gated' },
 
   // Billing
   { area: 'Billing', name: 'Stripe checkout + subscriptions', status: 'live', route: '/checkout', connects: ['subscriptions', 'payments', 'webhook_events'], action: 'Subscribe / pay', reaction: 'Checkout + 3DS + webhook reconciliation built (test mode); live account connection is the last step' },
 
   // Forms / check-ins
-  { area: 'Check-ins', name: 'Forms', status: 'partial', route: '/coach/forms', connects: ['forms tables'], action: 'Open / build a form', reaction: 'Basic forms surface; full builder + responses pending' },
-  { area: 'Check-ins', name: 'Habits', status: 'planned', route: '/coach (nav)', connects: ['habits tables'], action: 'Track a habit', reaction: 'Planned (nav item placeholder)' },
+  { area: 'Check-ins', name: 'Check-in forms + responses', status: 'live', route: '/checkin', connects: ['forms', 'form_fields', 'form_responses'], action: 'Coach assigns a form; subscriber submits a check-in', reaction: 'Assigned forms render at /checkin; submissions land in form_responses for coach review' },
+  { area: 'Check-ins', name: 'Habits', status: 'live', route: '/dashboard', connects: ['habits', 'habit_logs'], action: 'Check off a daily habit', reaction: 'Habit toggles log per local day; streak tracked' },
 
   // Platform
   { area: 'Platform', name: 'Light / dark theme', status: 'live', route: 'all', connects: ['next-themes', 'data-theme'], action: 'Toggle theme (top bar)', reaction: 'Whole app flips via CSS-var tokens; choice persists' },
   { area: 'Platform', name: 'Language (EN / ES)', status: 'live', route: 'all', connects: ['next-intl', 'profiles.ui_locale'], action: 'Switch language in Settings', reaction: 'UI + content locale persist to the profile' },
   { area: 'Platform', name: 'App Health + coverage', status: 'live', route: '/coach/health', connects: ['system-health', 'system-map'], action: 'Open App Health', reaction: 'Real service probes, live data counts, and this coverage checklist' },
-  { area: 'Platform', name: 'Error monitoring + analytics', status: 'planned', route: null, connects: ['Sentry', 'PostHog'], action: 'Any runtime error / event', reaction: 'Planned: Sentry capture + PostHog product analytics' },
+  { area: 'Platform', name: 'Error monitoring + analytics', status: 'planned', route: null, connects: ['Sentry', 'PostHog'], action: 'Any runtime error / event', reaction: 'Planned: Sentry capture + PostHog product analytics (key-gated)' },
+
+  // AI coach
+  { area: 'AI Coach', name: 'AI coach chat (her voice, RAG)', status: 'live', route: '/coach-chat', connects: ['OpenRouter', 'coach_knowledge', 'pgvector', 'coach_messages'], action: 'Ask the AI coach a question', reaction: 'Streams a grounded answer in Stephanie’s voice from her knowledge base + the member’s logs; medical-claim guardrails' },
+  { area: 'AI Coach', name: 'AI plan generation', status: 'live', route: '/coach-chat', connects: ['plan-gen', 'meal_plans', 'programs'], action: 'Generate a plan from intake', reaction: 'PCOS-aware meal/workout plan from intake + knowledge' },
+  { area: 'AI Coach', name: 'AI nightly insights + gamification', status: 'live', route: '/api/internal/generate-insights', connects: ['user_insights', 'user_streaks', 'user_badges', 'pg_cron'], action: 'Nightly cron', reaction: 'Generates a personalized insight, recomputes streaks, awards badges' },
+  { area: 'AI Coach', name: 'AI cost controls (rate-limit + meter)', status: 'live', route: 'all AI routes', connects: ['ai_usage_log', 'rate-limit'], action: 'Any AI call', reaction: 'Every AI route is rate-limited + metered to ai_usage_log (caps OpenRouter spend)' },
+  { area: 'AI Coach', name: 'AI knowledge base (ingest)', status: 'live', route: '/coach/settings/knowledge', connects: ['coach_knowledge', 'embeddings'], action: 'Ingest method/voice text', reaction: 'Chunks + embeds into the knowledge base feeding the chat context' },
+  { area: 'AI Coach', name: 'AI voice clone', status: 'planned', route: null, connects: ['voice provider'], action: 'AI coach speaks', reaction: 'Phase 3 (PRD-32): cloned voice for the AI coach' },
+
+  // Text-to-macro (the headline nutrition differentiator)
+  { area: 'Nutrition', name: 'Text-to-macro logging', status: 'live', route: '/nutrition', connects: ['OpenRouter', 'foods', 'food_log', 'text-parse'], action: 'Type a meal in natural language', reaction: 'AI parses items + portions into a confirmable macro preview, then logs (kills the ChatGPT-screenshot workflow)' },
+
+  // Access / entitlement
+  { area: 'Billing', name: 'Entitlement + paywall', status: 'live', route: '(app) layout', connects: ['subscriptions', 'profiles.comp_access_until', 'isEntitled'], action: 'Open the app un-paid', reaction: 'Hard wall to /checkout unless an active sub OR a live coach-granted comp; comped (free) users in; comp/sub expiry auto-locks' },
+
+  // Mid-ticket coaching workflow
+  { area: 'Coaching', name: 'Mid-ticket draft + approval', status: 'live', route: '/coach/drafts, /coach/approvals, /coach/assignments', connects: ['coaching_assignments', 'approval_queue'], action: 'Assistant drafts; Stephanie approves', reaction: 'Drafts held in approval_queue; approve publishes to the client; bypass blocked; per-assistant payout rollup' },
+
+  // Engagement
+  { area: 'Engagement', name: 'Challenges + leaderboard + auto-close', status: 'live', route: '/coach/challenges', connects: ['challenges', 'challenge_participants', 'badges', 'pg_cron'], action: 'Coach publishes a challenge', reaction: 'Renders on the community leaderboard; nightly close-challenges cron awards the leader the Champion badge + notifies participants' },
+
+  // Legal / account
+  { area: 'Legal', name: 'Consent + medical disclaimer', status: 'live', route: '/disclaimer, /onboarding', connects: ['consent capture'], action: 'Sign up / onboard', reaction: 'Terms + privacy consent at signup; medical / assumption-of-risk disclaimer gates onboarding' },
+  { area: 'Legal', name: 'Account deletion + data export', status: 'live', route: '/account', connects: ['account/actions', 'security_events'], action: 'Export or delete my data', reaction: 'GDPR/CCPA export + right-to-delete, audited to security_events' },
+  { area: 'Legal', name: 'Login audit (Fort Knox)', status: 'live', route: '/auth/sign-in', connects: ['session_logs'], action: 'Any sign-in attempt', reaction: 'Success/failure + IP/device logged to session_logs' },
 ];
 
 export function coverageByArea(items: CoverageItem[] = COVERAGE): { area: string; items: CoverageItem[] }[] {
