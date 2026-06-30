@@ -831,7 +831,21 @@
       "selectLeft": "Foto izquierda",
       "selectRight": "Foto derecha",
       "noWeight": "Sin peso",
-      "loadError": "No se pudieron cargar tus fotos."
+      "loadError": "No se pudieron cargar tus fotos.",
+      "analyzePhoto": "Lectura de tu coach",
+      "analyzeTitle": "La lectura de tu coach",
+      "analyzing": "Analizando tu foto...",
+      "aiNotReady": "El análisis de fotos aún no está activo. Vuelve pronto.",
+      "analyzeFailed": "No pudimos analizar esta. Prueba con una foto de cuerpo completo, clara y bien iluminada.",
+      "estimateLabel": "Estimación de grasa corporal (a ojo de coach)",
+      "estimateDisclaimer": "Es una estimación a partir de una foto, no una medición médica ni DEXA. Tu evolución con el tiempo importa mucho más que cualquier número aislado.",
+      "whatsWorking": "Lo que está funcionando",
+      "focusOn": "En qué enfocarte",
+      "thePlan": "Tu plan",
+      "timeline": "Plazo",
+      "approach": "Enfoque",
+      "flaggedNote": "Stephanie te va a escribir personalmente sobre esto. No estás sola en esto.",
+      "close": "Cerrar"
     },
     "nutrition": {
       "title": "Nutrición",

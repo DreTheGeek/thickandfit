@@ -11,6 +11,7 @@ import { Icon } from '@/components/ui/icons';
 import { PageTitle } from '@/components/ui/section';
 import { Segmented } from '@/components/ui/segmented';
 import { RecipeImage } from '@/components/coach/recipe-image';
+import { PhysiqueAnalysisButton } from '@/components/progress/physique-analysis';
 import { createClient } from '@/lib/supabase/client';
 import {
   recordPhotoAction,
@@ -325,6 +326,7 @@ function PhotoTile({
           {photo.weightKg != null ? `${lb(photo.weightKg)} lb` : t('noWeight')}
         </div>
         {error && <div className="text-[11px] text-red-600">{t('deleteFailed')}</div>}
+        <PhysiqueAnalysisButton imageUrl={photo.url} photoId={photo.id} weightKg={photo.weightKg} />
       </div>
     </div>
   );

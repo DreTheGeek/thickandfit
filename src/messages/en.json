@@ -831,7 +831,21 @@
       "selectLeft": "Left photo",
       "selectRight": "Right photo",
       "noWeight": "No weight",
-      "loadError": "Could not load your photos."
+      "loadError": "Could not load your photos.",
+      "analyzePhoto": "Coach's read",
+      "analyzeTitle": "Your coach's read",
+      "analyzing": "Reading your photo...",
+      "aiNotReady": "Photo analysis isn't turned on yet. Check back soon.",
+      "analyzeFailed": "Couldn't read this one. Try a clear, well-lit full-body photo.",
+      "estimateLabel": "Coach's-eye body-fat estimate",
+      "estimateDisclaimer": "An estimate from one photo, not a medical or DEXA measurement. Your trend over time matters far more than any single number.",
+      "whatsWorking": "What's working",
+      "focusOn": "Where to focus",
+      "thePlan": "Your plan",
+      "timeline": "Timeline",
+      "approach": "Approach",
+      "flaggedNote": "Stephanie will follow up with you personally on this one. You're not alone here.",
+      "close": "Close"
     },
     "nutrition": {
       "title": "Nutrition",
