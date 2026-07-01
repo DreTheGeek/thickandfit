@@ -19,6 +19,8 @@ export type OverloadHint = {
   reps: number;
   rationale: string;
   historyPoints: number;
+  lastWeight: number | null;
+  lastReps: number | null;
 };
 
 type Difficulty = 'easy' | 'moderate' | 'hard' | 'failed';
@@ -165,7 +167,6 @@ export function WorkoutPlayer({
   // Prefill from the progressive-overload recommendation when we have one, else the plan target.
   const [reps, setReps] = useState(ex?.overload?.reps ?? ex?.reps ?? 10);
   const [weight, setWeight] = useState(ex?.overload?.weight ?? ex?.weight ?? 0);
-  const [hintOpen, setHintOpen] = useState(true);
 
   // Wake Lock for the whole session.
   useEffect(() => {
@@ -277,7 +278,6 @@ export function WorkoutPlayer({
       setSetNum(1);
       setReps(next.overload?.reps ?? next.reps ?? 10);
       setWeight(next.overload?.weight ?? next.weight ?? 0);
-      setHintOpen(true);
       setTab('instructions');
       if (ex.rest_sec) setRest(ex.rest_sec);
     } else {
@@ -289,13 +289,6 @@ export function WorkoutPlayer({
       if (found.length) fire();
     }
   }, [ex, setNum, totalSets, idx, exercises, reps, weight, difficulty, fire]);
-
-  const applyHint = useCallback((): void => {
-    if (!ex?.overload) return;
-    setReps(ex.overload.reps);
-    if (ex.overload.weight !== null) setWeight(ex.overload.weight);
-    setHintOpen(false);
-  }, [ex]);
 
   const muscleLabel = ex?.muscle ?? null;
   const cueLines = ex?.cues
@@ -394,10 +387,8 @@ export function WorkoutPlayer({
           </div>
         )}
 
-        {/* Progressive-overload recommendation (first set only) */}
-        {ex.overload && setNum === 1 && hintOpen && (
-          <OverloadCard hint={ex.overload} onApply={applyHint} onDismiss={() => setHintOpen(false)} />
-        )}
+        {/* Progressive overload: canonical "Last time / Target / +X" line (+ coach rationale on set 1) */}
+        {ex.overload && <ProgressionLine hint={ex.overload} showRationale={setNum === 1} />}
 
         {/* Steppers */}
         <div className="mt-[26px] flex items-center justify-between gap-3.5">
@@ -632,94 +623,56 @@ function RatingRow({
   );
 }
 
-// Pure-SVG glyph + colorway per overload action. No chart library.
-function actionVisual(action: OverloadHint['action']): { glyph: ReactElement; tone: string } {
-  const stroke = 'currentColor';
-  switch (action) {
-    case 'increase_weight':
-    case 'increase_reps':
-      return {
-        tone: 'text-accent',
-        glyph: (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 13V3M8 3L4 7M8 3l4 4" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-      };
-    case 'deload':
-      return {
-        tone: 'text-alert',
-        glyph: (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 3v10M8 13l-4-4M8 13l4-4" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-      };
-    default:
-      return {
-        tone: 'text-muted',
-        glyph: (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M3 8h10" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        ),
-      };
-  }
-}
-
-function OverloadCard({
+// Canonical progressive-overload line: "Last time - N x W lb / Target - N x W lb [+X]" with the
+// suggested next step as a pill, plus the coach's-voice rationale on the first set (my enhancement).
+// The steppers already prefill to the target, so this reads rather than acts.
+function ProgressionLine({
   hint,
-  onApply,
-  onDismiss,
+  showRationale,
 }: {
   hint: OverloadHint;
-  onApply: () => void;
-  onDismiss: () => void;
+  showRationale: boolean;
 }): ReactElement {
   const t = useTranslations('app.exercise');
-  const { glyph, tone } = actionVisual(hint.action);
-  const thin = hint.historyPoints < 2;
-  const actionLabel = t(`overloadAction.${hint.action}`);
-  const target =
-    hint.weight !== null
-      ? t('overloadTarget', { weight: hint.weight, reps: hint.reps })
-      : t('overloadTargetBodyweight', { reps: hint.reps });
+  const fmtSet = (r: number | null, w: number | null): string =>
+    w != null && w > 0 ? `${r ?? 0} × ${w} lb` : t('prReps', { reps: r ?? 0 });
+
+  const wDelta = Math.round(((hint.weight ?? 0) - (hint.lastWeight ?? 0)) * 10) / 10;
+  const rDelta = hint.reps - (hint.lastReps ?? hint.reps);
+  let pill: { text: string; tone: string } | null = null;
+  if (hint.lastReps != null) {
+    if (hint.action === 'increase_weight' && wDelta > 0) {
+      pill = { text: `+${wDelta} lb`, tone: 'bg-accent/15 text-accent' };
+    } else if (hint.action === 'increase_reps' && rDelta > 0) {
+      pill = { text: t('plusReps', { n: rDelta }), tone: 'bg-accent/15 text-accent' };
+    } else if (hint.action === 'deload' && wDelta < 0) {
+      pill = { text: `${wDelta} lb`, tone: 'bg-alert text-alert-ink' };
+    }
+  }
 
   return (
-    <div className="mt-[22px] rounded-2xl bg-surface p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={`flex h-6 w-6 items-center justify-center rounded-full bg-bg ${tone}`}>
-            {glyph}
+    <div className="mt-[22px]">
+      <div className="flex items-center justify-between gap-2 text-[12px]">
+        <span className="text-muted">
+          {hint.lastReps != null
+            ? `${t('lastTime')} · ${fmtSet(hint.lastReps, hint.lastWeight)}`
+            : t('firstSet')}
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="text-muted">
+            {t('target')} ·{' '}
+            <span className="font-semibold text-ink">{fmtSet(hint.reps, hint.weight)}</span>
           </span>
-          <span className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
-            {t('overloadTitle')}
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={onDismiss}
-          aria-label={t('overloadDismiss')}
-          className="tf-press text-faint"
-        >
-          <Icon name="x" size={14} />
-        </button>
+          {pill && (
+            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${pill.tone}`}>
+              {pill.text}
+            </span>
+          )}
+        </span>
       </div>
-
-      <div className={`mt-2 text-[13px] font-semibold ${tone}`}>{actionLabel}</div>
-      <div className="mt-0.5 font-display text-[22px] leading-none text-ink">{target}</div>
-      <p className="mt-2 text-[13px] leading-[1.6] text-soft">{hint.rationale}</p>
-      {thin && (
-        <p className="mt-1 text-[12px] leading-[1.5] text-faint">{t('overloadThin')}</p>
+      {showRationale && hint.rationale && (
+        <p className="mt-1.5 text-[12px] leading-[1.5] text-soft">{hint.rationale}</p>
       )}
-
-      <button
-        type="button"
-        onClick={onApply}
-        className="tf-press mt-3 text-[12px] font-semibold uppercase tracking-[1px] text-accent"
-      >
-        {t('overloadApply')}
-      </button>
     </div>
   );
 }

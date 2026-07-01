@@ -119,6 +119,9 @@ export type OverloadHint = {
   // All-time bests for client-side PR detection (Epley e1RM for weighted, max reps for bodyweight).
   bestE1rm: number | null;
   bestReps: number | null;
+  // The most recent logged set, for the canonical "Last time - N x W lb" line.
+  lastWeight: number | null;
+  lastReps: number | null;
 };
 
 // Epley estimated 1-rep max. Normalizes weight x reps so "more reps at the same load"
@@ -199,6 +202,7 @@ export async function recommendForSession(
       const rec = recommendNext(history, rangeFromTarget(tg.reps));
       const rationale = await explainRecommendation(rec, tg.name, locale);
       const { bestE1rm, bestReps } = bestsFromHistory(all);
+      const lastSet = [...all].reverse().find((s) => s.completed) ?? all[all.length - 1] ?? null;
       out.set(tg.exerciseId, {
         exerciseId: tg.exerciseId,
         action: rec.action,
@@ -208,6 +212,8 @@ export async function recommendForSession(
         historyPoints: history.length,
         bestE1rm,
         bestReps,
+        lastWeight: lastSet?.weight ?? null,
+        lastReps: lastSet?.reps ?? null,
       });
     }),
   );

@@ -109,6 +109,8 @@ export default async function WorkoutPage({
             reps: hint.reps,
             rationale: hint.rationale,
             historyPoints: hint.historyPoints,
+            lastWeight: hint.lastWeight,
+            lastReps: hint.lastReps,
           }
         : null,
       bestE1rm: hint?.bestE1rm ?? null,
