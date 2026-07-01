@@ -217,30 +217,22 @@ export async function resolvePredictedItems(
   if (items.length === 0) return { status: 'noFood' };
 
   const sb = await createClient();
-  const candidates: PhotoCandidate[] = [];
-
-  for (const item of items) {
-    // 1) local corpus. 2) if it misses, ground against USDA + cache the hit into `foods` so the next
-    // log is a local hit. The model's grams still scale the DB's per-100g macros (golden rule).
-    let food = await matchFood(sb, item.name, locale);
-    if (!food) food = await groundFoodByName(item.name, locale);
-    if (!food) {
-      candidates.push({ predictedName: item.name, grams: item.grams, confidence: item.confidence, matched: false, food: null, macros: null, basis: item.basis });
-      continue;
-    }
-    const effGrams = await effectiveGramsForFood(sb, food, item.name, item.grams);
-    const macros = macrosForGrams(food, effGrams);
-    candidates.push({
-      predictedName: item.name,
+  // Resolve items in PARALLEL - each is a local DB match + optional USDA grounding + cook/raw
+  // conversion. Sequential resolution was the latency killer on a multi-item plate (N serial lookups).
+  const candidates: PhotoCandidate[] = await Promise.all(
+    items.map(async (item): Promise<PhotoCandidate> => {
+      // 1) local corpus. 2) if it misses, ground against USDA + cache the hit so the next log is a
+      // local hit. The model's grams still scale the DB's per-100g macros (golden rule).
+      let food = await matchFood(sb, item.name, locale);
+      if (!food) food = await groundFoodByName(item.name, locale);
+      if (!food) {
+        return { predictedName: item.name, grams: item.grams, confidence: item.confidence, matched: false, food: null, macros: null, basis: item.basis };
+      }
+      const effGrams = await effectiveGramsForFood(sb, food, item.name, item.grams);
       // Report the grams the user weighs/sees (the estimate), not the raw-equivalent.
-      grams: item.grams,
-      confidence: item.confidence,
-      matched: true,
-      food,
-      macros,
-      basis: item.basis,
-    });
-  }
+      return { predictedName: item.name, grams: item.grams, confidence: item.confidence, matched: true, food, macros: macrosForGrams(food, effGrams), basis: item.basis };
+    }),
+  );
 
   const totals = candidates.reduce<MacroTotals>(
     (a, c) => (c.macros ? { kcal: a.kcal + c.macros.kcal, proteinG: a.proteinG + c.macros.proteinG, carbG: a.carbG + c.macros.carbG, fatG: a.fatG + c.macros.fatG } : a),

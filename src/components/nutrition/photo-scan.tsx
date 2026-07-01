@@ -33,6 +33,8 @@ type Candidate = {
 };
 type ApiResult =
   | { status: 'ok'; candidates: Candidate[]; totals: Macros }
+  | { status: 'product'; food: FoodLite; clarify: string | null }
+  | { status: 'clarify'; clarify: string }
   | { status: 'notConfigured' }
   | { status: 'noFood' }
   | { status: 'error' };
@@ -45,6 +47,34 @@ function readAsDataUrl(file: File): Promise<string> {
     r.onload = () => resolve(String(r.result));
     r.onerror = () => reject(new Error('read_failed'));
     r.readAsDataURL(file);
+  });
+}
+
+// Downscale a captured image before sending it to the vision model: smaller image = far faster scan
+// and cheaper tokens, with no meaningful loss for food recognition. Barcode decoding stays on the
+// full-res original (it needs the detail). Falls back to the original on any failure.
+function resizeImage(dataUrl: string, maxDim: number, quality: number): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      if (scale >= 1) {
+        resolve(dataUrl);
+        return;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(dataUrl);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
   });
 }
 
@@ -92,7 +122,7 @@ export function PhotoScan({
     else setOpenInternal(v);
   }
   const [preview, setPreview] = useState<string | null>(null);
-  const [phase, setPhase] = useState<'idle' | 'analyzing' | 'review' | 'product' | 'notConfigured' | 'noFood' | 'error'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'analyzing' | 'review' | 'product' | 'clarify' | 'notConfigured' | 'noFood' | 'error'>('idle');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [slot, setSlot] = useState<MealSlot>('lunch');
   const [logged, setLogged] = useState<Record<number, boolean>>({});
@@ -104,6 +134,7 @@ export function PhotoScan({
   const [unit, setUnit] = useState<ServingUnit>('g');
   const [productLogged, setProductLogged] = useState(false);
   const [productBusy, setProductBusy] = useState(false);
+  const [clarify, setClarify] = useState<string | null>(null);
 
   function reset(): void {
     setPreview(null);
@@ -116,6 +147,7 @@ export function PhotoScan({
     setQty('1');
     setUnit('g');
     setProductLogged(false);
+    setClarify(null);
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -186,11 +218,13 @@ export function PhotoScan({
       }
       // Barcode present but not in Open Food Facts -> fall through to the vision pipeline.
     }
+    // Downscale for the vision call (the barcode was already read from the full-res original above).
+    const scanImage = await resizeImage(dataUrl, 1280, 0.82);
     try {
       const res = await fetch('/api/nutrition/photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: dataUrl }),
+        body: JSON.stringify({ image: scanImage }),
       });
       const json = (await res.json()) as { ok: boolean; data?: ApiResult };
       const data = json.data;
@@ -201,6 +235,20 @@ export function PhotoScan({
       if (data.status === 'ok') {
         setCandidates(data.candidates);
         setPhase('review');
+      } else if (data.status === 'product') {
+        // The photo was a single packaged product / label -> confirm the amount.
+        setProductFood(data.food);
+        setClarify(data.clarify);
+        const drink =
+          data.food.densityGPerMl != null ||
+          /juice|milk|drink|soda|water|tea|coffee|smoothie|shake/i.test(data.food.name);
+        setQty(drink ? '1' : '100');
+        setUnit(drink ? 'cup' : 'g');
+        setProductLogged(false);
+        setPhase('product');
+      } else if (data.status === 'clarify') {
+        setClarify(data.clarify);
+        setPhase('clarify');
       } else {
         setPhase(data.status);
       }
@@ -436,10 +484,40 @@ export function PhotoScan({
               </div>
             )}
 
+            {phase === 'clarify' && (
+              <div>
+                <p className="mb-3 text-[15px] font-medium">{clarify}</p>
+                <textarea
+                  value={desc}
+                  onChange={(e) => setDesc(e.target.value)}
+                  rows={2}
+                  placeholder={t('clarifyPlaceholder')}
+                  className="mb-3 w-full resize-none rounded-2xl border border-line bg-bg p-3 text-[14px] outline-none placeholder:text-faint focus:border-ink"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void onDescribe()}
+                    disabled={desc.trim().length < 2}
+                    className="tf-press flex-1 rounded-full bg-ink py-2.5 text-[13px] font-semibold text-bg disabled:opacity-40"
+                  >
+                    {t('textScanCta')}
+                  </button>
+                  <button type="button" onClick={reset} className="tf-press rounded-full border border-line px-4 py-2.5 text-[13px] font-semibold">
+                    {t('photoNewPhoto')}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {phase === 'product' && productFood && (
               <div>
                 <div className="text-[17px] font-semibold">{productFood.name}</div>
                 <div className="mb-4 text-[12px] text-faint">{productFood.brand ?? ''}</div>
+
+                {clarify ? (
+                  <p className="mb-3 rounded-lg bg-warm p-2.5 text-[12px] leading-relaxed text-muted">{clarify}</p>
+                ) : null}
 
                 {/* How much? Confirm/adjust the amount before logging (this is the "ask" for quantity). */}
                 <div className="mb-3 flex flex-wrap items-center gap-2">

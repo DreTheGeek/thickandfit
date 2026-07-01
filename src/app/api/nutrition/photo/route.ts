@@ -8,7 +8,7 @@ import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { isEntitled } from '@/lib/billing/entitlement';
 import { checkRateLimit } from '@/lib/security/rate-limit';
-import { analyzeMealPhoto } from '@/lib/nutrition/photo';
+import { analyzeSmartPhoto } from '@/lib/nutrition/smart-scan';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,6 +54,6 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) return apiError(parsed.error.issues[0]?.message ?? 'Invalid input', 422);
 
   const locale = await getLocale();
-  const result = await analyzeMealPhoto(parsed.data.image, locale);
+  const result = await analyzeSmartPhoto(parsed.data.image, locale);
   return apiSuccess(result);
 }
