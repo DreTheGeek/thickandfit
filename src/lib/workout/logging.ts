@@ -116,7 +116,33 @@ export type OverloadHint = {
   reps: number;
   rationale: string;
   historyPoints: number;
+  // All-time bests for client-side PR detection (Epley e1RM for weighted, max reps for bodyweight).
+  bestE1rm: number | null;
+  bestReps: number | null;
 };
+
+// Epley estimated 1-rep max. Normalizes weight x reps so "more reps at the same load"
+// and "more load" both register as progress.
+function epley(weight: number, reps: number): number {
+  return weight * (1 + reps / 30);
+}
+
+// Best weighted e1RM and best bodyweight reps across a set history (completed sets only).
+function bestsFromHistory(sets: SetResult[]): { bestE1rm: number | null; bestReps: number | null } {
+  let bestE1rm = 0;
+  let bestReps = 0;
+  for (const s of sets) {
+    if (!s.completed) continue;
+    const reps = s.reps ?? 0;
+    const weight = s.weight ?? 0;
+    if (reps > bestReps) bestReps = reps;
+    if (weight > 0 && reps > 0) {
+      const e = epley(weight, reps);
+      if (e > bestE1rm) bestE1rm = e;
+    }
+  }
+  return { bestE1rm: bestE1rm || null, bestReps: bestReps || null };
+}
 
 type ExerciseTarget = { exerciseId: string; name: string; reps: number | null };
 
@@ -168,9 +194,11 @@ export async function recommendForSession(
 
   await Promise.all(
     targets.map(async (tg) => {
-      const history = (byExercise.get(tg.exerciseId) ?? []).slice(-4);
+      const all = byExercise.get(tg.exerciseId) ?? [];
+      const history = all.slice(-4);
       const rec = recommendNext(history, rangeFromTarget(tg.reps));
       const rationale = await explainRecommendation(rec, tg.name, locale);
+      const { bestE1rm, bestReps } = bestsFromHistory(all);
       out.set(tg.exerciseId, {
         exerciseId: tg.exerciseId,
         action: rec.action,
@@ -178,6 +206,8 @@ export async function recommendForSession(
         reps: rec.reps,
         rationale,
         historyPoints: history.length,
+        bestE1rm,
+        bestReps,
       });
     }),
   );

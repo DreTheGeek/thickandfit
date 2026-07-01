@@ -245,6 +245,24 @@
         "hold": "Hold steady",
         "deload": "Deload"
       },
+      "feltTitle": "How did that set feel?",
+      "difficulty": {
+        "easy": "Easy",
+        "moderate": "Moderate",
+        "hard": "Hard",
+        "failed": "Failed"
+      },
+      "completeTitle": "Workout complete",
+      "completeSubtitle": "Rate it so your coach can dial in what comes next.",
+      "setsLogged": "{count, plural, one {# set logged} other {# sets logged}}",
+      "prTitle": "{count, plural, one {New personal record} other {New personal records}}",
+      "prReps": "{reps, plural, one {# rep} other {# reps}}",
+      "enjoymentLabel": "How did it feel?",
+      "enjoymentLow": "Rough",
+      "enjoymentHigh": "Loved it",
+      "effortLabel": "How hard was it?",
+      "effortLow": "Easy",
+      "effortHigh": "All out",
       "untitled": "Exercise"
     },
     "coach": {

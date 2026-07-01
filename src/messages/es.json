@@ -245,6 +245,24 @@
         "hold": "Mantén firme",
         "deload": "Baja la carga"
       },
+      "feltTitle": "¿Cómo se sintió esa serie?",
+      "difficulty": {
+        "easy": "Fácil",
+        "moderate": "Moderada",
+        "hard": "Difícil",
+        "failed": "No pude"
+      },
+      "completeTitle": "Entreno completo",
+      "completeSubtitle": "Califícalo para que tu coach ajuste lo que sigue.",
+      "setsLogged": "{count, plural, one {# serie registrada} other {# series registradas}}",
+      "prTitle": "{count, plural, one {Nuevo récord personal} other {Nuevos récords personales}}",
+      "prReps": "{reps, plural, one {# rep} other {# reps}}",
+      "enjoymentLabel": "¿Cómo te sentiste?",
+      "enjoymentLow": "Dura",
+      "enjoymentHigh": "Me encantó",
+      "effortLabel": "¿Qué tan intenso fue?",
+      "effortLow": "Suave",
+      "effortHigh": "Al máximo",
       "untitled": "Ejercicio"
     },
     "coach": {

@@ -111,6 +111,8 @@ export default async function WorkoutPage({
             historyPoints: hint.historyPoints,
           }
         : null,
+      bestE1rm: hint?.bestE1rm ?? null,
+      bestReps: hint?.bestReps ?? null,
     };
   });
 
