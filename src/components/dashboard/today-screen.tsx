@@ -17,9 +17,14 @@ import { Icon } from '@/components/ui/icons';
 import { IconTile, ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
 import { SectionTitle } from '@/components/ui/section';
+import { MacroRing } from '@/components/coach/macro-ring';
+import { ProgressBar } from '@/components/ui/ring';
 import type { DashboardSummary } from '@/lib/dashboard/summary';
+import type { MacroTotals } from '@/lib/nutrition/macros';
 import { toggleHabitAction } from '@/lib/habits/habit-actions';
 import type { TodayHabit } from '@/lib/habits/habits';
+
+export type TodayNutrition = { consumed: MacroTotals; target: MacroTotals };
 
 export type WeekDay = { key: string; label: string; day: number; isToday: boolean };
 
@@ -29,12 +34,14 @@ export function TodayScreen({
   weekDays: weekDaysInit,
   initial,
   habits: habitsInit,
+  nutrition,
 }: {
   name: string;
   dateLabel: string;
   weekDays: WeekDay[];
   initial: DashboardSummary | null;
   habits: TodayHabit[];
+  nutrition: TodayNutrition | null;
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
@@ -116,17 +123,11 @@ export function TodayScreen({
       ? 'Hola'
       : 'Hey there';
 
+  // The notification bell + messages entry live in the app top bar / rail (rendered by the layout), so
+  // the home header is just the wordmark. (Previously this rendered a dead, disabled bell placeholder.)
   const header = (
-    <div className="mb-[18px] flex items-center justify-between">
+    <div className="mb-[18px] flex items-center">
       <Wordmark height={20} />
-      {/* Notifications are a later phase. Render the bell as a non-interactive placeholder rather than
-          linking it to the /messages Coming-Soon stub -- a dead-end tap on the home screen. */}
-      <span
-        aria-hidden
-        className="flex h-[34px] w-[34px] items-center justify-center border border-line text-faint opacity-50"
-      >
-        <Icon name="bell" size={18} />
-      </span>
     </div>
   );
 
@@ -200,6 +201,9 @@ export function TodayScreen({
 
       <h1 className="tf-display text-[34px]">{greeting}</h1>
       <p className="mt-1.5 text-[14px] text-faint">{dateLabel}</p>
+
+      {/* Nutrition first: the moat lives on the home screen. Today's intake vs. target + a log CTA. */}
+      {nutrition ? <NutritionCard n={nutrition} t={t} /> : null}
 
       {/* Plateau nudge: dismissible, only when the latest insight flags an active plateau. */}
       {plateau && !plateauDismissed ? (
@@ -315,5 +319,70 @@ export function TodayScreen({
         />
       ))}
     </div>
+  );
+}
+
+// Today's nutrition: the macro ring + calories consumed vs. target + per-macro progress. The home
+// screen of a nutrition-first app must lead with this. Tapping "Log a meal" opens the diary.
+function NutritionCard({
+  n,
+  t,
+}: {
+  n: TodayNutrition;
+  t: ReturnType<typeof useTranslations>;
+}): ReactElement {
+  const { consumed, target } = n;
+  const kcalLeft = Math.max(0, Math.round(target.kcal - consumed.kcal));
+  const over = consumed.kcal > target.kcal;
+  const rows = [
+    { key: 'p', label: t('today.macroProtein'), got: Math.round(consumed.proteinG), goal: Math.round(target.proteinG), color: 'var(--color-macro-protein)' },
+    { key: 'c', label: t('today.macroCarbs'), got: Math.round(consumed.carbG), goal: Math.round(target.carbG), color: 'var(--color-macro-carbs)' },
+    { key: 'f', label: t('today.macroFat'), got: Math.round(consumed.fatG), goal: Math.round(target.fatG), color: 'var(--color-macro-fat)' },
+  ];
+  return (
+    <Card className="mt-5 p-[18px]">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-[1.5px] text-faint">
+          {t('today.nutritionTitle')}
+        </span>
+        <Link href="/nutrition" className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent">
+          {t('today.logMeal')}
+          <Icon name="chevronRight" size={14} />
+        </Link>
+      </div>
+      <div className="flex items-center gap-4">
+        <MacroRing
+          proteinG={consumed.proteinG}
+          carbG={consumed.carbG}
+          fatG={consumed.fatG}
+          kcal={Math.round(consumed.kcal)}
+          size={84}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="tf-display text-[24px] leading-none">
+            {Math.round(consumed.kcal)}
+            <span className="text-[14px] text-faint"> / {Math.round(target.kcal)} kcal</span>
+          </div>
+          <div className="mt-0.5 text-[12px] text-faint">
+            {over
+              ? t('today.kcalOver', { n: String(Math.round(consumed.kcal - target.kcal)) })
+              : t('today.kcalLeft', { n: String(kcalLeft) })}
+          </div>
+          <div className="mt-3 space-y-2">
+            {rows.map((r) => (
+              <div key={r.key}>
+                <div className="mb-1 flex justify-between text-[12px]">
+                  <span className="text-muted">{r.label}</span>
+                  <span className="text-faint">
+                    {r.got}/{r.goal} g
+                  </span>
+                </div>
+                <ProgressBar pct={r.goal > 0 ? (r.got / r.goal) * 100 : 0} color={r.color} height={5} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }

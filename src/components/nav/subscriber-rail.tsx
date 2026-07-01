@@ -83,6 +83,19 @@ export function SubscriberRail({
             </Link>
           );
         })}
+        <Link
+          href="/inbox"
+          aria-current={pathname.startsWith('/inbox') ? 'page' : undefined}
+          className={[
+            'flex items-center gap-3 rounded-full px-4 py-2.5 text-[14px] font-medium transition-colors',
+            pathname.startsWith('/inbox')
+              ? 'bg-warm font-semibold text-ink'
+              : 'text-muted hover:bg-warm/60 hover:text-ink',
+          ].join(' ')}
+        >
+          <Icon name="chat" size={18} />
+          {t('messages')}
+        </Link>
       </nav>
       <div className="border-t border-line p-3">
         <form action={signOutAction}>

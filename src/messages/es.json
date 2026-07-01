@@ -67,7 +67,8 @@
       "activities": "Actividades",
       "nutrition": "Nutrición",
       "you": "Tú",
-      "chat": "Chat"
+      "chat": "Chat",
+      "messages": "Mensajes"
     },
     "community": {
       "title": "Comunidad",
@@ -113,6 +114,13 @@
     },
     "today": {
       "greeting": "Hola {name}",
+      "nutritionTitle": "Nutrición de hoy",
+      "logMeal": "Registrar comida",
+      "kcalLeft": "{n} kcal restantes hoy",
+      "kcalOver": "{n} kcal sobre el objetivo",
+      "macroProtein": "Proteína",
+      "macroCarbs": "Carbos",
+      "macroFat": "Grasa",
       "week": "Estás en la semana {week} de {total}",
       "checkinTitle": "Hora de tu check-in",
       "checkinBody": "Comparte tu progreso y mantén tu racha viva.",
@@ -391,6 +399,7 @@
       "colStatus": "Estado",
       "active": "Activo",
       "backToSubs": "Volver a suscriptores",
+      "messageClient": "Mensaje",
       "subscriberProfile": "Perfil de suscriptor",
       "memberSince": "Miembro desde {date}",
       "english": "Inglés",

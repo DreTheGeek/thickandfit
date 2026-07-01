@@ -1,7 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
+import { Icon } from '@/components/ui/icons';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 
 /**
@@ -22,10 +25,18 @@ export function SubscriberTopBar({
   profileId: string;
 }): ReactElement | null {
   const pathname = usePathname();
+  const t = useTranslations('app.nav');
   if (isHidden(pathname)) return null;
 
   return (
-    <div className="flex h-12 flex-none items-center justify-end border-b border-line/60 bg-surface px-2 lg:hidden">
+    <div className="flex h-12 flex-none items-center justify-end gap-1 border-b border-line/60 bg-surface px-2 lg:hidden">
+      <Link
+        href="/inbox"
+        aria-label={t('messages')}
+        className="tf-press flex h-9 w-9 items-center justify-center text-muted"
+      >
+        <Icon name="chat" size={20} />
+      </Link>
       <NotificationBell initialUnread={initialUnread} profileId={profileId} />
     </div>
   );
