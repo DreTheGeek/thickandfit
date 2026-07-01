@@ -40,11 +40,26 @@ function confidenceTone(c: number): string {
   return 'text-faint';
 }
 
-export function PhotoScan(): ReactElement {
+export function PhotoScan({
+  open: openProp,
+  onOpenChange,
+  hideTrigger = false,
+}: {
+  /** Controlled open state (e.g. driven by the global capture FAB). Omit for the self-contained diary card. */
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  /** Hide the inline diary entry button (when the FAB owns the trigger). */
+  hideTrigger?: boolean;
+} = {}): ReactElement {
   const t = useTranslations('app.nutrition');
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [open, setOpen] = useState(false);
+  const [openInternal, setOpenInternal] = useState(false);
+  const open = openProp ?? openInternal;
+  function setOpen(v: boolean): void {
+    if (onOpenChange) onOpenChange(v);
+    else setOpenInternal(v);
+  }
   const [preview, setPreview] = useState<string | null>(null);
   const [phase, setPhase] = useState<'idle' | 'analyzing' | 'review' | 'notConfigured' | 'noFood' | 'error'>('idle');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -161,26 +176,28 @@ export function PhotoScan(): ReactElement {
         }}
       />
 
-      {/* Entry button on the diary */}
-      <button
-        type="button"
-        onClick={() => {
-          setOpen(true);
-          reset();
-        }}
-        className="tf-press flex w-full items-center gap-3 rounded-2xl border border-line bg-surface p-4 text-left hover:border-ink"
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink text-bg">
-          <Icon name="camera" size={18} />
-        </span>
-        <span className="min-w-0">
-          <span className="flex items-center gap-1.5 text-[14px] font-semibold">
-            {t('photoScanTitle')}
-            <Icon name="sparkles" size={14} />
+      {/* Entry button on the diary (hidden when the global capture FAB owns the trigger) */}
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={() => {
+            reset();
+            setOpen(true);
+          }}
+          className="tf-press flex w-full items-center gap-3 rounded-2xl border border-line bg-surface p-4 text-left hover:border-ink"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink text-bg">
+            <Icon name="camera" size={18} />
           </span>
-          <span className="block text-[12px] text-faint">{t('photoScanSubtitle')}</span>
-        </span>
-      </button>
+          <span className="min-w-0">
+            <span className="flex items-center gap-1.5 text-[14px] font-semibold">
+              {t('photoScanTitle')}
+              <Icon name="sparkles" size={14} />
+            </span>
+            <span className="block text-[12px] text-faint">{t('photoScanSubtitle')}</span>
+          </span>
+        </button>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={() => setOpen(false)}>

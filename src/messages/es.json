@@ -68,7 +68,8 @@
       "nutrition": "Nutrición",
       "you": "Tú",
       "chat": "Chat",
-      "messages": "Mensajes"
+      "messages": "Mensajes",
+      "logFood": "Registrar comida"
     },
     "community": {
       "title": "Comunidad",
@@ -121,6 +122,8 @@
       "kcalLeftLabel": "restan",
       "kcalOverLabel": "de más",
       "paceGoalBy": "Vas bien: meta para {date}",
+      "catchUpTitle": "Novedades",
+      "daysLeft": "{n} días",
       "macroProtein": "Proteína",
       "macroCarbs": "Carbos",
       "macroFat": "Grasa",

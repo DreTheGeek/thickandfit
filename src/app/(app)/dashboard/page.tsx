@@ -7,8 +7,9 @@ import { createClient } from '@/lib/supabase/server';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
 import { getTodayHabits, localToday } from '@/lib/habits/habits';
 import { getDiary } from '@/lib/nutrition/diary';
+import { getCommunity } from '@/lib/community/feed';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
-import { TodayScreen, type WeekDay, type TodayNutrition } from '@/components/dashboard/today-screen';
+import { TodayScreen, type WeekDay, type TodayNutrition, type CatchUp } from '@/components/dashboard/today-screen';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,29 @@ export default async function DashboardPage(): Promise<ReactElement> {
     }
   }
 
+  // Catch-up: newest coach broadcast + active challenge progress (best-effort; never blocks the home).
+  let catchUp: CatchUp | null = null;
+  if (ctx.companyId) {
+    try {
+      const community = await getCommunity(ctx.userId);
+      catchUp = {
+        broadcast: community.broadcast
+          ? { author: community.broadcast.author.name, body: community.broadcast.body }
+          : null,
+        challenge: community.challenge
+          ? {
+              title: community.challenge.title,
+              progress: community.challenge.viewerProgress,
+              goal: community.challenge.goal,
+              daysLeft: community.challenge.daysLeft,
+            }
+          : null,
+      };
+    } catch {
+      catchUp = null;
+    }
+  }
+
   const now = new Date();
   const dateLabel = new Intl.DateTimeFormat(locale, {
     weekday: 'long',
@@ -52,6 +76,9 @@ export default async function DashboardPage(): Promise<ReactElement> {
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
   const narrow = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+  const activeSet = new Set(summary?.activeDays ?? []);
+  const isoOf = (d: Date): string =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const weekDays: WeekDay[] = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(startOfWeek);
     d.setDate(startOfWeek.getDate() + i);
@@ -60,6 +87,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
       label: narrow.format(d),
       day: d.getDate(),
       isToday: d.toDateString() === now.toDateString(),
+      completed: activeSet.has(isoOf(d)),
     };
   });
 
@@ -71,6 +99,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
       initial={summary}
       habits={habits}
       nutrition={nutrition}
+      catchUp={catchUp}
     />
   );
 }

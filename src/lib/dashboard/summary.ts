@@ -15,6 +15,8 @@ export type DashboardSummary = {
   plateau: { daysFlat: number } | null;
   // Goal-pace chip from the latest insight: are they on pace + the projected goal date.
   pace: { onPace: boolean | null; goalDate: string | null } | null;
+  // Local ISO days the member was active (for painting the home week strip green).
+  activeDays: string[];
 };
 
 type InsightPayloadShape = {
@@ -79,9 +81,11 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
   // Real streak from the gamification engine (safe to recompute on dashboard load; also refreshes
   // badges + fires any newly-earned confetti). Degrades to 0 on any failure, never blocks the home.
   let streak = 0;
+  let activeDays: string[] = [];
   try {
-    const { snapshot } = await recomputeGamification(userId, companyId);
-    streak = snapshot.streak.currentStreak;
+    const gam = await recomputeGamification(userId, companyId);
+    streak = gam.snapshot.streak.currentStreak;
+    activeDays = gam.activeDays;
   } catch (e) {
     console.error('dashboard streak:', e instanceof Error ? e.message : e);
   }
@@ -94,5 +98,6 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
     recentActivity: [],
     plateau,
     pace,
+    activeDays,
   };
 }

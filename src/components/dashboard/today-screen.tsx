@@ -17,7 +17,7 @@ import { Icon } from '@/components/ui/icons';
 import { IconTile, ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
 import { SectionTitle } from '@/components/ui/section';
-import { ProgressRing } from '@/components/ui/ring';
+import { ProgressRing, ProgressBar } from '@/components/ui/ring';
 import type { DashboardSummary } from '@/lib/dashboard/summary';
 import type { MacroTotals } from '@/lib/nutrition/macros';
 import { toggleHabitAction } from '@/lib/habits/habit-actions';
@@ -25,7 +25,12 @@ import type { TodayHabit } from '@/lib/habits/habits';
 
 export type TodayNutrition = { consumed: MacroTotals; target: MacroTotals };
 
-export type WeekDay = { key: string; label: string; day: number; isToday: boolean };
+export type CatchUp = {
+  broadcast: { author: string; body: string } | null;
+  challenge: { title: string; progress: number; goal: number | null; daysLeft: number } | null;
+};
+
+export type WeekDay = { key: string; label: string; day: number; isToday: boolean; completed?: boolean };
 
 export function TodayScreen({
   name,
@@ -34,6 +39,7 @@ export function TodayScreen({
   initial,
   habits: habitsInit,
   nutrition,
+  catchUp,
 }: {
   name: string;
   dateLabel: string;
@@ -41,6 +47,7 @@ export function TodayScreen({
   initial: DashboardSummary | null;
   habits: TodayHabit[];
   nutrition: TodayNutrition | null;
+  catchUp: CatchUp | null;
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
@@ -70,6 +77,9 @@ export function TodayScreen({
     const start = new Date(now);
     start.setDate(now.getDate() - now.getDay());
     const narrow = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+    const active = new Set(summary?.activeDays ?? []);
+    const isoOf = (d: Date): string =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     setWeekDays(
       Array.from({ length: 7 }, (_, i) => {
         const d = new Date(start);
@@ -79,10 +89,11 @@ export function TodayScreen({
           label: narrow.format(d),
           day: d.getDate(),
           isToday: d.toDateString() === now.toDateString(),
+          completed: active.has(isoOf(d)),
         };
       }),
     );
-  }, [locale]);
+  }, [locale, summary]);
 
   // Plateau banner dismissal. We key the dismissed flag by the plateau span so a freshly-extended
   // plateau re-surfaces the banner instead of staying hidden forever. Persisted in localStorage so
@@ -224,6 +235,9 @@ export function TodayScreen({
       {/* Nutrition first: the moat lives on the home screen. Cal-AI-style calories-left hero. */}
       {nutrition ? <NutritionCard n={nutrition} t={t} /> : null}
 
+      {/* Catch-up: newest coach broadcast + active challenge progress, so home feels alive. */}
+      {catchUp && (catchUp.broadcast || catchUp.challenge) ? <CatchUpCard c={catchUp} t={t} /> : null}
+
       {/* Plateau nudge: dismissible, only when the latest insight flags an active plateau. */}
       {plateau && !plateauDismissed ? (
         <Card className="mt-5 flex items-start gap-3 p-[18px]">
@@ -287,6 +301,10 @@ export function TodayScreen({
             <div className="text-[11px] text-faint">{d.label}</div>
             {d.isToday ? (
               <div className="mx-auto mt-1 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-ink text-[13px] text-white">
+                {d.day}
+              </div>
+            ) : d.completed ? (
+              <div className="mx-auto mt-1 flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 border-accent text-[13px] font-semibold text-ink">
                 {d.day}
               </div>
             ) : (
@@ -400,6 +418,60 @@ function NutritionCard({
         </div>
       </div>
     </Card>
+  );
+}
+
+// Catch-up: the newest coach broadcast + the active challenge progress. Makes the home feel alive
+// (the AI Junkies "mission control" pattern) instead of a static form. Taps through to /community.
+function CatchUpCard({
+  c,
+  t,
+}: {
+  c: CatchUp;
+  t: ReturnType<typeof useTranslations>;
+}): ReactElement {
+  return (
+    <div className="mt-6">
+      <SectionTitle className="mb-2.5" action={<Link href="/community">{t('common.viewAll')}</Link>}>
+        {t('today.catchUpTitle')}
+      </SectionTitle>
+      <div className="flex flex-col gap-2">
+        {c.broadcast ? (
+          <Link href="/community" className="tf-press block">
+            <Card className="p-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[1px] text-accent">
+                {c.broadcast.author}
+              </div>
+              <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed">{c.broadcast.body}</p>
+            </Card>
+          </Link>
+        ) : null}
+        {c.challenge ? (
+          <Link href="/community" className="tf-press block">
+            <Card className="p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-[14px] font-semibold">{c.challenge.title}</span>
+                <span className="shrink-0 text-[12px] text-faint">
+                  {t('today.daysLeft', { n: String(c.challenge.daysLeft) })}
+                </span>
+              </div>
+              {c.challenge.goal ? (
+                <div className="mt-2.5">
+                  <ProgressBar
+                    pct={c.challenge.goal > 0 ? (c.challenge.progress / c.challenge.goal) * 100 : 0}
+                    color="var(--color-accent)"
+                    height={6}
+                  />
+                  <div className="mt-1 text-[12px] text-faint">
+                    {Math.round(c.challenge.progress)} / {c.challenge.goal}
+                  </div>
+                </div>
+              ) : null}
+            </Card>
+          </Link>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

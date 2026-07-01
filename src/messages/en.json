@@ -68,7 +68,8 @@
       "nutrition": "Nutrition",
       "you": "You",
       "chat": "Chat",
-      "messages": "Messages"
+      "messages": "Messages",
+      "logFood": "Log food"
     },
     "community": {
       "title": "Community",
@@ -121,6 +122,8 @@
       "kcalLeftLabel": "left",
       "kcalOverLabel": "over",
       "paceGoalBy": "On track: goal by {date}",
+      "catchUpTitle": "Catch up",
+      "daysLeft": "{n} days left",
       "macroProtein": "Protein",
       "macroCarbs": "Carbs",
       "macroFat": "Fat",

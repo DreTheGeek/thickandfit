@@ -47,6 +47,9 @@ type DbBadge = {
 export type RecomputeResult = {
   snapshot: GamificationSnapshot;
   newlyEarnedKeys: string[];
+  // Distinct local ISO days (YYYY-MM-DD) the member was active (workout | food log | weight entry),
+  // ascending. The home week strip paints these green.
+  activeDays: string[];
 };
 
 function toBadge(b: DbBadge): Badge {
@@ -350,5 +353,5 @@ export async function recomputeGamification(
     totalCount: badgeStatuses.length,
   };
 
-  return { snapshot, newlyEarnedKeys };
+  return { snapshot, newlyEarnedKeys, activeDays: activeAsc };
 }

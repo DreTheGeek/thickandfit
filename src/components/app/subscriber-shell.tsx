@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { BottomNav } from '@/components/nav/bottom-nav';
 import { SubscriberRail } from '@/components/nav/subscriber-rail';
 import { SubscriberTopBar } from '@/components/notifications/subscriber-topbar';
+import { CaptureFab } from '@/components/app/capture-fab';
 import { resolveAuth } from '@/lib/auth/session';
 import { getUnreadCount } from '@/lib/notifications/queries';
 
@@ -26,6 +27,7 @@ export async function SubscriberShell({
         <SubscriberTopBar initialUnread={unread} profileId={profileId} />
         <main className="tf-scroll flex-1">{children}</main>
         <BottomNav />
+        <CaptureFab />
       </div>
     </div>
   );
