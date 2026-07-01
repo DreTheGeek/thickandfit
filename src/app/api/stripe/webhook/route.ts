@@ -102,6 +102,10 @@ export async function POST(req: Request): Promise<Response> {
 
   try {
     switch (type) {
+      // `created` is what flips a NEW subscriber to entitled the moment Checkout completes. Without it,
+      // the first grant depended on event ordering (a stray invoice.payment_succeeded first would drop).
+      // The subscription_data.metadata (profile_id/company_id) set at checkout resolves the tenant here.
+      case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const sub = SubscriptionObject.parse(data.object);

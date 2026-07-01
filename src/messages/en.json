@@ -956,6 +956,16 @@
         "generic": "Something went wrong. Please try again."
       }
     },
+    "checkout": {
+      "title": "Unlock your plan",
+      "subtitle": "Your personalized plan is ready. Subscribe to train with Stephanie, track nutrition by photo, and get your AI coach.",
+      "targetsLabel": "Your daily targets",
+      "includedLabel": "What's included",
+      "featureWorkouts": "Structured workouts with Stephanie's filmed demos",
+      "featureNutrition": "Photo and text nutrition tracking, cooked-or-raw accurate",
+      "featureCoach": "Your AI coach, in her voice, whenever you need her",
+      "featureCommunity": "The community, challenges, and progress tracking"
+    },
     "billing": {
       "title": "Billing",
       "back": "Back",

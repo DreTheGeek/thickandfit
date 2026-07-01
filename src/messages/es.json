@@ -956,6 +956,16 @@
         "generic": "Algo salió mal. Inténtalo de nuevo."
       }
     },
+    "checkout": {
+      "title": "Desbloquea tu plan",
+      "subtitle": "Tu plan personalizado está listo. Suscríbete para entrenar con Stephanie, contar tus macros por foto y tener tu coach de IA.",
+      "targetsLabel": "Tus objetivos diarios",
+      "includedLabel": "Qué incluye",
+      "featureWorkouts": "Rutinas estructuradas con los videos de Stephanie",
+      "featureNutrition": "Registro de nutrición por foto y texto, preciso cocido o crudo",
+      "featureCoach": "Tu coach de IA, en su voz, cuando la necesites",
+      "featureCommunity": "La comunidad, los retos y el seguimiento de tu progreso"
+    },
     "billing": {
       "title": "Facturación",
       "back": "Atrás",

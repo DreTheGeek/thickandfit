@@ -105,7 +105,13 @@ export async function upsertSubscriptionFromStripe(sub: StripeSubscriptionObject
     resolvedProfile = resolvedProfile ?? existing?.profile_id ?? null;
     resolvedCompany = resolvedCompany ?? existing?.company_id ?? null;
   }
-  if (!resolvedProfile || !resolvedCompany) return; // cannot place this row; drop silently
+  if (!resolvedProfile || !resolvedCompany) {
+    // Never drop a money event silently (global rule): a charged-but-not-granted user must be catchable.
+    console.error(
+      `upsertSubscriptionFromStripe: unresolved tenant for subscription ${sub.id} (no metadata + no existing row); grant NOT applied`,
+    );
+    return;
+  }
 
   await svc.from('subscriptions').upsert(
     {
@@ -161,7 +167,13 @@ export async function recordInvoicePayment(
     profileId = sub?.profile_id ?? null;
     companyId = sub?.company_id ?? null;
   }
-  if (!companyId) return; // need a tenant for NOT NULL; skip if we cannot resolve it
+  if (!companyId) {
+    // Never drop a money event silently (global rule): surface an invoice we cannot reconcile to a tenant.
+    console.error(
+      `recordInvoicePayment: unresolved tenant for invoice ${invoice.id} (subscription ${invoice.subscription ?? 'none'} not found); payment NOT recorded`,
+    );
+    return;
+  }
 
   await svc.from('payments').upsert(
     {
