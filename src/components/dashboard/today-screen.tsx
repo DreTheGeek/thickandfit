@@ -133,18 +133,12 @@ export function TodayScreen({
       ? 'Hola'
       : 'Hey there';
 
-  // Header: wordmark + a live streak flame (Cal-AI style). The notification bell + messages entry live
-  // in the app top bar / rail (rendered by the layout), so they are not repeated here.
+  // Header: wordmark only. The streak now lives in the dark hero (canonical), and the bell +
+  // messages entry live in the app top bar / rail (rendered by the layout).
   const streak = summary?.streak ?? 0;
   const header = (
     <div className="mb-[18px] flex items-center justify-between">
       <Wordmark height={20} />
-      {streak > 0 ? (
-        <span className="flex items-center gap-1 rounded-full bg-warm px-2.5 py-1 text-[13px] font-bold">
-          <Icon name="flame" size={15} className="text-accent" />
-          {streak}
-        </span>
-      ) : null}
     </div>
   );
 
@@ -212,25 +206,59 @@ export function TodayScreen({
     ? t('activities.todaysWorkout')
     : t('activities.noProgram');
 
+  // Personalized macro status for the hero: how far from "closing" today, then a coaching nudge.
+  let heroMessage: string = t('today.checkinBody');
+  if (nutrition) {
+    const calLeft = Math.round(nutrition.target.kcal - nutrition.consumed.kcal);
+    const proteinLeft = Math.max(0, Math.round(nutrition.target.proteinG - nutrition.consumed.proteinG));
+    heroMessage =
+      calLeft > 0
+        ? `${t('today.heroFromClosing', { cals: calLeft, protein: proteinLeft })} ${t('today.heroNudge')}`
+        : t('today.heroClosed');
+  }
+
   return (
     <div className="px-[22px] pb-7 pt-3">
       {header}
 
-      <h1 className="tf-display text-[34px]">{greeting}</h1>
-      <p className="mt-1.5 text-[14px] text-faint">{dateLabel}</p>
-
-      {/* Goal-pace chip from the latest nightly insight (only when we have a projected date). */}
-      {summary.pace?.goalDate ? (
-        <div
-          className={[
-            'mt-2.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold',
-            summary.pace.onPace === false ? 'bg-warm text-muted' : 'bg-accent/12 text-accent',
-          ].join(' ')}
-        >
-          <Icon name="pulse" size={13} />
-          {t('today.paceGoalBy', { date: fmtGoalDate(summary.pace.goalDate, locale) })}
+      {/* Canonical dark hero: week/program eyebrow + greeting + personalized macro status + the two
+          CTAs (check-in, book a call) + streak. Leads the screen, per the 7.1 Portal. */}
+      <Card dark className="p-[22px]">
+        {summary.todaysWorkout?.name ? (
+          <div className="text-[11px] font-semibold uppercase tracking-[2px] text-white/55">
+            {summary.todaysWorkout.name}
+          </div>
+        ) : null}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="tf-display mt-1 text-[32px] leading-none text-white">{greeting}</h1>
+            <p className="mt-1 text-[12px] text-white/45">{dateLabel}</p>
+            <p className="mt-2.5 text-[13px] leading-[1.5] text-white/65">{heroMessage}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              <ButtonLink href="/checkin" variant="light" size="sm">
+                {t('today.checkinCta')}
+              </ButtonLink>
+              <Link
+                href="/inbox"
+                className="tf-press rounded-full border border-white/35 px-4 py-2 text-[12px] font-semibold uppercase tracking-[1px] text-white"
+              >
+                {t('today.bookCall')}
+              </Link>
+            </div>
+          </div>
+          {streak > 0 ? (
+            <div className="flex flex-none flex-col items-center">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-accent">
+                <Icon name="flame" size={20} />
+              </span>
+              <span className="tf-display mt-1.5 text-[26px] leading-none text-white">{streak}</span>
+              <span className="text-[9px] uppercase tracking-[1.5px] text-white/55">
+                {t('today.streakUnit')}
+              </span>
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </Card>
 
       {/* Nutrition first: the moat lives on the home screen. Cal-AI-style calories-left hero. */}
       {nutrition ? <NutritionCard n={nutrition} t={t} /> : null}
@@ -269,30 +297,6 @@ export function TodayScreen({
           </button>
         </Card>
       ) : null}
-
-      {/* Check-in prompt */}
-      <Card dark className="mt-5 flex items-center gap-4 p-[22px]">
-        <div className="flex-1">
-          <div className="tf-display text-[26px] leading-[1.06]">
-            {t('today.checkinTitle')}
-          </div>
-          <p className="mb-4 mt-2.5 text-[13px] leading-[1.5] text-white/65">
-            {t('today.checkinBody')}
-          </p>
-          <div className="flex items-center gap-3">
-            <ButtonLink href="/checkin" variant="light" size="sm">
-              {t('today.checkinCta')}
-            </ButtonLink>
-          </div>
-        </div>
-        <div
-          className="h-[104px] w-[84px] flex-none rounded-xl bg-cover"
-          style={{
-            backgroundImage: "url('/brand/img/steph-hero.avif')",
-            backgroundPosition: 'center 20%',
-          }}
-        />
-      </Card>
 
       {/* Week strip */}
       <div className="mt-[22px] flex justify-between">
@@ -475,10 +479,3 @@ function CatchUpCard({
   );
 }
 
-// ISO (YYYY-MM-DD) -> a short local "Aug 14" label for the goal-pace chip.
-function fmtGoalDate(iso: string, locale: string): string {
-  const [y, m, d] = iso.split('-').map(Number);
-  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(
-    new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1),
-  );
-}
