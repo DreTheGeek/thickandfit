@@ -47,9 +47,10 @@ export function WeightTrendChart({
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
       <defs>
+        {/* Ink line + fill: green is functional-only (the delta figure), never a decorative trend line. */}
         <linearGradient id="gWeight" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#5EBE62" stopOpacity={0.22} />
-          <stop offset="100%" stopColor="#5EBE62" stopOpacity={0} />
+          <stop offset="0%" stopColor="var(--color-ink)" stopOpacity={0.14} />
+          <stop offset="100%" stopColor="var(--color-ink)" stopOpacity={0} />
         </linearGradient>
       </defs>
 
@@ -81,10 +82,10 @@ export function WeightTrendChart({
       )}
 
       {area && <path d={area} fill="url(#gWeight)" />}
-      {n > 1 && <path d={line} fill="none" stroke="#5EBE62" strokeWidth={2.5} />}
+      {n > 1 && <path d={line} fill="none" stroke="var(--color-ink)" strokeWidth={2.5} />}
 
       {series.map((p, i) => (
-        <circle key={i} cx={x(i)} cy={y(p.lb)} r={n > 30 ? 1.8 : 3} fill="#5EBE62">
+        <circle key={i} cx={x(i)} cy={y(p.lb)} r={n > 30 ? 1.8 : 3} fill="var(--color-ink)">
           <title>{`${p.on}: ${p.lb} lb`}</title>
         </circle>
       ))}

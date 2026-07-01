@@ -5,7 +5,9 @@ import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 
 type Mode = 'light' | 'dark' | 'system';
-const MODES: Mode[] = ['light', 'dark', 'system'];
+// Light is the pinned default (the 7.1 handoff is a light design); dark is opt-in. We do not
+// auto-follow the OS, so the toggle is a straight light/dark switch (no 'system').
+const MODES: Mode[] = ['light', 'dark'];
 
 // Sun / moon / monitor glyphs (inline so the toggle is self-contained).
 const GLYPH: Record<Mode, ReactElement> = {
@@ -35,7 +37,8 @@ export function ThemeToggle(): ReactElement {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const active = (mounted ? theme : 'light') as Mode;
+  // A legacy 'system' choice (from before we dropped auto-system) resolves to light.
+  const active: Mode = mounted && theme === 'dark' ? 'dark' : 'light';
 
   return (
     <div className="inline-flex items-center gap-0.5 rounded-full border border-line p-0.5">

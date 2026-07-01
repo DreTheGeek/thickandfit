@@ -11,12 +11,14 @@
    Raw palette lives in :root (light) + [data-theme="dark"] (dark); @theme maps to it.
    ========================================================================== */
 :root {
+  /* Warm-cream app surface, canonical per the 7.1 Client Portal handoff (page #E7E5DF, white
+     cards, warm insets) -- warmer than the older #fafafa library files. */
   --c-ink: #0f0f0f;
-  --c-bg: #fafafa;
+  --c-bg: #e7e5df;
   --c-surface: #ffffff;
-  --c-warm: #f0f0f0;
-  --c-line: #e4e4e4;
-  --c-divider: #f0f0ee;
+  --c-warm: #dddbd3;
+  --c-line: #ddd9d0;
+  --c-divider: #eae7e0;
   --c-muted: #767676;
   --c-soft: #5c5c5c;
   --c-faint: #999999;
