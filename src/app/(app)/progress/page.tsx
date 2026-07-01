@@ -1,20 +1,35 @@
-// Subscriber progress-photos screen (PRD-24, subscriber side). The client captures their own
-// photos going forward; coaches see imported Lenus photos in the client Files tab separately.
+// Subscriber progress screen (PRD-24). Three tabs: Gallery (own photos), Body (weight trend,
+// weekly recap, measurements), Compare (before/after). Coaches see imported Lenus photos in the
+// client Files tab separately.
 import type { ReactElement } from 'react';
 import { requireEntitled } from '@/lib/auth/guards';
 import { listPhotosAction } from '@/lib/progress-photos/actions';
 import { getLegacySnapshot } from '@/lib/legacy/snapshot';
+import { getBodyStats } from '@/lib/body/stats';
+import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 import { ProgressPhotosScreen } from '@/components/progress/progress-photos-screen';
 import { LegacySnapshotCard } from '@/components/legacy/legacy-snapshot-card';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ProgressPage(): Promise<ReactElement> {
+type Tab = 'gallery' | 'body' | 'compare';
+
+export default async function ProgressPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}): Promise<ReactElement> {
   const ctx = await requireEntitled();
-  const photos = await listPhotosAction();
-  // Claimed legacy clients see a read-only "journey so far" card above their gallery. Returns null
-  // (renders nothing) for everyone else.
-  const snapshot = ctx.companyId ? await getLegacySnapshot(ctx.userId, ctx.companyId) : null;
+  const sp = await searchParams;
+  const initialTab: Tab = sp.tab === 'body' || sp.tab === 'compare' ? sp.tab : 'gallery';
+  const tz = await getProfileTimezone(ctx.userId);
+
+  const [photos, body, snapshot] = await Promise.all([
+    listPhotosAction(),
+    getBodyStats(ctx.userId, tz),
+    // Claimed legacy clients see a read-only "journey so far" card; null for everyone else.
+    ctx.companyId ? getLegacySnapshot(ctx.userId, ctx.companyId) : Promise.resolve(null),
+  ]);
 
   return (
     <>
@@ -23,7 +38,12 @@ export default async function ProgressPage(): Promise<ReactElement> {
           <LegacySnapshotCard snapshot={snapshot} />
         </div>
       ) : null}
-      <ProgressPhotosScreen initialPhotos={photos} profileId={ctx.userId} />
+      <ProgressPhotosScreen
+        initialPhotos={photos}
+        profileId={ctx.userId}
+        body={body}
+        initialTab={initialTab}
+      />
     </>
   );
 }

@@ -12,7 +12,9 @@ import { PageTitle } from '@/components/ui/section';
 import { Segmented } from '@/components/ui/segmented';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { PhysiqueAnalysisButton } from '@/components/progress/physique-analysis';
+import { BodyProgress } from '@/components/progress/body-progress';
 import { createClient } from '@/lib/supabase/client';
+import type { BodyStats } from '@/lib/body/types';
 import {
   recordPhotoAction,
   listPhotosAction,
@@ -24,19 +26,23 @@ const BUCKET = 'progress-photos';
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB, matches the bucket cap.
 const KG_TO_LB = 2.20462;
 
-type Tab = 'gallery' | 'compare';
+type Tab = 'gallery' | 'body' | 'compare';
 
 export function ProgressPhotosScreen({
   initialPhotos,
   profileId,
+  body,
+  initialTab = 'gallery',
 }: {
   initialPhotos: ProgressPhoto[];
   profileId: string;
+  body: BodyStats;
+  initialTab?: Tab;
 }): ReactElement {
   const t = useTranslations('app.progress');
   const locale = useLocale();
   const [photos, setPhotos] = useState<ProgressPhoto[]>(initialPhotos);
-  const [tab, setTab] = useState<Tab>('gallery');
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   async function refresh(): Promise<void> {
     setPhotos(await listPhotosAction());
@@ -47,7 +53,9 @@ export function ProgressPhotosScreen({
       <div className="mb-1.5">
         <PageTitle>{t('title')}</PageTitle>
       </div>
-      <p className="mb-[18px] text-[13px] text-faint">{t('subtitle')}</p>
+      <p className="mb-[18px] text-[13px] text-faint">
+        {tab === 'body' ? t('bodySubtitle') : t('subtitle')}
+      </p>
 
       <div className="mb-[22px]">
         <Segmented<Tab>
@@ -55,18 +63,16 @@ export function ProgressPhotosScreen({
           onChange={setTab}
           options={[
             { value: 'gallery', label: t('tabGallery') },
+            { value: 'body', label: t('tabBody') },
             { value: 'compare', label: t('tabCompare') },
           ]}
         />
       </div>
 
-      {tab === 'gallery' ? (
-        <Gallery
-          photos={photos}
-          profileId={profileId}
-          locale={locale}
-          onChanged={refresh}
-        />
+      {tab === 'body' ? (
+        <BodyProgress body={body} />
+      ) : tab === 'gallery' ? (
+        <Gallery photos={photos} profileId={profileId} locale={locale} onChanged={refresh} />
       ) : (
         <Compare photos={photos} locale={locale} />
       )}
