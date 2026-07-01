@@ -259,6 +259,8 @@
       "prReps": "{reps, plural, one {# rep} other {# reps}}",
       "lastTime": "Last time",
       "target": "Target",
+      "front": "Front",
+      "back": "Back",
       "firstSet": "First set — set your baseline",
       "plusReps": "+{n, plural, one {# rep} other {# reps}}",
       "enjoymentLabel": "How did it feel?",

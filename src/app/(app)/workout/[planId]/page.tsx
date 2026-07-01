@@ -101,6 +101,7 @@ export default async function WorkoutPage({
       notes: e.notes,
       cues: (locale === 'es' && meta?.cues_es) || meta?.cues_en || null,
       muscle: meta?.muscle_group ? (muscleLabel.get(meta.muscle_group) ?? meta.muscle_group) : null,
+      muscleKey: meta?.muscle_group ?? null,
       video_mux_id: meta?.video_mux_id ?? null,
       overload: hint
         ? {

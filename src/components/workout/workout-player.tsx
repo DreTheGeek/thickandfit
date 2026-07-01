@@ -12,6 +12,7 @@ import { Icon } from '@/components/ui/icons';
 import { UnderlineTabs } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Confetti, useConfetti } from '@/components/ui/confetti';
+import { MuscleMap } from '@/components/workout/muscle-map';
 
 export type OverloadHint = {
   action: 'increase_reps' | 'increase_weight' | 'hold' | 'deload';
@@ -45,6 +46,7 @@ export type PlayerExercise = {
   notes: string | null;
   cues: string | null;
   muscle: string | null;
+  muscleKey: string | null;
   video_mux_id: string | null;
   overload: OverloadHint | null;
   // All-time bests for PR detection (Epley e1RM for weighted, max reps for bodyweight).
@@ -383,6 +385,9 @@ export function WorkoutPlayer({
             </div>
             <div className="mt-1 text-[16px] font-semibold capitalize">
               {muscleLabel ?? '-'}
+            </div>
+            <div className="mt-4">
+              <MuscleMap muscleKey={ex.muscleKey} frontLabel={t('front')} backLabel={t('back')} />
             </div>
           </div>
         )}
