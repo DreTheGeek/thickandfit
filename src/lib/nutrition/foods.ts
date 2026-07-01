@@ -3,6 +3,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { foodStateFromName, type FoodLite, type FoodPortion, type FoodState } from '@/lib/nutrition/macros';
+import { groundFoodByBarcode } from '@/lib/nutrition/external-foods';
 
 export * from '@/lib/nutrition/macros';
 
@@ -88,16 +89,18 @@ export async function searchFoods(query: string, locale: string): Promise<FoodLi
   return ((data ?? []) as unknown as FoodRaw[]).map((r) => mapFood(r, locale));
 }
 
-// Manual barcode lookup. Normalizes the entry (digits only), then matches foods.barcode. The
-// un-paywalled differentiator: any logged barcode resolves straight to a loggable food.
+// Barcode lookup. Normalizes to digits, matches the local foods.barcode first, then falls back to
+// Open Food Facts (2.5M packaged products, free) and caches the hit. The un-paywalled differentiator:
+// any scanned barcode resolves straight to a loggable food, MyFitnessPal-style but without the paywall.
 export async function lookupFoodByBarcode(barcode: string, locale: string): Promise<FoodLite | null> {
   const code = barcode.replace(/\D/g, '');
   if (!code) return null;
   const sb = await createClient();
   const { data, error } = await sb.from('foods').select(COLS).eq('barcode', code).limit(1).maybeSingle();
   if (error) throw new Error(`lookupFoodByBarcode: ${error.message}`);
-  if (!data) return null;
-  return mapFood(data as unknown as FoodRaw, locale);
+  if (data) return mapFood(data as unknown as FoodRaw, locale);
+  // Not in the local corpus -> Open Food Facts, cached into `foods` for next time.
+  return groundFoodByBarcode(code, locale);
 }
 
 export async function getFoodWithPortions(

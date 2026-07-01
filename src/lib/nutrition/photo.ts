@@ -7,6 +7,7 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite, type MacroTotals } from '@/lib/nutrition/macros';
 import { AI_MODELS } from '@/lib/ai/models';
+import { groundFoodByName } from '@/lib/nutrition/external-foods';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -219,7 +220,10 @@ export async function resolvePredictedItems(
   const candidates: PhotoCandidate[] = [];
 
   for (const item of items) {
-    const food = await matchFood(sb, item.name, locale);
+    // 1) local corpus. 2) if it misses, ground against USDA + cache the hit into `foods` so the next
+    // log is a local hit. The model's grams still scale the DB's per-100g macros (golden rule).
+    let food = await matchFood(sb, item.name, locale);
+    if (!food) food = await groundFoodByName(item.name, locale);
     if (!food) {
       candidates.push({ predictedName: item.name, grams: item.grams, confidence: item.confidence, matched: false, food: null, macros: null, basis: item.basis });
       continue;
