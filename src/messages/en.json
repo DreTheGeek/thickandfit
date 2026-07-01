@@ -914,6 +914,7 @@
       "prevDay": "Previous day",
       "nextDay": "Next day",
       "recentFoods": "Recent",
+      "dayScore": "Quality {n}/10",
       "unitFloz": "fl oz",
       "unitCup": "cup",
       "unitTbsp": "tbsp",

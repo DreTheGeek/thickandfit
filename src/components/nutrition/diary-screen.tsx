@@ -8,7 +8,7 @@ import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
 import { PhotoScan } from '@/components/nutrition/photo-scan';
 import { searchFoodsAction, getFoodDetailAction, logFoodAction, deleteFoodLogAction, lookupBarcodeAction } from '@/lib/nutrition/diary-actions';
-import { MEAL_SLOTS, macrosForGrams, effectiveGrams, type DiaryDay, type FoodLite, type FoodPortion, type FoodState, type MealSlot } from '@/lib/nutrition/macros';
+import { MEAL_SLOTS, macrosForGrams, effectiveGrams, dayScore, type DiaryDay, type FoodLite, type FoodPortion, type FoodState, type MealSlot } from '@/lib/nutrition/macros';
 
 function MacroBar({ label, value, target, color }: { label: string; value: number; target: number; color: string }): ReactElement {
   const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -140,6 +140,7 @@ export function DiaryScreen({
   const { totals, target, entries } = diary;
   const preview = sel ? macrosForGrams(sel, effGrams) : null;
   const kcalLeft = target ? Math.max(0, target.kcal - totals.kcal) : 0;
+  const score = target ? dayScore(totals, target) : null;
   const slotLabel = (s: MealSlot): string => t(s);
 
   return (
@@ -190,6 +191,17 @@ export function DiaryScreen({
                 {target ? t('ofTargetKcal', { target: Math.round(target.kcal) }) : t('kcalToday')}
               </div>
               {target && <div className="mt-1 text-[12px] font-semibold text-accent-ink">{t('kcalLeft', { n: kcalLeft })}</div>}
+              {score != null && (
+                <div
+                  className={[
+                    'mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
+                    score >= 7 ? 'bg-accent/12 text-accent' : 'bg-warm text-muted',
+                  ].join(' ')}
+                >
+                  <Icon name="sparkles" size={12} />
+                  {t('dayScore', { n: score })}
+                </div>
+              )}
             </div>
           </div>
           {target && (

@@ -73,6 +73,20 @@ export function gramsFromAmount(qty: number, unit: ServingUnit, densityGPerMl: n
   return Math.round(qty * ML_PER_UNIT[unit] * d);
 }
 
+// A gentle, goal-aware 1-10 "how well today fits your plan" score. Rewards protein adherence and
+// staying in the calorie budget; never shaming (bounded, positive; the UI colors it accent/neutral,
+// never alert). Returns null when there's nothing to score yet (no target or nothing logged).
+export function dayScore(consumed: MacroTotals, target: MacroTotals): number | null {
+  if (target.kcal <= 0 || consumed.kcal <= 0) return null;
+  const proteinRatio = target.proteinG > 0 ? consumed.proteinG / target.proteinG : 1;
+  const kcalRatio = consumed.kcal / target.kcal;
+  let s = 6;
+  s += Math.min(1, proteinRatio) * 3; // up to +3 for hitting protein (the biggest lever for the goal)
+  if (kcalRatio <= 1.05) s += 1; // on or under target
+  else s -= Math.min(3, (kcalRatio - 1.05) * 8); // over budget, gently
+  return Math.max(1, Math.min(10, Math.round(s)));
+}
+
 export function sumMacros(rows: MacroTotals[]): MacroTotals {
   return rows.reduce(
     (a, r) => ({ kcal: a.kcal + r.kcal, proteinG: a.proteinG + r.proteinG, carbG: a.carbG + r.carbG, fatG: a.fatG + r.fatG }),
