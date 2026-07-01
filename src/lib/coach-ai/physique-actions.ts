@@ -9,9 +9,18 @@ import { requireEntitled } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { analyzePhysique, type PhysiqueResult } from '@/lib/coach-ai/physique';
 import { notifyCoachesOfFlaggedPhysique } from '@/lib/coach-ai/physique-notify';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 const Input = z.object({
-  imageUrl: z.string().min(1).max(15_000_000), // signed storage URL or data URL
+  // Signed storage URL or data URL. Refined like the photo route so only data:image/ or http(s) reaches
+  // the upstream vision provider (no file:/junk strings forwarded to OpenRouter).
+  imageUrl: z
+    .string()
+    .min(8)
+    .max(15_000_000)
+    .refine((v) => v.startsWith('data:image/') || /^https?:\/\//i.test(v), {
+      message: 'imageUrl must be a data:image/ URL or an http(s) URL',
+    }),
   weightLb: z.number().positive().max(2000).nullable().optional(),
   goal: z.string().trim().max(500).nullable().optional(),
   progressPhotoId: z.string().uuid().nullable().optional(),
@@ -23,6 +32,12 @@ export async function analyzePhysiqueAction(input: unknown): Promise<PhysiqueRes
 
   const ctx = await requireEntitled();
   if (!ctx.companyId) return { status: 'error' };
+
+  // Cost control: gpt-5 vision is the priciest AI path; cap per user so spend cannot run away (fails open).
+  if (!(await checkRateLimit(ctx.userId, 'physique-analysis', 20, 3600))) {
+    return { status: 'error' };
+  }
+
   const locale = (await getLocale()) === 'es' ? 'es' : 'en';
 
   const result = await analyzePhysique({

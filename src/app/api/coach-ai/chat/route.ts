@@ -5,8 +5,9 @@
 //
 // Key-gating: with no OPENROUTER_API_KEY set it returns HTTP 200 with a clean "not configured"
 // body ({ ok: false, status: 'notConfigured', message }). It never crashes without the key.
-import { resolveAuth } from '@/lib/auth/session';
+import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
 import { apiError } from '@/lib/api/auth';
+import { isEntitled } from '@/lib/billing/entitlement';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { chatRequestSchema, streamChat } from '@/lib/coach-ai/chat';
 
@@ -18,6 +19,12 @@ export async function POST(req: Request): Promise<Response> {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
+
+  // Paywall at the API boundary: the page requires entitlement, so the endpoint must too (else a
+  // free/lapsed user can call it directly). Coaches pass by role; everyone else needs an active sub or comp.
+  if (!hasRole(ctx.role, COACH_ROLES) && !(await isEntitled(ctx.userId))) {
+    return apiError('An active subscription is required.', 403);
+  }
 
   // Cost control: cap AI chat turns per user so OpenRouter spend cannot run away (fails open).
   if (!(await checkRateLimit(ctx.userId, 'coach-ai-chat', 30, 300))) {

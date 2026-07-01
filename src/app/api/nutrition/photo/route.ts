@@ -4,8 +4,9 @@
 // With no OPENROUTER_API_KEY set it returns { status: 'notConfigured' } and 200 — never crashes.
 import { z } from 'zod';
 import { getLocale } from 'next-intl/server';
-import { resolveAuth } from '@/lib/auth/session';
+import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
+import { isEntitled } from '@/lib/billing/entitlement';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { analyzeMealPhoto } from '@/lib/nutrition/photo';
 
@@ -30,6 +31,12 @@ export async function POST(req: Request): Promise<Response> {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
+
+  // Paywall at the API boundary: the page requires entitlement, so the endpoint must too (else a
+  // free/lapsed user can call it directly). Coaches pass by role; everyone else needs an active sub or comp.
+  if (!hasRole(ctx.role, COACH_ROLES) && !(await isEntitled(ctx.userId))) {
+    return apiError('An active subscription is required.', 403);
+  }
 
   // Cost control: vision calls are the priciest AI path; cap per user to bound spend (fails open).
   if (!(await checkRateLimit(ctx.userId, 'nutrition-photo', 40, 3600))) {
