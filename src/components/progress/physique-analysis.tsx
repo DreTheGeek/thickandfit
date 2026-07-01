@@ -55,8 +55,14 @@ export function PhysiqueAnalysisButton({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-          <div className="tf-scroll max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-surface p-5 sm:rounded-2xl">
+        <div
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="tf-scroll max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-surface p-5 sm:rounded-2xl"
+          >
             <div className="mb-3 flex items-center justify-between">
               <span className="font-display text-[20px]">{t('analyzeTitle')}</span>
               <button type="button" onClick={() => setOpen(false)} aria-label={t('close')} className="tf-press text-faint">
