@@ -53,6 +53,26 @@ export function macrosForGrams(food: Pick<FoodLite, 'kcal' | 'proteinG' | 'carbG
   };
 }
 
+// Human amount ("1 cup", "8 fl oz") -> grams. Volume units use the food's density (g/mL), defaulting
+// to water (1 g/mL) when unknown, so "1 cup of juice" logs a sane weight. `oz` here is the WEIGHT
+// ounce; fluid volume is `floz`. Everything downstream (macrosForGrams, the log) works in grams.
+export type ServingUnit = 'g' | 'oz' | 'ml' | 'floz' | 'cup' | 'tbsp';
+export const SERVING_UNITS: ServingUnit[] = ['g', 'oz', 'ml', 'floz', 'cup', 'tbsp'];
+const ML_PER_UNIT: Record<'ml' | 'floz' | 'cup' | 'tbsp', number> = {
+  ml: 1,
+  floz: 29.5735,
+  cup: 240,
+  tbsp: 14.7868,
+};
+
+export function gramsFromAmount(qty: number, unit: ServingUnit, densityGPerMl: number | null): number {
+  if (!Number.isFinite(qty) || qty <= 0) return 0;
+  if (unit === 'g') return qty;
+  if (unit === 'oz') return qty * 28.3495; // weight ounce
+  const d = densityGPerMl && densityGPerMl > 0 ? densityGPerMl : 1;
+  return Math.round(qty * ML_PER_UNIT[unit] * d);
+}
+
 export function sumMacros(rows: MacroTotals[]): MacroTotals {
   return rows.reduce(
     (a, r) => ({ kcal: a.kcal + r.kcal, proteinG: a.proteinG + r.proteinG, carbG: a.carbG + r.carbG, fatG: a.fatG + r.fatG }),

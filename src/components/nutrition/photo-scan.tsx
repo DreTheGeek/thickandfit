@@ -4,8 +4,22 @@ import { useRef, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
-import { logPhotoFoodAction, parseTextToMacroAction } from '@/lib/nutrition/diary-actions';
-import { MEAL_SLOTS, type MealSlot } from '@/lib/nutrition/macros';
+import {
+  logPhotoFoodAction,
+  parseTextToMacroAction,
+  lookupBarcodeAction,
+  logFoodAction,
+} from '@/lib/nutrition/diary-actions';
+import {
+  MEAL_SLOTS,
+  macrosForGrams,
+  gramsFromAmount,
+  SERVING_UNITS,
+  type MealSlot,
+  type FoodLite,
+  type ServingUnit,
+} from '@/lib/nutrition/macros';
+import { decodeBarcodeFromImage } from '@/lib/nutrition/barcode-scan';
 
 // Client-safe mirror of the server pipeline's response shape (server module is server-only).
 type Macros = { kcal: number; proteinG: number; carbG: number; fatG: number };
@@ -40,6 +54,23 @@ function confidenceTone(c: number): string {
   return 'text-faint';
 }
 
+function unitLabel(u: ServingUnit, t: ReturnType<typeof useTranslations>): string {
+  switch (u) {
+    case 'oz':
+      return 'oz';
+    case 'ml':
+      return 'mL';
+    case 'floz':
+      return t('unitFloz');
+    case 'cup':
+      return t('unitCup');
+    case 'tbsp':
+      return t('unitTbsp');
+    default:
+      return 'g';
+  }
+}
+
 export function PhotoScan({
   open: openProp,
   onOpenChange,
@@ -61,12 +92,18 @@ export function PhotoScan({
     else setOpenInternal(v);
   }
   const [preview, setPreview] = useState<string | null>(null);
-  const [phase, setPhase] = useState<'idle' | 'analyzing' | 'review' | 'notConfigured' | 'noFood' | 'error'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'analyzing' | 'review' | 'product' | 'notConfigured' | 'noFood' | 'error'>('idle');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [slot, setSlot] = useState<MealSlot>('lunch');
   const [logged, setLogged] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
   const [desc, setDesc] = useState('');
+  // Barcode / packaged-product result (a single food + a real amount to confirm).
+  const [productFood, setProductFood] = useState<FoodLite | null>(null);
+  const [qty, setQty] = useState('1');
+  const [unit, setUnit] = useState<ServingUnit>('g');
+  const [productLogged, setProductLogged] = useState(false);
+  const [productBusy, setProductBusy] = useState(false);
 
   function reset(): void {
     setPreview(null);
@@ -75,7 +112,30 @@ export function PhotoScan({
     setLogged({});
     setBusy(null);
     setDesc('');
+    setProductFood(null);
+    setQty('1');
+    setUnit('g');
+    setProductLogged(false);
     if (fileRef.current) fileRef.current.value = '';
+  }
+
+  async function logProduct(): Promise<void> {
+    if (!productFood) return;
+    const grams = gramsFromAmount(Number(qty), unit, productFood.densityGPerMl);
+    if (grams <= 0) return;
+    setProductBusy(true);
+    const res = await logFoodAction({
+      foodId: productFood.id,
+      name: productFood.name,
+      mealSlot: slot,
+      grams,
+      source: 'barcode',
+    });
+    setProductBusy(false);
+    if (res.ok) {
+      setProductLogged(true);
+      router.refresh();
+    }
   }
 
   // Text-to-macro: parse a natural-language description into the same candidate review flow as photo.
@@ -109,6 +169,23 @@ export function PhotoScan({
     setPhase('analyzing');
     setCandidates([]);
     setLogged({});
+    // A picture of a package / barcode: decode it first -> the exact product via Open Food Facts.
+    const code = await decodeBarcodeFromImage(dataUrl);
+    if (code) {
+      const bc = await lookupBarcodeAction(code);
+      if (bc.ok && bc.food) {
+        setProductFood(bc.food);
+        const drink =
+          bc.food.densityGPerMl != null ||
+          /juice|milk|drink|soda|water|tea|coffee|smoothie|shake/i.test(bc.food.name);
+        setQty(drink ? '1' : '100');
+        setUnit(drink ? 'cup' : 'g');
+        setProductLogged(false);
+        setPhase('product');
+        return;
+      }
+      // Barcode present but not in Open Food Facts -> fall through to the vision pipeline.
+    }
     try {
       const res = await fetch('/api/nutrition/photo', {
         method: 'POST',
@@ -356,6 +433,84 @@ export function PhotoScan({
                     {t('photoNewPhoto')}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {phase === 'product' && productFood && (
+              <div>
+                <div className="text-[17px] font-semibold">{productFood.name}</div>
+                <div className="mb-4 text-[12px] text-faint">{productFood.brand ?? ''}</div>
+
+                {/* How much? Confirm/adjust the amount before logging (this is the "ask" for quantity). */}
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.25"
+                    value={qty}
+                    onChange={(e) => setQty(e.target.value)}
+                    aria-label={t('productAmount')}
+                    className="w-20 rounded-lg border border-line bg-bg px-3 py-2 text-[15px] outline-none focus:border-ink"
+                  />
+                  <select
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value as ServingUnit)}
+                    className="rounded-lg border border-line bg-bg px-3 py-2 text-[14px] outline-none focus:border-ink"
+                  >
+                    {SERVING_UNITS.map((u) => (
+                      <option key={u} value={u}>
+                        {unitLabel(u, t)}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={slot}
+                    onChange={(e) => setSlot(e.target.value as MealSlot)}
+                    className="ml-auto rounded-lg border border-line bg-bg px-3 py-2 text-[14px] outline-none focus:border-ink"
+                  >
+                    {MEAL_SLOTS.map((s) => (
+                      <option key={s} value={s}>
+                        {t(s)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-4 rounded-xl border border-line p-3">
+                  {(() => {
+                    const g = gramsFromAmount(Number(qty), unit, productFood.densityGPerMl);
+                    const m = macrosForGrams(productFood, g);
+                    return (
+                      <div className="text-[13px]">
+                        <span className="text-[16px] font-semibold">{m.kcal} kcal</span>
+                        <span className="text-muted"> · {m.proteinG}p / {m.carbG}c / {m.fatG}f</span>
+                        <span className="text-faint"> · {g} g</span>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {productLogged ? (
+                  <div className="flex items-center gap-1.5 text-[13px] font-semibold text-accent-ink">
+                    <Icon name="check" size={16} />
+                    {t('photoLogged')}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void logProduct()}
+                      disabled={productBusy || !(Number(qty) > 0)}
+                      className="tf-press flex-1 rounded-full bg-ink py-2.5 text-[13px] font-semibold text-bg disabled:opacity-40"
+                    >
+                      {t('productLogCta')}
+                    </button>
+                    <button type="button" onClick={reset} className="tf-press rounded-full border border-line px-4 py-2.5 text-[13px] font-semibold">
+                      {t('photoNewPhoto')}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
