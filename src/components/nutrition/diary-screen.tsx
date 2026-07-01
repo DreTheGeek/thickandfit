@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef, useState, type ReactElement } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
 import { PhotoScan } from '@/components/nutrition/photo-scan';
@@ -27,9 +28,32 @@ function MacroBar({ label, value, target, color }: { label: string; value: numbe
   );
 }
 
-export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
+export function DiaryScreen({
+  diary,
+  recents,
+  date,
+  prevDate,
+  nextDate,
+  isToday,
+}: {
+  diary: DiaryDay;
+  recents: FoodLite[];
+  date: string;
+  prevDate: string;
+  nextDate: string | null;
+  isToday: boolean;
+}): ReactElement {
   const t = useTranslations('app.nutrition');
+  const locale = useLocale();
   const router = useRouter();
+  const dateLabel = isToday
+    ? t('today')
+    : (() => {
+        const [y, m, d] = date.split('-').map(Number);
+        return new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(
+          new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1),
+        );
+      })();
   const [q, setQ] = useState('');
   const [results, setResults] = useState<FoodLite[]>([]);
   const [sel, setSel] = useState<FoodLite | null>(null);
@@ -120,7 +144,40 @@ export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-4 py-6 sm:px-6">
-      <h1 className="tf-display mb-5 text-[26px]">{t('title')}</h1>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h1 className="tf-display text-[26px]">{t('title')}</h1>
+        <div className="flex items-center gap-0.5">
+          <Link
+            href={`/nutrition?date=${prevDate}`}
+            aria-label={t('prevDay')}
+            className="tf-press flex h-8 w-8 items-center justify-center text-muted hover:text-ink"
+          >
+            <Icon name="chevronRight" size={18} className="rotate-180" />
+          </Link>
+          <span className="min-w-[92px] text-center text-[13px] font-semibold">{dateLabel}</span>
+          {nextDate ? (
+            <Link
+              href={`/nutrition?date=${nextDate}`}
+              aria-label={t('nextDay')}
+              className="tf-press flex h-8 w-8 items-center justify-center text-muted hover:text-ink"
+            >
+              <Icon name="chevronRight" size={18} />
+            </Link>
+          ) : (
+            <span className="flex h-8 w-8 items-center justify-center text-line">
+              <Icon name="chevronRight" size={18} />
+            </span>
+          )}
+          {!isToday && (
+            <Link
+              href="/nutrition"
+              className="tf-press ml-1 rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-muted hover:text-ink"
+            >
+              {t('today')}
+            </Link>
+          )}
+        </div>
+      </div>
 
       {/* Daily summary */}
       <div className="rounded-2xl border border-line bg-surface p-5">
@@ -153,6 +210,27 @@ export function DiaryScreen({ diary }: { diary: DiaryDay }): ReactElement {
       <div className="mt-5">
         <PhotoScan />
       </div>
+
+      {/* Recently logged: one tap to re-log a food you eat often. */}
+      {recents.length > 0 && (
+        <div className="mt-5">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-faint">
+            {t('recentFoods')}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {recents.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => void selectFood(f)}
+                className="tf-press rounded-full border border-line px-3 py-1.5 text-[12px] font-medium text-muted hover:border-ink hover:text-ink"
+              >
+                {f.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Add food */}
       <div className="mt-5 rounded-2xl border border-line bg-surface p-5">

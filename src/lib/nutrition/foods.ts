@@ -103,6 +103,31 @@ export async function lookupFoodByBarcode(barcode: string, locale: string): Prom
   return groundFoodByBarcode(code, locale);
 }
 
+// The member's recently-logged distinct foods, newest first -> one-tap re-log. food_log is RLS
+// owner-scoped, so the session client already limits it to the caller.
+export async function getRecentFoods(userId: string, locale: string, limit = 8): Promise<FoodLite[]> {
+  const sb = await createClient();
+  const { data: logs } = await sb
+    .from('food_log')
+    .select('food_id, logged_at')
+    .eq('profile_id', userId)
+    .not('food_id', 'is', null)
+    .order('logged_at', { ascending: false })
+    .limit(80);
+  const seen = new Set<string>();
+  const ids: string[] = [];
+  for (const r of (logs ?? []) as { food_id: string }[]) {
+    if (seen.has(r.food_id)) continue;
+    seen.add(r.food_id);
+    ids.push(r.food_id);
+    if (ids.length >= limit) break;
+  }
+  if (ids.length === 0) return [];
+  const { data } = await sb.from('foods').select(COLS).in('id', ids);
+  const byId = new Map(((data ?? []) as unknown as FoodRaw[]).map((r) => [r.id, mapFood(r, locale)]));
+  return ids.map((id) => byId.get(id)).filter((f): f is FoodLite => f != null);
+}
+
 export async function getFoodWithPortions(
   id: string,
   locale: string,
