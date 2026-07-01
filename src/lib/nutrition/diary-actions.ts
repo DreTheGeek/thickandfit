@@ -202,3 +202,32 @@ export async function deleteFoodLogAction(id: string): Promise<LogResult> {
   revalidatePath('/nutrition');
   return { ok: true };
 }
+
+// Star / unstar a food. Returns the new state so the UI can flip optimistically.
+export async function toggleFavoriteAction(foodId: unknown): Promise<{ ok: boolean; favorited?: boolean }> {
+  const parsed = z.string().uuid().safeParse(foodId);
+  if (!parsed.success) return { ok: false };
+  const ctx = await requireAuth();
+  if (!ctx.companyId) return { ok: false };
+  const sb = await createClient();
+  const { data: existing } = await sb
+    .from('user_food_favorites')
+    .select('id')
+    .eq('profile_id', ctx.userId)
+    .eq('food_id', parsed.data)
+    .maybeSingle();
+  if (existing) {
+    await sb.from('user_food_favorites').delete().eq('id', (existing as { id: string }).id);
+    revalidatePath('/nutrition');
+    return { ok: true, favorited: false };
+  }
+  const { error } = await sb
+    .from('user_food_favorites')
+    .insert({ company_id: ctx.companyId, profile_id: ctx.userId, food_id: parsed.data });
+  if (error) {
+    console.error('toggleFavoriteAction:', error.message);
+    return { ok: false };
+  }
+  revalidatePath('/nutrition');
+  return { ok: true, favorited: true };
+}

@@ -7,7 +7,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
 import { PhotoScan } from '@/components/nutrition/photo-scan';
-import { searchFoodsAction, getFoodDetailAction, logFoodAction, deleteFoodLogAction, lookupBarcodeAction } from '@/lib/nutrition/diary-actions';
+import { searchFoodsAction, getFoodDetailAction, logFoodAction, deleteFoodLogAction, lookupBarcodeAction, toggleFavoriteAction } from '@/lib/nutrition/diary-actions';
 import { MEAL_SLOTS, macrosForGrams, effectiveGrams, dayScore, type DiaryDay, type FoodLite, type FoodPortion, type FoodState, type MealSlot } from '@/lib/nutrition/macros';
 
 function MacroBar({ label, value, target, color }: { label: string; value: number; target: number; color: string }): ReactElement {
@@ -31,6 +31,8 @@ function MacroBar({ label, value, target, color }: { label: string; value: numbe
 export function DiaryScreen({
   diary,
   recents,
+  favorites,
+  favoriteIds,
   date,
   prevDate,
   nextDate,
@@ -38,6 +40,8 @@ export function DiaryScreen({
 }: {
   diary: DiaryDay;
   recents: FoodLite[];
+  favorites: FoodLite[];
+  favoriteIds: string[];
   date: string;
   prevDate: string;
   nextDate: string | null;
@@ -46,6 +50,26 @@ export function DiaryScreen({
   const t = useTranslations('app.nutrition');
   const locale = useLocale();
   const router = useRouter();
+  const [favSet, setFavSet] = useState<Set<string>>(() => new Set(favoriteIds));
+
+  async function toggleFavorite(id: string): Promise<void> {
+    const currently = favSet.has(id);
+    setFavSet((prev) => {
+      const n = new Set(prev);
+      if (currently) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+    const res = await toggleFavoriteAction(id);
+    if (!res.ok) {
+      setFavSet((prev) => {
+        const n = new Set(prev);
+        if (currently) n.add(id);
+        else n.delete(id);
+        return n;
+      });
+    }
+  }
   const dateLabel = isToday
     ? t('today')
     : (() => {
@@ -223,6 +247,27 @@ export function DiaryScreen({
         <PhotoScan />
       </div>
 
+      {/* Favorites: starred foods, one tap. */}
+      {favorites.length > 0 && (
+        <div className="mt-5">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-faint">
+            {t('favorites')}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {favorites.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => void selectFood(f)}
+                className="tf-press rounded-full border border-accent/40 px-3 py-1.5 text-[12px] font-medium text-muted hover:border-ink hover:text-ink"
+              >
+                {f.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recently logged: one tap to re-log a food you eat often. */}
       {recents.length > 0 && (
         <div className="mt-5">
@@ -313,11 +358,23 @@ export function DiaryScreen({
 
         {sel ? (
           <div className="mt-4 rounded-xl border border-line p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="font-semibold">{sel.name}</div>
-              <button type="button" onClick={() => setSel(null)} className="tf-press text-faint hover:text-ink">
-                <Icon name="x" size={16} />
-              </button>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="min-w-0 truncate font-semibold">{sel.name}</div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void toggleFavorite(sel.id)}
+                  aria-label={t('favorite')}
+                  className="tf-press text-[18px] leading-none"
+                >
+                  <span className={favSet.has(sel.id) ? 'text-accent' : 'text-line'}>
+                    {favSet.has(sel.id) ? '★' : '☆'}
+                  </span>
+                </button>
+                <button type="button" onClick={() => setSel(null)} className="tf-press text-faint hover:text-ink">
+                  <Icon name="x" size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Portion picker (household measures -> grams) */}

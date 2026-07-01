@@ -915,6 +915,8 @@
       "nextDay": "Next day",
       "recentFoods": "Recent",
       "dayScore": "Quality {n}/10",
+      "favorites": "Favorites",
+      "favorite": "Favorite",
       "unitFloz": "fl oz",
       "unitCup": "cup",
       "unitTbsp": "tbsp",

@@ -128,6 +128,22 @@ export async function getRecentFoods(userId: string, locale: string, limit = 8):
   return ids.map((id) => byId.get(id)).filter((f): f is FoodLite => f != null);
 }
 
+// The member's starred foods (newest first) for one-tap re-log. RLS owner-scoped.
+export async function getFavorites(userId: string, locale: string, limit = 12): Promise<FoodLite[]> {
+  const sb = await createClient();
+  const { data: favs } = await sb
+    .from('user_food_favorites')
+    .select('food_id')
+    .eq('profile_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  const ids = ((favs ?? []) as { food_id: string }[]).map((r) => r.food_id);
+  if (ids.length === 0) return [];
+  const { data } = await sb.from('foods').select(COLS).in('id', ids);
+  const byId = new Map(((data ?? []) as unknown as FoodRaw[]).map((r) => [r.id, mapFood(r, locale)]));
+  return ids.map((id) => byId.get(id)).filter((f): f is FoodLite => f != null);
+}
+
 export async function getFoodWithPortions(
   id: string,
   locale: string,
