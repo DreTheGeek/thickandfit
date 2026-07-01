@@ -2,6 +2,7 @@
 // arrive in PRD-10/11/12 and the community PRDs, so each is null/empty until then.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { recomputeGamification } from '@/lib/gamification/engine';
 
 export type DashboardSummary = {
   hasOnboarded: boolean;
@@ -12,10 +13,14 @@ export type DashboardSummary = {
   // Active weight plateau from the latest nightly insight (null when not flat / no insights yet).
   // Drives the dismissible dashboard banner. Deterministic; populated by the insight engine.
   plateau: { daysFlat: number } | null;
+  // Goal-pace chip from the latest insight: are they on pace + the projected goal date.
+  pace: { onPace: boolean | null; goalDate: string | null } | null;
 };
 
 type InsightPayloadShape = {
   plateau?: { status?: string; days_flat?: number };
+  on_pace?: boolean | null;
+  projected_goal_date?: string | null;
 };
 
 type Targets = { calories: number; macros: { protein_g: number; carbs_g: number; fat_g: number } };
@@ -66,13 +71,28 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
     payload?.plateau?.status === 'plateau'
       ? { daysFlat: Math.max(0, Math.round(Number(payload.plateau.days_flat ?? 0))) }
       : null;
+  const pace =
+    payload && (payload.projected_goal_date || payload.on_pace != null)
+      ? { onPace: payload.on_pace ?? null, goalDate: payload.projected_goal_date ?? null }
+      : null;
+
+  // Real streak from the gamification engine (safe to recompute on dashboard load; also refreshes
+  // badges + fires any newly-earned confetti). Degrades to 0 on any failure, never blocks the home.
+  let streak = 0;
+  try {
+    const { snapshot } = await recomputeGamification(userId, companyId);
+    streak = snapshot.streak.currentStreak;
+  } catch (e) {
+    console.error('dashboard streak:', e instanceof Error ? e.message : e);
+  }
 
   return {
     hasOnboarded: Boolean(onb),
     macros,
-    streak: 0, // workout logging lands in PRD-12
+    streak,
     todaysWorkout: planName ? { name: planName } : null,
-    recentActivity: [], // community feed lands in Phase 2
+    recentActivity: [],
     plateau,
+    pace,
   };
 }

@@ -17,8 +17,7 @@ import { Icon } from '@/components/ui/icons';
 import { IconTile, ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
 import { SectionTitle } from '@/components/ui/section';
-import { MacroRing } from '@/components/coach/macro-ring';
-import { ProgressBar } from '@/components/ui/ring';
+import { ProgressRing } from '@/components/ui/ring';
 import type { DashboardSummary } from '@/lib/dashboard/summary';
 import type { MacroTotals } from '@/lib/nutrition/macros';
 import { toggleHabitAction } from '@/lib/habits/habit-actions';
@@ -123,11 +122,18 @@ export function TodayScreen({
       ? 'Hola'
       : 'Hey there';
 
-  // The notification bell + messages entry live in the app top bar / rail (rendered by the layout), so
-  // the home header is just the wordmark. (Previously this rendered a dead, disabled bell placeholder.)
+  // Header: wordmark + a live streak flame (Cal-AI style). The notification bell + messages entry live
+  // in the app top bar / rail (rendered by the layout), so they are not repeated here.
+  const streak = summary?.streak ?? 0;
   const header = (
-    <div className="mb-[18px] flex items-center">
+    <div className="mb-[18px] flex items-center justify-between">
       <Wordmark height={20} />
+      {streak > 0 ? (
+        <span className="flex items-center gap-1 rounded-full bg-warm px-2.5 py-1 text-[13px] font-bold">
+          <Icon name="flame" size={15} className="text-accent" />
+          {streak}
+        </span>
+      ) : null}
     </div>
   );
 
@@ -202,7 +208,20 @@ export function TodayScreen({
       <h1 className="tf-display text-[34px]">{greeting}</h1>
       <p className="mt-1.5 text-[14px] text-faint">{dateLabel}</p>
 
-      {/* Nutrition first: the moat lives on the home screen. Today's intake vs. target + a log CTA. */}
+      {/* Goal-pace chip from the latest nightly insight (only when we have a projected date). */}
+      {summary.pace?.goalDate ? (
+        <div
+          className={[
+            'mt-2.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold',
+            summary.pace.onPace === false ? 'bg-warm text-muted' : 'bg-accent/12 text-accent',
+          ].join(' ')}
+        >
+          <Icon name="pulse" size={13} />
+          {t('today.paceGoalBy', { date: fmtGoalDate(summary.pace.goalDate, locale) })}
+        </div>
+      ) : null}
+
+      {/* Nutrition first: the moat lives on the home screen. Cal-AI-style calories-left hero. */}
       {nutrition ? <NutritionCard n={nutrition} t={t} /> : null}
 
       {/* Plateau nudge: dismissible, only when the latest insight flags an active plateau. */}
@@ -322,8 +341,8 @@ export function TodayScreen({
   );
 }
 
-// Today's nutrition: the macro ring + calories consumed vs. target + per-macro progress. The home
-// screen of a nutrition-first app must lead with this. Tapping "Log a meal" opens the diary.
+// Today's nutrition, Cal-AI style: a big calories-LEFT ring that depletes as you log, plus three macro
+// rings that count DOWN to zero (and flip to "+Xg over" when you blow the target). The moat, on home.
 function NutritionCard({
   n,
   t,
@@ -332,16 +351,17 @@ function NutritionCard({
   t: ReturnType<typeof useTranslations>;
 }): ReactElement {
   const { consumed, target } = n;
-  const kcalLeft = Math.max(0, Math.round(target.kcal - consumed.kcal));
-  const over = consumed.kcal > target.kcal;
-  const rows = [
-    { key: 'p', label: t('today.macroProtein'), got: Math.round(consumed.proteinG), goal: Math.round(target.proteinG), color: 'var(--color-macro-protein)' },
-    { key: 'c', label: t('today.macroCarbs'), got: Math.round(consumed.carbG), goal: Math.round(target.carbG), color: 'var(--color-macro-carbs)' },
-    { key: 'f', label: t('today.macroFat'), got: Math.round(consumed.fatG), goal: Math.round(target.fatG), color: 'var(--color-macro-fat)' },
+  const kcalLeft = Math.round(target.kcal - consumed.kcal);
+  const kcalPct = target.kcal > 0 ? (consumed.kcal / target.kcal) * 100 : 0;
+  const kcalOver = kcalLeft < 0;
+  const macros = [
+    { key: 'p', label: t('today.macroProtein'), got: consumed.proteinG, goal: target.proteinG, color: 'var(--color-macro-protein)' },
+    { key: 'c', label: t('today.macroCarbs'), got: consumed.carbG, goal: target.carbG, color: 'var(--color-macro-carbs)' },
+    { key: 'f', label: t('today.macroFat'), got: consumed.fatG, goal: target.fatG, color: 'var(--color-macro-fat)' },
   ];
   return (
-    <Card className="mt-5 p-[18px]">
-      <div className="mb-3 flex items-center justify-between">
+    <Card className="mt-5 p-5">
+      <div className="mb-4 flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-[1.5px] text-faint">
           {t('today.nutritionTitle')}
         </span>
@@ -350,39 +370,43 @@ function NutritionCard({
           <Icon name="chevronRight" size={14} />
         </Link>
       </div>
-      <div className="flex items-center gap-4">
-        <MacroRing
-          proteinG={consumed.proteinG}
-          carbG={consumed.carbG}
-          fatG={consumed.fatG}
-          kcal={Math.round(consumed.kcal)}
-          size={84}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="tf-display text-[24px] leading-none">
-            {Math.round(consumed.kcal)}
-            <span className="text-[14px] text-faint"> / {Math.round(target.kcal)} kcal</span>
+      <div className="flex items-center gap-5">
+        <ProgressRing
+          pct={Math.min(100, kcalPct)}
+          size={116}
+          thickness={9}
+          color={kcalOver ? 'var(--color-alert)' : 'var(--color-ink)'}
+        >
+          <div className="text-center">
+            <div className="tf-display text-[28px] leading-none">{Math.abs(kcalLeft)}</div>
+            <div className="text-[10px] uppercase tracking-[1.5px] text-faint">
+              {kcalOver ? t('today.kcalOverLabel') : t('today.kcalLeftLabel')}
+            </div>
           </div>
-          <div className="mt-0.5 text-[12px] text-faint">
-            {over
-              ? t('today.kcalOver', { n: String(Math.round(consumed.kcal - target.kcal)) })
-              : t('today.kcalLeft', { n: String(kcalLeft) })}
-          </div>
-          <div className="mt-3 space-y-2">
-            {rows.map((r) => (
-              <div key={r.key}>
-                <div className="mb-1 flex justify-between text-[12px]">
-                  <span className="text-muted">{r.label}</span>
-                  <span className="text-faint">
-                    {r.got}/{r.goal} g
-                  </span>
-                </div>
-                <ProgressBar pct={r.goal > 0 ? (r.got / r.goal) * 100 : 0} color={r.color} height={5} />
+        </ProgressRing>
+        <div className="grid flex-1 grid-cols-3 gap-2">
+          {macros.map((m) => {
+            const left = Math.round(m.goal - m.got);
+            const pct = m.goal > 0 ? (m.got / m.goal) * 100 : 0;
+            return (
+              <div key={m.key} className="flex flex-col items-center gap-1.5">
+                <ProgressRing pct={Math.min(100, pct)} size={58} thickness={6} color={m.color}>
+                  <span className="text-[13px] font-bold">{left < 0 ? `+${-left}` : left}</span>
+                </ProgressRing>
+                <span className="text-[11px] text-faint">{m.label}</span>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </Card>
+  );
+}
+
+// ISO (YYYY-MM-DD) -> a short local "Aug 14" label for the goal-pace chip.
+function fmtGoalDate(iso: string, locale: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(
+    new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1),
   );
 }
