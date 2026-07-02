@@ -7,6 +7,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { fetchHistory } from '@/lib/workout/logging';
 import { getCoachBodyStats } from '@/lib/body/stats';
 import { getCoachFoodDiaryWeek } from '@/lib/coach/food-diary';
+import { getClientMembership, getClientHabits } from '@/lib/coach/client-engagement';
 import { SubscriberProfile, type ProfileData } from '@/components/coach/subscriber-profile';
 import { getCoachNotes } from '@/lib/coach/notes-actions';
 import { getClientFoodPhotos } from '@/lib/food-photos/coach';
@@ -33,7 +34,7 @@ export default async function CoachSubscriberPage({
   const supabase = createServiceClient();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('company_id, full_name, email, role, ui_locale, is_legacy_client, created_at, timezone')
+    .select('company_id, full_name, email, role, ui_locale, is_legacy_client, created_at, timezone, comp_access_until')
     .eq('id', id)
     .maybeSingle();
 
@@ -98,6 +99,15 @@ export default async function CoachSubscriberPage({
       .maybeSingle();
     currentPlanId = (mp as { id?: string } | null)?.id ?? null;
   }
+
+  const [membership, habits] = await Promise.all([
+    getClientMembership(contactId, {
+      role: profile.role,
+      compUntil: (profile.comp_access_until as string | null) ?? null,
+      createdAt: profile.created_at,
+    }),
+    getClientHabits(id, tz),
+  ]);
 
   const targets = (onb?.computed_targets ?? null) as Targets | null;
 
@@ -171,6 +181,8 @@ export default async function CoachSubscriberPage({
     intake,
     bodyStats,
     foodDiary,
+    membership,
+    habits,
   };
 
   return <SubscriberProfile data={data} />;

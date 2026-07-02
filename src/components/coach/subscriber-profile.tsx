@@ -14,9 +14,11 @@ import { RecipeImage } from '@/components/coach/recipe-image';
 import { GeneratePlanButton } from '@/components/coach/generate-plan-button';
 import { CoachBodyProgress } from '@/components/coach/coach-body-progress';
 import { CoachFoodDiary } from '@/components/coach/coach-food-diary';
+import { formatCents } from '@/components/coach/money';
 import type { CoachNote } from '@/lib/coach/notes-actions';
 import type { BodyStats } from '@/lib/body/types';
 import type { CoachDiaryWeek } from '@/lib/coach/food-diary';
+import type { MembershipInfo, ClientHabits } from '@/lib/coach/client-engagement';
 
 export type ProfileData = {
   name: string;
@@ -49,6 +51,8 @@ export type ProfileData = {
   intake: ClientIntake | null;
   bodyStats: BodyStats | null;
   foodDiary: CoachDiaryWeek | null;
+  membership: MembershipInfo | null;
+  habits: ClientHabits | null;
 };
 
 export type ClientIntake = {
@@ -155,6 +159,29 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
       {/* Panels */}
       {tab === 'overview' && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {data.membership && (
+            <Card className="p-5 md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Eyebrow>{t('membershipTitle')}</Eyebrow>
+                <PaymentBadge payment={data.membership.payment} t={t} />
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3.5 sm:grid-cols-4">
+                <InfoRow label={t('membershipType')} value={typeLabel(data.membership.productType, data.role, t)} />
+                <InfoRow label={t('membershipStatus')} value={statusLabel(data.membership.status, t)} />
+                <InfoRow label={t('membershipSince')} value={fmtISO(data.membership.startedAt)} />
+                <InfoRow
+                  label={t('membershipUntil')}
+                  value={data.membership.endedAt ? fmtISO(data.membership.endedAt) : t('membershipOngoing')}
+                />
+              </div>
+              {data.membership.priceCents ? (
+                <div className="mt-3 text-[13px] text-muted">
+                  {formatCents(data.membership.priceCents, data.membership.currency)}
+                  {data.membership.nextBillingDate ? ` · ${t('membershipRenews')} ${fmtISO(data.membership.nextBillingDate)}` : ''}
+                </div>
+              ) : null}
+            </Card>
+          )}
           <Card className="p-5">
             <Eyebrow>{t('assignedProgram')}</Eyebrow>
             <div className="mt-2 font-display text-[22px]">{data.programName ?? t('noProgram')}</div>
@@ -201,6 +228,27 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
               </Link>
             </div>
           </Card>
+          {data.habits && data.habits.habits.length > 0 && (
+            <Card className="p-5 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <Eyebrow>{t('habitsTitle')}</Eyebrow>
+                {data.habits.streak && (
+                  <span className="text-[12px] text-muted">
+                    {t('habitsStreak')} <span className="font-semibold text-ink">{data.habits.streak.current}</span>
+                  </span>
+                )}
+              </div>
+              <div className="mt-3 space-y-2.5">
+                {data.habits.habits.map((h) => (
+                  <div key={h.id} className="flex items-center gap-3">
+                    <CompletionCheck done={h.doneToday} size={20} />
+                    <span className="flex-1 text-[14px]">{h.title}</span>
+                    <span className="text-[12px] text-faint">{t('habitsWeek', { pct: h.pct7 })}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
           <Card className="p-5 md:col-span-2">
             <Eyebrow>{t('recentActivity')}</Eyebrow>
             {data.history.length === 0 ? (
@@ -409,4 +457,46 @@ function activityLabel(v: string | null, t: T): string {
 function tierLabel(v: string | null, t: T): string {
   const m: Record<string, string> = { self: 'tierSelfShort', team: 'tierTeamShort', steph: 'tierStephShort' };
   return v && m[v] ? t(m[v]) : v ?? '-';
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function fmtISO(iso: string | null): string {
+  if (!iso) return '-';
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return '-';
+  return `${MONTHS[m - 1]} ${d}, ${y}`;
+}
+function statusLabel(v: string | null, t: T): string {
+  const m: Record<string, string> = {
+    active: 'statusActive', comped: 'statusComped', free: 'statusFree', past_due: 'statusPastDue',
+    unpaid: 'statusUnpaid', canceled: 'statusCanceled', churned: 'statusChurned',
+  };
+  return v && m[v] ? t(m[v]) : v ?? '-';
+}
+function typeLabel(productType: string | null, role: string, t: T): string {
+  if (productType) {
+    const m: Record<string, string> = {
+      personal_coaching: 'typePersonalCoaching', personalCoaching: 'typePersonalCoaching',
+      bootcamp: 'typeBootcamp', basic: 'typeBasic',
+    };
+    return m[productType] ? t(m[productType]) : productType;
+  }
+  return role === 'free' ? t('segFree') : t('segPremium');
+}
+
+function PaymentBadge({ payment, t }: { payment: MembershipInfo['payment']; t: T }): ReactElement {
+  const style: Record<MembershipInfo['payment'], string> = {
+    paid: 'border-accent/40 bg-accent/10 text-accent',
+    comped: 'border-line bg-warm text-soft',
+    free: 'border-line bg-warm text-soft',
+    past_due: 'border-red-300 bg-red-50 text-red-600',
+  };
+  const key: Record<MembershipInfo['payment'], string> = {
+    paid: 'payPaid', comped: 'payComped', free: 'payFree', past_due: 'payPastDue',
+  };
+  return (
+    <span className={['rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.5px]', style[payment]].join(' ')}>
+      {t(key[payment])}
+    </span>
+  );
 }
