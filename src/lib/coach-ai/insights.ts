@@ -15,6 +15,7 @@ import { notifText } from '@/lib/notifications/i18n';
 import { AI_MODELS } from '@/lib/ai/models';
 import { aiConfigured, callJson } from '@/lib/ai/client';
 import { emitEvent } from '@/lib/events/emit';
+import { fetchScanQuality, type ScanQuality } from '@/lib/coach-ai/scan-quality';
 
 // Cheap, reliable tier for the nightly batch extraction (runs once a day across all users).
 const INSIGHT_MODEL = AI_MODELS.insights;
@@ -73,6 +74,7 @@ export type InsightPayload = {
   projected_goal_date: string | null; // YYYY-MM-DD or null
   coaching_flags: CoachingFlag[];
   plateau: PlateauInsight; // deterministic plateau detection (always present; status 'none' when not flat)
+  scan_quality?: ScanQuality; // photo-scan correction rollup; absent below the signal floor (additive)
 };
 
 export type InsightResult =
@@ -615,11 +617,13 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
   const sb = createServiceClient();
   const since30 = isoDaysAgo(WINDOW_DAYS);
 
-  const [foodRes, weightRes, completionRes, onbRes] = await Promise.all([
+  const [foodRes, weightRes, completionRes, onbRes, scanQuality] = await Promise.all([
     sb.from('food_log').select('log_date, kcal, protein_g, carb_g, fat_g').eq('profile_id', sub.profileId).gte('log_date', since30),
     sb.from('weight_entries').select('recorded_on, weight_kg').eq('profile_id', sub.profileId).gte('recorded_on', since30),
     sb.from('workout_completion_history').select('changed_at, status').eq('profile_id', sub.profileId).gte('changed_at', `${since30}T00:00:00Z`),
     sb.from('onboarding_responses').select('computed_targets').eq('profile_id', sub.profileId).maybeSingle(),
+    // Photo-scan correction rollup (one indexed query; null below the signal floor, never throws).
+    fetchScanQuality(sb, sub.profileId, since30),
   ]);
 
   const food = (foodRes.data ?? []) as FoodLogRow[];
@@ -672,6 +676,7 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
     projected_goal_date: ai?.narrative.projected_goal_date ?? null,
     coaching_flags,
     plateau,
+    ...(scanQuality ? { scan_quality: scanQuality } : {}),
   };
 
   // Was the member already in a plateau as of their previous snapshot? If so this is not "newly

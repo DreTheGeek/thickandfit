@@ -297,6 +297,41 @@ export function renderContextBlock(ctx: CoachContext): string {
     );
   }
 
+  // Scan accuracy (the corrections -> coaching loop): only when the signal is meaningful, at most
+  // two lines, so the coach treats this member's scanned portions with the right skepticism.
+  // Read defensively from the payload (older rows have no scan_quality).
+  const sq = (ctx.insights?.scan_quality ?? null) as
+    | {
+        scans_30d?: number;
+        correction_rate?: number;
+        avg_portion_error_pct?: number | null;
+        top_corrected_foods?: { name?: string; avg_delta_pct?: number }[];
+      }
+    | null;
+  if (sq) {
+    const scans = num(sq.scans_30d);
+    const rate = typeof sq.correction_rate === 'number' ? sq.correction_rate : 0;
+    const errPct = typeof sq.avg_portion_error_pct === 'number' ? sq.avg_portion_error_pct : null;
+    const meaningful = (rate >= 0.3 && scans >= 5) || (errPct !== null && Math.abs(errPct) >= 10);
+    if (meaningful) {
+      const ratePct = Math.round(rate * 100);
+      const dir = errPct !== null && errPct !== 0 ? (errPct > 0 ? (es ? 'hacia arriba' : 'up') : (es ? 'hacia abajo' : 'down')) : null;
+      const adj = errPct !== null && dir ? ` ~${Math.abs(Math.round(errPct))}% ${dir}` : '';
+      lines.push(
+        es
+          ? `Precision de escaneo: esta miembro ajusta ~${ratePct}% de las porciones escaneadas${adj ? `, normalmente${adj}` : ''}. Trata las porciones escaneadas como estimaciones al hablar de sus comidas.`
+          : `Scan accuracy: this member adjusts ~${ratePct}% of scanned portions${adj ? `, usually${adj}` : ''}. Treat scanned portions as estimates when discussing their meals.`,
+      );
+      const top = (sq.top_corrected_foods ?? [])
+        .filter((f) => typeof f.name === 'string' && typeof f.avg_delta_pct === 'number')
+        .slice(0, 3)
+        .map((f) => `${f.name} (${(f.avg_delta_pct as number) > 0 ? '+' : ''}${Math.round(f.avg_delta_pct as number)}%)`);
+      if (top.length) {
+        lines.push(es ? `Alimentos que suele ajustar: ${top.join(', ')}` : `Frequently adjusted foods: ${top.join(', ')}`);
+      }
+    }
+  }
+
   if (ctx.insights && Object.keys(ctx.insights).length) {
     lines.push(`${L.insights}: ${JSON.stringify(ctx.insights)}`);
   }
