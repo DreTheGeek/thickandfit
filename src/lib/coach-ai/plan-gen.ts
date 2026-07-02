@@ -19,17 +19,17 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { retrieveKnowledge } from '@/lib/coach-ai/knowledge';
 import { SAFETY_CLAUSE_EN, planCaveat } from '@/lib/coach-ai/safety';
 import { AI_MODELS } from '@/lib/ai/models';
-
-const apiKey = process.env.OPENROUTER_API_KEY;
+import { aiConfigured, callJson } from '@/lib/ai/client';
 
 // Flagship reasoning for generation (rare, quality-critical, PCOS-aware structured JSON).
 const PLAN_MODEL = AI_MODELS.planGen;
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Bump when PLAN_SYSTEM changes so replay/eval can group inferences by prompt generation.
+const PROMPT_VERSION = 'plan-gen.v1';
 
 export type PlanLocale = 'en' | 'es';
 
 export function isPlanGenConfigured(): boolean {
-  return Boolean(apiKey);
+  return aiConfigured();
 }
 
 // --- The model output shape (validated before any write) --------------------
@@ -198,7 +198,7 @@ export type GenerateMealPlanResult =
 // Generate + persist one meal plan for a client. Reads their onboarding intake, retrieves the
 // company's coaching knowledge, calls Sonnet in JSON mode, validates, and inserts a meal_plans row.
 export async function generateMealPlan(input: GenerateMealPlanInput): Promise<GenerateMealPlanResult> {
-  if (!apiKey) return { status: 'notConfigured' };
+  if (!aiConfigured()) return { status: 'notConfigured' };
 
   const sb = createServiceClient();
 
@@ -226,27 +226,26 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
   let parsed: ParsedPlan | null = null;
   let usage: Usage = {};
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: PLAN_MODEL,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: PLAN_SYSTEM },
-          { role: 'user', content: buildUserPrompt(goal, targets, answers, knowledgeText, input.locale) },
-        ],
-      }),
+    const res = await callJson({
+      models: [PLAN_MODEL],
+      timeoutMs: 120_000, // flagship reasoning on a rare, coach-triggered path
+      messages: [
+        { role: 'system', content: PLAN_SYSTEM },
+        { role: 'user', content: buildUserPrompt(goal, targets, answers, knowledgeText, input.locale) },
+      ],
+      // fire: the inference id has no consumer (plans are reviewed, not corrected field-by-field).
+      // ai_usage_log token metering below stays untouched; metering and audit are separate lifecycles.
+      provenance: {
+        feature: 'plan-gen',
+        promptVersion: PROMPT_VERSION,
+        companyId: input.companyId,
+        profileId: input.clientProfileId,
+        mode: 'fire',
+      },
     });
-    if (!res.ok) return { status: 'error' };
-    const json = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-      usage?: Usage;
-    };
-    usage = json.usage ?? {};
-    const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return { status: 'error' };
-    parsed = parsePlan(raw);
+    if (res.status !== 'ok') return { status: 'error' };
+    usage = { prompt_tokens: res.usage.promptTokens, completion_tokens: res.usage.completionTokens };
+    parsed = parsePlan(res.content);
   } catch {
     return { status: 'error' };
   }

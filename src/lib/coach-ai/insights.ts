@@ -13,12 +13,12 @@ import { embedText, toVectorLiteral, embeddingsConfigured } from '@/lib/coach-ai
 import { createNotification } from '@/lib/notifications/create';
 import { notifText } from '@/lib/notifications/i18n';
 import { AI_MODELS } from '@/lib/ai/models';
-
-const apiKey = process.env.OPENROUTER_API_KEY;
+import { aiConfigured, callJson } from '@/lib/ai/client';
 
 // Cheap, reliable tier for the nightly batch extraction (runs once a day across all users).
 const INSIGHT_MODEL = AI_MODELS.insights;
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Bump when EXTRACT_SYSTEM changes so replay/eval can group inferences by prompt generation.
+const PROMPT_VERSION = 'insights.v1';
 
 const KG_TO_LB = 2.20462;
 const WINDOW_DAYS = 30;
@@ -369,30 +369,30 @@ async function extractNarrative(
   roll: Rollup,
   targets: unknown,
 ): Promise<{ narrative: AiNarrative; usage: Usage } | null> {
-  if (!apiKey) return null;
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: INSIGHT_MODEL,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: EXTRACT_SYSTEM },
-          { role: 'user', content: buildUserPrompt(sub, roll, targets) },
-        ],
-      }),
+    const res = await callJson({
+      models: [INSIGHT_MODEL],
+      timeoutMs: 60_000,
+      messages: [
+        { role: 'system', content: EXTRACT_SYSTEM },
+        { role: 'user', content: buildUserPrompt(sub, roll, targets) },
+      ],
+      // fire: batch path, the inference id has no consumer. ai_usage_log metering stays separate.
+      provenance: {
+        feature: 'insights',
+        promptVersion: PROMPT_VERSION,
+        companyId: sub.companyId,
+        profileId: sub.profileId,
+        mode: 'fire',
+      },
     });
-    if (!res.ok) return null;
-    const json = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-      usage?: Usage;
-    };
-    const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return null;
-    const narrative = parseNarrative(raw);
+    if (res.status !== 'ok') return null;
+    const narrative = parseNarrative(res.content);
     if (!narrative) return null;
-    return { narrative, usage: json.usage ?? {} };
+    return {
+      narrative,
+      usage: { prompt_tokens: res.usage.promptTokens, completion_tokens: res.usage.completionTokens },
+    };
   } catch {
     return null;
   }
@@ -646,7 +646,7 @@ export async function generateAllInsights(): Promise<BatchResult> {
 
   return {
     ok: errors === 0,
-    configured: Boolean(apiKey),
+    configured: aiConfigured(),
     subscribers: subs.length,
     written,
     skipped,

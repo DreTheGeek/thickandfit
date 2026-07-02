@@ -10,13 +10,14 @@
 // as `knowledge`) without code changes.
 import 'server-only';
 import { AI_MODELS } from '@/lib/ai/models';
-
-const apiKey = process.env.OPENROUTER_API_KEY;
+import { callJson, hashInput } from '@/lib/ai/client';
 
 // No-compromise vision per the photo priority. Routed centrally (gpt-5: $1.25/$10, image-capable, the
 // model from the best published macro study). Progress photos are low-frequency so a flagship is cheap
 // in aggregate. The eval decides the final pick (challengers: openai/gpt-5.4, google/gemini-3.1-pro-preview).
 export const PHYSIQUE_MODEL = AI_MODELS.physique;
+// Bump when systemPrompt changes so replay/eval can group inferences by prompt generation.
+const PROMPT_VERSION = 'physique.v1';
 
 export type PhysiqueAnalysis = {
   bfLow: number | null;
@@ -88,33 +89,41 @@ function strArray(v: unknown, max: number): string[] {
   return v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).map((s) => s.trim()).slice(0, max);
 }
 
-export async function analyzePhysique(c: PhysiqueContext): Promise<PhysiqueResult> {
-  if (!apiKey) return { status: 'notConfigured' };
+export async function analyzePhysique(
+  c: PhysiqueContext,
+  prov?: { companyId: string; profileId: string },
+): Promise<PhysiqueResult> {
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: PHYSIQUE_MODEL,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt(c.locale) },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: userContext(c) },
-              { type: 'image_url', image_url: { url: c.imageUrl } },
-            ],
-          },
-        ],
-      }),
+    const res = await callJson({
+      models: [PHYSIQUE_MODEL],
+      timeoutMs: 90_000,
+      messages: [
+        { role: 'system', content: systemPrompt(c.locale) },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: userContext(c) },
+            { type: 'image_url', image_url: { url: c.imageUrl } },
+          ],
+        },
+      ],
+      // fire: the inference id has no consumer today (no correction UI on physique reads).
+      ...(prov
+        ? {
+            provenance: {
+              feature: 'physique' as const,
+              promptVersion: PROMPT_VERSION,
+              companyId: prov.companyId,
+              profileId: prov.profileId,
+              inputHash: hashInput(c.imageUrl),
+              mode: 'fire' as const,
+            },
+          }
+        : {}),
     });
-    if (!res.ok) return { status: 'error' };
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return { status: 'error' };
-    const cleaned = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-    const p = JSON.parse(cleaned) as Record<string, unknown>;
+    if (res.status === 'notConfigured') return { status: 'notConfigured' };
+    if (res.status !== 'ok') return { status: 'error' };
+    const p = JSON.parse(res.content) as Record<string, unknown>;
     const a = (p.assessment ?? {}) as Record<string, unknown>;
     const g = (p.goals ?? {}) as Record<string, unknown>;
 

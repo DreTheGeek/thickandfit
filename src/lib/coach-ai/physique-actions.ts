@@ -40,12 +40,15 @@ export async function analyzePhysiqueAction(input: unknown): Promise<PhysiqueRes
 
   const locale = (await getLocale()) === 'es' ? 'es' : 'en';
 
-  const result = await analyzePhysique({
-    imageUrl: parsed.data.imageUrl,
-    weightLb: parsed.data.weightLb ?? null,
-    goal: parsed.data.goal ?? null,
-    locale,
-  });
+  const result = await analyzePhysique(
+    {
+      imageUrl: parsed.data.imageUrl,
+      weightLb: parsed.data.weightLb ?? null,
+      goal: parsed.data.goal ?? null,
+      locale,
+    },
+    { companyId: ctx.companyId, profileId: ctx.userId },
+  );
 
   // Persist successful reads (service client; RLS is the backstop). Best-effort, never blocks the result.
   if (result.status === 'ok') {
