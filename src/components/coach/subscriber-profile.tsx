@@ -14,11 +14,13 @@ import { RecipeImage } from '@/components/coach/recipe-image';
 import { GeneratePlanButton } from '@/components/coach/generate-plan-button';
 import { CoachBodyProgress } from '@/components/coach/coach-body-progress';
 import { CoachFoodDiary } from '@/components/coach/coach-food-diary';
+import { CoachCheckins } from '@/components/coach/coach-checkins';
 import { formatCents } from '@/components/coach/money';
 import type { CoachNote } from '@/lib/coach/notes-actions';
 import type { BodyStats } from '@/lib/body/types';
 import type { CoachDiaryWeek } from '@/lib/coach/food-diary';
 import type { MembershipInfo, ClientHabits } from '@/lib/coach/client-engagement';
+import type { ClientCheckin } from '@/lib/coach/client-checkin';
 
 export type ProfileData = {
   name: string;
@@ -53,6 +55,7 @@ export type ProfileData = {
   foodDiary: CoachDiaryWeek | null;
   membership: MembershipInfo | null;
   habits: ClientHabits | null;
+  checkin: ClientCheckin | null;
 };
 
 export type ClientIntake = {
@@ -70,11 +73,11 @@ export type ClientIntake = {
 
 type TabKey =
   | 'overview' | 'info' | 'nutrition' | 'workouts' | 'community'
-  | 'progress' | 'messages' | 'billing' | 'notes';
+  | 'progress' | 'checkins' | 'messages' | 'billing' | 'notes';
 
 const TAB_LABEL: Record<TabKey, string> = {
   overview: 'tabOverview', info: 'tabInfo', nutrition: 'tabNutrition', workouts: 'tabWorkouts', community: 'tabCommunity',
-  progress: 'tabProgress', messages: 'tabMessages', billing: 'tabBilling', notes: 'tabNotes',
+  progress: 'tabProgress', checkins: 'tabCheckins', messages: 'tabMessages', billing: 'tabBilling', notes: 'tabNotes',
 };
 
 function initials(name: string, email: string): string {
@@ -97,9 +100,11 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
     !!data.bodyStats &&
     (data.bodyStats.weightSeries.length > 0 || data.bodyStats.measurements.some((m) => m.latest != null));
   const hasNutrition = !!data.foodDiary && (data.foodDiary.loggedDays > 0 || data.foodDiary.entries.length > 0);
+  const hasCheckin = !!data.checkin && (!!data.checkin.latest || data.checkin.photos.length > 0);
   const tabs: TabKey[] = ['overview', 'info'];
   if (hasBody) tabs.push('progress');
   if (hasNutrition) tabs.push('nutrition');
+  if (hasCheckin) tabs.push('checkins');
   tabs.push('workouts');
 
   return (
@@ -374,6 +379,8 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
       {tab === 'progress' && data.bodyStats && <CoachBodyProgress stats={data.bodyStats} />}
 
       {tab === 'nutrition' && data.foodDiary && <CoachFoodDiary week={data.foodDiary} />}
+
+      {tab === 'checkins' && data.checkin && <CoachCheckins checkin={data.checkin} />}
 
       {tab === 'workouts' && (
         <Card className="p-6">

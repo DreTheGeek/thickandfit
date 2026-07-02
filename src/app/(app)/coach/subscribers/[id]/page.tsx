@@ -8,6 +8,7 @@ import { fetchHistory } from '@/lib/workout/logging';
 import { getCoachBodyStats } from '@/lib/body/stats';
 import { getCoachFoodDiaryWeek } from '@/lib/coach/food-diary';
 import { getClientMembership, getClientHabits } from '@/lib/coach/client-engagement';
+import { getClientCheckin } from '@/lib/coach/client-checkin';
 import { SubscriberProfile, type ProfileData } from '@/components/coach/subscriber-profile';
 import { getCoachNotes } from '@/lib/coach/notes-actions';
 import { getClientFoodPhotos } from '@/lib/food-photos/coach';
@@ -100,13 +101,14 @@ export default async function CoachSubscriberPage({
     currentPlanId = (mp as { id?: string } | null)?.id ?? null;
   }
 
-  const [membership, habits] = await Promise.all([
+  const [membership, habits, checkin] = await Promise.all([
     getClientMembership(contactId, {
       role: profile.role,
       compUntil: (profile.comp_access_until as string | null) ?? null,
       createdAt: profile.created_at,
     }),
     getClientHabits(id, tz),
+    getClientCheckin(ctx.companyId, id),
   ]);
 
   const targets = (onb?.computed_targets ?? null) as Targets | null;
@@ -183,6 +185,7 @@ export default async function CoachSubscriberPage({
     foodDiary,
     membership,
     habits,
+    checkin,
   };
 
   return <SubscriberProfile data={data} />;

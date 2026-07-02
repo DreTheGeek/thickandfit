@@ -958,7 +958,11 @@
       "payPastDue": "Past due",
       "habitsTitle": "Habits",
       "habitsStreak": "Streak",
-      "habitsWeek": "{pct}% this week"
+      "habitsWeek": "{pct}% this week",
+      "tabCheckins": "Check-ins",
+      "checkinLatest": "Latest check-in",
+      "checkinPhotos": "Progress photos",
+      "checkinNoData": "No check-ins submitted yet."
     },
     "you": {
       "title": "You",
