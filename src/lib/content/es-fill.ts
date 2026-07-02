@@ -8,10 +8,9 @@
 // glossary so the model stays consistent with the vocabulary the app already shows.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { aiConfigured, callJson } from '@/lib/ai/client';
+import { AI_MODELS } from '@/lib/ai/models';
 
-const apiKey = process.env.OPENROUTER_API_KEY;
-const MODEL = 'anthropic/claude-haiku-4-5';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const BATCH_SIZE = 20; // names per model call; small enough to stay reliable, large enough to be cheap
 
 // Curated ES glossary reused from the exercise seed vocabulary (0007_exercises.sql:11-45). Few-shot
@@ -61,30 +60,18 @@ export type EsFillResult = {
 
 // Calls the model for one batch. Returns null on any failure so the caller can degrade / retry.
 async function translateBatch(rows: EsFillRow[]): Promise<EsFillDraft[] | null> {
-  if (!apiKey) return null;
   const payload = rows.map((r) => ({ id: r.id, name_en: r.name_en, cues_en: r.cues_en ?? '' }));
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: JSON.stringify({ items: payload }) },
-        ],
-      }),
+    const res = await callJson({
+      models: [AI_MODELS.esFill],
+      timeoutMs: 60_000,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: JSON.stringify({ items: payload }) },
+      ],
     });
-    if (!res.ok) return null;
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return null;
-    const cleaned = raw
-      .replace(/^```(?:json)?/i, '')
-      .replace(/```$/, '')
-      .trim();
-    const parsed = JSON.parse(cleaned) as { items?: unknown };
+    if (res.status !== 'ok') return null;
+    const parsed = JSON.parse(res.content) as { items?: unknown };
     if (!Array.isArray(parsed.items)) return null;
     return parsed.items
       .map((it): EsFillDraft | null => {
@@ -123,7 +110,7 @@ export async function fillExerciseSpanish(
     return { status: 'error', translated: 0, written: 0, remaining: -1 };
   }
   const pending = (rows ?? []) as EsFillRow[];
-  if (!apiKey) {
+  if (!aiConfigured()) {
     // No key: report what WOULD be done, change nothing.
     const { count } = await svc
       .from('exercises')
