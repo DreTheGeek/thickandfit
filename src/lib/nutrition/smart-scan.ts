@@ -6,21 +6,27 @@
 //     inventing) and we convert to per-100g + cache it.
 // Ambiguity -> a `clarify` question the UI asks the user. No OPENROUTER_API_KEY -> clean notConfigured.
 import 'server-only';
+import { createHash } from 'node:crypto';
 import { createServiceClient } from '@/lib/supabase/service';
 import { resolvePredictedItems, type PhotoCandidate } from '@/lib/nutrition/photo';
 import { groundFoodByName } from '@/lib/nutrition/external-foods';
 import type { FoodLite, MacroTotals } from '@/lib/nutrition/macros';
+import { AI_MODELS } from '@/lib/ai/models';
+import { logInference } from '@/lib/ai/inferences';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
-// The unified scan is a fast, high-frequency path (classify meal-vs-product, read items/label). gpt-5's
-// heavy reasoning made it ~40s per scan, which kills logging. Gemini 2.5 Flash runs the same
-// prompt-driven structured-context steps in a few seconds. (A gpt-5 "precise mode" can be an option later.)
-const MODEL = 'google/gemini-2.5-flash';
+// Model routing lives in the central router (AI_MODELS), NOT hardcoded here, so the eval harness can
+// A/B models and swap in one place. The scan tries the primary (smartScan = gpt-5, benchmarked faster +
+// more accurate), then a distinct fallback (gemini), so a provider outage or a model-specific rejection
+// degrades to a proven model instead of failing every meal log. Deduped in case both point to one model.
+const SCAN_CHAIN = [AI_MODELS.smartScan, AI_MODELS.smartScanFallback].filter((m, i, a) => a.indexOf(m) === i);
+// Bump when PROMPT changes so replay/eval can group inferences by prompt generation.
+const PROMPT_VERSION = 'smart-scan.v1';
 const FOOD_COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
 
 export type SmartScanResult =
-  | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals } // a MEAL (matches PhotoResult 'ok')
-  | { status: 'product'; food: FoodLite; clarify: string | null }
+  | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals; inferenceId?: string } // a MEAL
+  | { status: 'product'; food: FoodLite; clarify: string | null; inferenceId?: string }
   | { status: 'clarify'; clarify: string }
   | { status: 'notConfigured' }
   | { status: 'noFood' }
@@ -122,44 +128,63 @@ function num(v: unknown, d = 0): number {
   return Number.isFinite(n) ? n : d;
 }
 
-export async function analyzeSmartPhoto(image: string, locale: string): Promise<SmartScanResult> {
+export async function analyzeSmartPhoto(
+  image: string,
+  locale: string,
+  ctx?: { companyId: string; profileId: string },
+): Promise<SmartScanResult> {
   if (!apiKey) return { status: 'notConfigured' };
   const tVision = Date.now();
+  const inputHash = createHash('sha256').update(image).digest('hex');
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      // Bound the vision call so a slow provider response fails cleanly instead of hanging to the
-      // function ceiling (which the user sees as a hard timeout error).
-      signal: AbortSignal.timeout(90_000),
-      body: JSON.stringify({
-        model: MODEL,
-        // Route to the lowest-latency Gemini provider (same model + weights, so no accuracy change);
-        // avoids the occasional slow-provider outlier on OpenRouter.
-        provider: { sort: 'latency' },
-        // Food recognition + label transcription is not a deep-reasoning task; gpt-5 defaults to heavy
-        // reasoning that made a scan take ~40s. Low effort keeps the accuracy and cuts it to a few seconds.
-        reasoning: { effort: 'low' },
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: PROMPT },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: 'Classify and read this photo (a meal, or a single packaged product/label).' },
-              { type: 'image_url', image_url: { url: image } },
-            ],
-          },
+    const messages = [
+      { role: 'system', content: PROMPT },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Classify and read this photo (a meal, or a single packaged product/label).' },
+          { type: 'image_url', image_url: { url: image } },
         ],
-      }),
-    });
-    if (!res.ok) {
-      // Never swallow the cause: log the provider status + body so a prod failure is diagnosable
-      // (401 = bad key, 402 = out of credits, 429 = rate limit, 400 = bad request/model).
-      const body = await res.text().catch(() => '');
-      console.error(`smart-scan vision HTTP ${res.status} (${MODEL}):`, body.slice(0, 400));
-      return { status: 'error' };
+      },
+    ];
+    // Try the primary scan model, then the fallback. A model-level failure (5xx, 429, or a model-specific
+    // 400) drops to the next model instead of failing the whole scan; a bad IMAGE fails on both and
+    // surfaces as a real error. Each attempt gets its own timeout so the fallback still fits the route's
+    // 300s ceiling. `usedModel` records which model actually produced the result (for provenance).
+    let res: Response | null = null;
+    let usedModel = SCAN_CHAIN[0];
+    for (const m of SCAN_CHAIN) {
+      try {
+        const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+          // Bound each attempt so a slow provider fails cleanly instead of hanging to the ceiling.
+          signal: AbortSignal.timeout(75_000),
+          body: JSON.stringify({
+            model: m,
+            // Lowest-latency provider (same weights, no accuracy change); avoids slow-provider outliers.
+            provider: { sort: 'latency' },
+            // Recognition + label transcription is not deep reasoning; low effort keeps accuracy and
+            // keeps gpt-5 sub-second (its default heavy reasoning was the old ~40s cost).
+            reasoning: { effort: 'low' },
+            response_format: { type: 'json_object' },
+            messages,
+          }),
+        });
+        if (r.ok) {
+          res = r;
+          usedModel = m;
+          break;
+        }
+        // Never swallow the cause: log status + body so a prod failure is diagnosable, then try the next
+        // model (401 = bad key, 402 = out of credits, 429 = rate limit, 400 = bad request/model).
+        const body = await r.text().catch(() => '');
+        console.error(`smart-scan vision HTTP ${r.status} (${m}):`, body.slice(0, 300));
+      } catch (e) {
+        console.warn(`smart-scan vision ${m} failed, trying fallback:`, e instanceof Error ? e.message : String(e));
+      }
     }
+    if (!res) return { status: 'error' };
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const raw = json?.choices?.[0]?.message?.content?.trim();
     if (!raw) {
@@ -170,8 +195,14 @@ export async function analyzeSmartPhoto(image: string, locale: string): Promise<
     const out = JSON.parse(cleaned) as VisionOut;
     const visionMs = Date.now() - tVision;
 
-    // --- PRODUCT ---
+    // Build the result first, then write ONE provenance row for the whole scan and thread its id back so
+    // a logged food links to the inference that produced it (enables correction capture + replay).
+    let result: SmartScanResult;
+    let itemCount = 0;
+    let confidence: number | null = null;
+
     if (out.kind === 'product' && out.product) {
+      // --- PRODUCT ---
       const p = out.product;
       const name = (p.name ?? '').trim();
       const clarify = p.clarify?.trim() || null;
@@ -194,33 +225,60 @@ export async function analyzeSmartPhoto(image: string, locale: string): Promise<
         );
       }
       if (!food && name) food = await groundFoodByName(name, locale);
-      if (food) return { status: 'product', food, clarify };
-      if (clarify) return { status: 'clarify', clarify };
-      return { status: 'noFood' };
+      if (food) result = { status: 'product', food, clarify };
+      else if (clarify) result = { status: 'clarify', clarify };
+      else result = { status: 'noFood' };
+    } else {
+      // --- MEAL --- (reuse the grounded resolve pipeline)
+      const items = (out.meal?.items ?? [])
+        .map((it) => {
+          const nm = (it.name ?? '').trim();
+          if (!nm) return null;
+          return {
+            name: nm,
+            grams: Math.min(5000, Math.max(1, Math.round(num(it.grams, 100)))),
+            confidence: Math.min(1, Math.max(0, num(it.confidence, 0.5))),
+            basis: typeof it.basis === 'string' && it.basis.trim() ? it.basis.trim() : undefined,
+          };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null)
+        .slice(0, 12);
+      itemCount = items.length;
+      confidence = items.length ? items.reduce((s, it) => s + it.confidence, 0) / items.length : null;
+
+      const tResolve = Date.now();
+      const resolved = await resolvePredictedItems(items, locale);
+      // Timing split so prod latency is attributable (vision vs food resolution) from the logs.
+      console.log(`[smart-scan] vision ${visionMs}ms, resolve ${Date.now() - tResolve}ms, items ${items.length}`);
+      if (resolved.status === 'ok') result = { status: 'ok', candidates: resolved.candidates, totals: resolved.totals };
+      else {
+        if (resolved.status !== 'noFood') console.error('smart-scan resolve failed:', resolved.status);
+        result = { status: resolved.status === 'noFood' ? 'noFood' : 'error' };
+      }
     }
 
-    // --- MEAL --- (reuse the grounded resolve pipeline)
-    const items = (out.meal?.items ?? [])
-      .map((it) => {
-        const nm = (it.name ?? '').trim();
-        if (!nm) return null;
-        return {
-          name: nm,
-          grams: Math.min(5000, Math.max(1, Math.round(num(it.grams, 100)))),
-          confidence: Math.min(1, Math.max(0, num(it.confidence, 0.5))),
-          basis: typeof it.basis === 'string' && it.basis.trim() ? it.basis.trim() : undefined,
-        };
-      })
-      .filter((x): x is NonNullable<typeof x> => x !== null)
-      .slice(0, 12);
-
-    const tResolve = Date.now();
-    const resolved = await resolvePredictedItems(items, locale);
-    // Timing split so prod latency is attributable (vision vs food resolution) from the logs.
-    console.log(`[smart-scan] vision ${visionMs}ms, resolve ${Date.now() - tResolve}ms, items ${items.length}`);
-    if (resolved.status === 'ok') return { status: 'ok', candidates: resolved.candidates, totals: resolved.totals };
-    if (resolved.status !== 'noFood') console.error('smart-scan resolve failed:', resolved.status);
-    return { status: resolved.status === 'noFood' ? 'noFood' : 'error' };
+    // Provenance: one row per scan (fire-after, needs the final status). Only when we know the
+    // tenant/member (ctx). Thread the id back onto loggable outcomes so a correction can attach to it.
+    if (ctx) {
+      const inferenceId = await logInference({
+        companyId: ctx.companyId,
+        profileId: ctx.profileId,
+        feature: 'photo-scan',
+        model: usedModel,
+        promptVersion: PROMPT_VERSION,
+        inputHash,
+        rawOutput: out,
+        confidence,
+        latencyMs: Date.now() - tVision,
+        status: result.status,
+        itemCount,
+      });
+      if (inferenceId) {
+        if (result.status === 'ok') result = { ...result, inferenceId };
+        else if (result.status === 'product') result = { ...result, inferenceId };
+      }
+    }
+    return result;
   } catch (e) {
     console.error('smart-scan exception:', e instanceof Error ? e.message : String(e));
     return { status: 'error' };

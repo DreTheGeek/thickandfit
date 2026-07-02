@@ -56,7 +56,11 @@ export async function POST(req: Request): Promise<Response> {
 
   const tGate = Date.now();
   const locale = await getLocale();
-  const result = await analyzeSmartPhoto(parsed.data.image, locale);
+  // Pass tenant/member so the scan writes a provenance row and returns its id (for correction capture).
+  const result = await analyzeSmartPhoto(parsed.data.image, locale, {
+    companyId: ctx.companyId,
+    profileId: ctx.userId,
+  });
   // Attribute prod latency: how much is the auth/entitlement/rate-limit gate vs the analyze pipeline.
   console.log(`[photo] gate ${tGate - t0}ms, analyze ${Date.now() - tGate}ms, total ${Date.now() - t0}ms, status ${result.status}`);
   return apiSuccess(result);
