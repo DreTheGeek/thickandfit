@@ -84,10 +84,17 @@ function resizeImage(dataUrl: string, maxDim: number, quality: number): Promise<
   });
 }
 
+// Confidence tiers (the friction dial). >=HIGH logs silently; MID gets a subtle double-check hint;
+// <LOW gets real attention (ring + confirm-tap) because that is exactly the item someone should
+// eyeball. Low confidence renders in the alert tone, never faint: faint visually DEMOTES the one
+// row that needs eyes.
+const CONF_HIGH = 0.9;
+const CONF_LOW = 0.7;
+
 function confidenceTone(c: number): string {
-  if (c >= 0.75) return 'text-accent-ink';
-  if (c >= 0.45) return 'text-soft';
-  return 'text-faint';
+  if (c >= CONF_HIGH) return 'text-accent-ink';
+  if (c >= CONF_LOW) return 'text-soft';
+  return 'text-alert';
 }
 
 // Macros are linear in grams, so scaling the predicted macros by (edited / predicted) grams is exact -
@@ -153,6 +160,11 @@ export function PhotoScan({
   // The food id each candidate ORIGINALLY matched, so a swap to a different food is detectable
   // server-side as an identity correction (names are noise; only the id comparison is signal).
   const [predictedFoodIds, setPredictedFoodIds] = useState<(string | null)[]>([]);
+  // Confidence-tier state: touched = the user adjusted this portion (editing IS confirming);
+  // armed = a low-confidence Add was tapped once (the second tap logs). High/mid tiers never gate.
+  const [touched, setTouched] = useState<Record<number, boolean>>({});
+  const [armed, setArmed] = useState<Record<number, boolean>>({});
+  const gramsRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const [slot, setSlot] = useState<MealSlot>('lunch');
   const [logged, setLogged] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
@@ -172,6 +184,8 @@ export function PhotoScan({
     setInferenceId(null);
     setPredictedGrams([]);
     setPredictedFoodIds([]);
+    setTouched({});
+    setArmed({});
     setLogged({});
     setBusy(null);
     setDesc('');
@@ -298,14 +312,24 @@ export function PhotoScan({
 
   // Adjust a detected portion in place. The predicted grams are kept separately (predictedGrams[i]) so
   // the change becomes the correction signal on log; macros rescale live off the predicted macros.
+  // Editing the portion IS confirming it (clears the low-confidence gate for this row).
   function updateGrams(i: number, next: number): void {
     const g = Math.max(1, Math.min(5000, Math.round(next || 0)));
+    setTouched((prev) => ({ ...prev, [i]: true }));
     setCandidates((prev) => prev.map((c, idx) => (idx === i ? { ...c, grams: g } : c)));
   }
 
   async function logOne(i: number): Promise<void> {
     const c = candidates[i];
     if (!c || !c.food || !c.matched) return;
+    // Low-confidence gate: the first Add tap arms the row (focus the portion, switch the button to
+    // an explicit confirm) instead of logging a portion nobody looked at. Second tap logs normally.
+    // High/mid confidence never gates - the one-tap thesis stays intact where the model is sure.
+    if (c.confidence < CONF_LOW && !touched[i] && !armed[i]) {
+      setArmed((prev) => ({ ...prev, [i]: true }));
+      gramsRefs.current[i]?.focus();
+      return;
+    }
     setBusy(i);
     const res = await logPhotoFoodAction({
       foodId: c.food.id,
@@ -325,17 +349,22 @@ export function PhotoScan({
     }
   }
 
+  // Bulk-log confident items; low-confidence rows the user never looked at (not touched, not
+  // armed) stay listed with their attention treatment instead of being silently bulk-logged.
   async function logAll(): Promise<void> {
     for (let i = 0; i < candidates.length; i++) {
-      if (candidates[i]?.matched && !logged[i]) {
-         
-        await logOne(i);
-      }
+      const c = candidates[i];
+      if (!c?.matched || logged[i]) continue;
+      if (c.confidence < CONF_LOW && !touched[i] && !armed[i]) continue;
+      await logOne(i);
     }
   }
 
   const matchedCount = candidates.filter((c) => c.matched).length;
   const remaining = candidates.filter((c, i) => c.matched && !logged[i]).length;
+  const lowSkipped = candidates.filter(
+    (c, i) => c.matched && !logged[i] && c.confidence < CONF_LOW && !touched[i] && !armed[i],
+  ).length;
 
   return (
     <>
@@ -499,8 +528,16 @@ export function PhotoScan({
                                   step="5"
                                   value={Math.round(c.grams)}
                                   onChange={(e) => updateGrams(i, Number(e.target.value))}
+                                  ref={(el) => {
+                                    gramsRefs.current[i] = el;
+                                  }}
                                   aria-label={t('productAmount')}
-                                  className="w-16 rounded-lg border border-line bg-bg px-2 py-1 text-[13px] tabular-nums outline-none focus:border-ink"
+                                  className={[
+                                    'w-16 rounded-lg border bg-bg px-2 py-1 text-[13px] tabular-nums outline-none focus:border-ink',
+                                    c.confidence < CONF_LOW && !touched[i] && !armed[i]
+                                      ? 'border-alert ring-1 ring-alert/30'
+                                      : 'border-line',
+                                  ].join(' ')}
                                 />
                                 <span className="text-[12px] text-faint">g</span>
                               </span>
@@ -517,6 +554,11 @@ export function PhotoScan({
                           ) : (
                             <div className="mt-0.5 text-[12px] text-faint">{t('photoNoMatch')}</div>
                           )}
+                          {c.matched && c.macros && c.confidence < CONF_LOW && !logged[i] ? (
+                            <div className="mt-1 text-[11px] text-alert">{t('photoLowConfidence')}</div>
+                          ) : c.matched && c.macros && c.confidence < CONF_HIGH && !logged[i] ? (
+                            <div className="mt-1 text-[11px] text-faint">{t('photoCheckPortion')}</div>
+                          ) : null}
                         </div>
                         {c.matched ? (
                           logged[i] ? (
@@ -531,7 +573,7 @@ export function PhotoScan({
                               onClick={() => logOne(i)}
                               className="tf-press shrink-0 rounded-full bg-ink px-3.5 py-1.5 text-[12px] font-semibold text-bg disabled:opacity-50"
                             >
-                              <Icon name="plus" size={14} />
+                              {armed[i] && !touched[i] ? t('photoConfirmAdd') : <Icon name="plus" size={14} />}
                             </button>
                           )
                         ) : null}
@@ -540,6 +582,9 @@ export function PhotoScan({
                   ))}
                 </div>
 
+                {lowSkipped > 0 && remaining > lowSkipped ? (
+                  <p className="mt-2 text-[11px] text-faint">{t('photoLowSkipped', { n: lowSkipped })}</p>
+                ) : null}
                 <div className="mt-4 flex gap-2">
                   {matchedCount > 0 && remaining > 0 && (
                     <button type="button" onClick={logAll} className="tf-press flex-1 rounded-full bg-ink py-2.5 text-[13px] font-semibold text-bg">
