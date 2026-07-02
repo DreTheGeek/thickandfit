@@ -17,7 +17,7 @@ const OWNER = [
   ['coach_messages', 'profile_id'], ['workout_logs', 'profile_id'], ['onboarding_responses', 'profile_id'],
   ['notifications', 'profile_id'], ['progress_photos', 'profile_id'], ['form_responses', 'profile_id'],
   ['user_insights', 'profile_id'], ['push_subscriptions', 'profile_id'],
-  ['body_measurements', 'profile_id'],
+  ['body_measurements', 'profile_id'], ['food_photos', 'profile_id'],
 ];
 const FORBIDDEN = [
   'contacts', 'client_subscriptions', 'contact_transactions', 'opportunities', 'pipelines',

@@ -7,6 +7,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { fetchHistory } from '@/lib/workout/logging';
 import { SubscriberProfile, type ProfileData } from '@/components/coach/subscriber-profile';
 import { getCoachNotes } from '@/lib/coach/notes-actions';
+import { getClientFoodPhotos } from '@/lib/food-photos/coach';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,7 @@ export default async function CoachSubscriberPage({
 
   if (!profile || profile.company_id !== ctx.companyId) notFound();
 
-  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }, { data: physique }] =
+  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }, { data: physique }, foodPhotos] =
     await Promise.all([
       supabase.from('onboarding_responses').select('computed_targets').eq('profile_id', id).maybeSingle(),
       supabase
@@ -61,6 +62,7 @@ export default async function CoachSubscriberPage({
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(5),
+      getClientFoodPhotos(ctx.companyId, id),
     ]);
   const meRow = me as { full_name: string | null; email: string | null } | null;
 
@@ -107,6 +109,7 @@ export default async function CoachSubscriberPage({
     notes,
     coachName: meRow?.full_name ?? meRow?.email ?? 'Coach',
     physiqueReads,
+    foodPhotos: foodPhotos.map((p) => ({ id: p.id, url: p.url, caption: p.caption, mealSlot: p.mealSlot, takenOn: p.takenOn })),
   };
 
   return <SubscriberProfile data={data} />;

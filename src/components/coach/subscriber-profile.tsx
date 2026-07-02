@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { CompletionCheck } from '@/components/ui/completion';
 import { CoachNotesPanel } from '@/components/coach/coach-notes-panel';
+import { RecipeImage } from '@/components/coach/recipe-image';
 import type { CoachNote } from '@/lib/coach/notes-actions';
 
 export type ProfileData = {
@@ -36,6 +37,7 @@ export type ProfileData = {
     flagged: boolean;
     date: string;
   }[];
+  foodPhotos: { id: string; url: string | null; caption: string | null; mealSlot: string | null; takenOn: string }[];
 };
 
 type TabKey =
@@ -190,6 +192,25 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
                         {r.narrative.length > 220 ? `${r.narrative.slice(0, 220)}...` : r.narrative}
                       </p>
                     )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+          {data.foodPhotos.length > 0 && (
+            <Card className="p-5 md:col-span-2">
+              <Eyebrow>{t('foodPhotos')}</Eyebrow>
+              <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {data.foodPhotos.map((p) => (
+                  <div key={p.id}>
+                    <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-warm">
+                      <RecipeImage src={p.url} alt={p.caption ?? ''} icon="camera" sizes="25vw" />
+                    </div>
+                    <div className="mt-1 truncate text-[10px] text-faint">
+                      {p.mealSlot ? `${p.mealSlot} · ` : ''}
+                      {p.takenOn.slice(5)}
+                      {p.caption ? ` · ${p.caption}` : ''}
+                    </div>
                   </div>
                 ))}
               </div>
