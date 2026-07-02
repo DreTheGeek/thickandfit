@@ -124,6 +124,7 @@ function num(v: unknown, d = 0): number {
 
 export async function analyzeSmartPhoto(image: string, locale: string): Promise<SmartScanResult> {
   if (!apiKey) return { status: 'notConfigured' };
+  const tVision = Date.now();
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -164,6 +165,7 @@ export async function analyzeSmartPhoto(image: string, locale: string): Promise<
     }
     const cleaned = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
     const out = JSON.parse(cleaned) as VisionOut;
+    const visionMs = Date.now() - tVision;
 
     // --- PRODUCT ---
     if (out.kind === 'product' && out.product) {
@@ -209,7 +211,10 @@ export async function analyzeSmartPhoto(image: string, locale: string): Promise<
       .filter((x): x is NonNullable<typeof x> => x !== null)
       .slice(0, 12);
 
+    const tResolve = Date.now();
     const resolved = await resolvePredictedItems(items, locale);
+    // Timing split so prod latency is attributable (vision vs food resolution) from the logs.
+    console.log(`[smart-scan] vision ${visionMs}ms, resolve ${Date.now() - tResolve}ms, items ${items.length}`);
     if (resolved.status === 'ok') return { status: 'ok', candidates: resolved.candidates, totals: resolved.totals };
     if (resolved.status !== 'noFood') console.error('smart-scan resolve failed:', resolved.status);
     return { status: resolved.status === 'noFood' ? 'noFood' : 'error' };

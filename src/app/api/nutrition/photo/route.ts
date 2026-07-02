@@ -31,6 +31,7 @@ const Body = z
   .strict();
 
 export async function POST(req: Request): Promise<Response> {
+  const t0 = Date.now();
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
@@ -56,7 +57,10 @@ export async function POST(req: Request): Promise<Response> {
   const parsed = Body.safeParse(raw);
   if (!parsed.success) return apiError(parsed.error.issues[0]?.message ?? 'Invalid input', 422);
 
+  const tGate = Date.now();
   const locale = await getLocale();
   const result = await analyzeSmartPhoto(parsed.data.image, locale);
+  // Attribute prod latency: how much is the auth/entitlement/rate-limit gate vs the analyze pipeline.
+  console.log(`[photo] gate ${tGate - t0}ms, analyze ${Date.now() - tGate}ms, total ${Date.now() - t0}ms, status ${result.status}`);
   return apiSuccess(result);
 }
