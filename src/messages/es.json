@@ -1045,7 +1045,15 @@
       "photoNotConfigured": "El escaneo por foto casi está listo",
       "photoNotConfiguredNote": "El motor de fotos con IA aún no está activado. Mientras tanto, busca o escanea un código de barras.",
       "photoNoFood": "No pudimos identificar comida en esa foto. Intenta una toma más clara.",
-      "photoError": "Algo salio mal al leer esa foto. Intenta de nuevo."
+      "photoError": "Algo salio mal al leer esa foto. Intenta de nuevo.",
+      "mpPickOne": "Elige uno cada dia - tu decides",
+      "mpPrep": "Prep.",
+      "mpCook": "Coccion",
+      "mpMin": "min",
+      "mpKcal": "kcal",
+      "mpIngredients": "Ingredientes",
+      "mpSpices": "Especias y sabor",
+      "mpMethod": "Preparacion"
     },
     "disclaimer": {
       "title": "Antes de empezar",

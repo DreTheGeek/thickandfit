@@ -1,4 +1,6 @@
 // Pure, client-safe types + parsing for the meal-plans Library. Re-exported by meal-plans.ts.
+import type { StructuredPlan } from '@/lib/coach/meal-plan-structured';
+
 export type MealPlanSort = 'name' | 'calories' | 'client';
 
 export type MealPlanFilters = {
@@ -29,6 +31,9 @@ export type MealPlanDetail = MealPlanRow & {
   splitFatPct: number | null;
   groups: MealGroupLite[];
   notes: string | null;
+  // The full structured plan (slots -> recipes) when the plan was built/generated in-app; null for
+  // legacy Lenus imports, which fall back to `groups`.
+  structured: StructuredPlan | null;
 };
 
 export type MealPlansPage = { rows: MealPlanRow[]; total: number; page: number; pageSize: number; totalAll: number };

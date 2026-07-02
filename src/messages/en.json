@@ -1045,7 +1045,15 @@
       "photoNotConfigured": "Photo scan is almost ready",
       "photoNotConfiguredNote": "The AI photo engine is not switched on yet. Search or scan a barcode in the meantime.",
       "photoNoFood": "We could not spot any food in that photo. Try a clearer shot.",
-      "photoError": "Something went wrong reading that photo. Please try again."
+      "photoError": "Something went wrong reading that photo. Please try again.",
+      "mpPickOne": "Pick one each day - your choice",
+      "mpPrep": "Prep",
+      "mpCook": "Cook",
+      "mpMin": "min",
+      "mpKcal": "kcal",
+      "mpIngredients": "Ingredients",
+      "mpSpices": "Spices & flavor",
+      "mpMethod": "Method"
     },
     "disclaimer": {
       "title": "Before you begin",

@@ -3,6 +3,7 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { clampPage } from '@/lib/coach/clients-types';
+import { parseStructuredPlan } from '@/lib/coach/meal-plan-structured';
 import type { MealGroupLite, MealPlanDetail, MealPlanFilters, MealPlanRow, MealPlansPage } from '@/lib/coach/meal-plans-types';
 
 export * from '@/lib/coach/meal-plans-types';
@@ -21,6 +22,7 @@ type PlanRaw = {
   split_carb_pct: number | null;
   split_fat_pct: number | null;
   plan_jsonb: unknown;
+  structured: unknown;
   notes: string | null;
   contact: ContactLite | ContactLite[];
 };
@@ -84,7 +86,7 @@ export async function getMealPlanDetail(companyId: string, id: string): Promise<
   const sb = createServiceClient();
   const { data, error } = await sb
     .from('meal_plans')
-    .select(`${COLS}, plan_jsonb, notes`)
+    .select(`${COLS}, plan_jsonb, structured, notes`)
     .eq('company_id', companyId)
     .eq('id', id)
     .maybeSingle();
@@ -122,6 +124,7 @@ function detailFrom(p: PlanRaw): MealPlanDetail {
     splitFatPct: p.split_fat_pct,
     groups,
     notes: p.notes,
+    structured: parseStructuredPlan(p.structured),
   };
 }
 
@@ -158,7 +161,7 @@ export async function getClientMealPlan(
 
   const { data } = await sb
     .from('meal_plans')
-    .select(`${COLS}, plan_jsonb, notes`)
+    .select(`${COLS}, plan_jsonb, structured, notes`)
     .eq('company_id', companyId)
     .eq('contact_id', contactId)
     .order('updated_at', { ascending: false })

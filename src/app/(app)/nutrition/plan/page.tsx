@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { getClientMealPlan } from '@/lib/coach/meal-plans';
+import { StructuredPlanView } from '@/components/nutrition/structured-plan-view';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { PageTitle } from '@/components/ui/section';
@@ -41,14 +42,14 @@ export default async function ClientMealPlanPage(): Promise<ReactElement> {
               {t('mpTargets')}
             </div>
             <div className="mt-1.5 font-display text-[34px] leading-none">
-              {plan.calorieGoal ?? '--'}
+              {plan.structured?.calorieTarget ?? plan.calorieGoal ?? '--'}
               <span className="ml-1.5 text-[13px] text-muted">{t('mpKcalDay')}</span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-3">
               {[
-                { l: t('mpProtein'), v: plan.proteinG, c: 'var(--color-macro-protein)' },
-                { l: t('mpCarbs'), v: plan.carbG, c: 'var(--color-macro-carbs)' },
-                { l: t('mpFat'), v: plan.fatG, c: 'var(--color-macro-fat)' },
+                { l: t('mpProtein'), v: plan.structured?.macros?.proteinG ?? plan.proteinG, c: 'var(--color-macro-protein)' },
+                { l: t('mpCarbs'), v: plan.structured?.macros?.carbG ?? plan.carbG, c: 'var(--color-macro-carbs)' },
+                { l: t('mpFat'), v: plan.structured?.macros?.fatG ?? plan.fatG, c: 'var(--color-macro-fat)' },
               ].map((m) => (
                 <div key={m.l} className="rounded-xl bg-warm p-3 text-center">
                   <div className="font-display text-[20px] leading-none">{Math.round(m.v ?? 0)}g</div>
@@ -74,8 +75,15 @@ export default async function ClientMealPlanPage(): Promise<ReactElement> {
             </Card>
           ) : null}
 
-          {/* Meal groups */}
-          {plan.groups.length > 0 ? (
+          {/* Meals: the full structured plan (built/generated in-app), else the legacy group list. */}
+          {plan.structured ? (
+            <>
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[2px] text-faint">
+                {t('mpMeals')}
+              </div>
+              <StructuredPlanView plan={plan.structured} />
+            </>
+          ) : plan.groups.length > 0 ? (
             <>
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-[2px] text-faint">
                 {t('mpMeals')}

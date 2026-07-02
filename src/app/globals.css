@@ -126,6 +126,20 @@
   opacity: 0.85;
 }
 
+/* Collapsible <details> (meal-plan Method, etc.): hide the native marker, rotate the chevron on open. */
+.tf-details > summary {
+  list-style: none;
+}
+.tf-details > summary::-webkit-details-marker {
+  display: none;
+}
+.tf-details-chevron {
+  transition: transform 0.15s ease;
+}
+.tf-details[open] > summary .tf-details-chevron {
+  transform: rotate(90deg);
+}
+
 /* Display lockup helper: Gulams condensed, uppercase, tight leading. */
 .tf-display {
   font-family: var(--font-gulams), Impact, sans-serif;

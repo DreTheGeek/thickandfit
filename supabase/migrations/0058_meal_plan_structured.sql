@@ -1,0 +1,16 @@
+-- 0058 PHASE 2 -- Structured meal plans (call 2026-07-02: "start the meal plan builder"). Stephanie's
+-- real plans are kcal-budgeted meal slots (Breakfast / Snack / Lunch / Snack / Dinner) each offering a
+-- few recipe OPTIONS, and every recipe carries raw-weight ingredients, per-recipe macros, an optional
+-- tip, and numbered steps. plan_jsonb (0019) only held group-name + count + example strings; this holds
+-- the whole plan so the in-app builder + the AI auto-generator can author + render a full plan.
+--
+-- Shape (validated in app code, see src/lib/coach/meal-plan-structured.ts):
+--   { goal, calorieTarget, macros{proteinG,carbG,fatG}, macroSplit{proteinPct,carbPct,fatPct},
+--     slots:[{ name, kcalTarget, recipes:[{ title, prepMin, cookMin, kcal, macros,
+--              ingredients:[{qty,item}], spices:[{qty,item}], note, steps:[] }] }] }
+--
+-- When `structured` is present it is the source of truth for the coach builder + the client view;
+-- legacy imported plans (no structured) fall back to plan_jsonb.mealGroups. No RLS change: the 0019
+-- meal_plans tenant policy (company + is_coach) already covers this column; the client reads via the
+-- service client (getClientMealPlan), same as notes (0056).
+alter table public.meal_plans add column if not exists structured jsonb;
