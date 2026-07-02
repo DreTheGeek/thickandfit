@@ -1,8 +1,11 @@
 // AI meal-plan generation. SERVER-ONLY.
 // Given a client's onboarding intake (answers + predicted_goal + computed_targets) and the company's
 // documented coaching knowledge, ask claude-sonnet-4-6 (JSON mode, same pattern as insights.ts
-// extractNarrative) to draft a structured meal plan, then insert a meal_plans row the coach Meal Plans
-// library already renders (typed macro columns + a plan_jsonb subset getMealPlanDetail parses).
+// extractNarrative) to draft a FULL structured meal plan in Stephanie's style (kcal-budgeted slots ->
+// recipe options -> raw-weight ingredients, per-recipe macros, tips, steps), then insert a meal_plans
+// row. It writes meal_plans.structured (the same shape the builder authors + the client/coach render)
+// plus her free-veggie coach note to meal_plans.notes, so an AI plan is indistinguishable from a
+// hand-built one.
 //
 // SCOPE: MEAL PLANS ONLY. There is no programs table; workout programs are public.plans +
 // session_exercises with FK exercise_id UUIDs the model cannot invent, so workout-gen is deferred.
@@ -30,44 +33,77 @@ export function isPlanGenConfigured(): boolean {
 }
 
 // --- The model output shape (validated before any write) --------------------
-const MealGroupSchema = z.object({
-  name: z.string().trim().min(1).max(80),
-  number_of_meals: z.number().int().min(1).max(12),
-  example_items: z.array(z.string().trim().min(1).max(120)).max(8).optional().default([]),
+// Full STRUCTURED plan matching how Stephanie really writes them: kcal-budgeted slots -> recipe
+// OPTIONS -> raw-weight ingredients, per-recipe macros, a tip, and steps. Written to meal_plans.structured
+// (the same shape the builder authors), so an AI plan and a hand-built plan render identically.
+const IngredientSchema = z.object({
+  qty: z.string().trim().max(40).optional().default(''),
+  item: z.string().trim().min(1).max(160),
 });
-
+const RecipeSchema = z.object({
+  title: z.string().trim().min(1).max(160),
+  prep_min: z.number().int().min(0).max(1440).nullable().optional().default(null),
+  cook_min: z.number().int().min(0).max(1440).nullable().optional().default(null),
+  kcal: z.number().int().min(0).max(5000).nullable().optional().default(null),
+  protein_g: z.number().int().min(0).max(400).optional().default(0),
+  carb_g: z.number().int().min(0).max(500).optional().default(0),
+  fat_g: z.number().int().min(0).max(300).optional().default(0),
+  ingredients: z.array(IngredientSchema).max(20).optional().default([]),
+  spices: z.array(IngredientSchema).max(20).optional().default([]),
+  note: z.string().trim().max(400).nullable().optional().default(null),
+  steps: z.array(z.string().trim().min(1).max(800)).max(20).optional().default([]),
+});
+const SlotSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  kcal_target: z.number().int().min(0).max(3000).nullable().optional().default(null),
+  recipes: z.array(RecipeSchema).min(1).max(4),
+});
 const PlanSchema = z.object({
   name: z.string().trim().min(1).max(120),
+  goal: z.string().trim().max(200).optional().default(''),
   calorie_goal: z.number().int().min(800).max(6000),
   protein_g: z.number().int().min(0).max(600),
   carb_g: z.number().int().min(0).max(900),
   fat_g: z.number().int().min(0).max(400),
-  split_protein_pct: z.number().int().min(0).max(100),
-  split_carb_pct: z.number().int().min(0).max(100),
-  split_fat_pct: z.number().int().min(0).max(100),
-  macro_timing_name: z.string().trim().max(80).optional().default(''),
-  meal_groups: z.array(MealGroupSchema).min(1).max(6),
+  coach_note: z.string().trim().max(600).optional().default(''),
+  slots: z.array(SlotSchema).min(1).max(6),
 });
 
 type ParsedPlan = z.infer<typeof PlanSchema>;
 
 const PLAN_SYSTEM = [
-  "You are coach Stephanie's meal-planning assistant for a bilingual (English/Spanish) fitness app.",
-  'Given a member intake and her documented coaching method, produce ONE structured meal plan.',
-  'Return ONLY minified JSON of this exact shape, no prose, no markdown fences:',
-  '{"name":string,"calorie_goal":int,"protein_g":int,"carb_g":int,"fat_g":int,',
-  '"split_protein_pct":int,"split_carb_pct":int,"split_fat_pct":int,"macro_timing_name":string,',
-  '"meal_groups":[{"name":string,"number_of_meals":int,"example_items":[string]}]}',
+  "You are coach Stephanie's meal-planning assistant for a bilingual (English/Latin-American Spanish)",
+  'fitness app. Given a member intake and her documented coaching method, produce ONE full meal plan',
+  'in HER style. Return ONLY minified JSON of this exact shape, no prose, no markdown fences:',
+  '{"name":string,"goal":string,"calorie_goal":int,"protein_g":int,"carb_g":int,"fat_g":int,',
+  '"coach_note":string,"slots":[{"name":string,"kcal_target":int,"recipes":[{"title":string,',
+  '"prep_min":int|null,"cook_min":int|null,"kcal":int,"protein_g":int,"carb_g":int,"fat_g":int,',
+  '"ingredients":[{"qty":string,"item":string}],"spices":[{"qty":string,"item":string}],',
+  '"note":string,"steps":[string]}]}]}',
+  '',
+  "Stephanie's method + style (follow it closely):",
+  '- 5 kcal-budgeted slots: Breakfast, Snack 1, Lunch, Snack 2, Dinner. Set each kcal_target so they',
+  '  sum to the daily calorie_goal. Give 1-2 recipe OPTIONS per slot so the member can choose.',
+  '- KEEP RECIPES SIMPLE: 3-5 core ingredients. Simple is the whole point.',
+  '- Ingredients use RAW-WEIGHT grams as the qty (e.g. "135g"), and lean, specific items: 93/7 ground',
+  '  beef (never fattier), protein pasta, Greek yogurt, egg whites, chicken breast. Name real products',
+  '  where it helps (Fage, Kodiak, Quest). Put seasonings/sauces in "spices" (e.g. "1-2 tsp","Taco',
+  '  seasoning"), not "ingredients".',
+  '- Every recipe: realistic kcal + per-recipe protein_g/carb_g/fat_g that roughly match its portion,',
+  '  a few numbered steps, and an optional short "note" tip (or "").',
+  '- coach_note: a short, warm note in her voice reminding the member that if they are still hungry',
+  '  they can add "free" veggies (spinach, onions, cucumbers) that barely move their macros.',
+  '',
   'Rules:',
   '- Honor the member computed_targets when present (calories + protein/carb/fat grams). If absent,',
-  '  pick sensible targets for the stated goal. Macros must roughly sum to the calorie goal at',
-  '  4 kcal/g protein, 4 kcal/g carb, 9 kcal/g fat.',
-  '- split_*_pct are the percent of total calories from each macro and should sum to about 100.',
-  '- Keep meal_groups to 3-5 (e.g. Breakfast, Lunch, Dinner, Snacks). number_of_meals is how many',
-  '  options that group offers. example_items are 2-4 short real food examples per group.',
-  "- Name the plan for the member's goal. Reply in the member's language for all human-readable text",
-  '  (name, group names, example items).',
-  '- Ground choices in the coaching method provided; do not invent medical claims.',
+  '  pick sensible targets for the stated goal. Daily macros must roughly sum to calorie_goal at',
+  '  4 kcal/g protein, 4 kcal/g carb, 9 kcal/g fat, and the recipe macros across chosen options should',
+  '  land near the slot budgets.',
+  '- If the intake shows PCOS, insulin issues, or an allergy, respect it (higher protein/fiber, avoid',
+  '  the allergen) but never state a medical claim.',
+  "- Name the plan for the member's goal. Reply in the member's language for ALL human-readable text",
+  '  (name, goal, slot names, recipe titles, ingredients, notes, steps).',
+  '- Ground choices in the coaching method provided below.',
   '',
   SAFETY_CLAUSE_EN,
 ].join('\n');
@@ -79,15 +115,15 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-// Recompute macro split percentages from grams + calorie goal, so what we store is internally
-// consistent even if the model's split_*_pct drift. Falls back to the model's values if we cannot.
+// Macro split percentages from grams + calorie goal, so what we store is internally consistent. Zeros
+// when the model returns no usable macro grams (the generated protein_g/carb_g/fat_g columns go null).
 function normalizeSplit(p: ParsedPlan): { protein: number; carb: number; fat: number } {
   const pK = p.protein_g * 4;
   const cK = p.carb_g * 4;
   const fK = p.fat_g * 9;
   const total = pK + cK + fK;
   if (total <= 0) {
-    return { protein: p.split_protein_pct, carb: p.split_carb_pct, fat: p.split_fat_pct };
+    return { protein: 0, carb: 0, fat: 0 };
   }
   return {
     protein: Math.round((pK / total) * 100),
@@ -220,22 +256,31 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
 
   const split = normalizeSplit(parsed);
 
-  // plan_jsonb: only the minimal subset getMealPlanDetail reads (mealGroups[].name + numberOfMeals),
-  // plus the example items + a generated_by marker for provenance. NOT the full Lenus GraphQL shape.
-  const planJsonb = {
-    name: parsed.name,
-    generated_by: 'ai',
-    // The model's intended macro grams, kept for reference. The meal_plans.protein_g/carb_g/fat_g
-    // columns are GENERATED from calorie_goal + split_*_pct, so they may differ by a gram or two; this
-    // preserves what the model actually intended.
-    targetMacros: { proteinG: parsed.protein_g, carbG: parsed.carb_g, fatG: parsed.fat_g },
-    mealGroups: parsed.meal_groups.map((g) => ({
-      name: g.name,
-      numberOfMeals: g.number_of_meals,
-      exampleItems: g.example_items ?? [],
+  // The full structured plan (same shape the builder authors + the client/coach render). camelCase to
+  // match src/lib/coach/meal-plan-structured.ts; parseStructuredPlan normalizes it again on read.
+  const structured = {
+    goal: parsed.goal || null,
+    calorieTarget: parsed.calorie_goal,
+    macros: { proteinG: parsed.protein_g, carbG: parsed.carb_g, fatG: parsed.fat_g },
+    macroSplit: { proteinPct: split.protein, carbPct: split.carb, fatPct: split.fat },
+    slots: parsed.slots.map((s) => ({
+      name: s.name,
+      kcalTarget: s.kcal_target ?? null,
+      recipes: s.recipes.map((r) => ({
+        title: r.title,
+        prepMin: r.prep_min ?? null,
+        cookMin: r.cook_min ?? null,
+        kcal: r.kcal ?? null,
+        macros: { proteinG: r.protein_g, carbG: r.carb_g, fatG: r.fat_g },
+        ingredients: r.ingredients.map((i) => ({ qty: i.qty ?? '', item: i.item })),
+        spices: r.spices.map((i) => ({ qty: i.qty ?? '', item: i.item })),
+        note: r.note || null,
+        steps: r.steps,
+      })),
     })),
-    caveat: planCaveat(input.locale),
   };
+  // A provenance marker + the caveat (the client note comes from coach_note -> meal_plans.notes).
+  const planJsonb = { generated_by: 'ai', caveat: planCaveat(input.locale) };
 
   // NOTE: meal_plans.protein_g / carb_g / fat_g are GENERATED ALWAYS columns, computed by Postgres
   // from calorie_goal * split_*_pct (protein/carb at 4 kcal/g, fat at 9). We must NOT write them
@@ -251,9 +296,10 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
       split_protein_pct: split.protein,
       split_carb_pct: split.carb,
       split_fat_pct: split.fat,
-      macro_timing_name: parsed.macro_timing_name || null,
-      num_meal_groups: parsed.meal_groups.length,
+      num_meal_groups: parsed.slots.length,
       is_template: false,
+      structured,
+      notes: parsed.coach_note || null,
       plan_jsonb: planJsonb,
     })
     .select('id')
