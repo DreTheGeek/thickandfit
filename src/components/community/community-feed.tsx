@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition, type ReactElement } from 'react';
+import { useRef, useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { createClient } from '@/lib/supabase/client';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
@@ -37,22 +38,71 @@ function relativeTime(iso: string, locale: string): string {
   return new Date(iso).toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 }
 
-function Composer({ canBroadcast }: { canBroadcast: boolean }): ReactElement {
+const MEDIA_BUCKET = 'community-media';
+const MAX_MEDIA = 10 * 1024 * 1024; // 10 MB, matches the bucket cap.
+
+function extFor(file: File): string {
+  if (file.type === 'image/png') return 'png';
+  if (file.type === 'image/webp') return 'webp';
+  if (file.type === 'image/heic' || file.type === 'image/heif') return 'heic';
+  return 'jpg';
+}
+
+function Composer({ canBroadcast, viewerId }: { canBroadcast: boolean; viewerId: string }): ReactElement {
   const t = useTranslations('app.community');
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [body, setBody] = useState('');
   const [broadcast, setBroadcast] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  function pickFile(e: React.ChangeEvent<HTMLInputElement>): void {
+    const f = e.target.files?.[0] ?? null;
+    setError(null);
+    if (!f) return;
+    if (!f.type.startsWith('image/')) return setError(t('notImage'));
+    if (f.size > MAX_MEDIA) return setError(t('tooLarge'));
+    setFile(f);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(f));
+  }
+
+  function clearFile(): void {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(null);
+    setPreviewUrl(null);
+    if (fileRef.current) fileRef.current.value = '';
+  }
 
   function submit(): void {
     const text = body.trim();
-    if (!text || pending) return;
+    if ((!text && !file) || pending) return;
+    setError(null);
     start(async () => {
-      const res = await createPostAction({ body: text, isBroadcast: broadcast });
+      let mediaUrl: string | null = null;
+      if (file) {
+        const supabase = createClient();
+        const path = `${viewerId}/${crypto.randomUUID()}.${extFor(file)}`;
+        const { error: upErr } = await supabase.storage
+          .from(MEDIA_BUCKET)
+          .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+        if (upErr) {
+          setError(t('uploadFailed'));
+          return;
+        }
+        mediaUrl = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+      }
+      const res = await createPostAction({ body: text || ' ', mediaUrl, isBroadcast: broadcast });
       if (res.ok) {
         setBody('');
         setBroadcast(false);
+        clearFile();
         router.refresh();
+      } else {
+        setError(t('uploadFailed'));
       }
     });
   }
@@ -67,27 +117,54 @@ function Composer({ canBroadcast }: { canBroadcast: boolean }): ReactElement {
         maxLength={2000}
         className="w-full resize-none bg-transparent text-[15px] text-ink placeholder:text-faint focus:outline-none"
       />
+
+      <input ref={fileRef} type="file" accept="image/*" onChange={pickFile} className="hidden" />
+      {previewUrl ? (
+        <div className="relative mt-2 w-fit">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={previewUrl} alt="" className="max-h-48 rounded-xl object-cover" />
+          <button
+            type="button"
+            onClick={clearFile}
+            aria-label={t('removePhoto')}
+            className="tf-press absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white"
+          >
+            <Icon name="x" size={14} />
+          </button>
+        </div>
+      ) : null}
+      {error ? <p className="mt-2 text-[12px] text-red-600">{error}</p> : null}
+
       <div className="mt-3 flex items-center justify-between">
-        {canBroadcast ? (
-          <label className="flex items-center gap-2 text-[13px] text-muted">
-            <input
-              type="checkbox"
-              checked={broadcast}
-              onChange={(e) => setBroadcast(e.target.checked)}
-              className="h-4 w-4 accent-[var(--color-accent)]"
-            />
-            <span className="inline-flex items-center gap-1">
-              <Icon name="megaphone" size={14} />
-              {t('postAsBroadcast')}
-            </span>
-          </label>
-        ) : (
-          <span />
-        )}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            aria-label={t('addPhoto')}
+            className="tf-press flex items-center gap-1.5 text-[13px] font-medium text-muted hover:text-ink"
+          >
+            <Icon name="camera" size={16} />
+            {t('addPhoto')}
+          </button>
+          {canBroadcast ? (
+            <label className="flex items-center gap-2 text-[13px] text-muted">
+              <input
+                type="checkbox"
+                checked={broadcast}
+                onChange={(e) => setBroadcast(e.target.checked)}
+                className="h-4 w-4 accent-[var(--color-accent)]"
+              />
+              <span className="inline-flex items-center gap-1">
+                <Icon name="megaphone" size={14} />
+                {t('postAsBroadcast')}
+              </span>
+            </label>
+          ) : null}
+        </div>
         <button
           type="button"
           onClick={submit}
-          disabled={pending || body.trim().length === 0}
+          disabled={pending || (body.trim().length === 0 && !file)}
           className="tf-press rounded-full bg-accent px-5 py-2 text-[13px] font-semibold text-accent-ink disabled:opacity-40"
         >
           {pending ? t('posting') : t('post')}
@@ -284,9 +361,11 @@ function Broadcast({ post }: { post: FeedPost }): ReactElement {
 export function CommunityFeed({
   data,
   canBroadcast,
+  viewerId,
 }: {
   data: CommunityData;
   canBroadcast: boolean;
+  viewerId: string;
 }): ReactElement {
   const t = useTranslations('app.community');
   const router = useRouter();
@@ -307,7 +386,7 @@ export function CommunityFeed({
     <div className="space-y-4">
       {data.challenge ? <ChallengeCard challenge={data.challenge} onJoin={join} joining={pending} /> : null}
 
-      <Composer canBroadcast={canBroadcast} />
+      <Composer canBroadcast={canBroadcast} viewerId={viewerId} />
 
       {data.broadcast ? <Broadcast post={data.broadcast} /> : null}
 
