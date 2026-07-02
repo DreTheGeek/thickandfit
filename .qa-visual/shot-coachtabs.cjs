@@ -22,7 +22,14 @@ const TABS = process.argv.slice(2); // e.g. Info Progress Nutrition
   await new Promise((r) => setTimeout(r, 900));
 
   for (const label of TABS) {
-    const h = await page.evaluateHandle((lbl) => [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === lbl), label);
+    // Scope to the profile tab bar (avoids the sidebar "Nutrition" section toggle name collision).
+    const h = await page.evaluateHandle((lbl) => {
+      const bar = [...document.querySelectorAll('div')].find(
+        (d) => d.className.includes('overflow-x-auto') && d.className.includes('border-b'),
+      );
+      const scope = bar || document;
+      return [...scope.querySelectorAll('button')].find((b) => b.textContent.trim() === lbl);
+    }, label);
     const el = h.asElement();
     if (!el) { console.log(`tab "${label}" NOT FOUND`); continue; }
     await el.click();

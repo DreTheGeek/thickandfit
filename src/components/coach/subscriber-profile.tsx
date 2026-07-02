@@ -13,8 +13,10 @@ import { CoachNotesPanel } from '@/components/coach/coach-notes-panel';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { GeneratePlanButton } from '@/components/coach/generate-plan-button';
 import { CoachBodyProgress } from '@/components/coach/coach-body-progress';
+import { CoachFoodDiary } from '@/components/coach/coach-food-diary';
 import type { CoachNote } from '@/lib/coach/notes-actions';
 import type { BodyStats } from '@/lib/body/types';
+import type { CoachDiaryWeek } from '@/lib/coach/food-diary';
 
 export type ProfileData = {
   name: string;
@@ -46,6 +48,7 @@ export type ProfileData = {
   clientLocale: 'en' | 'es';
   intake: ClientIntake | null;
   bodyStats: BodyStats | null;
+  foodDiary: CoachDiaryWeek | null;
 };
 
 export type ClientIntake = {
@@ -89,8 +92,10 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
   const hasBody =
     !!data.bodyStats &&
     (data.bodyStats.weightSeries.length > 0 || data.bodyStats.measurements.some((m) => m.latest != null));
+  const hasNutrition = !!data.foodDiary && (data.foodDiary.loggedDays > 0 || data.foodDiary.entries.length > 0);
   const tabs: TabKey[] = ['overview', 'info'];
   if (hasBody) tabs.push('progress');
+  if (hasNutrition) tabs.push('nutrition');
   tabs.push('workouts');
 
   return (
@@ -319,6 +324,8 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
       )}
 
       {tab === 'progress' && data.bodyStats && <CoachBodyProgress stats={data.bodyStats} />}
+
+      {tab === 'nutrition' && data.foodDiary && <CoachFoodDiary week={data.foodDiary} />}
 
       {tab === 'workouts' && (
         <Card className="p-6">

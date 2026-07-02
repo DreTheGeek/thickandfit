@@ -932,7 +932,14 @@
       "mChest": "Chest",
       "mArms": "Arms",
       "mThighs": "Thighs",
-      "mBodyFat": "Body fat"
+      "mBodyFat": "Body fat",
+      "nutToday": "Today vs target",
+      "nutWeek": "This week",
+      "nutLoggedDays": "Days logged",
+      "nutAvgKcal": "Avg kcal",
+      "nutEntries": "Today",
+      "nutNoEntries": "Nothing logged today.",
+      "nutKcal": "Calories"
     },
     "you": {
       "title": "You",

@@ -932,7 +932,14 @@
       "mChest": "Pecho",
       "mArms": "Brazos",
       "mThighs": "Muslos",
-      "mBodyFat": "Grasa corporal"
+      "mBodyFat": "Grasa corporal",
+      "nutToday": "Hoy vs meta",
+      "nutWeek": "Esta semana",
+      "nutLoggedDays": "Dias registrados",
+      "nutAvgKcal": "Prom. kcal",
+      "nutEntries": "Hoy",
+      "nutNoEntries": "Nada registrado hoy.",
+      "nutKcal": "Calorias"
     },
     "you": {
       "title": "Tú",
