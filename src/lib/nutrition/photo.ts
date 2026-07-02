@@ -29,7 +29,9 @@ export type PhotoCandidate = {
 };
 
 export type PhotoResult =
-  | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals }
+  // inferenceId/model are set by provenance-aware callers (text-to-macro) so a logged food can link
+  // back to the ai_inferences row that predicted it (correction capture + eval attribution).
+  | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals; inferenceId?: string; model?: string }
   | { status: 'notConfigured' }
   | { status: 'noFood' }
   | { status: 'error' };

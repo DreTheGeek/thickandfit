@@ -1,16 +1,17 @@
 // Text-to-macro (the demoed headline). A natural-language meal description ("I ate 10 chicken
 // nuggets and a cup of white rice") becomes loggable, macro-scaled food rows:
-//   1. claude-haiku-4-5 (via the lazy OpenRouter client) parses the text into [{ name, grams, confidence }].
+//   1. The text model (via the shared AI client) parses the text into [{ name, grams, confidence }].
 //   2. The SAME resolve pipeline as photo-to-macro matches each name to public.foods + scales macros
 //      with cooked/uncooked conversion (reused via resolvePredictedItems).
 // No OPENROUTER_API_KEY => returns a clean "not configured" state. It never crashes.
 import 'server-only';
 import { resolvePredictedItems, type PredictedItem, type PhotoResult } from '@/lib/nutrition/photo';
 import { AI_MODELS } from '@/lib/ai/models';
+import { callJson, hashInput } from '@/lib/ai/client';
+import { logInference } from '@/lib/ai/inferences';
 
-const apiKey = process.env.OPENROUTER_API_KEY;
-const TEXT_MODEL = AI_MODELS.textMacro;
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Bump when PARSE_PROMPT changes so replay/eval can group inferences by prompt generation.
+const PROMPT_VERSION = 'text-macro.v1';
 
 function clampConfidence(n: unknown): number {
   const v = typeof n === 'number' ? n : Number(n);
@@ -37,28 +38,9 @@ const PARSE_PROMPT = [
   'confidence is 0 to 1. If you cannot identify any food, return {"items":[]}.',
 ].join('\n');
 
-// Calls the text model and parses its prediction. Returns null on any failure (caller degrades).
-async function parseItems(text: string): Promise<PredictedItem[] | null> {
-  if (!apiKey) return null;
+function parseContent(content: string): PredictedItem[] | null {
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: TEXT_MODEL,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: PARSE_PROMPT },
-          { role: 'user', content: text },
-        ],
-      }),
-    });
-    if (!res.ok) return null;
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return null;
-    const cleaned = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-    const parsed = JSON.parse(cleaned) as { items?: unknown };
+    const parsed = JSON.parse(content) as { items?: unknown };
     if (!Array.isArray(parsed.items)) return null;
     return parsed.items
       .map((it): PredictedItem | null => {
@@ -75,9 +57,50 @@ async function parseItems(text: string): Promise<PredictedItem[] | null> {
   }
 }
 
-// Full text pipeline: parse -> resolve. Pure orchestration; safe to call without an API key.
-export async function analyzeMealText(text: string, locale: string): Promise<PhotoResult> {
-  const items = await parseItems(text);
-  if (items === null) return apiKey ? { status: 'error' } : { status: 'notConfigured' };
-  return resolvePredictedItems(items, locale);
+// Full text pipeline: parse -> resolve. Safe to call without an API key. When ctx is provided, one
+// ai_inferences row is written AFTER resolution (final pipeline status, like smart-scan) and its id
+// is threaded onto the ok result so a logged food links back to the prediction (correction capture).
+export async function analyzeMealText(
+  text: string,
+  locale: string,
+  ctx?: { companyId: string; profileId: string },
+): Promise<PhotoResult> {
+  const t0 = Date.now();
+  const call = await callJson({
+    models: [AI_MODELS.textMacro],
+    timeoutMs: 30_000, // previously unbounded; a hung provider now fails cleanly
+    messages: [
+      { role: 'system', content: PARSE_PROMPT },
+      { role: 'user', content: text },
+    ],
+  });
+  if (call.status === 'notConfigured') return { status: 'notConfigured' };
+  if (call.status !== 'ok') return { status: 'error' };
+
+  const items = parseContent(call.content);
+  if (items === null) return { status: 'error' };
+  const confidence = items.length ? items.reduce((s, it) => s + it.confidence, 0) / items.length : null;
+
+  const resolved = await resolvePredictedItems(items, locale);
+  let result: PhotoResult = resolved;
+
+  if (ctx) {
+    const inferenceId = await logInference({
+      companyId: ctx.companyId,
+      profileId: ctx.profileId,
+      feature: 'text-macro',
+      model: call.model,
+      promptVersion: PROMPT_VERSION,
+      inputHash: hashInput(text),
+      rawOutput: { items },
+      confidence,
+      latencyMs: Date.now() - t0,
+      status: resolved.status,
+      itemCount: items.length,
+    });
+    if (inferenceId && result.status === 'ok') {
+      result = { ...result, inferenceId, model: call.model };
+    }
+  }
+  return result;
 }

@@ -31,7 +31,12 @@ export async function parseTextToMacroAction(text: unknown): Promise<PhotoResult
   // Cost control: cap text-to-macro AI parses per user so OpenRouter spend stays bounded (fails open).
   if (!(await checkRateLimit(ctx.userId, 'text-to-macro', 30, 300))) return { status: 'error' };
   const locale = await getLocale();
-  return analyzeMealText(parsed.data, locale);
+  // ctx enables provenance: the returned inferenceId links logged foods back to this prediction.
+  return analyzeMealText(
+    parsed.data,
+    locale,
+    ctx.companyId ? { companyId: ctx.companyId, profileId: ctx.userId } : undefined,
+  );
 }
 
 const BarcodeInput = z.string().trim().min(4).max(32).regex(/^[0-9\s-]+$/);

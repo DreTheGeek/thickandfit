@@ -211,7 +211,7 @@ export function PhotoScan({
       if (data.status === 'ok') {
         setCandidates(data.candidates);
         setPredictedGrams(data.candidates.map((c) => c.grams));
-        setInferenceId(null); // text path has no photo inference to attach corrections to
+        setInferenceId(data.inferenceId ?? null); // text predictions now carry provenance too
         setPhase('review');
       } else {
         setPhase(data.status);
