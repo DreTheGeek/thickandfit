@@ -6,27 +6,29 @@
 //     inventing) and we convert to per-100g + cache it.
 // Ambiguity -> a `clarify` question the UI asks the user. No OPENROUTER_API_KEY -> clean notConfigured.
 import 'server-only';
-import { createHash } from 'node:crypto';
 import { createServiceClient } from '@/lib/supabase/service';
 import { resolvePredictedItems, type PhotoCandidate } from '@/lib/nutrition/photo';
 import { groundFoodByName } from '@/lib/nutrition/external-foods';
 import type { FoodLite, MacroTotals } from '@/lib/nutrition/macros';
 import { AI_MODELS } from '@/lib/ai/models';
+import { aiConfigured, callJson, hashInput } from '@/lib/ai/client';
 import { logInference } from '@/lib/ai/inferences';
 
-const apiKey = process.env.OPENROUTER_API_KEY;
 // Model routing lives in the central router (AI_MODELS), NOT hardcoded here, so the eval harness can
 // A/B models and swap in one place. The scan tries the primary (smartScan = gpt-5, benchmarked faster +
 // more accurate), then a distinct fallback (gemini), so a provider outage or a model-specific rejection
-// degrades to a proven model instead of failing every meal log. Deduped in case both point to one model.
-const SCAN_CHAIN = [AI_MODELS.smartScan, AI_MODELS.smartScanFallback].filter((m, i, a) => a.indexOf(m) === i);
-// Bump when PROMPT changes so replay/eval can group inferences by prompt generation.
-const PROMPT_VERSION = 'smart-scan.v1';
+// degrades to a proven model instead of failing every meal log. The shared client dedupes the chain.
+const SCAN_CHAIN = [AI_MODELS.smartScan, AI_MODELS.smartScanFallback];
+// Bump when PROMPT changes so replay/eval can group inferences by prompt generation. Exported so the
+// eval harness records the version under test instead of duplicating the string.
+export const PROMPT_VERSION = 'smart-scan.v1';
 const FOOD_COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
 
 export type SmartScanResult =
-  | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals; inferenceId?: string } // a MEAL
-  | { status: 'product'; food: FoodLite; clarify: string | null; inferenceId?: string }
+  // `model` = which chain entry actually answered (a mid-run 429 fallback would otherwise silently
+  // contaminate eval attribution). Set on loggable outcomes even without ctx.
+  | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals; inferenceId?: string; model?: string } // a MEAL
+  | { status: 'product'; food: FoodLite; clarify: string | null; inferenceId?: string; model?: string }
   | { status: 'clarify'; clarify: string }
   | { status: 'notConfigured' }
   | { status: 'noFood' }
@@ -133,9 +135,9 @@ export async function analyzeSmartPhoto(
   locale: string,
   ctx?: { companyId: string; profileId: string },
 ): Promise<SmartScanResult> {
-  if (!apiKey) return { status: 'notConfigured' };
+  if (!aiConfigured()) return { status: 'notConfigured' };
   const tVision = Date.now();
-  const inputHash = createHash('sha256').update(image).digest('hex');
+  const inputHash = hashInput(image);
   try {
     const messages = [
       { role: 'system', content: PROMPT },
@@ -147,53 +149,23 @@ export async function analyzeSmartPhoto(
         ],
       },
     ];
-    // Try the primary scan model, then the fallback. A model-level failure (5xx, 429, or a model-specific
-    // 400) drops to the next model instead of failing the whole scan; a bad IMAGE fails on both and
-    // surfaces as a real error. Each attempt gets its own timeout so the fallback still fits the route's
-    // 300s ceiling. `usedModel` records which model actually produced the result (for provenance).
-    let res: Response | null = null;
-    let usedModel = SCAN_CHAIN[0];
-    for (const m of SCAN_CHAIN) {
-      try {
-        const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-          // Bound each attempt so a slow provider fails cleanly instead of hanging to the ceiling.
-          signal: AbortSignal.timeout(75_000),
-          body: JSON.stringify({
-            model: m,
-            // Lowest-latency provider (same weights, no accuracy change); avoids slow-provider outliers.
-            provider: { sort: 'latency' },
-            // Recognition + label transcription is not deep reasoning; low effort keeps accuracy and
-            // keeps gpt-5 sub-second (its default heavy reasoning was the old ~40s cost).
-            reasoning: { effort: 'low' },
-            response_format: { type: 'json_object' },
-            messages,
-          }),
-        });
-        if (r.ok) {
-          res = r;
-          usedModel = m;
-          break;
-        }
-        // Never swallow the cause: log status + body so a prod failure is diagnosable, then try the next
-        // model (401 = bad key, 402 = out of credits, 429 = rate limit, 400 = bad request/model).
-        const body = await r.text().catch(() => '');
-        console.error(`smart-scan vision HTTP ${r.status} (${m}):`, body.slice(0, 300));
-      } catch (e) {
-        console.warn(`smart-scan vision ${m} failed, trying fallback:`, e instanceof Error ? e.message : String(e));
-      }
-    }
-    if (!res) return { status: 'error' };
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) {
-      console.error('smart-scan vision: empty content', JSON.stringify(json).slice(0, 300));
-      return { status: 'error' };
-    }
-    const cleaned = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-    const out = JSON.parse(cleaned) as VisionOut;
-    const visionMs = Date.now() - tVision;
+    // The shared client runs the chain: primary then fallback, each attempt bounded to 75s so the
+    // fallback still fits the route's 300s ceiling; latency-sorted provider + low reasoning effort
+    // keep gpt-5 sub-second (its default heavy reasoning was the old ~40s cost). Provenance is
+    // DEFERRED: the ai_inferences row needs the final pipeline status + itemCount + confidence, so
+    // this module enriches and logs it after the resolve step (exactly the pre-client behavior).
+    const call = await callJson({
+      models: SCAN_CHAIN,
+      timeoutMs: 75_000,
+      providerSort: 'latency',
+      reasoningEffort: 'low',
+      messages,
+    });
+    if (call.status === 'notConfigured') return { status: 'notConfigured' };
+    if (call.status !== 'ok') return { status: 'error' };
+    const usedModel = call.model;
+    const out = JSON.parse(call.content) as VisionOut;
+    const visionMs = call.latencyMs;
 
     // Build the result first, then write ONE provenance row for the whole scan and thread its id back so
     // a logged food links to the inference that produced it (enables correction capture + replay).
@@ -256,6 +228,10 @@ export async function analyzeSmartPhoto(
         result = { status: resolved.status === 'noFood' ? 'noFood' : 'error' };
       }
     }
+
+    // Which model answered, on every loggable outcome (with or without ctx): the eval harness runs
+    // ctx-less and must attribute a mid-run fallback (gpt-5 429 -> gemini) to the right model.
+    if (result.status === 'ok' || result.status === 'product') result = { ...result, model: usedModel };
 
     // Provenance: one row per scan (fire-after, needs the final status). Only when we know the
     // tenant/member (ctx). Thread the id back onto loggable outcomes so a correction can attach to it.
