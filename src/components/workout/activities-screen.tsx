@@ -36,16 +36,19 @@ export type HistoryItem = {
   enjoyment: number | null;
   effort: number | null;
 };
+export type WorkoutStats = { thisWeek: number; total: number; volumeLb: number };
 
 type Tab = 'program' | 'library' | 'history';
 
 export function ActivitiesScreen({
   program,
   history,
+  stats,
   locale,
 }: {
   program: ActivitiesProgram | null;
   history: HistoryItem[];
+  stats: WorkoutStats | null;
   locale: string;
 }): ReactElement {
   const t = useTranslations('app.activities');
@@ -90,6 +93,15 @@ export function ActivitiesScreen({
                 {t('dayOf', { day: program.day, total: program.totalDays })}
               </div>
             </HeroCard>
+
+            {/* Canonical stats band: sessions this week / total / lifted volume */}
+            {stats && (
+              <div className="mt-4 flex border border-divider">
+                <StatCell value={String(stats.thisWeek)} label={t('statThisWeek')} divider />
+                <StatCell value={String(stats.total)} label={t('statTotal')} divider />
+                <StatCell value={fmtVolume(stats.volumeLb)} label={t('statVolume')} />
+              </div>
+            )}
 
             {program.days.length > 1 && (
               <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
@@ -163,6 +175,27 @@ export function ActivitiesScreen({
             ))}
           </div>
         ))}
+    </div>
+  );
+}
+
+function fmtVolume(v: number): string {
+  return v >= 1000 ? `${Math.round(v / 100) / 10}k` : String(Math.round(v));
+}
+
+function StatCell({
+  value,
+  label,
+  divider = false,
+}: {
+  value: string;
+  label: string;
+  divider?: boolean;
+}): ReactElement {
+  return (
+    <div className={['flex-1 py-3.5 text-center', divider ? 'border-r border-divider' : ''].join(' ')}>
+      <div className="font-display text-[22px] leading-none">{value}</div>
+      <div className="mt-1 text-[10px] uppercase tracking-[1.5px] text-faint">{label}</div>
     </div>
   );
 }

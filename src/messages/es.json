@@ -166,7 +166,10 @@
       "noProgram": "Aún no tienes programa asignado",
       "noProgramBody": "Tu coach asignará tu programa pronto.",
       "noHistory": "Aún no hay entrenos completados",
-      "startWorkout": "Empezar entreno"
+      "startWorkout": "Empezar entreno",
+      "statThisWeek": "Esta semana",
+      "statTotal": "Total",
+      "statVolume": "Volumen (lb)"
     },
     "library": {
       "searchPlaceholder": "Buscar ejercicios",

@@ -166,7 +166,10 @@
       "noProgram": "No program assigned yet",
       "noProgramBody": "Your coach will assign your program soon.",
       "noHistory": "No completed workouts yet",
-      "startWorkout": "Start Workout"
+      "startWorkout": "Start Workout",
+      "statThisWeek": "This week",
+      "statTotal": "Total",
+      "statVolume": "Volume (lb)"
     },
     "library": {
       "searchPlaceholder": "Search exercises",

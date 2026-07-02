@@ -10,6 +10,7 @@ import {
   ActivitiesScreen,
   type ActivitiesProgram,
   type HistoryItem,
+  type WorkoutStats,
 } from '@/components/workout/activities-screen';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +34,7 @@ export default async function WorkoutsPage({
 
   let program: ActivitiesProgram | null = null;
   let history: HistoryItem[] = [];
+  let stats: WorkoutStats | null = null;
 
   if (ctx.companyId) {
     const plans = (await getAssignedPlans(
@@ -106,7 +108,29 @@ export default async function WorkoutsPage({
       enjoyment: h.enjoyment,
       effort: h.effort,
     }));
+
+    // Program stats band (This week / Total / Volume lb), computed from the logged history.
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoISO = weekAgo.toISOString();
+    const logIds = raw.map((r) => r.id);
+    let volumeLb = 0;
+    if (logIds.length) {
+      const { data: sets } = await createServiceClient()
+        .from('set_logs')
+        .select('weight, reps')
+        .in('workout_log_id', logIds);
+      volumeLb = (sets ?? []).reduce(
+        (a, s) => a + (Number(s.weight) || 0) * (Number(s.reps) || 0),
+        0,
+      );
+    }
+    stats = {
+      thisWeek: raw.filter((r) => String(r.performed_at) >= weekAgoISO).length,
+      total: raw.length,
+      volumeLb,
+    };
   }
 
-  return <ActivitiesScreen program={program} history={history} locale={locale} />;
+  return <ActivitiesScreen program={program} history={history} stats={stats} locale={locale} />;
 }
