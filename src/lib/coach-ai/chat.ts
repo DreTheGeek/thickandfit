@@ -14,12 +14,13 @@ import { embedText, retrieveMemories, renderMemoryBlock } from '@/lib/coach-ai/e
 import { retrieveKnowledge, renderKnowledgeBlock } from '@/lib/coach-ai/knowledge';
 import { SAFETY_CLAUSE_EN } from '@/lib/coach-ai/safety';
 import { AI_MODELS } from '@/lib/ai/models';
-
-const apiKey = process.env.OPENROUTER_API_KEY;
+import { aiConfigured, openChatStream } from '@/lib/ai/client';
+import { logInference } from '@/lib/ai/inferences';
 
 // Persona-strong, cheap model for the conversational coach (voice fidelity matters most here).
 const CHAT_MODEL = AI_MODELS.chat;
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Bump when the persona/system prompt changes so replay/eval can group turns by prompt generation.
+const PROMPT_VERSION = 'coach-chat.v1';
 
 // How many recent turns to replay into the model. Context already includes the last 7 days of
 // chat in its summary, but we replay the most recent turns verbatim for conversational coherence.
@@ -35,7 +36,7 @@ export const chatRequestSchema = z.object({
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
 
 export function isConfigured(): boolean {
-  return Boolean(apiKey);
+  return aiConfigured();
 }
 
 // --- Persona (STATIC, prompt-cacheable) -------------------------------------
@@ -184,7 +185,7 @@ export async function streamChat(
   const ctx = await buildCoachContext(profileId, companyId);
   const locale = ctx.profile.locale;
 
-  if (!apiKey) {
+  if (!aiConfigured()) {
     return { status: 'notConfigured', message: notConfiguredMessage(locale) };
   }
 
@@ -214,18 +215,11 @@ export async function streamChat(
     request.message,
   );
 
-  let upstream: Response;
-  try {
-    upstream = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: CHAT_MODEL, stream: true, messages }),
-    });
-  } catch {
-    return { status: 'notConfigured', message: notConfiguredMessage(locale) };
-  }
-
-  if (!upstream.ok || !upstream.body) {
+  // Thin passthrough: the shared client owns auth/endpoint/error logging; the SSE parse loop,
+  // persistence, and cache_control message shaping below stay exactly as they were.
+  const t0 = Date.now();
+  const upstream = await openChatStream({ model: CHAT_MODEL, messages });
+  if (!upstream || !upstream.body) {
     return { status: 'notConfigured', message: notConfiguredMessage(locale) };
   }
 
@@ -243,6 +237,18 @@ export async function streamChat(
           // Persist the assembled assistant reply (fire-and-forget; do not block the close).
           if (assistantText.trim()) {
             void persistMessage(companyId, profileId, 'assistant', assistantText.trim());
+            // Provenance for the turn (fire-and-forget, off the stream's hot path). rawOutput is
+            // bounded; full history lives in coach_messages.
+            void logInference({
+              companyId,
+              profileId,
+              feature: 'coach-chat',
+              model: CHAT_MODEL,
+              promptVersion: PROMPT_VERSION,
+              latencyMs: Date.now() - t0,
+              status: 'ok',
+              rawOutput: { text: assistantText.trim().slice(0, 8000) },
+            });
           }
           controller.close();
           return;

@@ -249,7 +249,9 @@ export async function resolvePredictedItems(
   return { status: 'ok', candidates, totals };
 }
 
-// Full photo pipeline: predict -> resolve. Pure orchestration; safe to call without an API key.
+// LEGACY, superseded by smart-scan.ts analyzeSmartPhoto (which classifies meal-vs-product and adds
+// label transcription). No live callers; kept for API compatibility until the next cleanup pass.
+// Deliberately NOT converted to the shared AI client: no risk budget on dead code.
 export async function analyzeMealPhoto(image: string, locale: string): Promise<PhotoResult> {
   const items = await predictItems(image);
   if (items === null) return apiKey ? { status: 'error' } : { status: 'notConfigured' };
