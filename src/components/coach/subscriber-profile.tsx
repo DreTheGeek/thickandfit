@@ -12,7 +12,9 @@ import { CompletionCheck } from '@/components/ui/completion';
 import { CoachNotesPanel } from '@/components/coach/coach-notes-panel';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { GeneratePlanButton } from '@/components/coach/generate-plan-button';
+import { CoachBodyProgress } from '@/components/coach/coach-body-progress';
 import type { CoachNote } from '@/lib/coach/notes-actions';
+import type { BodyStats } from '@/lib/body/types';
 
 export type ProfileData = {
   name: string;
@@ -43,6 +45,7 @@ export type ProfileData = {
   currentPlanId: string | null;
   clientLocale: 'en' | 'es';
   intake: ClientIntake | null;
+  bodyStats: BodyStats | null;
 };
 
 export type ClientIntake = {
@@ -62,8 +65,6 @@ type TabKey =
   | 'overview' | 'info' | 'nutrition' | 'workouts' | 'community'
   | 'progress' | 'messages' | 'billing' | 'notes';
 
-// Only tabs backed by real data, no empty placeholder tabs.
-const TABS: TabKey[] = ['overview', 'info', 'workouts'];
 const TAB_LABEL: Record<TabKey, string> = {
   overview: 'tabOverview', info: 'tabInfo', nutrition: 'tabNutrition', workouts: 'tabWorkouts', community: 'tabCommunity',
   progress: 'tabProgress', messages: 'tabMessages', billing: 'tabBilling', notes: 'tabNotes',
@@ -83,6 +84,14 @@ function initials(name: string, email: string): string {
 export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement {
   const t = useTranslations('app.coach');
   const [tab, setTab] = useState<TabKey>('overview');
+
+  // Only surface tabs backed by real data, in Lenus order.
+  const hasBody =
+    !!data.bodyStats &&
+    (data.bodyStats.weightSeries.length > 0 || data.bodyStats.measurements.some((m) => m.latest != null));
+  const tabs: TabKey[] = ['overview', 'info'];
+  if (hasBody) tabs.push('progress');
+  tabs.push('workouts');
 
   return (
     <div className="mx-auto w-full max-w-4xl px-5 py-8 sm:px-8 lg:py-10">
@@ -120,7 +129,7 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
 
       {/* Tabs */}
       <div className="mb-5 flex gap-5 overflow-x-auto border-b border-line">
-        {TABS.map((k) => {
+        {tabs.map((k) => {
           const active = k === tab;
           return (
             <button
@@ -308,6 +317,8 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
           </Card>
         </div>
       )}
+
+      {tab === 'progress' && data.bodyStats && <CoachBodyProgress stats={data.bodyStats} />}
 
       {tab === 'workouts' && (
         <Card className="p-6">

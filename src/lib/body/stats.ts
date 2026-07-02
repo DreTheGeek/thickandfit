@@ -3,7 +3,9 @@
 // (workouts trained, nutrition days logged, weight moved). Reads the caller's own rows via the
 // session client (RLS scopes to profile_id = auth.uid()); nothing here is trusted from the client.
 import 'server-only';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { localToday } from '@/lib/nutrition/diary';
 import {
   MEASURE_FIELDS,
@@ -39,8 +41,21 @@ const lbOf = (kg: number): number => Math.round(kg * KG_TO_LB * 10) / 10;
 type WeightRow = { weight_kg: number; recorded_on: string };
 type MeasureRow = Record<string, number | string | null> & { recorded_on: string };
 
+// Subscriber path: reads the caller's own rows via the session client (RLS scopes to auth.uid()).
 export async function getBodyStats(userId: string, tz: string): Promise<BodyStats> {
   const sb = await createClient();
+  return computeBodyStats(sb as unknown as SupabaseClient, userId, tz);
+}
+
+// Coach path: reads ONE client's body stats via the service client. The caller (a requireCoach page)
+// authorizes companyId + profileId first, and profile_id is a global UUID that uniquely identifies the
+// user (and thus their company), so filtering by profile_id here reads only that client's rows.
+export async function getCoachBodyStats(profileId: string, tz: string): Promise<BodyStats> {
+  const sb = createServiceClient() as unknown as SupabaseClient;
+  return computeBodyStats(sb, profileId, tz);
+}
+
+async function computeBodyStats(sb: SupabaseClient, userId: string, tz: string): Promise<BodyStats> {
   const today = localToday(tz);
   const windowStart = addDays(today, -89); // 90-day chart + covers the 28-day rollup lookback
 
@@ -63,11 +78,7 @@ export async function getBodyStats(userId: string, tz: string): Promise<BodyStat
         .select('performed_at')
         .eq('profile_id', userId)
         .gte('performed_at', `${addDays(today, -27)}T00:00:00Z`),
-      sb
-        .from('food_log')
-        .select('log_date')
-        .eq('profile_id', userId)
-        .gte('log_date', addDays(today, -27)),
+      sb.from('food_log').select('log_date').eq('profile_id', userId).gte('log_date', addDays(today, -27)),
     ]);
 
   const weightRows = (weights ?? []) as WeightRow[];

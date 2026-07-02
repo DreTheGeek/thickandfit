@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { fetchHistory } from '@/lib/workout/logging';
+import { getCoachBodyStats } from '@/lib/body/stats';
 import { SubscriberProfile, type ProfileData } from '@/components/coach/subscriber-profile';
 import { getCoachNotes } from '@/lib/coach/notes-actions';
 import { getClientFoodPhotos } from '@/lib/food-photos/coach';
@@ -37,7 +38,8 @@ export default async function CoachSubscriberPage({
 
   if (!profile || profile.company_id !== ctx.companyId) notFound();
 
-  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }, { data: physique }, foodPhotos] =
+  const tz = (profile.timezone as string | null) || 'America/Chicago';
+  const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }, { data: physique }, foodPhotos, bodyStats] =
     await Promise.all([
       supabase.from('onboarding_responses').select('answers, computed_targets, predicted_goal').eq('profile_id', id).maybeSingle(),
       supabase
@@ -67,6 +69,7 @@ export default async function CoachSubscriberPage({
         .order('created_at', { ascending: false })
         .limit(5),
       getClientFoodPhotos(ctx.companyId, id),
+      getCoachBodyStats(id, tz),
     ]);
   const meRow = me as { full_name: string | null; email: string | null } | null;
 
@@ -164,6 +167,7 @@ export default async function CoachSubscriberPage({
     currentPlanId,
     clientLocale: profile.ui_locale === 'es' ? 'es' : 'en',
     intake,
+    bodyStats,
   };
 
   return <SubscriberProfile data={data} />;

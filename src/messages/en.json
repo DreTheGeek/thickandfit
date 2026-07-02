@@ -919,7 +919,20 @@
       "tierTeamShort": "Team T&F",
       "tierStephShort": "1-on-1 with Steph",
       "metricEnjoyment": "Enjoyed",
-      "metricEffort": "Effort"
+      "metricEffort": "Effort",
+      "progressWeight": "Weight",
+      "progressGoal": "Goal",
+      "sinceStart": "since start",
+      "progressNoWeight": "No weight logged yet.",
+      "progressMeasurements": "Measurements",
+      "progressTotalCirc": "Total change:",
+      "progressNoMeasures": "No measurements logged yet.",
+      "mWaist": "Waist",
+      "mHips": "Hips",
+      "mChest": "Chest",
+      "mArms": "Arms",
+      "mThighs": "Thighs",
+      "mBodyFat": "Body fat"
     },
     "you": {
       "title": "You",
