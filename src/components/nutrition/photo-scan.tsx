@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
@@ -40,6 +40,12 @@ type ApiResult =
   | { status: 'error' };
 
 const MAX_BYTES = 8_000_000; // 8MB upload ceiling before encoding.
+
+// Fire-and-forget prewarm so the vision Lambda is hot by the time the user submits the photo (biggest
+// prod latency win: it removes the cold start from the critical path). Never awaited.
+function warmupScan(): void {
+  void fetch('/api/nutrition/photo/warmup', { method: 'GET', keepalive: true }).catch(() => {});
+}
 
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -121,6 +127,11 @@ export function PhotoScan({
     if (onOpenChange) onOpenChange(v);
     else setOpenInternal(v);
   }
+  // Warm the scan Lambda the moment the sheet opens (covers the FAB-controlled path too), so the
+  // user's framing time is spent warming the exact instance the real scan will hit.
+  useEffect(() => {
+    if (open) warmupScan();
+  }, [open]);
   const [preview, setPreview] = useState<string | null>(null);
   const [phase, setPhase] = useState<'idle' | 'analyzing' | 'review' | 'product' | 'clarify' | 'notConfigured' | 'noFood' | 'error'>('idle');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -196,6 +207,7 @@ export function PhotoScan({
       setPhase('error');
       return;
     }
+    warmupScan(); // belt-and-suspenders: warms during the barcode-decode + downscale window (~1-2s)
     const dataUrl = await readAsDataUrl(file);
     setPreview(dataUrl);
     setPhase('analyzing');

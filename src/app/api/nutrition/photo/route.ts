@@ -32,28 +32,25 @@ const Body = z
 
 export async function POST(req: Request): Promise<Response> {
   const t0 = Date.now();
+  // Parse the (large base64) body in parallel with the auth/entitlement DB round-trips instead of after
+  // them, so the parse overlaps the serial pre-vision latency.
+  const bodyPromise = req.json().then((v) => v as unknown).catch(() => undefined);
+
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
 
-  // Paywall at the API boundary: the page requires entitlement, so the endpoint must too (else a
-  // free/lapsed user can call it directly). Coaches pass by role; everyone else needs an active sub or comp.
-  if (!hasRole(ctx.role, COACH_ROLES) && !(await isEntitled(ctx.userId))) {
-    return apiError('An active subscription is required.', 403);
-  }
+  // Paywall + cost control at the API boundary. Entitlement (paywall) and the rate-limit gate are
+  // independent, so run them concurrently rather than serially before the vision call.
+  const [entitled, underLimit] = await Promise.all([
+    hasRole(ctx.role, COACH_ROLES) ? Promise.resolve(true) : isEntitled(ctx.userId),
+    checkRateLimit(ctx.userId, 'nutrition-photo', 40, 3600),
+  ]);
+  if (!entitled) return apiError('An active subscription is required.', 403);
+  if (!underLimit) return apiError('Too many photo scans right now. Please try again shortly.', 429);
 
-  // Cost control: vision calls are the priciest AI path; cap per user to bound spend (fails open).
-  if (!(await checkRateLimit(ctx.userId, 'nutrition-photo', 40, 3600))) {
-    return apiError('Too many photo scans right now. Please try again shortly.', 429);
-  }
-
-  let raw: unknown;
-  try {
-    raw = await req.json();
-  } catch {
-    return apiError('Invalid JSON body', 400);
-  }
-
+  const raw = await bodyPromise;
+  if (raw === undefined) return apiError('Invalid JSON body', 400);
   const parsed = Body.safeParse(raw);
   if (!parsed.success) return apiError(parsed.error.issues[0]?.message ?? 'Invalid input', 422);
 

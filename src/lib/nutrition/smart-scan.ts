@@ -134,6 +134,9 @@ export async function analyzeSmartPhoto(image: string, locale: string): Promise<
       signal: AbortSignal.timeout(90_000),
       body: JSON.stringify({
         model: MODEL,
+        // Route to the lowest-latency Gemini provider (same model + weights, so no accuracy change);
+        // avoids the occasional slow-provider outlier on OpenRouter.
+        provider: { sort: 'latency' },
         // Food recognition + label transcription is not a deep-reasoning task; gpt-5 defaults to heavy
         // reasoning that made a scan take ~40s. Low effort keeps the accuracy and cuts it to a few seconds.
         reasoning: { effort: 'low' },
