@@ -51,6 +51,33 @@ type UsdaFood = { fdcId?: number; description?: string; foodCategory?: string; f
 
 // USDA nutrient numbers (per 100g): 208 kcal, 203 protein, 204 fat, 205 carbs, 291 fiber, 269 sugar, 307 sodium(mg).
 const NUT = { kcal: '208', protein: '203', fat: '204', carbs: '205', fiber: '291', sugar: '269', sodium: '307' } as const;
+// Micronutrient panel (0064). Numbers verified against a live FDC response 2026-07-02; note 606 is
+// saturated fat (315 is manganese) and 417 is total folate (435 is the DFE variant). USDA values
+// already arrive in the column's target unit (MG for minerals/C/cholesterol, UG=mcg for D/B12/A-RAE/
+// folate, G for fatty acids), so usdaValue passes through unchanged.
+const NUT_MICRO = {
+  calcium_mg: '301',
+  iron_mg: '303',
+  magnesium_mg: '304',
+  potassium_mg: '306',
+  zinc_mg: '309',
+  vitamin_c_mg: '401',
+  vitamin_d_mcg: '328',
+  vitamin_b12_mcg: '418',
+  vitamin_a_mcg_rae: '320',
+  folate_mcg: '417',
+  cholesterol_mg: '601',
+  sat_fat_g: '606',
+  trans_fat_g: '605',
+  mono_fat_g: '645',
+  poly_fat_g: '646',
+} as const;
+
+function usdaMicros(f: UsdaFood): Record<string, number | null> {
+  const out: Record<string, number | null> = {};
+  for (const [col, num] of Object.entries(NUT_MICRO)) out[col] = usdaValue(f, num);
+  return out;
+}
 
 function usdaValue(f: UsdaFood, num: string): number | null {
   const n = (f.foodNutrients ?? []).find((x) => (x.nutrientNumber ?? x.nutrient?.number) === num);
@@ -132,6 +159,7 @@ export async function groundFoodByName(name: string, locale: string): Promise<Fo
         fiber_g: usdaValue(f, NUT.fiber),
         sugar_g: usdaValue(f, NUT.sugar),
         sodium_mg: usdaValue(f, NUT.sodium),
+        ...usdaMicros(f),
         is_verified: true, // USDA is government-validated
         search_text: description.toLowerCase(),
       })
@@ -185,7 +213,12 @@ export async function groundFoodByBarcode(barcode: string, locale: string): Prom
     if (kcal == null) return null;
 
     const name = (p.product_name?.trim() || 'Packaged food').slice(0, 300);
-    const sodiumG = offNum(nm, 'sodium_100g'); // OFF sodium is grams/100g
+    // OFF canonical *_100g values are GRAMS: minerals/vitC/cholesterol convert g -> mg (sodium
+    // precedent); fatty acids stay g. Vitamins A/D/B12/folate are SKIPPED from OFF on purpose:
+    // crowd-sourced unit chaos (IU vs mcg) makes a wrong 1e6-factor value worse than null; USDA
+    // covers the generic foods where those matter.
+    const gToMg = (v: number | null): number | null => (v != null ? Math.round(v * 1000) : null);
+    const sodiumG = offNum(nm, 'sodium_100g');
     const { data: inserted } = await svc
       .from('foods')
       .insert({
@@ -202,6 +235,17 @@ export async function groundFoodByBarcode(barcode: string, locale: string): Prom
         fiber_g: offNum(nm, 'fiber_100g'),
         sugar_g: offNum(nm, 'sugars_100g'),
         sodium_mg: sodiumG != null ? Math.round(sodiumG * 1000) : null,
+        sat_fat_g: offNum(nm, 'saturated-fat_100g'),
+        trans_fat_g: offNum(nm, 'trans-fat_100g'),
+        mono_fat_g: offNum(nm, 'monounsaturated-fat_100g'),
+        poly_fat_g: offNum(nm, 'polyunsaturated-fat_100g'),
+        calcium_mg: gToMg(offNum(nm, 'calcium_100g')),
+        iron_mg: gToMg(offNum(nm, 'iron_100g')),
+        magnesium_mg: gToMg(offNum(nm, 'magnesium_100g')),
+        potassium_mg: gToMg(offNum(nm, 'potassium_100g')),
+        zinc_mg: gToMg(offNum(nm, 'zinc_100g')),
+        vitamin_c_mg: gToMg(offNum(nm, 'vitamin-c_100g')),
+        cholesterol_mg: gToMg(offNum(nm, 'cholesterol_100g')),
         is_verified: false, // crowd-sourced
         search_text: name.toLowerCase(),
       })
