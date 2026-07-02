@@ -94,7 +94,9 @@ export async function groundFoodByName(name: string, locale: string): Promise<Fo
     const url =
       `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(q)}` +
       `&dataType=Foundation,SR%20Legacy&pageSize=8&api_key=${USDA_KEY}`;
-    const res = await fetch(url, { headers: { 'User-Agent': UA } });
+    // Hard cap the external call: unmatched items ground here in parallel, and a slow USDA response
+    // must never drag the whole photo scan toward the function timeout. Miss fast, log locally.
+    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
     const json = (await res.json()) as { foods?: UsdaFood[] };
     const f = pickBestUsda(q, json.foods ?? []);

@@ -12,7 +12,10 @@ import { analyzeSmartPhoto } from '@/lib/nutrition/smart-scan';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+// Vision + food-resolution can run 20-40s on a busy plate; 60s left no headroom and real photos timed
+// out ("Something went wrong reading that photo"). Vercel now allows up to 300s. The vision + USDA
+// calls also carry their own AbortSignal timeouts so nothing hangs to the ceiling.
+export const maxDuration = 300;
 
 // Either a data: URL (base64 inline) or a remote http(s) image URL. Bounded to keep payloads sane.
 const Body = z

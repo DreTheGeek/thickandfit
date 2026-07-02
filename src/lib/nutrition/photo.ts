@@ -76,6 +76,7 @@ async function predictItems(image: string): Promise<PredictedItem[] | null> {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(90_000),
       body: JSON.stringify({
         model: VISION_MODEL,
         response_format: { type: 'json_object' },
@@ -91,7 +92,11 @@ async function predictItems(image: string): Promise<PredictedItem[] | null> {
         ],
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error(`photo predictItems HTTP ${res.status} (${VISION_MODEL}):`, body.slice(0, 400));
+      return null;
+    }
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const raw = json?.choices?.[0]?.message?.content?.trim();
     if (!raw) return null;

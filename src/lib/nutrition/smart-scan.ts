@@ -128,6 +128,9 @@ export async function analyzeSmartPhoto(image: string, locale: string): Promise<
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      // Bound the vision call so a slow provider response fails cleanly instead of hanging to the
+      // function ceiling (which the user sees as a hard timeout error).
+      signal: AbortSignal.timeout(90_000),
       body: JSON.stringify({
         model: MODEL,
         // Food recognition + label transcription is not a deep-reasoning task; gpt-5 defaults to heavy
@@ -146,10 +149,19 @@ export async function analyzeSmartPhoto(image: string, locale: string): Promise<
         ],
       }),
     });
-    if (!res.ok) return { status: 'error' };
+    if (!res.ok) {
+      // Never swallow the cause: log the provider status + body so a prod failure is diagnosable
+      // (401 = bad key, 402 = out of credits, 429 = rate limit, 400 = bad request/model).
+      const body = await res.text().catch(() => '');
+      console.error(`smart-scan vision HTTP ${res.status} (${MODEL}):`, body.slice(0, 400));
+      return { status: 'error' };
+    }
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return { status: 'error' };
+    if (!raw) {
+      console.error('smart-scan vision: empty content', JSON.stringify(json).slice(0, 300));
+      return { status: 'error' };
+    }
     const cleaned = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
     const out = JSON.parse(cleaned) as VisionOut;
 
@@ -199,8 +211,10 @@ export async function analyzeSmartPhoto(image: string, locale: string): Promise<
 
     const resolved = await resolvePredictedItems(items, locale);
     if (resolved.status === 'ok') return { status: 'ok', candidates: resolved.candidates, totals: resolved.totals };
+    if (resolved.status !== 'noFood') console.error('smart-scan resolve failed:', resolved.status);
     return { status: resolved.status === 'noFood' ? 'noFood' : 'error' };
-  } catch {
+  } catch (e) {
+    console.error('smart-scan exception:', e instanceof Error ? e.message : String(e));
     return { status: 'error' };
   }
 }
