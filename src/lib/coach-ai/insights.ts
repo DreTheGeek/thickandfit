@@ -518,6 +518,96 @@ async function embedMissingMessages(
   return embedded;
 }
 
+// --- Derived behavioral events (0063) ---------------------------------------------------------
+// Deterministic signals computed nightly from the same window, emitted fire-and-forget with
+// per-day natural keys (re-runs are idempotent). micronutrient_low only fires when >=50% of the
+// week's logged grams carry micro data, so it activates organically as 0064-parsed foods
+// accumulate and stays silent (never wrong) before that.
+const MICRO_RDA_MG = {
+  magnesium_mg: 310, // adult women RDAs; the audience baseline
+  potassium_mg: 2600,
+  iron_mg: 18,
+  calcium_mg: 1000,
+} as const;
+type MicroCol = keyof typeof MICRO_RDA_MG;
+type MicroFoodRow = { grams: number | null; foods: Record<MicroCol, number | null> | null };
+
+async function emitDerivedNutritionEvents(
+  sb: ReturnType<typeof createServiceClient>,
+  sub: ActiveSubscriber,
+  roll: Rollup,
+  targets: unknown,
+): Promise<void> {
+  try {
+    // protein_goal_hit: the 7d average meets the member's computed onboarding target.
+    const t = targets as { macros?: { protein_g?: number } } | null;
+    const proteinTarget = typeof t?.macros?.protein_g === 'number' ? t.macros.protein_g : null;
+    if (proteinTarget && proteinTarget > 0 && roll.avg7 && roll.avg7.proteinG >= proteinTarget) {
+      emitEvent({
+        companyId: sub.companyId,
+        profileId: sub.profileId,
+        type: 'protein_goal_hit',
+        aggregateType: 'user_insight',
+        idempotencyKey: `protein_goal_hit:${sub.profileId}:${todayUtc()}`,
+        source: 'cron',
+        payload: { avg_protein_7d: roll.avg7.proteinG, target_g: proteinTarget },
+      });
+    }
+
+    // micronutrient_low: 7d average intake under 70% RDA for the deficiency set, computed from
+    // food_log grams x the food's per-100g micros (0064 columns).
+    const { data } = await sb
+      .from('food_log')
+      .select('grams, foods(magnesium_mg, potassium_mg, iron_mg, calcium_mg)')
+      .eq('profile_id', sub.profileId)
+      .gte('log_date', isoDaysAgo(7))
+      .limit(400);
+    const rows = (data ?? []) as unknown as MicroFoodRow[];
+    if (!rows.length) return;
+    let totalGrams = 0;
+    let coveredGrams = 0;
+    const totals: Record<MicroCol, number> = { magnesium_mg: 0, potassium_mg: 0, iron_mg: 0, calcium_mg: 0 };
+    for (const r of rows) {
+      const g = num(r.grams);
+      if (g <= 0) continue;
+      totalGrams += g;
+      const f = r.foods;
+      if (!f || Object.values(f).every((v) => v == null)) continue;
+      coveredGrams += g;
+      for (const col of Object.keys(totals) as MicroCol[]) {
+        const per100 = f[col];
+        if (typeof per100 === 'number' && Number.isFinite(per100)) totals[col] += (g / 100) * per100;
+      }
+    }
+    if (totalGrams <= 0 || coveredGrams / totalGrams < 0.5) return; // not enough micro coverage yet
+    // One event max per night: the nutrient furthest below its RDA (under the 70% line).
+    let worst: { col: MicroCol; ratio: number } | null = null;
+    for (const col of Object.keys(totals) as MicroCol[]) {
+      const ratio = totals[col] / 7 / MICRO_RDA_MG[col];
+      if (ratio < 0.7 && (!worst || ratio < worst.ratio)) worst = { col, ratio };
+    }
+    if (worst) {
+      emitEvent({
+        companyId: sub.companyId,
+        profileId: sub.profileId,
+        type: 'micronutrient_low',
+        aggregateType: 'user_insight',
+        idempotencyKey: `micronutrient_low:${sub.profileId}:${worst.col}:${todayUtc()}`,
+        source: 'cron',
+        payload: {
+          nutrient: worst.col,
+          avg_daily_mg: Math.round((totals[worst.col] / 7) * 10) / 10,
+          rda_mg: MICRO_RDA_MG[worst.col],
+          coverage_pct: Math.round((coveredGrams / totalGrams) * 100),
+        },
+      });
+    }
+  } catch (e) {
+    // Derived telemetry must never fail the insight write.
+    console.error('emitDerivedNutritionEvents:', e instanceof Error ? e.message : String(e));
+  }
+}
+
 // --- Per-subscriber entry point --------------------------------------------------------------
 // Builds the payload for one subscriber and upserts it. Idempotent: conflicts on
 // (profile_id, generated_at) replace today's row instead of stacking duplicates.
@@ -611,6 +701,7 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
       flags: coaching_flags.length,
     },
   });
+  void emitDerivedNutritionEvents(sb, sub, roll, targets);
 
   // Newly-detected plateau -> one encouraging bilingual nudge linking to the coach chat. Best-effort:
   // a notification failure must not fail the insight write (already persisted above).
