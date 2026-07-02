@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { getLocale } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
 import { getTodayHabits, localToday } from '@/lib/habits/habits';
 import { getDiary } from '@/lib/nutrition/diary';
@@ -66,6 +67,49 @@ export default async function DashboardPage(): Promise<ReactElement> {
     }
   }
 
+  const KG_TO_LB = 2.20462;
+
+  // Weight/goal progress for the Today card (start -> current -> goal), reusing the onboarding start
+  // + the latest logged weight. Only once onboarded + a goal weight exists.
+  let weightGoal: { startLb: number; currentLb: number; goalLb: number; pct: number } | null = null;
+  if (ctx.companyId && summary?.hasOnboarded) {
+    const [{ data: onb }, { data: lw }] = await Promise.all([
+      supabase.from('onboarding_responses').select('answers').eq('profile_id', ctx.userId).maybeSingle(),
+      supabase
+        .from('weight_entries')
+        .select('weight_kg')
+        .eq('profile_id', ctx.userId)
+        .order('recorded_on', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    const a = (onb?.answers ?? null) as { weightKg?: number; goalWeightKg?: number } | null;
+    if (a?.weightKg && a?.goalWeightKg) {
+      const startLb = Math.round(a.weightKg * KG_TO_LB);
+      const goalLb = Math.round(a.goalWeightKg * KG_TO_LB);
+      const currentLb = lw ? Math.round(Number(lw.weight_kg) * KG_TO_LB) : startLb;
+      const span = Math.abs(startLb - goalLb) || 1;
+      const pct = Math.min(100, Math.round((Math.abs(currentLb - startLb) / span) * 100));
+      weightGoal = { startLb, currentLb, goalLb, pct };
+    }
+  }
+
+  // Coach card: the company's coach (Stephanie). Service client + company scope (a subscriber can't
+  // read other profiles via RLS); we only surface the display name.
+  let coach: { name: string } | null = null;
+  if (ctx.companyId) {
+    const { data: c } = await createServiceClient()
+      .from('profiles')
+      .select('full_name')
+      .eq('company_id', ctx.companyId)
+      .in('role', ['operator', 'coach'])
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const nm = (c?.full_name ?? '').trim();
+    if (nm) coach = { name: nm };
+  }
+
   const now = new Date();
   const dateLabel = new Intl.DateTimeFormat(locale, {
     weekday: 'long',
@@ -100,6 +144,8 @@ export default async function DashboardPage(): Promise<ReactElement> {
       habits={habits}
       nutrition={nutrition}
       catchUp={catchUp}
+      weightGoal={weightGoal}
+      coach={coach}
     />
   );
 }

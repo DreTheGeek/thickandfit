@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/states/skeleton';
 import { ErrorState } from '@/components/states/error-state';
 import { FirstRunState } from '@/components/states/first-run-state';
 import { Card } from '@/components/ui/card';
+import { Avatar } from '@/components/ui/avatar';
 import { ButtonLink } from '@/components/ui/button';
 import { Wordmark } from '@/components/ui/wordmark';
 import { Icon } from '@/components/ui/icons';
@@ -31,6 +32,8 @@ export type CatchUp = {
 };
 
 export type WeekDay = { key: string; label: string; day: number; isToday: boolean; completed?: boolean };
+export type WeightGoal = { startLb: number; currentLb: number; goalLb: number; pct: number };
+export type TodayCoach = { name: string };
 
 export function TodayScreen({
   name,
@@ -40,6 +43,8 @@ export function TodayScreen({
   habits: habitsInit,
   nutrition,
   catchUp,
+  weightGoal,
+  coach,
 }: {
   name: string;
   dateLabel: string;
@@ -48,6 +53,8 @@ export function TodayScreen({
   habits: TodayHabit[];
   nutrition: TodayNutrition | null;
   catchUp: CatchUp | null;
+  weightGoal: WeightGoal | null;
+  coach: TodayCoach | null;
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
@@ -337,29 +344,99 @@ export function TodayScreen({
         sub={workoutSub}
         trailing={<CompletionCheck done={summary.streak > 0} />}
       />
-      {habits.map((h, i) => (
-        <ListRow
-          key={h.id}
-          divider={i < habits.length - 1}
-          leading={
-            <IconTile>
-              <Icon name="check" size={18} />
-            </IconTile>
-          }
-          title={h.title}
-          trailing={
-            <button
-              type="button"
-              onClick={() => void toggleHabit(h.id, !h.done)}
-              className="tf-press"
-              aria-label={h.title}
-            >
-              <CompletionCheck done={h.done} />
-            </button>
-          }
-        />
-      ))}
+
+      {/* Your habits (canonical card with a done count) */}
+      {habits.length > 0 && (
+        <div className="mt-7">
+          <div className="mb-2.5 flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
+              {t('today.habitsTitle')}
+            </span>
+            <span className="text-[12px] font-semibold text-accent">
+              {habits.filter((h) => h.done).length}/{habits.length}
+            </span>
+          </div>
+          <Card className="divide-y divide-divider p-0">
+            {habits.map((h) => (
+              <div key={h.id} className="flex items-center justify-between px-4 py-3">
+                <span className="text-[14px] font-medium">{h.title}</span>
+                <button
+                  type="button"
+                  onClick={() => void toggleHabit(h.id, !h.done)}
+                  className="tf-press"
+                  aria-label={h.title}
+                >
+                  <CompletionCheck done={h.done} />
+                </button>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+
+      {/* Weight / goal progress -> taps into the Progress Body tab */}
+      {weightGoal && (
+        <Link href="/progress?tab=body" className="tf-press mt-6 block">
+          <Card className="p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
+                {t('today.goalTitle')}
+              </span>
+              <span className="text-[11px] font-semibold text-accent">
+                {t('today.goalPct', { pct: weightGoal.pct })}
+              </span>
+            </div>
+            <div className="mb-3 flex items-end justify-between">
+              <div>
+                <div className="text-[11px] text-faint">{t('today.goalStart')}</div>
+                <div className="font-display text-[22px] leading-none">{weightGoal.startLb}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-[11px] text-accent">{t('today.goalCurrent')}</div>
+                <div className="font-display text-[28px] leading-none text-accent">
+                  {weightGoal.currentLb}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[11px] text-faint">{t('today.goalGoal')}</div>
+                <div className="font-display text-[22px] leading-none">{weightGoal.goalLb}</div>
+              </div>
+            </div>
+            <ProgressBar pct={weightGoal.pct} color="var(--color-accent)" height={4} />
+          </Card>
+        </Link>
+      )}
+
+      {/* Coach card -> messages */}
+      {coach && (
+        <Link href="/inbox" className="tf-press mt-6 block">
+          <Card className="flex items-center gap-3.5 p-4">
+            <Avatar initials={initialsOf(coach.name)} size={44} />
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-semibold uppercase tracking-[1.5px] text-faint">
+                {t('today.coachLabel')}
+              </div>
+              <div className="truncate text-[15px] font-semibold">{coach.name}</div>
+            </div>
+            <span className="flex flex-none items-center gap-1 text-[13px] font-semibold text-accent">
+              {t('today.messageCoach')}
+              <Icon name="chevronRight" size={14} />
+            </span>
+          </Card>
+        </Link>
+      )}
     </div>
+  );
+}
+
+function initialsOf(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join('') || '?'
   );
 }
 
