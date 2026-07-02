@@ -9,6 +9,7 @@ import { apiSuccess, apiError } from '@/lib/api/auth';
 import { isEntitled } from '@/lib/billing/entitlement';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { analyzeSmartPhoto } from '@/lib/nutrition/smart-scan';
+import { storeScanImage } from '@/lib/nutrition/scan-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -63,5 +64,10 @@ export async function POST(req: Request): Promise<Response> {
   });
   // Attribute prod latency: how much is the auth/entitlement/rate-limit gate vs the analyze pipeline.
   console.log(`[photo] gate ${tGate - t0}ms, analyze ${Date.now() - tGate}ms, total ${Date.now() - t0}ms, status ${result.status}`);
+  // Persist the scan image keyed by inference id (fire-and-forget, after the response-critical work):
+  // once the user corrects this scan, image + correction = an automatic gold eval case.
+  if ((result.status === 'ok' || result.status === 'product') && result.inferenceId) {
+    void storeScanImage(result.inferenceId, parsed.data.image);
+  }
   return apiSuccess(result);
 }
