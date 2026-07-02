@@ -47,6 +47,14 @@ export const AI_MODELS = {
   // (gpt-5 5xx/429, or a model-specific 400) would fail every meal log. Gemini 2.5 Flash is the proven
   // prior model - the scan tries smartScan first, then this, so a provider blip degrades instead of dies.
   smartScanFallback: 'google/gemini-2.5-flash',
+
+  // OVERLOAD EXPLAIN. One-sentence persona rewrite of a deterministic overload number; cheap + voice.
+  // Was hardcoded in overload/explain.ts; centralized so the eval can swap it. $1/$5.
+  overloadExplain: 'anthropic/claude-haiku-4.5',
+
+  // ES CONTENT FILL. Batch translation drafts (exercise names/cues), human-review gated before going
+  // live. Was hardcoded in content/es-fill.ts; centralized. $1/$5.
+  esFill: 'anthropic/claude-haiku-4.5',
 } as const;
 
 export type AiTask = keyof typeof AI_MODELS;
