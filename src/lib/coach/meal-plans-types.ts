@@ -28,6 +28,7 @@ export type MealPlanDetail = MealPlanRow & {
   splitCarbPct: number | null;
   splitFatPct: number | null;
   groups: MealGroupLite[];
+  notes: string | null;
 };
 
 export type MealPlansPage = { rows: MealPlanRow[]; total: number; page: number; pageSize: number; totalAll: number };

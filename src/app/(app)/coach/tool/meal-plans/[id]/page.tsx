@@ -7,6 +7,7 @@ import { requireCoach } from '@/lib/auth/guards';
 import { getMealPlanDetail } from '@/lib/coach/meal-plans';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
+import { MealPlanNotesEditor } from '@/components/coach/meal-plan-notes';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +80,8 @@ export default async function CoachMealPlanDetailPage({
           </div>
         )}
       </div>
+
+      <MealPlanNotesEditor planId={p.id} initial={p.notes} />
     </div>
   );
 }

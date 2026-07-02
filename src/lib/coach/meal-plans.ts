@@ -21,6 +21,7 @@ type PlanRaw = {
   split_carb_pct: number | null;
   split_fat_pct: number | null;
   plan_jsonb: unknown;
+  notes: string | null;
   contact: ContactLite | ContactLite[];
 };
 
@@ -83,13 +84,16 @@ export async function getMealPlanDetail(companyId: string, id: string): Promise<
   const sb = createServiceClient();
   const { data, error } = await sb
     .from('meal_plans')
-    .select(`${COLS}, plan_jsonb`)
+    .select(`${COLS}, plan_jsonb, notes`)
     .eq('company_id', companyId)
     .eq('id', id)
     .maybeSingle();
   if (error) throw new Error(`getMealPlanDetail: ${error.message}`);
   if (!data) return null;
-  const p = data as unknown as PlanRaw;
+  return detailFrom(data as unknown as PlanRaw);
+}
+
+function detailFrom(p: PlanRaw): MealPlanDetail {
   const base = mapRow(p);
 
   const rawGroups =
@@ -117,5 +121,49 @@ export async function getMealPlanDetail(companyId: string, id: string): Promise<
     splitCarbPct: p.split_carb_pct,
     splitFatPct: p.split_fat_pct,
     groups,
+    notes: p.notes,
   };
+}
+
+// The meal plan assigned to a client (subscriber), resolved via their linked contact. Returns null
+// when the client has no plan. Used by the client-facing meal-plan view.
+export async function getClientMealPlan(
+  companyId: string,
+  profileId: string,
+): Promise<MealPlanDetail | null> {
+  const sb = createServiceClient();
+  // A subscriber links to a Lenus contact by profile_id, falling back to an email match.
+  const { data: prof } = await sb.from('profiles').select('email').eq('id', profileId).maybeSingle();
+  const email = (prof as { email?: string } | null)?.email ?? null;
+
+  const { data: byProfile } = await sb
+    .from('contacts')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('profile_id', profileId)
+    .limit(1)
+    .maybeSingle();
+  let contactId = (byProfile as { id?: string } | null)?.id ?? null;
+  if (!contactId && email) {
+    const { data: byEmail } = await sb
+      .from('contacts')
+      .select('id')
+      .eq('company_id', companyId)
+      .eq('email', email)
+      .limit(1)
+      .maybeSingle();
+    contactId = (byEmail as { id?: string } | null)?.id ?? null;
+  }
+  if (!contactId) return null;
+
+  const { data } = await sb
+    .from('meal_plans')
+    .select(`${COLS}, plan_jsonb, notes`)
+    .eq('company_id', companyId)
+    .eq('contact_id', contactId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  return detailFrom(data as unknown as PlanRaw);
 }

@@ -65,6 +65,7 @@ export async function YouScreen({
     { key: 'photos', icon: 'camera', label: t('myPhotos'), href: '/progress' },
     { key: 'measurements', icon: 'ruler', label: t('measurements'), href: '/progress?tab=body' },
     { key: 'program', icon: 'clipboard', label: t('myProgram'), href: '/workouts' },
+    { key: 'mealPlan', icon: 'nutrition', label: t('mealPlan'), href: '/nutrition/plan' },
     { key: 'account', icon: 'gear', label: t('accountSettings'), href: '/account' },
     { key: 'help', icon: 'help', label: t('help'), href: 'mailto:hello@teamthickandfit.com' },
   ];
