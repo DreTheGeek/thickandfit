@@ -962,7 +962,17 @@
       "tabCheckins": "Check-ins",
       "checkinLatest": "Ultimo check-in",
       "checkinPhotos": "Fotos de progreso",
-      "checkinNoData": "Aun no hay check-ins enviados."
+      "checkinNoData": "Aun no hay check-ins enviados.",
+      "interviewTitle": "Entrena a tu coach",
+      "interviewIntro": "Responde con tus palabras: tu coach aprende de cada respuesta y empieza a pensar y hablar como tu. Tu o Dani pueden completarlo cuando quieran, seccion por seccion. Guardar una seccion entrena la app al instante con lo que dijiste.",
+      "interviewProgress": "Progreso",
+      "interviewSave": "Guardar y entrenar",
+      "interviewSaving": "Entrenando...",
+      "interviewSaved": "Guardado - tu coach aprendio esto",
+      "interviewError": "No se pudo guardar",
+      "interviewTeaches": "Le ensena a tu coach:",
+      "interviewCardTitle": "Entrena a tu coach",
+      "interviewCardHint": "Responde una entrevista guiada sobre como entrenas. Alimenta la base de conocimiento de tu coach y tus planes."
     },
     "you": {
       "title": "Tú",

@@ -962,7 +962,17 @@
       "tabCheckins": "Check-ins",
       "checkinLatest": "Latest check-in",
       "checkinPhotos": "Progress photos",
-      "checkinNoData": "No check-ins submitted yet."
+      "checkinNoData": "No check-ins submitted yet.",
+      "interviewTitle": "Train your coach",
+      "interviewIntro": "Answer in your own words - your coach learns from every answer and starts to think and talk like you. You or Dani can fill this in anytime, one section at a time. Saving a section instantly trains the app on what you said.",
+      "interviewProgress": "Progress",
+      "interviewSave": "Save & train",
+      "interviewSaving": "Training...",
+      "interviewSaved": "Saved - your coach learned this",
+      "interviewError": "Could not save",
+      "interviewTeaches": "Teaches your coach:",
+      "interviewCardTitle": "Train your coach",
+      "interviewCardHint": "Answer a guided interview about how you coach. It trains the knowledge base your AI coach + plans run on."
     },
     "you": {
       "title": "You",
