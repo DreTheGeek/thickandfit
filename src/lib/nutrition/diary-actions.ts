@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite } from '@/lib/nutrition/macros';
 import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
 import { analyzeMealText } from '@/lib/nutrition/text-parse';
+import { recordInferenceCorrection } from '@/lib/ai/inferences';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 import { localDay } from '@/lib/datetime/local-day';
@@ -120,6 +121,10 @@ const PhotoLogInput = z.object({
   predictedName: z.string().min(1).max(200),
   mealSlot: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
   grams: z.number().positive().max(5000),
+  // Provenance + correction capture (all optional; a photo log still works without them).
+  aiInferenceId: z.string().uuid().optional(),
+  predictedGrams: z.number().positive().max(5000).optional(),
+  confidence: z.number().min(0).max(1).optional(),
 });
 
 export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
@@ -165,6 +170,12 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
     effGrams,
   );
 
+  // A meaningful portion change (>5%) from the scan's estimate is a correction: the supervised signal
+  // that improves portion estimation (the hardest problem) over time. Compare the user-facing (visible)
+  // grams they submitted against the visible grams the scan predicted.
+  const predicted = parsed.data.predictedGrams ?? null;
+  const corrected = predicted != null && Math.abs(parsed.data.grams - predicted) / predicted > 0.05;
+
   const tz = await getProfileTimezone(ctx.userId);
   const { error } = await sb.from('food_log').insert({
     company_id: ctx.companyId,
@@ -180,10 +191,25 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
     protein_g: m.proteinG,
     carb_g: m.carbG,
     fat_g: m.fatG,
+    ai_inference_id: parsed.data.aiInferenceId ?? null,
+    predicted_grams: predicted,
+    confidence_score: parsed.data.confidence ?? null,
+    corrected_at: corrected ? new Date().toISOString() : null,
   });
   if (error) {
     console.error('logPhotoFoodAction:', error.message);
     return { ok: false, error: 'insert_failed' };
+  }
+  // Feed the learning loop: attach the {predicted, corrected} portion delta back onto the inference.
+  // Fire-and-forget - never blocks the log. Per-item detail also persists on the food_log row above.
+  if (corrected && parsed.data.aiInferenceId) {
+    void recordInferenceCorrection(parsed.data.aiInferenceId, {
+      field: 'grams',
+      food_id: parsed.data.foodId,
+      predicted_name: parsed.data.predictedName,
+      predicted_grams: predicted,
+      corrected_grams: parsed.data.grams,
+    });
   }
   revalidatePath('/nutrition');
   return { ok: true };

@@ -32,7 +32,7 @@ type Candidate = {
   macros: Macros | null;
 };
 type ApiResult =
-  | { status: 'ok'; candidates: Candidate[]; totals: Macros }
+  | { status: 'ok'; candidates: Candidate[]; totals: Macros; inferenceId?: string }
   | { status: 'product'; food: FoodLite; clarify: string | null }
   | { status: 'clarify'; clarify: string }
   | { status: 'notConfigured' }
@@ -90,6 +90,17 @@ function confidenceTone(c: number): string {
   return 'text-faint';
 }
 
+// Macros are linear in grams, so scaling the predicted macros by (edited / predicted) grams is exact -
+// lets the review row show live totals as the user adjusts a portion without a server round-trip.
+function scaleMacros(m: Macros, factor: number): Macros {
+  return {
+    kcal: Math.round(m.kcal * factor),
+    proteinG: Math.round(m.proteinG * factor),
+    carbG: Math.round(m.carbG * factor),
+    fatG: Math.round(m.fatG * factor),
+  };
+}
+
 function unitLabel(u: ServingUnit, t: ReturnType<typeof useTranslations>): string {
   switch (u) {
     case 'oz':
@@ -135,6 +146,10 @@ export function PhotoScan({
   const [preview, setPreview] = useState<string | null>(null);
   const [phase, setPhase] = useState<'idle' | 'analyzing' | 'review' | 'product' | 'clarify' | 'notConfigured' | 'noFood' | 'error'>('idle');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  // Provenance id of the scan that produced these candidates + the ORIGINAL predicted grams per row, so
+  // logging can send the predicted-vs-edited delta (the correction signal) back to the inference.
+  const [inferenceId, setInferenceId] = useState<string | null>(null);
+  const [predictedGrams, setPredictedGrams] = useState<number[]>([]);
   const [slot, setSlot] = useState<MealSlot>('lunch');
   const [logged, setLogged] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
@@ -151,6 +166,8 @@ export function PhotoScan({
     setPreview(null);
     setPhase('idle');
     setCandidates([]);
+    setInferenceId(null);
+    setPredictedGrams([]);
     setLogged({});
     setBusy(null);
     setDesc('');
@@ -193,6 +210,8 @@ export function PhotoScan({
       const data = (await parseTextToMacroAction(text)) as ApiResult;
       if (data.status === 'ok') {
         setCandidates(data.candidates);
+        setPredictedGrams(data.candidates.map((c) => c.grams));
+        setInferenceId(null); // text path has no photo inference to attach corrections to
         setPhase('review');
       } else {
         setPhase(data.status);
@@ -246,6 +265,8 @@ export function PhotoScan({
       }
       if (data.status === 'ok') {
         setCandidates(data.candidates);
+        setPredictedGrams(data.candidates.map((c) => c.grams));
+        setInferenceId(data.inferenceId ?? null);
         setPhase('review');
       } else if (data.status === 'product') {
         // The photo was a single packaged product / label -> confirm the amount.
@@ -269,6 +290,13 @@ export function PhotoScan({
     }
   }
 
+  // Adjust a detected portion in place. The predicted grams are kept separately (predictedGrams[i]) so
+  // the change becomes the correction signal on log; macros rescale live off the predicted macros.
+  function updateGrams(i: number, next: number): void {
+    const g = Math.max(1, Math.min(5000, Math.round(next || 0)));
+    setCandidates((prev) => prev.map((c, idx) => (idx === i ? { ...c, grams: g } : c)));
+  }
+
   async function logOne(i: number): Promise<void> {
     const c = candidates[i];
     if (!c || !c.food || !c.matched) return;
@@ -279,6 +307,9 @@ export function PhotoScan({
       predictedName: c.predictedName,
       mealSlot: slot,
       grams: c.grams,
+      predictedGrams: predictedGrams[i] ?? c.grams,
+      confidence: c.confidence,
+      aiInferenceId: inferenceId ?? undefined,
     });
     setBusy(null);
     if (res.ok) {
@@ -451,15 +482,34 @@ export function PhotoScan({
                           {c.matched && c.food && c.food.name.toLowerCase() !== c.predictedName.toLowerCase() && (
                             <div className="text-[11px] text-faint">{t('photoDetectedAs', { name: c.predictedName })}</div>
                           )}
-                          <div className="mt-0.5 text-[12px] text-muted">
-                            {c.matched && c.macros ? (
-                              <>
-                                {Math.round(c.grams)}g · {c.macros.kcal} kcal · {c.macros.proteinG}p / {c.macros.carbG}c / {c.macros.fatG}f
-                              </>
-                            ) : (
-                              <span className="text-faint">{t('photoNoMatch')}</span>
-                            )}
-                          </div>
+                          {c.matched && c.macros ? (
+                            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <span className="inline-flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="1"
+                                  step="5"
+                                  value={Math.round(c.grams)}
+                                  onChange={(e) => updateGrams(i, Number(e.target.value))}
+                                  aria-label={t('productAmount')}
+                                  className="w-16 rounded-lg border border-line bg-bg px-2 py-1 text-[13px] tabular-nums outline-none focus:border-ink"
+                                />
+                                <span className="text-[12px] text-faint">g</span>
+                              </span>
+                              {(() => {
+                                const base = predictedGrams[i] ?? c.grams;
+                                const sm = scaleMacros(c.macros, base > 0 ? c.grams / base : 1);
+                                return (
+                                  <span className="text-[12px] text-muted">
+                                    {sm.kcal} kcal · {sm.proteinG}p / {sm.carbG}c / {sm.fatG}f
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          ) : (
+                            <div className="mt-0.5 text-[12px] text-faint">{t('photoNoMatch')}</div>
+                          )}
                         </div>
                         {c.matched ? (
                           logged[i] ? (
