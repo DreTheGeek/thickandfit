@@ -226,8 +226,8 @@ export default function AboutPage() {
           <div className="grid gap-6 sm:grid-cols-3">
             {[
               {
-                tier: 'Free',
-                price: '7-day trial',
+                tier: 'Free trial',
+                price: '3 days',
                 features: [
                   'Workout library browse',
                   'Basic nutrition calculator',
@@ -237,7 +237,7 @@ export default function AboutPage() {
               },
               {
                 tier: 'Self-Guided',
-                price: '$19.99/mo',
+                price: '$19.97/mo',
                 features: [
                   'Full workout programs + player',
                   'Progressive overload engine',
@@ -250,14 +250,13 @@ export default function AboutPage() {
                 ],
               },
               {
-                tier: 'Coached',
-                price: '$275/mo',
+                tier: 'Team Thick & Fit',
+                price: 'From $200/mo',
                 features: [
                   'Everything in Self-Guided',
-                  'PT assistant inbox',
-                  'Stephanie last-eyes on your plan',
-                  'Unlimited AI photo-to-macro',
+                  '1-on-1 coaching from Stephanie’s team',
                   'Custom meal plans',
+                  'Unlimited AI photo-to-macro',
                   'Weekly check-in review',
                   'Priority AI coach',
                   'Bilingual',
