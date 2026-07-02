@@ -11,10 +11,13 @@ import { ProgressBar } from '@/components/ui/ring';
 import { Icon } from '@/components/ui/icons';
 
 const LB_PER_KG = 2.20462;
-const TOTAL = 4;
+const TOTAL = 5;
 
 type Goal = OnboardingInput['goal'];
 type Activity = OnboardingInput['activity'];
+// Coaching tier chosen at onboarding (call 2026-07-01). Captured as intent; checkout maps it to a
+// Stripe price once billing is live. 'team' = coached by Steph's team (Dani), not Steph one-on-one.
+type Tier = 'self' | 'team' | 'steph';
 
 export function OnboardingFlow(): ReactElement {
   const t = useTranslations('app.onboarding');
@@ -38,6 +41,7 @@ export function OnboardingFlow(): ReactElement {
   const [weightVal, setWeightVal] = useState(locale === 'es' ? 75 : 165); // in the selected unit
   const [goalVal, setGoalVal] = useState(locale === 'es' ? 64 : 140);
   const [activity, setActivity] = useState<Activity>('moderate');
+  const [tier, setTier] = useState<Tier>('self');
 
   // Convert displayed values when switching units so nothing is lost or misread.
   function switchUnits(next: 'imperial' | 'metric'): void {
@@ -91,7 +95,7 @@ export function OnboardingFlow(): ReactElement {
       const res = await fetch('/api/onboarding/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...input, firstName: firstName.trim(), lastName: lastName.trim(), language }),
+        body: JSON.stringify({ ...input, firstName: firstName.trim(), lastName: lastName.trim(), language, tier }),
       });
       if (!res.ok) {
         // Do NOT advance to the "plan ready" screen on a failed save, or the user sees a plan that
@@ -99,7 +103,7 @@ export function OnboardingFlow(): ReactElement {
         setSaveError(true);
         return;
       }
-      setStep(3);
+      setStep(4);
     } catch {
       setSaveError(true);
     } finally {
@@ -238,8 +242,40 @@ export function OnboardingFlow(): ReactElement {
         </>
       )}
 
-      {/* Step 3: Plan */}
+      {/* Step 3: Coaching tier (Self-Guided / Team Thick & Fit / 1-on-1 with Coach Steph) */}
       {step === 3 && (
+        <>
+          <h2 className="tf-display mb-2 text-[34px]">{t('tierTitle')}</h2>
+          <p className="mb-6 text-[14px] leading-[1.5] text-soft">{t('tierSub')}</p>
+          <div className="flex flex-col gap-3">
+            <TierCard
+              name={t('tierSelfName')}
+              price={t('tierSelfPrice')}
+              blurb={t('tierSelfBlurb')}
+              active={tier === 'self'}
+              onClick={() => setTier('self')}
+            />
+            <TierCard
+              name={t('tierTeamName')}
+              price={t('tierTeamPrice')}
+              blurb={t('tierTeamBlurb')}
+              active={tier === 'team'}
+              onClick={() => setTier('team')}
+            />
+            <TierCard
+              name={t('tierStephName')}
+              price={t('tierStephPrice')}
+              blurb={t('tierStephBlurb')}
+              active={tier === 'steph'}
+              onClick={() => setTier('steph')}
+            />
+          </div>
+          <p className="mt-4 text-[12px] leading-[1.5] text-faint">{t('tierTrialNote')}</p>
+        </>
+      )}
+
+      {/* Step 4: Plan */}
+      {step === 4 && (
         <>
           <h2 className="tf-display text-[40px]">{t('planTitle')}</h2>
           <p className="mb-1 mt-3 text-[14px] leading-[1.5] text-soft">{t('planSub')}</p>
@@ -258,7 +294,7 @@ export function OnboardingFlow(): ReactElement {
         </>
       )}
 
-      {step === 2 && saveError && (
+      {step === 3 && saveError && (
         <p role="alert" className="mt-5 text-[13px] leading-[1.5] text-red-500">
           {t('saveError')}
         </p>
@@ -266,12 +302,12 @@ export function OnboardingFlow(): ReactElement {
 
       {/* Footer */}
       <div className="mt-auto flex items-center gap-3 pt-8">
-        {step > 0 && step < 3 && (
+        {step > 0 && step < 4 && (
           <Button variant="outline" size="md" onClick={() => setStep((s) => s - 1)}>
             {t('back')}
           </Button>
         )}
-        {step < 2 && (
+        {step < 3 && (
           <Button
             size="block"
             disabled={step === 1 && (firstName.trim() === '' || lastName.trim() === '')}
@@ -280,13 +316,13 @@ export function OnboardingFlow(): ReactElement {
             {t('continue')}
           </Button>
         )}
-        {step === 2 && (
+        {step === 3 && (
           <Button size="block" disabled={busy} onClick={submit}>
             {busy ? '…' : t('seePlan')}
           </Button>
         )}
-        {step === 3 && (
-          // Onboarding is already persisted (step 2 submit), so the user is fully onboarded. Send
+        {step === 4 && (
+          // Onboarding is already persisted (step 3 submit), so the user is fully onboarded. Send
           // them INTO the app, not to /checkout -- billing is deferred (PRD-05/06) and /checkout is a
           // ComingSoon stub, which would dead-end the new-user golden path.
           <ButtonLink href="/dashboard" size="block">
@@ -324,6 +360,47 @@ function GoalCard({
       ) : (
         <span className="h-[18px] w-[18px] rounded-full border border-line" />
       )}
+    </button>
+  );
+}
+
+// Coaching-tier card: name + price on top, one-line blurb below, single-select like the goal cards.
+function TierCard({
+  name,
+  price,
+  blurb,
+  active,
+  onClick,
+}: {
+  name: string;
+  price: string;
+  blurb: string;
+  active: boolean;
+  onClick: () => void;
+}): ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'tf-press rounded-[14px] p-[18px] text-left',
+        active ? 'border-[1.5px] border-ink' : 'border border-line',
+      ].join(' ')}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[15px] font-semibold">{name}</div>
+          <div className="mt-0.5 font-display text-[18px] leading-none">{price}</div>
+        </div>
+        {active ? (
+          <span className="mt-0.5 flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full bg-ink text-bg">
+            <Icon name="check" size={11} strokeWidth={2.6} />
+          </span>
+        ) : (
+          <span className="mt-0.5 h-[18px] w-[18px] flex-none rounded-full border border-line" />
+        )}
+      </div>
+      <p className="mt-2 text-[13px] leading-[1.5] text-soft">{blurb}</p>
     </button>
   );
 }

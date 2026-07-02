@@ -16,6 +16,9 @@ const submitSchema = onboardingInputSchema.extend({
   firstName: z.string().trim().min(1).max(60),
   lastName: z.string().trim().min(1).max(60),
   language: z.enum(['en', 'es']).optional(),
+  // Coaching tier chosen at onboarding (call 2026-07-01). Stored as intent; checkout maps it to a
+  // Stripe price when billing goes live. 'team' = coached by Steph's team, not Steph 1-on-1.
+  tier: z.enum(['self', 'team', 'steph']).optional(),
 });
 
 export async function POST(req: Request) {
