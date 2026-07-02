@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite } from '@/lib/nutrition/macros';
 import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
 import { analyzeMealText } from '@/lib/nutrition/text-parse';
-import { recordInferenceCorrection } from '@/lib/ai/inferences';
+import { recordItemOutcome } from '@/lib/ai/inferences';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 import { localDay } from '@/lib/datetime/local-day';
@@ -128,6 +128,7 @@ const PhotoLogInput = z.object({
   grams: z.number().positive().max(5000),
   // Provenance + correction capture (all optional; a photo log still works without them).
   aiInferenceId: z.string().uuid().optional(),
+  predictedFoodId: z.string().uuid().optional(), // the food the scan matched (identity-swap detection)
   predictedGrams: z.number().positive().max(5000).optional(),
   confidence: z.number().min(0).max(1).optional(),
 });
@@ -175,11 +176,20 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
     effGrams,
   );
 
-  // A meaningful portion change (>5%) from the scan's estimate is a correction: the supervised signal
-  // that improves portion estimation (the hardest problem) over time. Compare the user-facing (visible)
-  // grams they submitted against the visible grams the scan predicted.
+  // Correction detection, the supervised signal that improves the scan over time.
+  // GRAMS: a meaningful portion change (>5%) from the scan's estimate, comparing the user-facing
+  // (visible) grams they submitted against the visible grams the scan predicted.
+  // IDENTITY: the user logged a DIFFERENT food than the scan matched. Detected ONLY via the threaded
+  // predictedFoodId; display names differ on nearly every log (DB name vs model phrase) = pure noise.
   const predicted = parsed.data.predictedGrams ?? null;
-  const corrected = predicted != null && Math.abs(parsed.data.grams - predicted) / predicted > 0.05;
+  const gramsChanged = predicted != null && Math.abs(parsed.data.grams - predicted) / predicted > 0.05;
+  const identityChanged =
+    parsed.data.predictedFoodId != null && parsed.data.predictedFoodId !== parsed.data.foodId;
+  const fields: ('grams' | 'food_identity')[] = [
+    ...(identityChanged ? (['food_identity'] as const) : []),
+    ...(gramsChanged ? (['grams'] as const) : []),
+  ];
+  const corrected = fields.length > 0;
 
   const tz = await getProfileTimezone(ctx.userId);
   const { error } = await sb.from('food_log').insert({
@@ -205,15 +215,19 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
     console.error('logPhotoFoodAction:', error.message);
     return { ok: false, error: 'insert_failed' };
   }
-  // Feed the learning loop: attach the {predicted, corrected} portion delta back onto the inference.
+  // Feed the learning loop: merge this item's outcome onto the scan's inference row. ALWAYS recorded
+  // when the log links to an inference: a correction (grams and/or identity) is supervision, and an
+  // unchanged log (fields=[]) is a confirmed-correct prediction, equally valuable signal.
   // Fire-and-forget - never blocks the log. Per-item detail also persists on the food_log row above.
-  if (corrected && parsed.data.aiInferenceId) {
-    void recordInferenceCorrection(parsed.data.aiInferenceId, {
-      field: 'grams',
-      food_id: parsed.data.foodId,
-      predicted_name: parsed.data.predictedName,
-      predicted_grams: predicted,
-      corrected_grams: parsed.data.grams,
+  if (parsed.data.aiInferenceId) {
+    void recordItemOutcome(parsed.data.aiInferenceId, {
+      foodId: parsed.data.foodId,
+      predictedFoodId: parsed.data.predictedFoodId ?? null,
+      predictedName: parsed.data.predictedName,
+      correctedName: identityChanged ? parsed.data.name : null,
+      predictedGrams: predicted,
+      correctedGrams: gramsChanged ? parsed.data.grams : null,
+      fields,
     });
   }
   revalidatePath('/nutrition');

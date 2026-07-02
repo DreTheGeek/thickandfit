@@ -150,6 +150,9 @@ export function PhotoScan({
   // logging can send the predicted-vs-edited delta (the correction signal) back to the inference.
   const [inferenceId, setInferenceId] = useState<string | null>(null);
   const [predictedGrams, setPredictedGrams] = useState<number[]>([]);
+  // The food id each candidate ORIGINALLY matched, so a swap to a different food is detectable
+  // server-side as an identity correction (names are noise; only the id comparison is signal).
+  const [predictedFoodIds, setPredictedFoodIds] = useState<(string | null)[]>([]);
   const [slot, setSlot] = useState<MealSlot>('lunch');
   const [logged, setLogged] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
@@ -168,6 +171,7 @@ export function PhotoScan({
     setCandidates([]);
     setInferenceId(null);
     setPredictedGrams([]);
+    setPredictedFoodIds([]);
     setLogged({});
     setBusy(null);
     setDesc('');
@@ -211,6 +215,7 @@ export function PhotoScan({
       if (data.status === 'ok') {
         setCandidates(data.candidates);
         setPredictedGrams(data.candidates.map((c) => c.grams));
+        setPredictedFoodIds(data.candidates.map((c) => c.food?.id ?? null));
         setInferenceId(data.inferenceId ?? null); // text predictions now carry provenance too
         setPhase('review');
       } else {
@@ -266,6 +271,7 @@ export function PhotoScan({
       if (data.status === 'ok') {
         setCandidates(data.candidates);
         setPredictedGrams(data.candidates.map((c) => c.grams));
+        setPredictedFoodIds(data.candidates.map((c) => c.food?.id ?? null));
         setInferenceId(data.inferenceId ?? null);
         setPhase('review');
       } else if (data.status === 'product') {
@@ -308,6 +314,7 @@ export function PhotoScan({
       mealSlot: slot,
       grams: c.grams,
       predictedGrams: predictedGrams[i] ?? c.grams,
+      predictedFoodId: predictedFoodIds[i] ?? undefined,
       confidence: c.confidence,
       aiInferenceId: inferenceId ?? undefined,
     });
