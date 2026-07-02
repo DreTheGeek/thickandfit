@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
+import { emitEvent } from '@/lib/events/emit';
 
 const LB_TO_KG = 0.45359237;
 
@@ -28,15 +29,29 @@ export async function logWeightAction(input: unknown): Promise<WeightLogResult> 
   if (weightKg < 20 || weightKg > 500) return { ok: false, error: 'invalid' };
 
   const sb = await createClient();
-  const { error } = await sb.from('weight_entries').insert({
-    company_id: ctx.companyId,
-    profile_id: ctx.userId,
-    weight_kg: weightKg,
-    source: 'manual',
-  });
+  const { data: inserted, error } = await sb
+    .from('weight_entries')
+    .insert({
+      company_id: ctx.companyId,
+      profile_id: ctx.userId,
+      weight_kg: weightKg,
+      source: 'manual',
+    })
+    .select('id')
+    .single();
   if (error) {
     console.error('logWeightAction:', error.message);
     return { ok: false, error: 'insert_failed' };
+  }
+  if (ctx.companyId && inserted) {
+    emitEvent({
+      companyId: ctx.companyId,
+      profileId: ctx.userId,
+      type: 'weight_logged',
+      aggregateType: 'weight_entry',
+      aggregateId: (inserted as { id: string }).id,
+      payload: { weight_kg: weightKg, source: 'manual' },
+    });
   }
   revalidatePath('/you');
   return { ok: true };

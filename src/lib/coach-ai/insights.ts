@@ -14,6 +14,7 @@ import { createNotification } from '@/lib/notifications/create';
 import { notifText } from '@/lib/notifications/i18n';
 import { AI_MODELS } from '@/lib/ai/models';
 import { aiConfigured, callJson } from '@/lib/ai/client';
+import { emitEvent } from '@/lib/events/emit';
 
 // Cheap, reliable tier for the nightly batch extraction (runs once a day across all users).
 const INSIGHT_MODEL = AI_MODELS.insights;
@@ -594,6 +595,22 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
       { onConflict: 'profile_id,generated_at' },
     );
   if (error) return { status: 'error' };
+
+  // Behavioral events (fire-and-forget; natural keys make nightly re-runs idempotent per day).
+  emitEvent({
+    companyId: sub.companyId,
+    profileId: sub.profileId,
+    type: 'insight_generated',
+    aggregateType: 'user_insight',
+    idempotencyKey: `insight_generated:${sub.profileId}:${todayUtc()}`,
+    source: 'cron',
+    payload: {
+      generated_at: todayUtc(),
+      ai: payload.ai,
+      plateau: plateau.status,
+      flags: coaching_flags.length,
+    },
+  });
 
   // Newly-detected plateau -> one encouraging bilingual nudge linking to the coach chat. Best-effort:
   // a notification failure must not fail the insight write (already persisted above).

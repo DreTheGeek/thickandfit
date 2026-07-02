@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { recommendNext, type SetResult, type RepRange } from '@/lib/overload/recommend';
 import { explainRecommendation } from '@/lib/overload/explain';
+import { emitEvent } from '@/lib/events/emit';
 
 const setSchema = z.object({
   exercise_id: z.string().uuid(),
@@ -22,7 +23,11 @@ export const logSchema = z.object({
 });
 export type LogInput = z.infer<typeof logSchema>;
 
-export async function saveWorkoutLog(companyId: string, profileId: string, input: LogInput) {
+export async function saveWorkoutLog(
+  companyId: string,
+  profileId: string,
+  input: LogInput,
+): Promise<{ workoutLogId: string; setsLogged: number }> {
   const supabase = createServiceClient();
   const { data: log } = await supabase
     .from('workout_logs')
@@ -54,6 +59,19 @@ export async function saveWorkoutLog(companyId: string, profileId: string, input
   await supabase
     .from('workout_completion_history')
     .insert({ company_id: companyId, profile_id: profileId, workout_log_id: log.id, status: 'completed' });
+
+  emitEvent({
+    companyId,
+    profileId,
+    type: 'workout_logged',
+    aggregateType: 'workout_log',
+    aggregateId: log.id,
+    payload: {
+      session_id: input.session_id ?? null,
+      sets: input.sets.length,
+      completion_pct: input.completion_pct ?? null,
+    },
+  });
 
   return { workoutLogId: log.id, setsLogged: input.sets.length };
 }

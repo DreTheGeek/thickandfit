@@ -9,6 +9,7 @@ import { macrosForGrams, foodStateFromName, type FoodLite } from '@/lib/nutritio
 import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
 import { analyzeMealText } from '@/lib/nutrition/text-parse';
 import { recordItemOutcome } from '@/lib/ai/inferences';
+import { emitEvent } from '@/lib/events/emit';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 import { localDay } from '@/lib/datetime/local-day';
@@ -93,25 +94,45 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
 
   // Write the user's LOCAL day explicitly so an evening logger does not land on tomorrow (UTC).
   const tz = await getProfileTimezone(ctx.userId);
-  const { error } = await sb.from('food_log').insert({
-    company_id: ctx.companyId,
-    profile_id: ctx.userId,
-    name: parsed.data.name,
-    food_id: parsed.data.foodId,
-    portion_id: parsed.data.portionId ?? null,
-    meal_slot: parsed.data.mealSlot,
-    log_date: localDay(tz),
-    grams: parsed.data.grams,
-    amount: parsed.data.grams,
-    source: parsed.data.source ?? 'search',
-    kcal: m.kcal,
-    protein_g: m.proteinG,
-    carb_g: m.carbG,
-    fat_g: m.fatG,
-  });
+  const { data: inserted, error } = await sb
+    .from('food_log')
+    .insert({
+      company_id: ctx.companyId,
+      profile_id: ctx.userId,
+      name: parsed.data.name,
+      food_id: parsed.data.foodId,
+      portion_id: parsed.data.portionId ?? null,
+      meal_slot: parsed.data.mealSlot,
+      log_date: localDay(tz),
+      grams: parsed.data.grams,
+      amount: parsed.data.grams,
+      source: parsed.data.source ?? 'search',
+      kcal: m.kcal,
+      protein_g: m.proteinG,
+      carb_g: m.carbG,
+      fat_g: m.fatG,
+    })
+    .select('id')
+    .single();
   if (error) {
     console.error('logFoodAction:', error.message);
     return { ok: false, error: 'insert_failed' };
+  }
+  if (ctx.companyId && inserted) {
+    emitEvent({
+      companyId: ctx.companyId,
+      profileId: ctx.userId,
+      type: 'food_logged',
+      aggregateType: 'food_log',
+      aggregateId: (inserted as { id: string }).id,
+      payload: {
+        food_id: parsed.data.foodId,
+        meal_slot: parsed.data.mealSlot,
+        grams: parsed.data.grams,
+        kcal: m.kcal,
+        source: parsed.data.source ?? 'search',
+      },
+    });
   }
   revalidatePath('/nutrition');
   return { ok: true };
@@ -192,28 +213,69 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
   const corrected = fields.length > 0;
 
   const tz = await getProfileTimezone(ctx.userId);
-  const { error } = await sb.from('food_log').insert({
-    company_id: ctx.companyId,
-    profile_id: ctx.userId,
-    name: parsed.data.name,
-    food_id: parsed.data.foodId,
-    meal_slot: parsed.data.mealSlot,
-    log_date: localDay(tz),
-    grams: effGrams,
-    amount: effGrams,
-    source: 'photo',
-    kcal: m.kcal,
-    protein_g: m.proteinG,
-    carb_g: m.carbG,
-    fat_g: m.fatG,
-    ai_inference_id: parsed.data.aiInferenceId ?? null,
-    predicted_grams: predicted,
-    confidence_score: parsed.data.confidence ?? null,
-    corrected_at: corrected ? new Date().toISOString() : null,
-  });
+  const { data: inserted, error } = await sb
+    .from('food_log')
+    .insert({
+      company_id: ctx.companyId,
+      profile_id: ctx.userId,
+      name: parsed.data.name,
+      food_id: parsed.data.foodId,
+      meal_slot: parsed.data.mealSlot,
+      log_date: localDay(tz),
+      grams: effGrams,
+      amount: effGrams,
+      source: 'photo',
+      kcal: m.kcal,
+      protein_g: m.proteinG,
+      carb_g: m.carbG,
+      fat_g: m.fatG,
+      ai_inference_id: parsed.data.aiInferenceId ?? null,
+      predicted_grams: predicted,
+      confidence_score: parsed.data.confidence ?? null,
+      corrected_at: corrected ? new Date().toISOString() : null,
+    })
+    .select('id')
+    .single();
   if (error) {
     console.error('logPhotoFoodAction:', error.message);
     return { ok: false, error: 'insert_failed' };
+  }
+  const logId = inserted ? (inserted as { id: string }).id : null;
+  if (ctx.companyId && logId) {
+    emitEvent({
+      companyId: ctx.companyId,
+      profileId: ctx.userId,
+      type: 'food_logged',
+      aggregateType: 'food_log',
+      aggregateId: logId,
+      correlationId: parsed.data.aiInferenceId ?? null,
+      payload: {
+        food_id: parsed.data.foodId,
+        meal_slot: parsed.data.mealSlot,
+        grams: parsed.data.grams,
+        kcal: m.kcal,
+        source: 'photo',
+        confidence: parsed.data.confidence ?? null,
+      },
+    });
+    if (corrected) {
+      emitEvent({
+        companyId: ctx.companyId,
+        profileId: ctx.userId,
+        type: 'food_corrected',
+        aggregateType: 'food_log',
+        aggregateId: logId,
+        idempotencyKey: `food_corrected:${logId}`,
+        correlationId: parsed.data.aiInferenceId ?? null,
+        payload: {
+          food_id: parsed.data.foodId,
+          fields,
+          predicted_food_id: parsed.data.predictedFoodId ?? null,
+          predicted_grams: predicted,
+          corrected_grams: gramsChanged ? parsed.data.grams : null,
+        },
+      });
+    }
   }
   // Feed the learning loop: merge this item's outcome onto the scan's inference row. ALWAYS recorded
   // when the log links to an inference: a correction (grams and/or identity) is supervision, and an

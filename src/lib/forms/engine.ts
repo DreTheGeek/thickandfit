@@ -2,6 +2,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
+import { emitEvent } from '@/lib/events/emit';
 
 const fieldSchema = z.object({
   type: z.enum(['text', 'multiline', 'select', 'rating', 'sleep_duration', 'photo', 'measurement']),
@@ -118,7 +119,7 @@ export async function submitResponse(
   const supabase = createServiceClient();
   const { data: form } = await supabase
     .from('forms')
-    .select('id, status, version')
+    .select('id, status, version, type')
     .eq('id', formId)
     .eq('company_id', companyId)
     .maybeSingle();
@@ -143,6 +144,17 @@ export async function submitResponse(
     .insert({ company_id: companyId, form_id: formId, profile_id: profileId, answers, form_version: form.version })
     .select('id')
     .single();
+  // Behavioral event, check-ins only (onboarding/custom forms are not adherence signal).
+  if (data?.id && form.type === 'check_in') {
+    emitEvent({
+      companyId,
+      profileId,
+      type: 'checkin_submitted',
+      aggregateType: 'form_response',
+      aggregateId: data.id,
+      payload: { form_id: formId, form_version: form.version },
+    });
+  }
   return { responseId: data?.id };
 }
 
