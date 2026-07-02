@@ -1027,6 +1027,8 @@
       "deleteConfirmBody": "Esto elimina permanentemente tu cuenta y todos tus datos: entrenamientos, registros de nutrición, fotos de progreso y mensajes. No se puede deshacer.",
       "deleting": "Eliminando...",
       "deleteConfirmCta": "Sí, eliminar todo",
+      "membership": "Membresía",
+      "manage": "Administrar",
       "security": "Seguridad",
       "changeEmail": "Cambiar correo",
       "changeEmailCta": "Enviar confirmación",

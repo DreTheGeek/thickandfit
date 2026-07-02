@@ -1027,6 +1027,8 @@
       "deleteConfirmBody": "This permanently deletes your account and all of your data: workouts, nutrition logs, progress photos, and messages. This cannot be undone.",
       "deleting": "Deleting...",
       "deleteConfirmCta": "Yes, delete everything",
+      "membership": "Membership",
+      "manage": "Manage",
       "security": "Security",
       "changeEmail": "Change email",
       "changeEmailCta": "Send confirmation",

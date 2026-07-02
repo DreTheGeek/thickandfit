@@ -7,6 +7,7 @@ import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { LanguageToggle } from '@/components/i18n/language-toggle';
 import { Icon } from '@/components/ui/icons';
+import { Card } from '@/components/ui/card';
 import { PageTitle } from '@/components/ui/section';
 import { signOutAction } from '@/lib/auth/actions';
 import { DeleteAccount } from '@/components/account/delete-account';
@@ -28,12 +29,23 @@ export default async function AccountPage(): Promise<ReactElement> {
   const ctx = await requireAuth();
   const t = await getTranslations('app');
   const supabase = await createClient();
-  const [{ data: profile }, { data: userData }, notifPrefs] = await Promise.all([
+  const [{ data: profile }, { data: onb }, { data: userData }, notifPrefs] = await Promise.all([
     supabase.from('profiles').select('ui_locale, content_locale').eq('id', ctx.userId).maybeSingle(),
+    supabase.from('onboarding_responses').select('answers').eq('profile_id', ctx.userId).maybeSingle(),
     supabase.auth.getUser(),
     readMyNotificationPrefs(),
   ]);
   const currentEmail = userData.user?.email ?? '';
+
+  // Membership card from the chosen coaching tier (self / team / steph). Reuses the onboarding tier
+  // copy; reflects the selection until live billing supplies the real subscription.
+  const tier = ((onb?.answers ?? null) as { tier?: string } | null)?.tier ?? null;
+  const tierKeys: Record<string, { name: string; price: string }> = {
+    self: { name: 'onboarding.tierSelfName', price: 'onboarding.tierSelfPrice' },
+    team: { name: 'onboarding.tierTeamName', price: 'onboarding.tierTeamPrice' },
+    steph: { name: 'onboarding.tierStephName', price: 'onboarding.tierStephPrice' },
+  };
+  const tk = tier ? tierKeys[tier] : null;
 
   return (
     <div className="px-[22px] pb-7 pt-3">
@@ -43,6 +55,27 @@ export default async function AccountPage(): Promise<ReactElement> {
         </Link>
         <PageTitle>{t('you.accountSettings')}</PageTitle>
       </div>
+
+      {/* Membership card (tier + price) */}
+      {tk ? (
+        <Card dark className="mb-6 p-5">
+          <div className="text-[11px] font-semibold uppercase tracking-[2px] text-white/55">
+            {t('account.membership')}
+          </div>
+          <div className="mt-1.5 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <div className="tf-display text-[24px] leading-none text-white">{t(tk.name)}</div>
+              <div className="mt-1 text-[13px] text-white/70">{t(tk.price)}</div>
+            </div>
+            <Link
+              href="/account/billing"
+              className="tf-press flex-none rounded-full border border-white/35 px-4 py-2 text-[12px] font-semibold uppercase tracking-[1px] text-white"
+            >
+              {t('account.manage')}
+            </Link>
+          </div>
+        </Card>
+      ) : null}
 
       <LanguageToggle
         uiLocale={profile?.ui_locale ?? 'en'}
