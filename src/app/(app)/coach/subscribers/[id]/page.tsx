@@ -12,6 +12,10 @@ import { getClientFoodPhotos } from '@/lib/food-photos/coach';
 export const dynamic = 'force-dynamic';
 
 type Targets = { calories: number; macros: { protein_g: number; carbs_g: number; fat_g: number } };
+type OnbAnswers = {
+  sex?: string; age?: number; heightCm?: number; weightKg?: number; goalWeightKg?: number;
+  activity?: string; goal?: string; tier?: string;
+};
 
 export default async function CoachSubscriberPage({
   params,
@@ -27,7 +31,7 @@ export default async function CoachSubscriberPage({
   const supabase = createServiceClient();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('company_id, full_name, email, role, ui_locale, is_legacy_client, created_at')
+    .select('company_id, full_name, email, role, ui_locale, is_legacy_client, created_at, timezone')
     .eq('id', id)
     .maybeSingle();
 
@@ -35,7 +39,7 @@ export default async function CoachSubscriberPage({
 
   const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }, { data: physique }, foodPhotos] =
     await Promise.all([
-      supabase.from('onboarding_responses').select('computed_targets').eq('profile_id', id).maybeSingle(),
+      supabase.from('onboarding_responses').select('answers, computed_targets, predicted_goal').eq('profile_id', id).maybeSingle(),
       supabase
         .from('plan_assignments')
         .select('plan:plan_id (name_en, name_es)')
@@ -91,6 +95,27 @@ export default async function CoachSubscriberPage({
   }
 
   const targets = (onb?.computed_targets ?? null) as Targets | null;
+
+  // Client intake (the Lenus "Info" gap): from the onboarding answers + profile.
+  const answers = (onb?.answers ?? null) as OnbAnswers | null;
+  const heightCm = answers?.heightCm ?? null;
+  const weightKg = answers?.weightKg ?? null;
+  const bmi = heightCm && weightKg ? Math.round((weightKg / (heightCm / 100) ** 2) * 10) / 10 : null;
+  const intake = answers
+    ? {
+        sex: answers.sex ?? null,
+        age: answers.age ?? null,
+        heightCm,
+        weightKg,
+        goalWeightKg: answers.goalWeightKg ?? null,
+        activity: answers.activity ?? null,
+        goal: (onb?.predicted_goal as string | null) ?? answers.goal ?? null,
+        tier: answers.tier ?? null,
+        bmi,
+        timezone: (profile.timezone as string | null) ?? null,
+      }
+    : null;
+
   const plan = (assignment?.plan ?? null) as { name_en: string; name_es: string | null } | { name_en: string; name_es: string | null }[] | null;
   const planObj = Array.isArray(plan) ? plan[0] : plan;
 
@@ -128,6 +153,7 @@ export default async function CoachSubscriberPage({
       date: fmtShort.format(new Date(h.performed_at)),
       completionPct: h.completion_pct,
       enjoyment: h.enjoyment,
+      effort: h.effort,
     })),
     id,
     notes,
@@ -137,6 +163,7 @@ export default async function CoachSubscriberPage({
     contactId,
     currentPlanId,
     clientLocale: profile.ui_locale === 'es' ? 'es' : 'en',
+    intake,
   };
 
   return <SubscriberProfile data={data} />;

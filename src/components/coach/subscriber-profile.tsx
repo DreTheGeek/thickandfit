@@ -26,7 +26,7 @@ export type ProfileData = {
   calories: number | null;
   macros: { p: number; c: number; f: number } | null;
   programName: string | null;
-  history: { id: string; date: string; completionPct: number | null; enjoyment: number | null }[];
+  history: { id: string; date: string; completionPct: number | null; enjoyment: number | null; effort: number | null }[];
   id: string;
   notes: CoachNote[];
   coachName: string;
@@ -42,16 +42,30 @@ export type ProfileData = {
   contactId: string | null;
   currentPlanId: string | null;
   clientLocale: 'en' | 'es';
+  intake: ClientIntake | null;
+};
+
+export type ClientIntake = {
+  sex: string | null;
+  age: number | null;
+  heightCm: number | null;
+  weightKg: number | null;
+  goalWeightKg: number | null;
+  activity: string | null;
+  goal: string | null;
+  tier: string | null;
+  bmi: number | null;
+  timezone: string | null;
 };
 
 type TabKey =
-  | 'overview' | 'nutrition' | 'workouts' | 'community'
+  | 'overview' | 'info' | 'nutrition' | 'workouts' | 'community'
   | 'progress' | 'messages' | 'billing' | 'notes';
 
 // Only tabs backed by real data, no empty placeholder tabs.
-const TABS: TabKey[] = ['overview', 'workouts'];
+const TABS: TabKey[] = ['overview', 'info', 'workouts'];
 const TAB_LABEL: Record<TabKey, string> = {
-  overview: 'tabOverview', nutrition: 'tabNutrition', workouts: 'tabWorkouts', community: 'tabCommunity',
+  overview: 'tabOverview', info: 'tabInfo', nutrition: 'tabNutrition', workouts: 'tabWorkouts', community: 'tabCommunity',
   progress: 'tabProgress', messages: 'tabMessages', billing: 'tabBilling', notes: 'tabNotes',
 };
 
@@ -256,6 +270,45 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
         </div>
       )}
 
+      {tab === 'info' && (
+        <div className="grid grid-cols-1 gap-4">
+          <Card className="p-5">
+            <Eyebrow>{t('infoClient')}</Eyebrow>
+            {data.intake ? (
+              <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3.5 sm:grid-cols-3">
+                <InfoRow label={t('infoSex')} value={sexLabel(data.intake.sex, t)} />
+                <InfoRow label={t('infoAge')} value={data.intake.age != null ? String(data.intake.age) : '-'} />
+                <InfoRow label={t('infoHeight')} value={data.intake.heightCm != null ? cmToFtIn(data.intake.heightCm) : '-'} />
+                <InfoRow label={t('infoWeight')} value={data.intake.weightKg != null ? `${kgToLb(data.intake.weightKg)} lb` : '-'} />
+                <InfoRow label={t('infoGoalWeight')} value={data.intake.goalWeightKg != null ? `${kgToLb(data.intake.goalWeightKg)} lb` : '-'} />
+                <InfoRow label={t('infoBmi')} value={data.intake.bmi != null ? String(data.intake.bmi) : '-'} />
+                <InfoRow label={t('infoGoal')} value={goalLabel(data.intake.goal, t)} />
+                <InfoRow label={t('infoActivity')} value={activityLabel(data.intake.activity, t)} />
+                <InfoRow label={t('infoTier')} value={tierLabel(data.intake.tier, t)} />
+                <InfoRow label={t('infoLanguage')} value={data.locale === 'es' ? t('spanish') : t('english')} />
+                <InfoRow label={t('infoTimezone')} value={data.intake.timezone ?? '-'} />
+                <InfoRow label={t('memberSinceShort')} value={data.memberSince} />
+              </div>
+            ) : (
+              <p className="mt-3 text-[14px] text-faint">{t('infoNoIntake')}</p>
+            )}
+          </Card>
+          <Card className="p-5">
+            <Eyebrow>{t('targets')}</Eyebrow>
+            {data.calories != null && data.macros ? (
+              <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="font-display text-[24px] leading-none">{data.calories} kcal</span>
+                <span className="text-[13px] text-muted">
+                  P{data.macros.p} · C{data.macros.c} · F{data.macros.f} g
+                </span>
+              </div>
+            ) : (
+              <p className="mt-2 text-[14px] text-faint">-</p>
+            )}
+          </Card>
+        </div>
+      )}
+
       {tab === 'workouts' && (
         <Card className="p-6">
           <Eyebrow>{t('workoutHistory')}</Eyebrow>
@@ -266,12 +319,15 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
               {data.history.map((h, i) => (
                 <div
                   key={h.id}
-                  className={['flex items-center justify-between py-3', i < data.history.length - 1 ? 'border-b border-divider' : ''].join(' ')}
+                  className={['flex items-center justify-between gap-3 py-3', i < data.history.length - 1 ? 'border-b border-divider' : ''].join(' ')}
                 >
                   <span className="text-[14px] font-medium">{h.date}</span>
-                  <span className="text-[12px] text-faint">
-                    {h.completionPct != null ? `${h.completionPct}%` : '-'}
-                    {h.enjoyment != null ? ` · ${h.enjoyment}/5` : ''}
+                  <span className="flex items-center gap-3 text-[12px] text-faint">
+                    {h.completionPct != null && (
+                      <span className="font-semibold text-ink">{h.completionPct}%</span>
+                    )}
+                    {h.enjoyment != null && <span>{t('metricEnjoyment')} {h.enjoyment}/5</span>}
+                    {h.effort != null && <span>{t('metricEffort')} {h.effort}/5</span>}
                   </span>
                 </div>
               ))}
@@ -297,4 +353,42 @@ function Eyebrow({ children }: { children: ReactElement | string }): ReactElemen
   return (
     <div className="text-[11px] font-semibold uppercase tracking-[1px] text-faint">{children}</div>
   );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }): ReactElement {
+  return (
+    <div>
+      <div className="text-[11px] uppercase tracking-[0.5px] text-faint">{label}</div>
+      <div className="mt-0.5 text-[15px] font-medium">{value}</div>
+    </div>
+  );
+}
+
+type T = ReturnType<typeof useTranslations>;
+function cmToFtIn(cm: number): string {
+  const totalIn = cm / 2.54;
+  const ft = Math.floor(totalIn / 12);
+  const inch = Math.round(totalIn - ft * 12);
+  return `${ft} ft ${inch} in`;
+}
+function kgToLb(kg: number): number {
+  return Math.round(kg * 2.20462 * 10) / 10;
+}
+function sexLabel(v: string | null, t: T): string {
+  if (!v) return '-';
+  return v === 'female' ? t('sexFemale') : v === 'male' ? t('sexMale') : v;
+}
+function goalLabel(v: string | null, t: T): string {
+  const m: Record<string, string> = { lose: 'goalLose', maintain: 'goalMaintain', gain: 'goalGain' };
+  return v && m[v] ? t(m[v]) : v ?? '-';
+}
+function activityLabel(v: string | null, t: T): string {
+  const m: Record<string, string> = {
+    sedentary: 'actSedentary', light: 'actLight', moderate: 'actModerate', active: 'actActive', very_active: 'actVeryActive',
+  };
+  return v && m[v] ? t(m[v]) : v ?? '-';
+}
+function tierLabel(v: string | null, t: T): string {
+  const m: Record<string, string> = { self: 'tierSelfShort', team: 'tierTeamShort', steph: 'tierStephShort' };
+  return v && m[v] ? t(m[v]) : v ?? '-';
 }
