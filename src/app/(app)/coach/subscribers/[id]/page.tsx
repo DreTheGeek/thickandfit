@@ -66,6 +66,30 @@ export default async function CoachSubscriberPage({
     ]);
   const meRow = me as { full_name: string | null; email: string | null } | null;
 
+  // Resolve the client's Lenus contact (AI plan assignment target) + their latest meal plan, so the
+  // profile can offer Generate-with-AI / Build-manually / View-current-plan.
+  const emailFilter = profile.email ? `,email.eq.${profile.email}` : '';
+  const { data: contactRow } = await supabase
+    .from('contacts')
+    .select('id')
+    .eq('company_id', ctx.companyId)
+    .or(`profile_id.eq.${id}${emailFilter}`)
+    .limit(1)
+    .maybeSingle();
+  const contactId = (contactRow as { id?: string } | null)?.id ?? null;
+  let currentPlanId: string | null = null;
+  if (contactId) {
+    const { data: mp } = await supabase
+      .from('meal_plans')
+      .select('id')
+      .eq('company_id', ctx.companyId)
+      .eq('contact_id', contactId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    currentPlanId = (mp as { id?: string } | null)?.id ?? null;
+  }
+
   const targets = (onb?.computed_targets ?? null) as Targets | null;
   const plan = (assignment?.plan ?? null) as { name_en: string; name_es: string | null } | { name_en: string; name_es: string | null }[] | null;
   const planObj = Array.isArray(plan) ? plan[0] : plan;
@@ -110,6 +134,9 @@ export default async function CoachSubscriberPage({
     coachName: meRow?.full_name ?? meRow?.email ?? 'Coach',
     physiqueReads,
     foodPhotos: foodPhotos.map((p) => ({ id: p.id, url: p.url, caption: p.caption, mealSlot: p.mealSlot, takenOn: p.takenOn })),
+    contactId,
+    currentPlanId,
+    clientLocale: profile.ui_locale === 'es' ? 'es' : 'en',
   };
 
   return <SubscriberProfile data={data} />;

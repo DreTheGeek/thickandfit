@@ -77,7 +77,7 @@ export default function AboutPage() {
             {[
               {
                 problem: 'Nutrition is a nightmare.',
-                fix: 'Snap a photo of your plate. The AI returns every food item with calories, protein, carbs, and fat. Adjust if needed. Log. Done. Free barcode scanner. Cooked vs uncooked auto-conversion. US food database plus a full LATAM database with the ingredients your family actually cooks with.',
+                fix: 'Snap a photo of your plate. It returns every food item with calories, protein, carbs, and fat. Adjust if needed. Log. Done. Free barcode scanner. Cooked vs uncooked auto-conversion. US food database plus a full LATAM database with the ingredients your family actually cooks with.',
               },
               {
                 problem: 'Your screen dims mid-set.',
@@ -85,7 +85,7 @@ export default function AboutPage() {
               },
               {
                 problem: 'The app never tells you what to do next.',
-                fix: 'After every session you rate difficulty. The progressive overload engine reads your last four sessions and recommends your exact next weight and rep target. This is standard sports science (double-progression), not AI invention. The math is transparent and auditable.',
+                fix: 'After every session you rate difficulty. The progressive overload engine reads your last four sessions and recommends your exact next weight and rep target. This is standard sports science (double-progression), not guesswork. The math is transparent and auditable.',
               },
               {
                 problem: 'Fake bilingual.',
@@ -130,7 +130,7 @@ export default function AboutPage() {
               {
                 title: 'Nutrition',
                 description:
-                  'AI photo-to-macro, free barcode scanner, cooked/uncooked conversion, USDA and LATAM food databases, daily diary, macro targets, meal plans, recipes. The most accurate low-friction tracking in the category.',
+                  'Photo-to-macro, free barcode scanner, cooked/uncooked conversion, USDA and LATAM food databases, daily diary, macro targets, meal plans, recipes. The most accurate low-friction tracking in the category.',
               },
               {
                 title: 'Workouts',
@@ -148,7 +148,7 @@ export default function AboutPage() {
                   'Side-by-side progress photos (front, back, side), body measurements, weight charts across four date ranges, weekly check-in forms, habits, water, streaks.',
               },
               {
-                title: 'AI Coach',
+                title: 'Coach in Her Voice',
                 description:
                   'Responds in Stephanie\'s voice and communication style. Text in Phase 1, ElevenLabs voice clone in Phase 2, Higgsfield video clone post-launch. Trained on a hand-authored knowledge base, not a generic fitness prompt.',
               },
@@ -198,7 +198,7 @@ export default function AboutPage() {
                 { stat: '562K', label: 'Instagram followers' },
                 { stat: '256', label: 'Paying clients migrating from Lenus' },
                 { stat: 'EN/ES', label: 'Bilingual. Full database depth in both.' },
-                { stat: '24/7', label: 'AI coach in her voice (coming soon)' },
+                { stat: '24/7', label: 'Coach in her voice (coming soon)' },
               ].map(({ stat, label }) => (
                 <div key={label} className="border border-neutral-200 p-4">
                   <p className="text-3xl font-black">{stat}</p>
@@ -242,10 +242,10 @@ export default function AboutPage() {
                   'Full workout programs + player',
                   'Progressive overload engine',
                   'Full nutrition tracking + barcode',
-                  'AI photo-to-macro (5/day)',
+                  'Photo-to-macro (5/day)',
                   'Community full access',
                   'Progress tracking',
-                  'AI coach (text)',
+                  'Coach chat (text)',
                   'Bilingual',
                 ],
               },
@@ -256,9 +256,9 @@ export default function AboutPage() {
                   'Everything in Self-Guided',
                   '1-on-1 coaching from Stephanie’s team',
                   'Custom meal plans',
-                  'Unlimited AI photo-to-macro',
+                  'Unlimited photo-to-macro',
                   'Weekly check-in review',
-                  'Priority AI coach',
+                  'Priority coach chat',
                   'Bilingual',
                 ],
               },
@@ -310,8 +310,8 @@ export default function AboutPage() {
               <p className="mb-2 font-bold uppercase tracking-tight">LevelUp Automations</p>
               <p className="text-sm leading-relaxed text-neutral-600">
                 Rodney Williams and Shakira Canty own the client relationship and scope. Rodney
-                manages the business and migration. Shakira authors the AI Knowledge Base that
-                trains the AI coach in Stephanie&apos;s voice.
+                manages the business and migration. Shakira authors the Knowledge Base that
+                powers the coach chat in Stephanie&apos;s voice.
               </p>
             </div>
             <div>

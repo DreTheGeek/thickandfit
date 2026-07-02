@@ -231,7 +231,7 @@
       "tierSub": "Empieza con cualquier plan. Puedes cambiar o subir de nivel cuando quieras.",
       "tierSelfName": "Autoguiado",
       "tierSelfPrice": "$19.97/mes",
-      "tierSelfBlurb": "La app completa: entrenos, la IA de nutrición y seguimiento de progreso. Guíate con el sistema de Stephanie.",
+      "tierSelfBlurb": "La app completa: entrenos, seguimiento de nutrición por foto y seguimiento de progreso. Guíate con el sistema de Stephanie.",
       "tierTeamName": "Equipo Thick & Fit",
       "tierTeamPrice": "Desde $200/mes",
       "tierTeamBlurb": "Todo lo de Autoguiado más coaching personalizado del equipo de Stephanie, hecho para ti.",
@@ -322,7 +322,7 @@
       "navCommunity": "Comunidad",
       "navLibrary": "Biblioteca",
       "navSettings": "Ajustes",
-      "navKnowledge": "Conocimiento IA",
+      "navKnowledge": "Base de Conocimiento",
       "navMidTicket": "Coaching",
       "navDrafts": "Borradores",
       "navApprovals": "Aprobaciones",
@@ -880,7 +880,16 @@
       "mbSave": "Guardar plan",
       "mbSaving": "Guardando...",
       "mbError": "No se pudo guardar",
-      "mbUntitled": "Plan sin titulo"
+      "mbUntitled": "Plan sin titulo",
+      "mealPlanCard": "Plan de comidas",
+      "mealPlanCardHint": "Genera un plan desde la informacion de este cliente con tu metodo, o crealo a mano.",
+      "genWithAI": "Generar plan",
+      "genGenerating": "Generando...",
+      "buildManually": "Crear a mano",
+      "viewPlan": "Ver plan actual",
+      "genFailed": "No se pudo generar. Intenta de nuevo.",
+      "genNoData": "Este cliente aun no completa el onboarding.",
+      "genNoKey": "La generación de planes aún no está configurada."
     },
     "you": {
       "title": "Tú",
@@ -913,7 +922,7 @@
       "saving": "Guardando",
       "weightSaved": "Peso registrado, sigue así",
       "weightError": "No se pudo guardar. Intenta de nuevo.",
-      "aiCoach": "Entrenadora IA",
+      "aiCoach": "Chat con tu coach",
       "progressLbs": "lbs Progreso"
     },
     "gamification": {
@@ -1088,7 +1097,7 @@
       "unitTbsp": "cda",
       "photoTryAgain": "Intentar de nuevo",
       "photoNotConfigured": "El escaneo por foto casi está listo",
-      "photoNotConfiguredNote": "El motor de fotos con IA aún no está activado. Mientras tanto, busca o escanea un código de barras.",
+      "photoNotConfiguredNote": "El escaneo por foto aún no está activado. Mientras tanto, busca o escanea un código de barras.",
       "photoNoFood": "No pudimos identificar comida en esa foto. Intenta una toma más clara.",
       "photoError": "Algo salio mal al leer esa foto. Intenta de nuevo.",
       "mpPickOne": "Elige uno cada dia - tu decides",
@@ -1162,12 +1171,12 @@
     },
     "checkout": {
       "title": "Desbloquea tu plan",
-      "subtitle": "Tu plan personalizado está listo. Suscríbete para entrenar con Stephanie, contar tus macros por foto y tener tu coach de IA.",
+      "subtitle": "Tu plan personalizado está listo. Suscríbete para entrenar con Stephanie, contar tus macros por foto y tener a tu coach en su voz.",
       "targetsLabel": "Tus objetivos diarios",
       "includedLabel": "Qué incluye",
       "featureWorkouts": "Rutinas estructuradas con los videos de Stephanie",
       "featureNutrition": "Registro de nutrición por foto y texto, preciso cocido o crudo",
-      "featureCoach": "Tu coach de IA, en su voz, cuando la necesites",
+      "featureCoach": "Tu coach, en su voz, cuando la necesites",
       "featureCommunity": "La comunidad, los retos y el seguimiento de tu progreso"
     },
     "billing": {
@@ -1229,22 +1238,22 @@
     },
     "coachChat": {
       "title": "Coach",
-      "statusOnline": "Tu entrenadora con IA en la voz de Stephanie",
+      "statusOnline": "Tu coach, en la voz de Stephanie",
       "statusOffline": "Aun no configurada",
       "placeholder": "Pregúntale lo que quieras a tu coach...",
       "send": "Enviar",
       "thinking": "La coach está escribiendo",
       "error": "Algo salio mal. Intentalo de nuevo.",
-      "notConfigured": "Tu entrenadora con IA todavía no está configurada. Vuelve pronto, estará lista en breve.",
+      "notConfigured": "Tu coach todavía no está configurada. Vuelve pronto, estará lista en breve.",
       "emptyTitle": "Saluda a tu coach",
       "emptyBody": "Pregunta sobre tus entrenamientos, nutrición o cómo alcanzar tu meta. Conoce tu progreso.",
-      "disclaimerTitle": "Entrenadora con IA, no es una profesional médica.",
+      "disclaimerTitle": "Orientación de coaching, no consejo médico.",
       "disclaimerBody": "Ofrece orientación general de fitness y nutrición, no consejo médico. Para lesiones, embarazo, condiciones médicas o trastornos alimenticios, consulta a un profesional licenciado."
     },
     "coachKnowledge": {
-      "pageTitle": "Base de Conocimiento IA",
-      "pageIntro": "Pega tu método de coaching, tu voz y tus preguntas frecuentes. La coach con IA usa esto para fundamentar sus respuestas en cómo entrenas de verdad.",
-      "noKeyNotice": "La IA aún no está configurada. Puedes agregar conocimiento ahora: se guarda y potenciará a la coach en cuanto se configure la clave de IA.",
+      "pageTitle": "Base de Conocimiento",
+      "pageIntro": "Pega tu método de coaching, tu voz y tus preguntas frecuentes. El chat de tu coach usa esto para fundamentar sus respuestas en cómo entrenas de verdad.",
+      "noKeyNotice": "Aún no está configurado. Puedes agregar conocimiento ahora: se guarda y potenciará a tu coach en cuanto se active.",
       "addTitle": "Agregar conocimiento",
       "addHint": "Ponle un titulo y pega el texto. Se divide en fragmentos y se incrusta para la recuperacion.",
       "titlePlaceholder": "Titulo (p. ej. Filosofia de macros, Protocolo de refeed)",
@@ -1274,7 +1283,7 @@
       "avgMacros7d": "Promedio de 7 días",
       "weightTrend": "Tendencia de peso",
       "noInsights": "Aún no hay suficientes datos. Sigue registrando y tu coach tendrá mucho que decir.",
-      "notConfigured": "Los análisis se activan cuando tu entrenadora con IA esté configurada."
+      "notConfigured": "Los análisis se activan cuando tu coach esté configurada."
     },
     "notifications": {
       "title": "Notificaciones",

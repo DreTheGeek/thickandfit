@@ -11,6 +11,7 @@ import { Icon } from '@/components/ui/icons';
 import { CompletionCheck } from '@/components/ui/completion';
 import { CoachNotesPanel } from '@/components/coach/coach-notes-panel';
 import { RecipeImage } from '@/components/coach/recipe-image';
+import { GeneratePlanButton } from '@/components/coach/generate-plan-button';
 import type { CoachNote } from '@/lib/coach/notes-actions';
 
 export type ProfileData = {
@@ -38,6 +39,9 @@ export type ProfileData = {
     date: string;
   }[];
   foodPhotos: { id: string; url: string | null; caption: string | null; mealSlot: string | null; takenOn: string }[];
+  contactId: string | null;
+  currentPlanId: string | null;
+  clientLocale: 'en' | 'es';
 };
 
 type TabKey =
@@ -139,6 +143,35 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
             ) : (
               <div className="mt-2 text-[14px] text-faint">-</div>
             )}
+          </Card>
+          <Card className="p-5 md:col-span-2">
+            <div className="flex items-center justify-between gap-3">
+              <Eyebrow>{t('mealPlanCard')}</Eyebrow>
+              {data.currentPlanId && (
+                <Link
+                  href={`/coach/tool/meal-plans/${data.currentPlanId}`}
+                  className="tf-press text-[12px] font-semibold text-accent"
+                >
+                  {t('viewPlan')}
+                </Link>
+              )}
+            </div>
+            <p className="mt-1.5 text-[13px] text-faint">{t('mealPlanCardHint')}</p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <div className="sm:flex-1">
+                <GeneratePlanButton
+                  clientProfileId={data.id}
+                  contactId={data.contactId}
+                  locale={data.clientLocale}
+                />
+              </div>
+              <Link
+                href="/coach/tool/meal-plans/new"
+                className="tf-press inline-flex items-center justify-center gap-2 rounded-full border border-ink px-4 py-2.5 text-[13px] font-semibold text-ink sm:flex-1"
+              >
+                <Icon name="plus" size={15} /> {t('buildManually')}
+              </Link>
+            </div>
           </Card>
           <Card className="p-5 md:col-span-2">
             <Eyebrow>{t('recentActivity')}</Eyebrow>

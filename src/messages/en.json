@@ -231,7 +231,7 @@
       "tierSub": "Start on any plan. You can change or upgrade anytime.",
       "tierSelfName": "Self-Guided",
       "tierSelfPrice": "$19.97/mo",
-      "tierSelfBlurb": "The full app: workouts, the nutrition AI, and progress tracking. Coach yourself with Stephanie's system.",
+      "tierSelfBlurb": "The full app: workouts, photo nutrition tracking, and progress tracking. Coach yourself with Stephanie's system.",
       "tierTeamName": "Team Thick & Fit",
       "tierTeamPrice": "From $200/mo",
       "tierTeamBlurb": "Everything in Self-Guided plus 1-on-1 coaching from Stephanie's trained team, tailored to you.",
@@ -322,7 +322,7 @@
       "navCommunity": "Community",
       "navLibrary": "Library",
       "navSettings": "Settings",
-      "navKnowledge": "AI Knowledge",
+      "navKnowledge": "Knowledge Base",
       "navMidTicket": "Coaching",
       "navDrafts": "Drafts",
       "navApprovals": "Approvals",
@@ -880,7 +880,16 @@
       "mbSave": "Save plan",
       "mbSaving": "Saving...",
       "mbError": "Could not save",
-      "mbUntitled": "Untitled plan"
+      "mbUntitled": "Untitled plan",
+      "mealPlanCard": "Meal plan",
+      "mealPlanCardHint": "Generate a plan from this client's intake in your method, or build one by hand.",
+      "genWithAI": "Generate plan",
+      "genGenerating": "Generating...",
+      "buildManually": "Build manually",
+      "viewPlan": "View current plan",
+      "genFailed": "Could not generate. Try again.",
+      "genNoData": "This client has not completed onboarding yet.",
+      "genNoKey": "Plan generation is not set up yet."
     },
     "you": {
       "title": "You",
@@ -913,7 +922,7 @@
       "saving": "Saving",
       "weightSaved": "Weight logged - keep it up",
       "weightError": "Could not save. Try again.",
-      "aiCoach": "AI Coach",
+      "aiCoach": "Coach chat",
       "progressLbs": "lbs Progress"
     },
     "gamification": {
@@ -1088,7 +1097,7 @@
       "unitTbsp": "tbsp",
       "photoTryAgain": "Try again",
       "photoNotConfigured": "Photo scan is almost ready",
-      "photoNotConfiguredNote": "The AI photo engine is not switched on yet. Search or scan a barcode in the meantime.",
+      "photoNotConfiguredNote": "Photo scan is not switched on yet. Search or scan a barcode in the meantime.",
       "photoNoFood": "We could not spot any food in that photo. Try a clearer shot.",
       "photoError": "Something went wrong reading that photo. Please try again.",
       "mpPickOne": "Pick one each day - your choice",
@@ -1162,12 +1171,12 @@
     },
     "checkout": {
       "title": "Unlock your plan",
-      "subtitle": "Your personalized plan is ready. Subscribe to train with Stephanie, track nutrition by photo, and get your AI coach.",
+      "subtitle": "Your personalized plan is ready. Subscribe to train with Stephanie, track nutrition by photo, and get your coach in her voice.",
       "targetsLabel": "Your daily targets",
       "includedLabel": "What's included",
       "featureWorkouts": "Structured workouts with Stephanie's filmed demos",
       "featureNutrition": "Photo and text nutrition tracking, cooked-or-raw accurate",
-      "featureCoach": "Your AI coach, in her voice, whenever you need her",
+      "featureCoach": "Your coach, in her voice, whenever you need her",
       "featureCommunity": "The community, challenges, and progress tracking"
     },
     "billing": {
@@ -1229,22 +1238,22 @@
     },
     "coachChat": {
       "title": "Coach",
-      "statusOnline": "Your AI coach in Stephanie's voice",
+      "statusOnline": "Your coach, in Stephanie's voice",
       "statusOffline": "Not configured yet",
       "placeholder": "Ask your coach anything...",
       "send": "Send",
       "thinking": "Coach is typing",
       "error": "Something went wrong. Please try again.",
-      "notConfigured": "Your AI coach is not configured yet. Check back soon, she will be ready shortly.",
+      "notConfigured": "Your coach is not set up yet. Check back soon, she will be ready shortly.",
       "emptyTitle": "Say hi to your coach",
       "emptyBody": "Ask about your workouts, nutrition, or how to hit your goal. She knows your progress.",
-      "disclaimerTitle": "AI coach, not a medical professional.",
+      "disclaimerTitle": "Coaching guidance, not medical advice.",
       "disclaimerBody": "This gives general fitness and nutrition guidance, not medical advice. For injuries, pregnancy, medical conditions, or eating-disorder concerns, talk to a licensed professional."
     },
     "coachKnowledge": {
-      "pageTitle": "AI Knowledge Base",
-      "pageIntro": "Paste your coaching method, voice, and FAQs. The AI coach uses this to ground its answers in how you actually coach.",
-      "noKeyNotice": "AI is not configured yet. You can add knowledge now: it is saved and will power the coach as soon as the AI key is set.",
+      "pageTitle": "Knowledge Base",
+      "pageIntro": "Paste your coaching method, voice, and FAQs. Your coach chat uses this to ground its answers in how you actually coach.",
+      "noKeyNotice": "Not set up yet. You can add knowledge now: it is saved and will power your coach as soon as it is switched on.",
       "addTitle": "Add knowledge",
       "addHint": "Give it a title and paste the text. It is split into chunks and embedded for retrieval.",
       "titlePlaceholder": "Title (e.g. Macro philosophy, Refeed protocol)",
@@ -1274,7 +1283,7 @@
       "avgMacros7d": "7-day average",
       "weightTrend": "Weight trend",
       "noInsights": "Not enough data yet. Keep logging and your coach will have plenty to say.",
-      "notConfigured": "Insights turn on once your AI coach is configured."
+      "notConfigured": "Insights turn on once your coach is set up."
     },
     "notifications": {
       "title": "Notifications",
