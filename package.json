@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "eval:scan": "node --env-file=.env.local scripts/eval/run-smart-scan-eval.mjs",
+    "eval:seed": "node --env-file=.env.local scripts/eval/seed-smart-scan-eval.mjs"
   },
   "dependencies": {
     "@mux/mux-player-react": "^3.13.0",
