@@ -21,6 +21,7 @@ const SECTIONS: NavSection[] = [
     items: [
       { key: 'navHome', href: '/coach', icon: 'home' },
       { key: 'navBilling', href: '/coach/billing', icon: 'card' },
+      { key: 'navIntelligence', href: '/coach/intelligence', icon: 'sparkles' },
     ],
   },
   {
