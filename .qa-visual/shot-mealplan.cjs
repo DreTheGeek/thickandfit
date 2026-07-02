@@ -5,7 +5,7 @@ const puppeteer = require(
   path.join(process.env.HOME || process.env.USERPROFILE, '.launchproof/runtime/node_modules/puppeteer-core'),
 );
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const BASE = 'http://127.0.0.1:3000';
+const BASE = 'http://localhost:3000';
 const PW = 'TFSample2026!';
 const OUT = path.join(__dirname, 'reskin');
 fs.mkdirSync(OUT, { recursive: true });

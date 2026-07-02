@@ -8,6 +8,7 @@ import { getMealPlanDetail } from '@/lib/coach/meal-plans';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
 import { MealPlanNotesEditor } from '@/components/coach/meal-plan-notes';
+import { StructuredPlanView } from '@/components/nutrition/structured-plan-view';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,9 +37,17 @@ export default async function CoachMealPlanDetailPage({
 
   return (
     <div className="mx-auto w-full max-w-[900px] px-5 py-7 sm:px-8">
-      <Link href={backHref} className="tf-press mb-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
-        <Icon name="arrowLeft" size={15} /> {t('backToMealPlans')}
-      </Link>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <Link href={backHref} className="tf-press inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
+          <Icon name="arrowLeft" size={15} /> {t('backToMealPlans')}
+        </Link>
+        <Link
+          href={`/coach/tool/meal-plans/${p.id}/edit`}
+          className="tf-press inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[12px] font-semibold text-bg"
+        >
+          <Icon name="bolt" size={14} /> {t('mbEditPlan')}
+        </Link>
+      </div>
 
       <div className="rounded-2xl border border-line bg-surface p-6">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
@@ -65,21 +74,28 @@ export default async function CoachMealPlanDetailPage({
         </div>
       </div>
 
-      <div className="mt-5 rounded-2xl border border-line bg-surface p-5">
-        <h2 className="mb-3 font-display text-[18px]">{t('mealGroups')}</h2>
-        {p.groups.length === 0 ? (
-          <p className="py-6 text-center text-sm text-faint">{t('noData')}</p>
-        ) : (
-          <div className="flex flex-col">
-            {p.groups.map((g, i) => (
-              <div key={i} className="flex items-center justify-between border-b border-divider py-3 text-[14px] last:border-0">
-                <span className="font-medium">{g.name || t('mealGroupUntitled')}</span>
-                {g.numberOfMeals != null && <span className="text-[12px] text-faint">{t('mealOptions', { n: g.numberOfMeals })}</span>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {p.structured ? (
+        <div className="mt-5">
+          <h2 className="mb-3 font-display text-[18px]">{t('mealGroups')}</h2>
+          <StructuredPlanView plan={p.structured} />
+        </div>
+      ) : (
+        <div className="mt-5 rounded-2xl border border-line bg-surface p-5">
+          <h2 className="mb-3 font-display text-[18px]">{t('mealGroups')}</h2>
+          {p.groups.length === 0 ? (
+            <p className="py-6 text-center text-sm text-faint">{t('noData')}</p>
+          ) : (
+            <div className="flex flex-col">
+              {p.groups.map((g, i) => (
+                <div key={i} className="flex items-center justify-between border-b border-divider py-3 text-[14px] last:border-0">
+                  <span className="font-medium">{g.name || t('mealGroupUntitled')}</span>
+                  {g.numberOfMeals != null && <span className="text-[12px] text-faint">{t('mealOptions', { n: g.numberOfMeals })}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <MealPlanNotesEditor planId={p.id} initial={p.notes} />
     </div>
