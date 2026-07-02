@@ -34,6 +34,19 @@ export const AI_MODELS = {
   // PLAN GENERATION. Rare + quality-critical (PCOS-aware structured JSON). Flagship reasoning; gpt-5
   // beats the prior Sonnet 4.6 on BOTH quality and cost ($1.25/$10 vs $3/$15).
   planGen: 'openai/gpt-5',
+
+  // SMART SCAN (photo: classify meal-vs-product, read items + portion grams / transcribe a label). The
+  // moat path. This was gemini-2.5-flash on the assumption gpt-5 was ~40s/scan - but that was gpt-5 at
+  // DEFAULT (heavy) reasoning. Benchmarked 2026-07 with reasoning:{effort:'low'} (which smart-scan.ts
+  // already sends): gpt-5 avg ~400ms vs gemini ~4,600ms over 6 real food photos, two runs, and gpt-5
+  // detected foods equal-or-better. So the flagship is BOTH faster and more accurate here - it wins on
+  // accuracy (the #1 need) and speed. Cost $1.25/$10 vs $0.30/$2.50 is pennies/scan and worth it.
+  smartScan: 'openai/gpt-5',
+
+  // SMART SCAN FALLBACK. The scan is the highest-volume user-facing surface, so a single-model outage
+  // (gpt-5 5xx/429, or a model-specific 400) would fail every meal log. Gemini 2.5 Flash is the proven
+  // prior model - the scan tries smartScan first, then this, so a provider blip degrades instead of dies.
+  smartScanFallback: 'google/gemini-2.5-flash',
 } as const;
 
 export type AiTask = keyof typeof AI_MODELS;
