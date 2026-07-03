@@ -1304,7 +1304,9 @@
         "emailUpdateFailed": "Could not start the email change. Please try again.",
         "rateLimited": "Too many attempts. Please wait a minute and try again.",
         "generic": "Something went wrong. Please try again."
-      }
+      },
+      "reminderHourLabel": "Daily reminder time",
+      "reminderHourHint": "When your daily nudge arrives, in your local time."
     },
     "checkout": {
       "title": "Unlock your plan",

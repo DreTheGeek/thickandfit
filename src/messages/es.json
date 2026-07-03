@@ -1304,7 +1304,9 @@
         "emailUpdateFailed": "No pudimos iniciar el cambio de correo. Inténtalo de nuevo.",
         "rateLimited": "Demasiados intentos. Espera un minuto e inténtalo de nuevo.",
         "generic": "Algo salió mal. Inténtalo de nuevo."
-      }
+      },
+      "reminderHourLabel": "Hora del recordatorio diario",
+      "reminderHourHint": "Cuándo llega tu recordatorio diario, en tu hora local."
     },
     "checkout": {
       "title": "Desbloquea tu plan",

@@ -14,6 +14,7 @@ import { DeleteAccount } from '@/components/account/delete-account';
 import { ChangeEmail } from '@/components/account/change-email';
 import { ChangePassword } from '@/components/account/change-password';
 import { NotificationPrefs } from '@/components/account/notification-prefs';
+import { ReminderHour } from '@/components/account/reminder-hour';
 import { ExportData } from '@/components/account/export-data';
 import { readMyNotificationPrefs } from '@/lib/account/notification-preferences';
 
@@ -30,7 +31,11 @@ export default async function AccountPage(): Promise<ReactElement> {
   const t = await getTranslations('app');
   const supabase = await createClient();
   const [{ data: profile }, { data: onb }, { data: userData }, notifPrefs] = await Promise.all([
-    supabase.from('profiles').select('ui_locale, content_locale').eq('id', ctx.userId).maybeSingle(),
+    supabase
+      .from('profiles')
+      .select('ui_locale, content_locale, reminder_hour')
+      .eq('id', ctx.userId)
+      .maybeSingle(),
     supabase.from('onboarding_responses').select('answers').eq('profile_id', ctx.userId).maybeSingle(),
     supabase.auth.getUser(),
     readMyNotificationPrefs(),
@@ -99,6 +104,7 @@ export default async function AccountPage(): Promise<ReactElement> {
       <div className="mt-8 border-t border-divider pt-6">
         <SectionLabel>{t('account.notifications')}</SectionLabel>
         <NotificationPrefs initial={notifPrefs} />
+        <ReminderHour initial={(profile as { reminder_hour?: number | null } | null)?.reminder_hour ?? 19} />
       </div>
 
       {/* Billing */}
