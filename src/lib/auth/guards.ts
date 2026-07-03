@@ -18,6 +18,14 @@ export async function requireCoach(): Promise<AuthContext> {
   return ctx;
 }
 
+// Operator-only surfaces (/admin: QA checklist, ops links). Coaches/assistants are redirected to
+// their console so Stephanie's view never grows ops clutter; members go to the app.
+export async function requireOperator(): Promise<AuthContext> {
+  const ctx = await requireAuth();
+  if (ctx.role !== 'operator') redirect(hasRole(ctx.role, COACH_ROLES) ? '/coach' : '/dashboard');
+  return ctx;
+}
+
 // The mid-ticket "last-eyes" gate (PRD-30, WP8). requireCoach admits assistant_coach (COACH_ROLES
 // includes it), so it CANNOT guard the approve / assignment paths: an assistant must never approve
 // their own draft. requireApprover admits coach + operator ONLY. This is the single enforcement point
