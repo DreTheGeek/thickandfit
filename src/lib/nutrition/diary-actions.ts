@@ -82,7 +82,9 @@ const LogInput = z.object({
   mealSlot: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
   grams: z.number().positive().max(5000),
   portionId: z.string().uuid().nullable().optional(),
-  source: z.enum(['search', 'barcode', 'text']).optional(),
+  // 'photo' covers vision-read packaged products (label scans); provenance links via aiInferenceId.
+  source: z.enum(['search', 'barcode', 'text', 'photo']).optional(),
+  aiInferenceId: z.string().uuid().optional(),
 });
 
 export type LogResult = { ok: boolean; error?: string };
@@ -121,6 +123,7 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
       grams: parsed.data.grams,
       amount: parsed.data.grams,
       source: parsed.data.source ?? 'search',
+      ai_inference_id: parsed.data.aiInferenceId ?? null,
       kcal: m.kcal,
       protein_g: m.proteinG,
       carb_g: m.carbG,

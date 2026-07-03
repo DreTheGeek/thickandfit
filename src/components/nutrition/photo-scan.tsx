@@ -33,7 +33,7 @@ type Candidate = {
 };
 type ApiResult =
   | { status: 'ok'; candidates: Candidate[]; totals: Macros; inferenceId?: string }
-  | { status: 'product'; food: FoodLite; clarify: string | null }
+  | { status: 'product'; food: FoodLite; clarify: string | null; inferenceId?: string }
   | { status: 'clarify'; clarify: string }
   | { status: 'notConfigured' }
   | { status: 'noFood' }
@@ -202,12 +202,15 @@ export function PhotoScan({
     const grams = gramsFromAmount(Number(qty), unit, productFood.densityGPerMl);
     if (grams <= 0) return;
     setProductBusy(true);
+    // A vision-read product (label/packaging) is a PHOTO log with provenance; only a decoded
+    // barcode is source 'barcode'. Mislabeling killed provenance for every label scan.
     const res = await logFoodAction({
       foodId: productFood.id,
       name: productFood.name,
       mealSlot: slot,
       grams,
-      source: 'barcode',
+      source: inferenceId ? 'photo' : 'barcode',
+      aiInferenceId: inferenceId ?? undefined,
     });
     setProductBusy(false);
     if (res.ok) {
@@ -256,6 +259,7 @@ export function PhotoScan({
     if (code) {
       const bc = await lookupBarcodeAction(code);
       if (bc.ok && bc.food) {
+        setInferenceId(null); // barcode path has no vision inference; never leak a stale meal-scan id
         setProductFood(bc.food);
         const drink =
           bc.food.densityGPerMl != null ||
@@ -289,7 +293,9 @@ export function PhotoScan({
         setInferenceId(data.inferenceId ?? null);
         setPhase('review');
       } else if (data.status === 'product') {
-        // The photo was a single packaged product / label -> confirm the amount.
+        // The photo was a single packaged product / label -> confirm the amount. Keep the inference
+        // id so the log links back to the scan (provenance + correction capture).
+        setInferenceId(data.inferenceId ?? null);
         setProductFood(data.food);
         setClarify(data.clarify);
         const drink =
