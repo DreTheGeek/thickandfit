@@ -199,7 +199,10 @@ export async function recomputeGamification(
 
   const workoutDays = new Set<string>();
   for (const r of (workoutRes.data ?? []) as { changed_at: string }[]) {
-    workoutDays.add(dateKey(r.changed_at));
+    // changed_at is a timestamptz INSTANT: bucket it into the member's LOCAL day, matching how
+    // food (log_date) and weight (recorded_on) already store local days. Slicing UTC mispainted the
+    // week strip and corrupted streaks for evening workouts west of UTC.
+    workoutDays.add(localDay(tz, new Date(r.changed_at)));
   }
   const loggingDays = new Set<string>();
   for (const r of (foodRes.data ?? []) as { log_date: string }[]) {

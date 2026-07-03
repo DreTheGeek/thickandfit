@@ -15,6 +15,7 @@ import { notifText } from '@/lib/notifications/i18n';
 import { AI_MODELS } from '@/lib/ai/models';
 import { aiConfigured, callJson } from '@/lib/ai/client';
 import { emitEvent } from '@/lib/events/emit';
+import { localDay } from '@/lib/datetime/local-day';
 import { fetchScanQuality, type ScanQuality } from '@/lib/coach-ai/scan-quality';
 
 // Cheap, reliable tier for the nightly batch extraction (runs once a day across all users).
@@ -86,7 +87,7 @@ type FoodLogRow = { log_date: string; kcal: number; protein_g: number; carb_g: n
 type WeightRow = { recorded_on: string; weight_kg: number };
 type CompletionRow = { changed_at: string; status: string };
 
-export type ActiveSubscriber = { profileId: string; companyId: string; locale: 'en' | 'es'; goal: string | null; name: string };
+export type ActiveSubscriber = { profileId: string; companyId: string; locale: 'en' | 'es'; goal: string | null; name: string; timezone: string | null };
 
 function isoDaysAgo(days: number): string {
   const d = new Date();
@@ -111,7 +112,7 @@ export async function listActiveSubscribers(): Promise<ActiveSubscriber[]> {
   const sb = createServiceClient();
   const { data, error } = await sb
     .from('profiles')
-    .select('id, company_id, full_name, content_locale, ui_locale')
+    .select('id, company_id, full_name, content_locale, ui_locale, timezone')
     .eq('role', 'subscriber');
   if (error || !data) return [];
 
@@ -136,6 +137,7 @@ export async function listActiveSubscribers(): Promise<ActiveSubscriber[]> {
       locale: localeRaw === 'es' ? 'es' : 'en',
       goal: goalById.get(p.id as string) ?? null,
       name: ((p.full_name as string | null) ?? '').trim(),
+      timezone: (p.timezone as string | null) ?? null,
     };
   });
 }
@@ -152,7 +154,7 @@ type Rollup = {
   weightRows: WeightRow[];
 };
 
-function rollUp(food: FoodLogRow[], weight: WeightRow[], completions: CompletionRow[]): Rollup {
+function rollUp(food: FoodLogRow[], weight: WeightRow[], completions: CompletionRow[], tz: string | null): Rollup {
   const byDay = new Map<string, { kcal: number; proteinG: number; carbG: number; fatG: number }>();
   for (const r of food) {
     const cur = byDay.get(r.log_date) ?? { kcal: 0, proteinG: 0, carbG: 0, fatG: 0 };
@@ -195,8 +197,10 @@ function rollUp(food: FoodLogRow[], weight: WeightRow[], completions: Completion
     return Math.round((latestWeightKg - num(base.weight_kg)) * 10) / 10;
   };
 
+  // changed_at is a timestamptz instant: bucket into the member's LOCAL day, consistent with
+  // log_date/recorded_on (which already store local days). UTC slicing shifted evening workouts.
   const completedDays = new Set(
-    completions.filter((c) => c.status === 'completed').map((c) => c.changed_at.slice(0, 10)),
+    completions.filter((c) => c.status === 'completed').map((c) => localDay(tz, new Date(c.changed_at))),
   );
 
   return {
@@ -635,7 +639,7 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
     return { status: 'noData' };
   }
 
-  const roll = rollUp(food, weight, completions);
+  const roll = rollUp(food, weight, completions, sub.timezone);
   const targets = onbRes.data?.computed_targets ?? null;
 
   // Deterministic plateau detection (no AI). Computed before the AI call so it is always present.

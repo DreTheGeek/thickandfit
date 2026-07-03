@@ -8,13 +8,15 @@
 // is fresh day-to-day and the winner is ranked on real numbers.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { localDay } from '@/lib/datetime/local-day';
+import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 
 type Window = { startsOn: string; endsOn: string };
 
-// End-exclusive upper bound: the challenge includes all of ends_on, so query < ends_on + 1 day.
-function dayAfter(iso: string): string {
+// Shift an ISO date by n days (UTC arithmetic on pure dates).
+function shiftDay(iso: string, n: number): string {
   const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
 
@@ -26,14 +28,24 @@ async function metricCount(
   w: Window,
 ): Promise<number | null> {
   if (metric === 'workouts') {
-    const { count } = await svc
+    // performed_at is a timestamptz INSTANT while the challenge window is calendar dates. Count by
+    // the PARTICIPANT'S local day (like food_log.log_date), else an evening boundary-day workout
+    // west of UTC lands outside the window. Fetch a range padded 1 day each side (covers UTC+/-14),
+    // then bucket precisely in JS (DST-correct via Intl).
+    const tz = await getProfileTimezone(profileId);
+    const { data } = await svc
       .from('workout_logs')
-      .select('id', { count: 'exact', head: true })
+      .select('performed_at')
       .eq('company_id', companyId)
       .eq('profile_id', profileId)
-      .gte('performed_at', `${w.startsOn}T00:00:00Z`)
-      .lt('performed_at', `${dayAfter(w.endsOn)}T00:00:00Z`);
-    return count ?? 0;
+      .gte('performed_at', `${shiftDay(w.startsOn, -1)}T00:00:00Z`)
+      .lt('performed_at', `${shiftDay(w.endsOn, 2)}T00:00:00Z`)
+      .limit(2000);
+    const rows = (data ?? []) as { performed_at: string }[];
+    return rows.filter((r) => {
+      const day = localDay(tz, new Date(r.performed_at));
+      return day >= w.startsOn && day <= w.endsOn;
+    }).length;
   }
   if (metric === 'logs') {
     // Distinct diary DAYS logged (log_date is already the user-local day), not raw row count, so
