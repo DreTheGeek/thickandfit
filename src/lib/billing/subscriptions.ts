@@ -113,7 +113,7 @@ export async function upsertSubscriptionFromStripe(sub: StripeSubscriptionObject
     return;
   }
 
-  await svc.from('subscriptions').upsert(
+  const { error } = await svc.from('subscriptions').upsert(
     {
       company_id: resolvedCompany,
       profile_id: resolvedProfile,
@@ -131,6 +131,9 @@ export async function upsertSubscriptionFromStripe(sub: StripeSubscriptionObject
     },
     { onConflict: 'stripe_subscription_id' },
   );
+  // THROW on failure: the webhook's catch marks the ledger row failed (reclaimable), so Stripe's
+  // retry re-runs this idempotent upsert. Swallowing left a charged user without their entitlement.
+  if (error) throw new Error(`upsertSubscriptionFromStripe: ${error.message}`);
 }
 
 type StripeInvoiceObject = {
@@ -167,12 +170,27 @@ export async function recordInvoicePayment(
     profileId = sub?.profile_id ?? null;
     companyId = sub?.company_id ?? null;
   }
+  if (!companyId && invoice.customer) {
+    // Fallback: the first invoice.payment_succeeded can race AHEAD of customer.subscription.created,
+    // so the subscription row may not exist yet. Resolve the tenant via the Stripe customer instead.
+    const { data: byCustomer } = await svc
+      .from('subscriptions')
+      .select('id, profile_id, company_id')
+      .eq('stripe_customer_id', invoice.customer)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    subscriptionRowId = byCustomer?.id ?? subscriptionRowId;
+    profileId = byCustomer?.profile_id ?? profileId;
+    companyId = byCustomer?.company_id ?? null;
+  }
   if (!companyId) {
-    // Never drop a money event silently (global rule): surface an invoice we cannot reconcile to a tenant.
-    console.error(
-      `recordInvoicePayment: unresolved tenant for invoice ${invoice.id} (subscription ${invoice.subscription ?? 'none'} not found); payment NOT recorded`,
+    // Never drop a money event silently: THROW so the webhook marks the ledger row failed
+    // (reclaimable) and Stripe's retry re-runs once the subscription row exists. The old clean
+    // return marked the event processed and the first payment vanished from the payments history.
+    throw new Error(
+      `recordInvoicePayment: unresolved tenant for invoice ${invoice.id} (subscription ${invoice.subscription ?? 'none'} not found yet)`,
     );
-    return;
   }
 
   await svc.from('payments').upsert(

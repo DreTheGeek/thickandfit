@@ -135,10 +135,10 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ ok: true, received: true }, { status: 200 });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Handler error';
+    // Record the failure on the ledger row (observability) WITHOUT retiring the event: claimEvent
+    // treats a row with error set as reclaimable, so Stripe's retry actually re-runs the idempotent
+    // handlers instead of hitting the duplicate path (which used to drop the event forever).
     await markEventProcessed(eventId, message);
-    // 500 so Stripe retries; the ledger row already exists, so the retry will see it as claimed.
-    // To allow a real retry we clear processing by leaving error set; Stripe retry will hit the
-    // duplicate path and 200. We log the failure for manual replay instead.
     return Response.json({ ok: false, error: 'Processing failed' }, { status: 500 });
   }
 }
