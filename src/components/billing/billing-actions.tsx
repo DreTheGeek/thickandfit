@@ -20,7 +20,7 @@ const REASON_CODES = ['too_expensive', 'not_using', 'missing_feature', 'other'] 
 
 function errorMessage(t: ReturnType<typeof useTranslations>, code?: string): string | null {
   if (!code) return null;
-  const known = ['notConfigured', 'stripeError', 'noSubscription', 'noEmail', 'noCompany'];
+  const known = ['notConfigured', 'stripeError', 'noSubscription', 'noEmail', 'noCompany', 'rateLimited'];
   return t(known.includes(code) ? `error.${code}` : 'error.generic');
 }
 

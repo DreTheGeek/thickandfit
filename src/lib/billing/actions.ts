@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 import {
   isStripeConfigured,
   createCustomer,
@@ -60,6 +61,9 @@ export async function startCheckoutAction(
   const ctx = await requireAuth();
   if (!ctx.companyId) return { error: 'noCompany' };
   if (!isStripeConfigured()) return { error: 'notConfigured' };
+  // Card-testing / spam control: creating checkout sessions writes consent rows and hits Stripe, so
+  // cap attempts per user. 10/hour is far above any honest retry pattern (fails open on limiter error).
+  if (!(await checkRateLimit(ctx.userId, 'checkout-start', 10, 3600))) return { error: 'rateLimited' };
 
   const tier: Tier = String(formData.get('tier') ?? 'low') === 'mid' ? 'mid' : 'low';
   const priceId = priceForTier(tier);
