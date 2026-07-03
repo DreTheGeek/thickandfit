@@ -91,6 +91,17 @@ async function groundFoodFromLabel(
   const scale = 100 / g;
   const name = `${p.brand ? `${p.brand} ` : ''}${p.name}`.trim().slice(0, 300);
   const svc = createServiceClient();
+  // Dedupe: scanning the same label twice previously inserted a NEW row every time, growing
+  // near-duplicate corpus rows that the ilike matcher then hit at random. Reuse the cached row;
+  // the uq_foods_ai_name partial unique index (0067) closes the concurrent-scan race.
+  const { data: existing } = await svc
+    .from('foods')
+    .select(FOOD_COLS)
+    .eq('source', 'ai')
+    .ilike('name_en', name)
+    .limit(1)
+    .maybeSingle();
+  if (existing) return toFoodLite(existing as FoodRow, locale);
   const { data: inserted } = await svc
     .from('foods')
     .insert({
@@ -105,8 +116,17 @@ async function groundFoodFromLabel(
       search_text: name.toLowerCase(),
     })
     .select(FOOD_COLS)
-    .single();
-  return inserted ? toFoodLite(inserted as FoodRow, locale) : null;
+    .maybeSingle();
+  if (inserted) return toFoodLite(inserted as FoodRow, locale);
+  // Unique-index race: a concurrent scan inserted it first - reuse that row.
+  const { data: winner } = await svc
+    .from('foods')
+    .select(FOOD_COLS)
+    .eq('source', 'ai')
+    .ilike('name_en', name)
+    .limit(1)
+    .maybeSingle();
+  return winner ? toFoodLite(winner as FoodRow, locale) : null;
 }
 
 type Product = {

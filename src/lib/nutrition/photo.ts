@@ -162,9 +162,26 @@ function keywords(name: string): string[] {
     .filter((w) => w.length > 2 && !STOP.has(w));
 }
 
-// PostgREST .or() splits conditions on commas, so strip them (and wildcards) from user-derived terms.
+// PostgREST .or() splits conditions on commas, so strip them (plus wildcards, quotes, and
+// backslashes - a predicted name like 6" sub would otherwise break the whole batched query,
+// failing EVERY item on the plate) from user-derived terms.
 function orSafe(term: string): string {
-  return term.replace(/[,%*()]/g, ' ').replace(/\s+/g, ' ').trim();
+  return term.replace(/[,%*()"\\]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Rank candidate rows for a term instead of taking the first substring hit (arbitrary order made
+// "egg" able to land on "eggplant"): exact match, then whole-token match, then shortest (most
+// specific) search_text. Deterministic, zero extra round-trips.
+function bestRowForTerm(rows: FoodRowWithSearch[], term: string): FoodRowWithSearch | null {
+  const hits = rows.filter((r) => (r.search_text ?? '').includes(term));
+  if (!hits.length) return null;
+  const exact = hits.find((r) => (r.search_text ?? '').trim() === term);
+  if (exact) return exact;
+  const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const token = new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`);
+  const wordHits = hits.filter((r) => token.test(r.search_text ?? ''));
+  const pool = wordHits.length ? wordHits : hits;
+  return pool.reduce((a, b) => ((a.search_text ?? '').length <= (b.search_text ?? '').length ? a : b));
 }
 
 type FoodRowWithSearch = FoodRaw & { search_text: string | null };
@@ -194,7 +211,7 @@ async function matchFoodsBatch(
     for (let i = 0; i < names.length; i++) {
       const p = phrases[i];
       if (!p) continue;
-      const hit = rows.find((r) => (r.search_text ?? '').includes(p));
+      const hit = bestRowForTerm(rows, p);
       if (hit) results[i] = mapFood(hit, locale);
     }
   }
@@ -213,7 +230,7 @@ async function matchFoodsBatch(
     for (const x of pending) {
       const ordered = [...x.words].sort((a, b) => b.length - a.length);
       for (const w of ordered) {
-        const hit = rows.find((r) => (r.search_text ?? '').includes(w));
+        const hit = bestRowForTerm(rows, w);
         if (hit) {
           results[x.i] = mapFood(hit, locale);
           break;

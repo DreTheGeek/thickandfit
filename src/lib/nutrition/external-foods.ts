@@ -144,28 +144,41 @@ export async function groundFoodByName(name: string, locale: string): Promise<Fo
     if (kcal == null) return null; // no energy -> not loggable
 
     const description = String(f.description).slice(0, 300);
+    // Race-tolerant via the (source, source_id) unique index (0067): a concurrent scan of the same
+    // unknown food no longer inserts a duplicate corpus row - the loser re-reads the winner's row.
     const { data: inserted } = await svc
       .from('foods')
-      .insert({
-        source: 'usda',
-        source_id: String(f.fdcId),
-        source_url: `https://fdc.nal.usda.gov/food-details/${f.fdcId}/nutrients`,
-        name_en: description,
-        category: f.foodCategory ?? null,
-        kcal,
-        protein_g: usdaValue(f, NUT.protein) ?? 0,
-        carb_g: usdaValue(f, NUT.carbs) ?? 0,
-        fat_g: usdaValue(f, NUT.fat) ?? 0,
-        fiber_g: usdaValue(f, NUT.fiber),
-        sugar_g: usdaValue(f, NUT.sugar),
-        sodium_mg: usdaValue(f, NUT.sodium),
-        ...usdaMicros(f),
-        is_verified: true, // USDA is government-validated
-        search_text: description.toLowerCase(),
-      })
+      .upsert(
+        {
+          source: 'usda',
+          source_id: String(f.fdcId),
+          source_url: `https://fdc.nal.usda.gov/food-details/${f.fdcId}/nutrients`,
+          name_en: description,
+          category: f.foodCategory ?? null,
+          kcal,
+          protein_g: usdaValue(f, NUT.protein) ?? 0,
+          carb_g: usdaValue(f, NUT.carbs) ?? 0,
+          fat_g: usdaValue(f, NUT.fat) ?? 0,
+          fiber_g: usdaValue(f, NUT.fiber),
+          sugar_g: usdaValue(f, NUT.sugar),
+          sodium_mg: usdaValue(f, NUT.sodium),
+          ...usdaMicros(f),
+          is_verified: true, // USDA is government-validated
+          search_text: description.toLowerCase(),
+        },
+        { onConflict: 'source,source_id', ignoreDuplicates: true },
+      )
       .select(FOOD_COLS)
-      .single();
-    return inserted ? toFoodLite(inserted as FoodRow, locale) : null;
+      .maybeSingle();
+    if (inserted) return toFoodLite(inserted as FoodRow, locale);
+    // Concurrent insert won the race: return its row.
+    const { data: winner } = await svc
+      .from('foods')
+      .select(FOOD_COLS)
+      .eq('source', 'usda')
+      .eq('source_id', String(f.fdcId))
+      .maybeSingle();
+    return winner ? toFoodLite(winner as FoodRow, locale) : null;
   } catch (e) {
     console.error('groundFoodByName:', e instanceof Error ? e.message : e);
     return null;
@@ -219,9 +232,10 @@ export async function groundFoodByBarcode(barcode: string, locale: string): Prom
     // covers the generic foods where those matter.
     const gToMg = (v: number | null): number | null => (v != null ? Math.round(v * 1000) : null);
     const sodiumG = offNum(nm, 'sodium_100g');
+    // Race-tolerant via the (source, source_id) unique index (0067).
     const { data: inserted } = await svc
       .from('foods')
-      .insert({
+      .upsert({
         source: 'off',
         source_id: code,
         source_url: `https://world.openfoodfacts.org/product/${code}`,
@@ -248,10 +262,18 @@ export async function groundFoodByBarcode(barcode: string, locale: string): Prom
         cholesterol_mg: gToMg(offNum(nm, 'cholesterol_100g')),
         is_verified: false, // crowd-sourced
         search_text: name.toLowerCase(),
-      })
+      }, { onConflict: 'source,source_id', ignoreDuplicates: true })
       .select(FOOD_COLS)
-      .single();
-    return inserted ? toFoodLite(inserted as FoodRow, locale) : null;
+      .maybeSingle();
+    if (inserted) return toFoodLite(inserted as FoodRow, locale);
+    // Concurrent insert won the race: return its row.
+    const { data: winner } = await svc
+      .from('foods')
+      .select(FOOD_COLS)
+      .eq('source', 'off')
+      .eq('source_id', code)
+      .maybeSingle();
+    return winner ? toFoodLite(winner as FoodRow, locale) : null;
   } catch (e) {
     console.error('groundFoodByBarcode:', e instanceof Error ? e.message : e);
     return null;
