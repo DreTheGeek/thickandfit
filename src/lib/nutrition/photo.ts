@@ -162,54 +162,98 @@ function keywords(name: string): string[] {
     .filter((w) => w.length > 2 && !STOP.has(w));
 }
 
-// FTS-style match: try the full lowercased phrase first, then fall back to the strongest keyword.
-// Uses ilike on search_text, which works today without embeddings.
-async function matchFood(
+// PostgREST .or() splits conditions on commas, so strip them (and wildcards) from user-derived terms.
+function orSafe(term: string): string {
+  return term.replace(/[,%*()]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+type FoodRowWithSearch = FoodRaw & { search_text: string | null };
+
+// BATCHED local matching for a whole plate: ONE query for every item's full phrase, then ONE query
+// for every unresolved item's keywords, then JS picks per item with the same preference order the old
+// per-item loop had (full phrase first, then longest keyword). The old path ran up to ~6 serial DB
+// round-trips PER item (phrase + each keyword + ratio), which was the dominant scan latency after the
+// vision call; this is 2 round-trips for the whole plate regardless of item count.
+async function matchFoodsBatch(
   sb: Awaited<ReturnType<typeof createClient>>,
-  predictedName: string,
+  names: string[],
   locale: string,
-): Promise<FoodLite | null> {
-  const phrase = predictedName.trim().toLowerCase();
-  if (!phrase) return null;
+): Promise<(FoodLite | null)[]> {
+  const phrases = names.map((n) => orSafe(n.trim().toLowerCase()));
+  const results: (FoodLite | null)[] = names.map(() => null);
 
-  const tryQuery = async (term: string): Promise<FoodLite | null> => {
-    const { data } = await sb.from('foods').select(COLS).ilike('search_text', `%${term}%`).limit(1).maybeSingle();
-    return data ? mapFood(data as unknown as FoodRaw, locale) : null;
-  };
-
-  const full = await tryQuery(phrase);
-  if (full) return full;
-
-  // Longest keyword first (most specific), then shorter ones.
-  const words = keywords(predictedName).sort((a, b) => b.length - a.length);
-  for (const w of words) {
-    const hit = await tryQuery(w);
-    if (hit) return hit;
+  // Round 1: all full phrases in one .or(ilike) query; assign in JS by substring test.
+  const phraseTerms = [...new Set(phrases.filter((p) => p.length > 2))];
+  if (phraseTerms.length) {
+    const { data } = await sb
+      .from('foods')
+      .select(`${COLS}, search_text`)
+      .or(phraseTerms.map((p) => `search_text.ilike.%${p}%`).join(','))
+      .limit(80);
+    const rows = (data ?? []) as unknown as FoodRowWithSearch[];
+    for (let i = 0; i < names.length; i++) {
+      const p = phrases[i];
+      if (!p) continue;
+      const hit = rows.find((r) => (r.search_text ?? '').includes(p));
+      if (hit) results[i] = mapFood(hit, locale);
+    }
   }
-  return null;
+
+  // Round 2: keywords for still-unresolved items, one query, longest-keyword-first per item.
+  const pending = names.map((n, i) => ({ i, words: keywords(n).map(orSafe).filter((w) => w.length > 2) }))
+    .filter((x) => results[x.i] === null && x.words.length > 0);
+  const kwTerms = [...new Set(pending.flatMap((x) => x.words))];
+  if (kwTerms.length) {
+    const { data } = await sb
+      .from('foods')
+      .select(`${COLS}, search_text`)
+      .or(kwTerms.map((w) => `search_text.ilike.%${w}%`).join(','))
+      .limit(150);
+    const rows = (data ?? []) as unknown as FoodRowWithSearch[];
+    for (const x of pending) {
+      const ordered = [...x.words].sort((a, b) => b.length - a.length);
+      for (const w of ordered) {
+        const hit = rows.find((r) => (r.search_text ?? '').includes(w));
+        if (hit) {
+          results[x.i] = mapFood(hit, locale);
+          break;
+        }
+      }
+    }
+  }
+  return results;
 }
 
 // Apply the deterministic cooked/uncooked yield so per-100g macros (stated for one state) apply to
-// the grams the photo estimated (the visible, cooked form). cooked = raw * factor.
-async function effectiveGramsForFood(
+// the grams the photo estimated (the visible, cooked form). Ratios come from ONE bulk fetch (the
+// table is tiny) instead of a query per item. cooked = raw * factor.
+async function loadRawToCookedFactors(
   sb: Awaited<ReturnType<typeof createClient>>,
+): Promise<Map<string, number>> {
+  const { data } = await sb
+    .from('cooked_uncooked_ratios')
+    .select('category, factor')
+    .eq('state_from', 'raw')
+    .eq('state_to', 'cooked')
+    .limit(200);
+  const map = new Map<string, number>();
+  for (const r of (data ?? []) as { category: string; factor: number }[]) {
+    if (!map.has(r.category)) map.set(r.category, Number(r.factor));
+  }
+  return map;
+}
+
+function effectiveGrams(
+  factors: Map<string, number>,
   food: FoodLite,
   predictedName: string,
   grams: number,
-): Promise<number> {
+): number {
   if (!food.category) return grams;
   const listed = foodStateFromName(`${food.name} ${predictedName}`);
   // The photo measures the visible (cooked) portion. If the food row is stated raw, convert down.
   if (listed !== 'raw') return grams;
-  const { data } = await sb
-    .from('cooked_uncooked_ratios')
-    .select('factor')
-    .eq('category', food.category)
-    .eq('state_from', 'raw')
-    .eq('state_to', 'cooked')
-    .limit(1)
-    .maybeSingle();
-  const factor = data ? Number((data as { factor: number }).factor) : 0;
+  const factor = factors.get(food.category) ?? 0;
   if (factor <= 0) return grams;
   // grams here are cooked (as seen); the row is per-100g raw, so convert cooked -> raw.
   return Math.round(grams / factor);
@@ -224,22 +268,30 @@ export async function resolvePredictedItems(
   if (items.length === 0) return { status: 'noFood' };
 
   const sb = await createClient();
-  // Resolve items in PARALLEL - each is a local DB match + optional USDA grounding + cook/raw
-  // conversion. Sequential resolution was the latency killer on a multi-item plate (N serial lookups).
+  const t0 = Date.now();
+  // Whole-plate resolution in 3 bulk round-trips (phrase batch + keyword batch + ratio map), then
+  // per-item USDA grounding ONLY for local misses (parallel, each cached into foods for next time).
+  // The old shape (per-item serial phrase->keyword->ratio queries) dominated scan latency.
+  const [localMatches, factors] = await Promise.all([
+    matchFoodsBatch(sb, items.map((i) => i.name), locale),
+    loadRawToCookedFactors(sb),
+  ]);
+  const tLocal = Date.now();
+
   const candidates: PhotoCandidate[] = await Promise.all(
-    items.map(async (item): Promise<PhotoCandidate> => {
-      // 1) local corpus. 2) if it misses, ground against USDA + cache the hit so the next log is a
-      // local hit. The model's grams still scale the DB's per-100g macros (golden rule).
-      let food = await matchFood(sb, item.name, locale);
-      if (!food) food = await groundFoodByName(item.name, locale);
+    items.map(async (item, idx): Promise<PhotoCandidate> => {
+      // 1) batched local corpus hit. 2) on miss, ground against USDA + cache so the next log is local.
+      // The model's grams still scale the DB's per-100g macros (golden rule).
+      const food = localMatches[idx] ?? (await groundFoodByName(item.name, locale));
       if (!food) {
         return { predictedName: item.name, grams: item.grams, confidence: item.confidence, matched: false, food: null, macros: null, basis: item.basis };
       }
-      const effGrams = await effectiveGramsForFood(sb, food, item.name, item.grams);
+      const effGrams = effectiveGrams(factors, food, item.name, item.grams);
       // Report the grams the user weighs/sees (the estimate), not the raw-equivalent.
       return { predictedName: item.name, grams: item.grams, confidence: item.confidence, matched: true, food, macros: macrosForGrams(food, effGrams), basis: item.basis };
     }),
   );
+  console.log(`[resolve] local ${tLocal - t0}ms, ground ${Date.now() - tLocal}ms, items ${items.length}, misses ${localMatches.filter((m) => m === null).length}`);
 
   const totals = candidates.reduce<MacroTotals>(
     (a, c) => (c.macros ? { kcal: a.kcal + c.macros.kcal, proteinG: a.proteinG + c.macros.proteinG, carbG: a.carbG + c.macros.carbG, fatG: a.fatG + c.macros.fatG } : a),
