@@ -1003,7 +1003,20 @@
       "interviewError": "Could not save",
       "interviewTeaches": "Teaches your coach:",
       "interviewCardTitle": "Train your coach",
-      "interviewCardHint": "Answer a guided interview about how you coach. It trains the knowledge base your AI coach + plans run on."
+      "interviewCardHint": "Answer a guided interview about how you coach. It trains the knowledge base your AI coach + plans run on.",
+      "compTitle": "Complimentary access",
+      "compActiveUntil": "Free access active until {date}",
+      "compRevoke": "Revoke",
+      "compRevokeConfirm": "Remove this client's free access now?",
+      "compGrantDays": "{n} days",
+      "compCustomDays": "Days",
+      "compGrantCta": "Grant",
+      "compHint": "Free access lets this client use the full app without a subscription. It ends automatically on the date shown.",
+      "compError": "That didn't save. Try again.",
+      "habitsNone": "No habits assigned yet.",
+      "habitsAssignPlaceholder": "e.g. Drink 3L of water",
+      "habitsAssignCta": "Assign",
+      "habitsAssignError": "That didn't save. Try again."
     },
     "you": {
       "title": "You",
@@ -1351,7 +1364,8 @@
         "noSubscription": "No subscription found.",
         "noEmail": "No email on file.",
         "noCompany": "Account not ready.",
-        "generic": "Something went wrong. Please try again."
+        "generic": "Something went wrong. Please try again.",
+        "rateLimited": "Too many attempts. Please wait a few minutes and try again."
       }
     },
     "coachChat": {

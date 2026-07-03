@@ -186,6 +186,11 @@ export default async function CoachSubscriberPage({
     membership,
     habits,
     checkin,
+    compUntil: (profile.comp_access_until as string | null) ?? null,
+    compActive: Boolean(
+      profile.comp_access_until &&
+        new Date(profile.comp_access_until as string).getTime() > new Date().getTime(),
+    ),
   };
 
   return <SubscriberProfile data={data} />;

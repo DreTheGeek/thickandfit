@@ -1003,7 +1003,20 @@
       "interviewError": "No se pudo guardar",
       "interviewTeaches": "Le ensena a tu coach:",
       "interviewCardTitle": "Entrena a tu coach",
-      "interviewCardHint": "Responde una entrevista guiada sobre como entrenas. Alimenta la base de conocimiento de tu coach y tus planes."
+      "interviewCardHint": "Responde una entrevista guiada sobre como entrenas. Alimenta la base de conocimiento de tu coach y tus planes.",
+      "compTitle": "Acceso de cortesía",
+      "compActiveUntil": "Acceso gratuito activo hasta {date}",
+      "compRevoke": "Revocar",
+      "compRevokeConfirm": "¿Quitar ahora el acceso gratuito de este cliente?",
+      "compGrantDays": "{n} días",
+      "compCustomDays": "Días",
+      "compGrantCta": "Otorgar",
+      "compHint": "El acceso de cortesía permite a este cliente usar la app completa sin suscripción. Termina automáticamente en la fecha indicada.",
+      "compError": "No se guardó. Inténtalo de nuevo.",
+      "habitsNone": "Aún no hay hábitos asignados.",
+      "habitsAssignPlaceholder": "p. ej. Tomar 3L de agua",
+      "habitsAssignCta": "Asignar",
+      "habitsAssignError": "No se guardó. Inténtalo de nuevo."
     },
     "you": {
       "title": "Tú",
@@ -1351,7 +1364,8 @@
         "noSubscription": "No se encontró ninguna suscripción.",
         "noEmail": "No hay correo registrado.",
         "noCompany": "La cuenta no está lista.",
-        "generic": "Algo salió mal. Inténtalo de nuevo."
+        "generic": "Algo salió mal. Inténtalo de nuevo.",
+        "rateLimited": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo."
       }
     },
     "coachChat": {

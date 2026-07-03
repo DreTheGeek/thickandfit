@@ -12,6 +12,8 @@ import { CompletionCheck } from '@/components/ui/completion';
 import { CoachNotesPanel } from '@/components/coach/coach-notes-panel';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { GeneratePlanButton } from '@/components/coach/generate-plan-button';
+import { CompAccessCard } from '@/components/coach/comp-access-card';
+import { AssignHabitForm } from '@/components/coach/assign-habit-form';
 import { CoachBodyProgress } from '@/components/coach/coach-body-progress';
 import { CoachFoodDiary } from '@/components/coach/coach-food-diary';
 import { CoachCheckins } from '@/components/coach/coach-checkins';
@@ -55,6 +57,8 @@ export type ProfileData = {
   foodDiary: CoachDiaryWeek | null;
   membership: MembershipInfo | null;
   habits: ClientHabits | null;
+  compUntil: string | null;
+  compActive: boolean;
   checkin: ClientCheckin | null;
 };
 
@@ -187,6 +191,12 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
               ) : null}
             </Card>
           )}
+          <Card className="p-5 md:col-span-2">
+            <Eyebrow>{t('compTitle')}</Eyebrow>
+            <div className="mt-3">
+              <CompAccessCard profileId={data.id} compUntil={data.compUntil} active={data.compActive} />
+            </div>
+          </Card>
           <Card className="p-5">
             <Eyebrow>{t('assignedProgram')}</Eyebrow>
             <div className="mt-2 font-display text-[22px]">{data.programName ?? t('noProgram')}</div>
@@ -233,16 +243,18 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
               </Link>
             </div>
           </Card>
-          {data.habits && data.habits.habits.length > 0 && (
-            <Card className="p-5 md:col-span-2">
-              <div className="flex items-center justify-between">
-                <Eyebrow>{t('habitsTitle')}</Eyebrow>
-                {data.habits.streak && (
-                  <span className="text-[12px] text-muted">
-                    {t('habitsStreak')} <span className="font-semibold text-ink">{data.habits.streak.current}</span>
-                  </span>
-                )}
-              </div>
+          {/* Habits: always rendered so the coach can assign the FIRST habit (the old length>0 guard
+              made assignment impossible for a client with none). */}
+          <Card className="p-5 md:col-span-2">
+            <div className="flex items-center justify-between">
+              <Eyebrow>{t('habitsTitle')}</Eyebrow>
+              {data.habits?.streak && (
+                <span className="text-[12px] text-muted">
+                  {t('habitsStreak')} <span className="font-semibold text-ink">{data.habits.streak.current}</span>
+                </span>
+              )}
+            </div>
+            {data.habits && data.habits.habits.length > 0 ? (
               <div className="mt-3 space-y-2.5">
                 {data.habits.habits.map((h) => (
                   <div key={h.id} className="flex items-center gap-3">
@@ -252,8 +264,11 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
                   </div>
                 ))}
               </div>
-            </Card>
-          )}
+            ) : (
+              <p className="mt-3 text-[13px] text-faint">{t('habitsNone')}</p>
+            )}
+            <AssignHabitForm profileId={data.id} />
+          </Card>
           <Card className="p-5 md:col-span-2">
             <Eyebrow>{t('recentActivity')}</Eyebrow>
             {data.history.length === 0 ? (
