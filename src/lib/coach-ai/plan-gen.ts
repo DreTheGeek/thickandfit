@@ -24,7 +24,8 @@ import { aiConfigured, callJson } from '@/lib/ai/client';
 // Flagship reasoning for generation (rare, quality-critical, PCOS-aware structured JSON).
 const PLAN_MODEL = AI_MODELS.planGen;
 // Bump when PLAN_SYSTEM changes so replay/eval can group inferences by prompt generation.
-const PROMPT_VERSION = 'plan-gen.v1';
+// v2: Dear-letter intro + member context (name/weight/top logged foods) + 2-3 options per main slot.
+const PROMPT_VERSION = 'plan-gen.v2';
 
 export type PlanLocale = 'en' | 'es';
 
@@ -66,6 +67,8 @@ const PlanSchema = z.object({
   carb_g: z.number().int().min(0).max(900),
   fat_g: z.number().int().min(0).max(400),
   coach_note: z.string().trim().max(600).optional().default(''),
+  // The "Dear {name}" opening letter of Stephanie's real plan documents.
+  intro: z.string().trim().max(1500).optional().default(''),
   slots: z.array(SlotSchema).min(1).max(6),
 });
 
@@ -76,14 +79,22 @@ const PLAN_SYSTEM = [
   'fitness app. Given a member intake and her documented coaching method, produce ONE full meal plan',
   'in HER style. Return ONLY minified JSON of this exact shape, no prose, no markdown fences:',
   '{"name":string,"goal":string,"calorie_goal":int,"protein_g":int,"carb_g":int,"fat_g":int,',
-  '"coach_note":string,"slots":[{"name":string,"kcal_target":int,"recipes":[{"title":string,',
+  '"coach_note":string,"intro":string,"slots":[{"name":string,"kcal_target":int,"recipes":[{"title":string,',
   '"prep_min":int|null,"cook_min":int|null,"kcal":int,"protein_g":int,"carb_g":int,"fat_g":int,',
   '"ingredients":[{"qty":string,"item":string}],"spices":[{"qty":string,"item":string}],',
   '"note":string,"steps":[string]}]}]}',
   '',
   "Stephanie's method + style (follow it closely):",
+  '- intro: the short personal letter that opens her real plan documents. 2-4 warm sentences,',
+  '  addressed to the member BY FIRST NAME ("Dear Maria,"), acknowledging THEIR goal and preferences,',
+  '  encouraging free choice between the options. Her tone: warm, direct, zero fluff. No sign-off',
+  '  (the app renders it) and no medical claims.',
   '- 5 kcal-budgeted slots: Breakfast, Snack 1, Lunch, Snack 2, Dinner. Set each kcal_target so they',
-  '  sum to the daily calorie_goal. Give 1-2 recipe OPTIONS per slot so the member can choose.',
+  '  sum to the daily calorie_goal. Give 2-3 recipe OPTIONS for Breakfast/Lunch/Dinner and 1-2 for',
+  '  snacks so the member can genuinely choose; OPTIONS WITHIN A SLOT must land within ~10% of the',
+  "  slot's kcal_target so any choice keeps the day on target (this is how her real plans work).",
+  '- When the member context lists foods they already eat and log, BUILD AROUND those foods first -',
+  '  familiar meals get followed; novelty gets abandoned.',
   '- KEEP RECIPES SIMPLE: 3-5 core ingredients. Simple is the whole point.',
   '- Ingredients use RAW-WEIGHT grams as the qty (e.g. "135g"), and lean, specific items: 93/7 ground',
   '  beef (never fattier), protein pasta, Greek yogurt, egg whites, chicken breast. Name real products',
@@ -132,17 +143,66 @@ function normalizeSplit(p: ParsedPlan): { protein: number; carb: number; fat: nu
   };
 }
 
+type MemberContext = {
+  firstName: string | null;
+  latestWeightKg: number | null;
+  topFoods: string[]; // what they actually eat + log, most-logged first
+};
+
+// Pull the member's REAL data so the plan is personal, not generic: their name (the Dear-letter),
+// latest weight, and the foods they demonstrably eat (plans built on familiar foods get followed).
+async function loadMemberContext(
+  sb: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  profileId: string,
+): Promise<MemberContext> {
+  const [{ data: prof }, { data: w }, { data: logs }] = await Promise.all([
+    sb.from('profiles').select('full_name').eq('id', profileId).maybeSingle(),
+    sb
+      .from('weight_entries')
+      .select('weight_kg')
+      .eq('company_id', companyId)
+      .eq('profile_id', profileId)
+      .order('recorded_on', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    sb
+      .from('food_log')
+      .select('name')
+      .eq('company_id', companyId)
+      .eq('profile_id', profileId)
+      .order('logged_at', { ascending: false })
+      .limit(300),
+  ]);
+  const counts = new Map<string, number>();
+  for (const r of (logs ?? []) as { name: string | null }[]) {
+    const n = (r.name ?? '').trim().toLowerCase();
+    if (n) counts.set(n, (counts.get(n) ?? 0) + 1);
+  }
+  const topFoods = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([n]) => n);
+  const fullName = ((prof as { full_name: string | null } | null)?.full_name ?? '').trim();
+  return {
+    firstName: fullName ? fullName.split(/\s+/)[0] : null,
+    latestWeightKg: w ? Number((w as { weight_kg: number }).weight_kg) : null,
+    topFoods,
+  };
+}
+
 function buildUserPrompt(
   goal: string | null,
   targets: unknown,
   answers: unknown,
   knowledge: string,
   locale: PlanLocale,
+  member: MemberContext,
 ): string {
   return [
     `Language: ${locale === 'es' ? 'Spanish' : 'English'}`,
+    `Member first name: ${member.firstName ?? 'not set (open the intro without a name)'}`,
     `Member goal: ${goal ?? 'not set'}`,
     `Computed targets: ${targets ? JSON.stringify(targets) : 'not set'}`,
+    `Latest logged weight (kg): ${member.latestWeightKg ?? 'none'}`,
+    `Foods this member already eats and logs (build around these first): ${member.topFoods.length ? member.topFoods.join(', ') : 'no logs yet'}`,
     `Intake answers: ${answers ? JSON.stringify(answers).slice(0, 2000) : 'none'}`,
     '',
     'Coaching method (ground the plan in this; empty means use general best practice):',
@@ -223,6 +283,9 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
   const hits = await retrieveKnowledge(input.companyId, knowledgeQuery, 6);
   const knowledgeText = hits.map((h) => `- ${h.content}`).join('\n');
 
+  // Their name, latest weight, and the foods they actually log - the plan is personal, not generic.
+  const member = await loadMemberContext(sb, input.companyId, input.clientProfileId);
+
   let parsed: ParsedPlan | null = null;
   let usage: Usage = {};
   try {
@@ -231,7 +294,7 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
       timeoutMs: 120_000, // flagship reasoning on a rare, coach-triggered path
       messages: [
         { role: 'system', content: PLAN_SYSTEM },
-        { role: 'user', content: buildUserPrompt(goal, targets, answers, knowledgeText, input.locale) },
+        { role: 'user', content: buildUserPrompt(goal, targets, answers, knowledgeText, input.locale, member) },
       ],
       // fire: the inference id has no consumer (plans are reviewed, not corrected field-by-field).
       // ai_usage_log token metering below stays untouched; metering and audit are separate lifecycles.
@@ -262,6 +325,7 @@ export async function generateMealPlan(input: GenerateMealPlanInput): Promise<Ge
     calorieTarget: parsed.calorie_goal,
     macros: { proteinG: parsed.protein_g, carbG: parsed.carb_g, fatG: parsed.fat_g },
     macroSplit: { proteinPct: split.protein, carbPct: split.carb, fatPct: split.fat },
+    intro: parsed.intro || null,
     slots: parsed.slots.map((s) => ({
       name: s.name,
       kcalTarget: s.kcal_target ?? null,

@@ -36,6 +36,10 @@ export type StructuredPlan = {
   calorieTarget: number | null;
   macros: PlanMacros | null;
   macroSplit: MacroSplit | null;
+  // The personal "Dear {name}" letter that opens Stephanie's real plans (goal-personalized, her
+  // voice). Written by plan-gen; rendered as the plan document's opening. NOTE: the builder does not
+  // edit this field yet, so a builder re-save of a generated plan drops it (known, acceptable).
+  intro: string | null;
   slots: PlanSlot[];
 };
 
@@ -64,7 +68,7 @@ export function starterSlots(): PlanSlot[] {
 }
 
 export function emptyStructuredPlan(): StructuredPlan {
-  return { goal: null, calorieTarget: null, macros: null, macroSplit: null, slots: starterSlots() };
+  return { goal: null, calorieTarget: null, macros: null, macroSplit: null, intro: null, slots: starterSlots() };
 }
 
 // A structured plan is "real" only when it has at least one recipe with a title. An empty scaffold
@@ -165,6 +169,7 @@ export function parseStructuredPlan(v: unknown): StructuredPlan | null {
     calorieTarget: nOrNull(o.calorieTarget),
     macros: macrosOf(o.macros),
     macroSplit: splitOf(o.macroSplit),
+    intro: str(o.intro, 1500).trim() || null,
     slots,
   };
   return hasStructuredContent(plan) ? plan : null;
