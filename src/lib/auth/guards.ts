@@ -3,6 +3,7 @@ import 'server-only';
 import { redirect } from 'next/navigation';
 import { resolveAuth, hasRole, COACH_ROLES, APPROVER_ROLES, type AuthContext } from '@/lib/auth/session';
 import { isEntitled, hasAckedHealth } from '@/lib/billing/entitlement';
+import { isStripeConfigured } from '@/lib/billing/stripe';
 
 export async function requireAuth(): Promise<AuthContext> {
   const ctx = await resolveAuth();
@@ -31,10 +32,14 @@ export async function requireApprover(): Promise<AuthContext> {
 
 // Pay-to-enter gate (defense-in-depth alongside the app layout). Coaches pass by role; everyone else
 // needs an active subscription or a live comp, else they are sent to checkout.
+// CRITICAL: while Stripe is unconfigured (pre-launch), the paywall must NOT fire - checkout cannot
+// complete, so gating on it dead-ended every new self-signup (onboarding -> /dashboard -> /checkout
+// -> notConfigured, with no escape on any later login). Pay-to-enter re-activates automatically the
+// moment the live STRIPE_SECRET_KEY lands; the health-disclaimer gate below applies either way.
 export async function requireEntitled(): Promise<AuthContext> {
   const ctx = await requireAuth();
   if (hasRole(ctx.role, COACH_ROLES)) return ctx;
-  if (!(await isEntitled(ctx.userId))) redirect('/checkout');
+  if (isStripeConfigured() && !(await isEntitled(ctx.userId))) redirect('/checkout');
   // Health / assumption-of-risk disclaimer must be accepted before any training content.
   if (!(await hasAckedHealth(ctx.userId))) redirect('/disclaimer');
   return ctx;

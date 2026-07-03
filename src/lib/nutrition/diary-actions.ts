@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
-import { requireAuth } from '@/lib/auth/guards';
+import { requireAuth, requireEntitled } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite } from '@/lib/nutrition/macros';
 import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
@@ -40,7 +40,9 @@ const TextMealInput = z.string().trim().min(2).max(500);
 export async function parseTextToMacroAction(text: unknown): Promise<PhotoResult> {
   const parsed = TextMealInput.safeParse(text);
   if (!parsed.success) return { status: 'error' };
-  const ctx = await requireAuth();
+  // requireEntitled, not requireAuth: this action spends real model tokens, and a server action is
+  // its own POST endpoint - the page-level paywall does not protect it (matches the photo route).
+  const ctx = await requireEntitled();
   // Cost control: cap text-to-macro AI parses per user so OpenRouter spend stays bounded (fails open).
   if (!(await checkRateLimit(ctx.userId, 'text-to-macro', 30, 300))) return { status: 'error' };
   const locale = await getLocale();
