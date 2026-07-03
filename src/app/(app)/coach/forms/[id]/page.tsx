@@ -12,6 +12,7 @@ type Initial = {
   id?: string;
   title_en: string;
   title_es?: string;
+  type?: string;
   fields: { type: string; label_en: string; label_es?: string; required: boolean }[];
 };
 
@@ -32,6 +33,7 @@ export default async function FormBuilderPage({
         id: loaded.form.id,
         title_en: loaded.form.title_en,
         title_es: loaded.form.title_es ?? undefined,
+        type: loaded.form.type,
         fields: loaded.fields.map((f) => ({
           type: f.type,
           label_en: f.label_en,

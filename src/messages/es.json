@@ -1016,7 +1016,13 @@
       "habitsNone": "Aún no hay hábitos asignados.",
       "habitsAssignPlaceholder": "p. ej. Tomar 3L de agua",
       "habitsAssignCta": "Asignar",
-      "habitsAssignError": "No se guardó. Inténtalo de nuevo."
+      "habitsAssignError": "No se guardó. Inténtalo de nuevo.",
+      "formIsCheckin": "Este es un formulario de check-in (los miembros lo completan en su día de check-in)",
+      "formCheckinTag": "Check-in",
+      "assignFormTo": "Asignar a...",
+      "assignFormCta": "Asignar",
+      "assignFormDone": "Asignado",
+      "assignFormError": "No se pudo asignar"
     },
     "you": {
       "title": "Tú",

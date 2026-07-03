@@ -24,7 +24,7 @@ const BLOCK_TYPES = [
   'measurement',
 ] as const;
 
-type Initial = { id?: string; title_en: string; title_es?: string; fields: Field[] };
+type Initial = { id?: string; title_en: string; title_es?: string; type?: string; fields: Field[] };
 
 const input =
   'border border-line bg-surface px-3.5 py-2.5 text-[14px] text-ink outline-none placeholder:text-faint focus:border-ink';
@@ -34,6 +34,9 @@ export function FormBuilder({ initial }: { initial?: Initial }): ReactElement {
   const [id, setId] = useState<string | undefined>(initial?.id);
   const [titleEn, setTitleEn] = useState(initial?.title_en ?? '');
   const [titleEs, setTitleEs] = useState(initial?.title_es ?? '');
+  // check_in forms power the member check-in loop (assign -> submit -> coach review); the builder
+  // previously never sent a type, so every authored form saved as 'custom' and could not be a check-in.
+  const [isCheckin, setIsCheckin] = useState(initial?.type === 'check_in');
   const [fields, setFields] = useState<Field[]>(initial?.fields ?? []);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
@@ -58,7 +61,13 @@ export function FormBuilder({ initial }: { initial?: Initial }): ReactElement {
     const res = await fetch('/api/forms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, title_en: titleEn, title_es: titleEs || undefined, fields }),
+      body: JSON.stringify({
+        id,
+        title_en: titleEn,
+        title_es: titleEs || undefined,
+        type: isCheckin ? 'check_in' : 'custom',
+        fields,
+      }),
     });
     const json = await res.json().catch(() => null);
     if (res.ok && json?.data?.formId) {
@@ -84,6 +93,10 @@ export function FormBuilder({ initial }: { initial?: Initial }): ReactElement {
       <div className="flex flex-col gap-2">
         <input className={input} placeholder="Title (EN)" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} />
         <input className={input} placeholder="Título (ES)" value={titleEs} onChange={(e) => setTitleEs(e.target.value)} />
+        <label className="flex items-center gap-2 text-[13px] text-muted">
+          <input type="checkbox" checked={isCheckin} onChange={(e) => setIsCheckin(e.target.checked)} />
+          {t('formIsCheckin')}
+        </label>
       </div>
 
       <div className="flex flex-wrap gap-2">

@@ -1016,7 +1016,13 @@
       "habitsNone": "No habits assigned yet.",
       "habitsAssignPlaceholder": "e.g. Drink 3L of water",
       "habitsAssignCta": "Assign",
-      "habitsAssignError": "That didn't save. Try again."
+      "habitsAssignError": "That didn't save. Try again.",
+      "formIsCheckin": "This is a check-in form (members fill it on their check-in day)",
+      "formCheckinTag": "Check-in",
+      "assignFormTo": "Assign to...",
+      "assignFormCta": "Assign",
+      "assignFormDone": "Assigned",
+      "assignFormError": "Could not assign"
     },
     "you": {
       "title": "You",
