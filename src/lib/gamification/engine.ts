@@ -50,6 +50,9 @@ export type RecomputeResult = {
   // Distinct local ISO days (YYYY-MM-DD) the member was active (workout | food log | weight entry),
   // ascending. The home week strip paints these green.
   activeDays: string[];
+  // True when a workout was actually completed on the member's local TODAY (drives the dashboard
+  // today's-workout check; streak>0 was a false signal since any food log kept it green).
+  workoutToday: boolean;
 };
 
 function toBadge(b: DbBadge): Badge {
