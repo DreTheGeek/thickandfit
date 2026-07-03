@@ -3,6 +3,7 @@
 // runs the analyze pipeline, and returns confidence-scored candidates with scaled macros.
 // With no OPENROUTER_API_KEY set it returns { status: 'notConfigured' } and 200 — never crashes.
 import { z } from 'zod';
+import { after } from 'next/server';
 import { getLocale } from 'next-intl/server';
 import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
@@ -64,10 +65,14 @@ export async function POST(req: Request): Promise<Response> {
   });
   // Attribute prod latency: how much is the auth/entitlement/rate-limit gate vs the analyze pipeline.
   console.log(`[photo] gate ${tGate - t0}ms, analyze ${Date.now() - tGate}ms, total ${Date.now() - t0}ms, status ${result.status}`);
-  // Persist the scan image keyed by inference id (fire-and-forget, after the response-critical work):
-  // once the user corrects this scan, image + correction = an automatic gold eval case.
+  // Persist the scan image keyed by inference id: once the user corrects this scan, image +
+  // correction = an automatic gold eval case. after() (not a bare void) because a serverless
+  // function freezes when the response returns; a multi-MB upload started fire-and-forget would
+  // silently die mid-flight. after() keeps the instance alive until the upload settles, and the
+  // response still goes out first (zero p95 impact).
   if ((result.status === 'ok' || result.status === 'product') && result.inferenceId) {
-    void storeScanImage(result.inferenceId, parsed.data.image);
+    const inferenceId = result.inferenceId;
+    after(() => storeScanImage(inferenceId, parsed.data.image));
   }
   return apiSuccess(result);
 }
