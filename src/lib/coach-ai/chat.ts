@@ -168,9 +168,10 @@ export type ChatStreamResult =
 // The graceful "coach not configured" copy, in the member's language. Returned (HTTP 200) when
 // no API key is present so the UI shows a clear state instead of an error.
 export function notConfiguredMessage(locale: CoachLocale): string {
+  // Brand rule: member-facing copy never says "AI"/"IA" - this is Stephanie's coaching, her voice.
   return locale === 'es'
-    ? 'Tu entrenadora con IA todavia no esta configurada. Vuelve pronto, estara lista en breve.'
-    : 'Your AI coach is not configured yet. Check back soon, she will be ready shortly.';
+    ? 'Tu entrenadora todavia esta preparando esta parte. Vuelve pronto, estara lista en breve.'
+    : 'Your coach is still getting this part ready. Check back soon, she will be with you shortly.';
 }
 
 // Runs a chat turn. Persists the user message immediately, then streams the assistant reply,

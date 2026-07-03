@@ -44,7 +44,7 @@ export const COVERAGE: CoverageItem[] = [
   { area: 'Nutrition', name: 'Recipe library + filters', status: 'live', route: '/coach/tool/recipes', connects: ['recipes', 'recipe_ingredients', 'recipe_books'], action: 'Browse / filter / open a recipe', reaction: 'Image grid with macros; detail shows macro ring, ingredients, method' },
   { area: 'Nutrition', name: 'Recipe books', status: 'live', route: '/coach/tool/recipe-books', connects: ['recipe_books', 'recipes'], action: 'Open a book', reaction: 'Filters the recipe browser to that book' },
   { area: 'Nutrition', name: 'Meal plans', status: 'live', route: '/coach/tool/meal-plans', connects: ['meal_plans', 'contacts'], action: 'Search / open a plan', reaction: 'Per-client plan with calorie goal, macro split, meal groups' },
-  { area: 'Nutrition', name: 'Photo-to-macro AI logging', status: 'live', route: '/nutrition', connects: ['OpenRouter/Gemini', 'foods', 'food_log'], action: 'Snap a food photo', reaction: 'AI returns foods + portions + macros + cooked/uncooked with confidence (the #1 differentiator)' },
+  { area: 'Nutrition', name: 'Photo-to-macro logging', status: 'live', route: '/nutrition', connects: ['OpenRouter/Gemini', 'foods', 'food_log'], action: 'Snap a food photo', reaction: 'The scanner returns foods + portions + macros + cooked/uncooked with confidence (the #1 differentiator)' },
 
   // Training
   { area: 'Training', name: 'Program builder', status: 'live', route: '/coach/programs', connects: ['programs', '/api/programs', 'exercises'], action: 'Build / save / assign a program', reaction: 'Day cards, exercise picker, sets/reps; save as template or assign' },
@@ -74,16 +74,16 @@ export const COVERAGE: CoverageItem[] = [
   { area: 'Platform', name: 'App Health + coverage', status: 'live', route: '/coach/health', connects: ['system-health', 'system-map'], action: 'Open App Health', reaction: 'Real service probes, live data counts, and this coverage checklist' },
   { area: 'Platform', name: 'Error monitoring + analytics', status: 'planned', route: null, connects: ['Sentry', 'PostHog'], action: 'Any runtime error / event', reaction: 'Planned: Sentry capture + PostHog product analytics (key-gated)' },
 
-  // AI coach
-  { area: 'AI Coach', name: 'AI coach chat (her voice, RAG)', status: 'live', route: '/coach-chat', connects: ['OpenRouter', 'coach_knowledge', 'pgvector', 'coach_messages'], action: 'Ask the AI coach a question', reaction: 'Streams a grounded answer in Stephanie’s voice from her knowledge base + the member’s logs; medical-claim guardrails' },
-  { area: 'AI Coach', name: 'AI plan generation', status: 'live', route: '/coach-chat', connects: ['plan-gen', 'meal_plans', 'programs'], action: 'Generate a plan from intake', reaction: 'PCOS-aware meal/workout plan from intake + knowledge' },
-  { area: 'AI Coach', name: 'AI nightly insights + gamification', status: 'live', route: '/api/internal/generate-insights', connects: ['user_insights', 'user_streaks', 'user_badges', 'pg_cron'], action: 'Nightly cron', reaction: 'Generates a personalized insight, recomputes streaks, awards badges' },
-  { area: 'AI Coach', name: 'AI cost controls (rate-limit + meter)', status: 'live', route: 'all AI routes', connects: ['ai_usage_log', 'rate-limit'], action: 'Any AI call', reaction: 'Every AI route is rate-limited + metered to ai_usage_log (caps OpenRouter spend)' },
-  { area: 'AI Coach', name: 'AI knowledge base (ingest)', status: 'live', route: '/coach/settings/knowledge', connects: ['coach_knowledge', 'embeddings'], action: 'Ingest method/voice text', reaction: 'Chunks + embeds into the knowledge base feeding the chat context' },
-  { area: 'AI Coach', name: 'AI voice clone', status: 'planned', route: null, connects: ['voice provider'], action: 'AI coach speaks', reaction: 'Phase 3 (PRD-32): cloned voice for the AI coach' },
+  // Coach intelligence
+  { area: 'Coach Intelligence', name: 'Coach chat (her voice, grounded)', status: 'live', route: '/coach-chat', connects: ['OpenRouter', 'coach_knowledge', 'pgvector', 'coach_messages'], action: 'Ask the coach a question', reaction: 'Streams a grounded answer in Stephanie’s voice from her knowledge base + the member’s logs; medical-claim guardrails' },
+  { area: 'Coach Intelligence', name: 'Plan generation', status: 'live', route: '/coach-chat', connects: ['plan-gen', 'meal_plans', 'programs'], action: 'Generate a plan from intake', reaction: 'PCOS-aware meal/workout plan from intake + knowledge' },
+  { area: 'Coach Intelligence', name: 'Nightly insights + gamification', status: 'live', route: '/api/internal/generate-insights', connects: ['user_insights', 'user_streaks', 'user_badges', 'pg_cron'], action: 'Nightly cron', reaction: 'Generates a personalized insight, recomputes streaks, awards badges' },
+  { area: 'Coach Intelligence', name: 'Model cost controls (rate-limit + meter)', status: 'live', route: 'all model routes', connects: ['ai_usage_log', 'rate-limit'], action: 'Any model call', reaction: 'Every model route is rate-limited + metered to ai_usage_log (caps OpenRouter spend)' },
+  { area: 'Coach Intelligence', name: 'Knowledge base (ingest)', status: 'live', route: '/coach/settings/knowledge', connects: ['coach_knowledge', 'embeddings'], action: 'Ingest method/voice text', reaction: 'Chunks + embeds into the knowledge base feeding the chat context' },
+  { area: 'Coach Intelligence', name: 'Voice clone', status: 'planned', route: null, connects: ['voice provider'], action: 'Coach voice speaks', reaction: 'Phase 3 (PRD-32): cloned voice for the coach' },
 
   // Text-to-macro (the headline nutrition differentiator)
-  { area: 'Nutrition', name: 'Text-to-macro logging', status: 'live', route: '/nutrition', connects: ['OpenRouter', 'foods', 'food_log', 'text-parse'], action: 'Type a meal in natural language', reaction: 'AI parses items + portions into a confirmable macro preview, then logs (kills the ChatGPT-screenshot workflow)' },
+  { area: 'Nutrition', name: 'Text-to-macro logging', status: 'live', route: '/nutrition', connects: ['OpenRouter', 'foods', 'food_log', 'text-parse'], action: 'Type a meal in natural language', reaction: 'The parser turns items + portions into a confirmable macro preview, then logs (kills the ChatGPT-screenshot workflow)' },
 
   // Access / entitlement
   { area: 'Billing', name: 'Entitlement + paywall', status: 'live', route: '(app) layout', connects: ['subscriptions', 'profiles.comp_access_until', 'isEntitled'], action: 'Open the app un-paid', reaction: 'Hard wall to /checkout unless an active sub OR a live coach-granted comp; comped (free) users in; comp/sub expiry auto-locks' },

@@ -1,19 +1,22 @@
-// Nightly insight engine endpoint. Triggered by Vercel Cron (or any caller with CRON_SECRET).
-// Secret-gated, runs as the service role. For each active subscriber it extracts a 30-day coaching
-// snapshot (claude-sonnet-4-6 when keyed, deterministic rollups otherwise) and upserts user_insights.
-// Idempotent per (profile_id, generated_at). Logs each run to cron_job_log. Mirrors ghl-sync/route.ts.
+// Nightly insight engine endpoint. Triggered by pg_cron via net.http_post (POST) with the
+// CRON_SECRET bearer; also callable as GET for manual verification. Secret-gated, runs as the
+// service role. For each active subscriber it extracts a 30-day coaching snapshot and upserts
+// user_insights. Idempotent per (profile_id, generated_at). Logs each run to cron_job_log.
+// NOTE: this route was GET-only while the registered pg_cron job POSTs - the nightly run would have
+// 405'd forever. Both methods now run; auth uses the timing-safe compare like every sibling route.
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { safeEqual } from '@/lib/api/auth';
 import { generateAllInsights } from '@/lib/coach-ai/insights';
 import { recomputeAllGamification } from '@/lib/gamification/batch';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+async function run(req: NextRequest): Promise<NextResponse> {
   const secret = process.env.CRON_SECRET;
   const auth = req.headers.get('authorization');
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!secret || !safeEqual(auth, `Bearer ${secret}`)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
@@ -36,4 +39,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   });
 
   return NextResponse.json({ insights: result, gamification }, { status: result.ok ? 200 : 500 });
+}
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  return run(req);
+}
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  return run(req);
 }

@@ -116,7 +116,8 @@
       "save": "Guardar",
       "theme_light": "Claro",
       "theme_dark": "Oscuro",
-      "theme_system": "Sistema"
+      "theme_system": "Sistema",
+      "language": "Idioma"
     },
     "today": {
       "greeting": "Hola {name}",
@@ -294,7 +295,7 @@
       "target": "Objetivo",
       "front": "Frente",
       "back": "Espalda",
-      "firstSet": "Primera vez — marca tu base",
+      "firstSet": "Primera vez: marca tu base",
       "plusReps": "+{n, plural, one {# rep} other {# reps}}",
       "enjoymentLabel": "¿Cómo te sentiste?",
       "enjoymentLow": "Dura",

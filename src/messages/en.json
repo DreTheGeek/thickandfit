@@ -116,7 +116,8 @@
       "save": "Save",
       "theme_light": "Light",
       "theme_dark": "Dark",
-      "theme_system": "System"
+      "theme_system": "System",
+      "language": "Language"
     },
     "today": {
       "greeting": "Hey {name}",
@@ -294,7 +295,7 @@
       "target": "Target",
       "front": "Front",
       "back": "Back",
-      "firstSet": "First set — set your baseline",
+      "firstSet": "First set: set your baseline",
       "plusReps": "+{n, plural, one {# rep} other {# reps}}",
       "enjoymentLabel": "How did it feel?",
       "enjoymentLow": "Rough",
@@ -1003,7 +1004,7 @@
       "interviewError": "Could not save",
       "interviewTeaches": "Teaches your coach:",
       "interviewCardTitle": "Train your coach",
-      "interviewCardHint": "Answer a guided interview about how you coach. It trains the knowledge base your AI coach + plans run on.",
+      "interviewCardHint": "Answer a guided interview about how you coach. It trains the knowledge base your coaching assistant + plans run on.",
       "compTitle": "Complimentary access",
       "compActiveUntil": "Free access active until {date}",
       "compRevoke": "Revoke",
