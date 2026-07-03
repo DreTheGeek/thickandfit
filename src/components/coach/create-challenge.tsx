@@ -4,7 +4,10 @@ import { useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { createChallengeAction } from '@/lib/community/challenge-actions';
 
-const METRICS = ['workouts', 'steps', 'water', 'points'] as const;
+// Only metrics with a REAL data source: workouts counts workout_logs, logs counts distinct diary
+// days. steps/water/points had no source (boards stayed 0 forever) so they are no longer offered;
+// they return when wearables/hydration tracking exist.
+const METRICS = ['workouts', 'logs'] as const;
 
 export function CreateChallenge(): ReactElement {
   const router = useRouter();

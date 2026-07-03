@@ -21,7 +21,9 @@ export type CoachChallenge = {
 
 const CreateInput = z.object({
   title: z.string().trim().min(2).max(120),
-  metric: z.enum(['workouts', 'steps', 'water', 'points']).default('workouts'),
+  // Only metrics challenge-progress.ts can actually compute (workouts = workout_logs count, logs =
+  // distinct diary days). steps/water/points return when their data sources exist.
+  metric: z.enum(['workouts', 'logs']).default('workouts'),
   goal: z.number().int().positive().max(1_000_000).nullable().optional(),
   startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

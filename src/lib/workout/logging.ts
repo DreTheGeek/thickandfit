@@ -4,7 +4,9 @@ import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { recommendNext, type SetResult, type RepRange } from '@/lib/overload/recommend';
 import { explainRecommendation } from '@/lib/overload/explain';
+import { after } from 'next/server';
 import { emitEvent } from '@/lib/events/emit';
+import { recomputeChallengeProgressForProfile } from '@/lib/community/challenge-progress';
 
 const setSchema = z.object({
   exercise_id: z.string().uuid(),
@@ -72,6 +74,15 @@ export async function saveWorkoutLog(
       completion_pct: input.completion_pct ?? null,
     },
   });
+
+  // Live leaderboard: refresh this member's progress on any active 'workouts' challenge they joined.
+  // after() so it survives the frozen lambda without delaying the response; try/catch because after()
+  // is unavailable outside a request scope (tests, scripts) - fall back to a plain floating call.
+  try {
+    after(() => recomputeChallengeProgressForProfile(companyId, profileId));
+  } catch {
+    void recomputeChallengeProgressForProfile(companyId, profileId);
+  }
 
   return { workoutLogId: log.id, setsLogged: input.sets.length };
 }

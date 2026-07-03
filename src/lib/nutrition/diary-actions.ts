@@ -8,8 +8,20 @@ import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite } from '@/lib/nutrition/macros';
 import { searchFoods, getFoodDetail, lookupFoodByBarcode, type FoodDetail } from '@/lib/nutrition/foods';
 import { analyzeMealText } from '@/lib/nutrition/text-parse';
+import { after } from 'next/server';
 import { recordItemOutcome } from '@/lib/ai/inferences';
 import { emitEvent } from '@/lib/events/emit';
+import { recomputeChallengeProgressForProfile } from '@/lib/community/challenge-progress';
+
+// Live leaderboard refresh for 'logs' challenges after a diary write; after() survives the frozen
+// lambda, with a plain floating fallback outside a request scope.
+function refreshChallenges(companyId: string, profileId: string): void {
+  try {
+    after(() => recomputeChallengeProgressForProfile(companyId, profileId));
+  } catch {
+    void recomputeChallengeProgressForProfile(companyId, profileId);
+  }
+}
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 import { localDay } from '@/lib/datetime/local-day';
@@ -133,6 +145,7 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
         source: parsed.data.source ?? 'search',
       },
     });
+    refreshChallenges(ctx.companyId, ctx.userId);
   }
   revalidatePath('/nutrition');
   return { ok: true };
@@ -276,6 +289,7 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
         },
       });
     }
+    refreshChallenges(ctx.companyId, ctx.userId);
   }
   // Feed the learning loop: merge this item's outcome onto the scan's inference row. ALWAYS recorded
   // when the log links to an inference: a correction (grams and/or identity) is supervision, and an

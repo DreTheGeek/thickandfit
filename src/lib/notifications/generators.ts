@@ -10,6 +10,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { createNotificationsBulk } from '@/lib/notifications/create';
 import { asNotifLocale, notifText, type NotifLocale } from '@/lib/notifications/i18n';
 import { localHour } from '@/lib/datetime/local-day';
+import { recomputeChallengeBoard } from '@/lib/community/challenge-progress';
 import type { NotificationPayload } from '@/lib/notifications/types';
 
 export type GeneratorResult = {
@@ -302,6 +303,9 @@ export async function finalizeEndedChallenges(): Promise<GeneratorResult> {
 
   let notified = 0;
   for (const ch of challenges) {
+    // Rank on REAL numbers: stored progress only refreshes on live activity hooks, so recompute the
+    // whole board from workout/food logs before picking a winner (it was 0-forever before this).
+    await recomputeChallengeBoard(ch.id);
     const { data: partData } = await svc
       .from('challenge_participants')
       .select('profile_id, progress, profiles!inner ( ui_locale, full_name )')
