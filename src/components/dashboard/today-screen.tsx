@@ -342,7 +342,7 @@ export function TodayScreen({
         }
         title={workoutTitle}
         sub={workoutSub}
-        trailing={<CompletionCheck done={summary.streak > 0} />}
+        trailing={<CompletionCheck done={summary.todaysWorkout?.done ?? false} />}
       />
 
       {/* Your habits (canonical card with a done count) */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useTransition, type ReactElement } from 'react';
+import { useOptimistic, useRef, useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
@@ -177,19 +177,18 @@ function Composer({ canBroadcast, viewerId }: { canBroadcast: boolean; viewerId:
 function ReactionBar({ post }: { post: FeedPost }): ReactElement {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [local, setLocal] = useState(post.reactions);
+  // useOptimistic (base = the server prop) instead of a one-time useState seed: a failed action or a
+  // concurrent refresh now auto-resyncs to the server truth (the old seed never reverted on failure).
+  const [local, applyOptimistic] = useOptimistic(post.reactions, (state, emoji: ReactionEmoji) =>
+    state.map((r) =>
+      r.emoji === emoji ? { ...r, reacted: !r.reacted, count: r.count + (r.reacted ? -1 : 1) } : r,
+    ),
+  );
 
   function toggle(emoji: ReactionEmoji): void {
     if (pending) return;
-    // Optimistic flip; the server is the source of truth on refresh.
-    setLocal((prev) =>
-      prev.map((r) =>
-        r.emoji === emoji
-          ? { ...r, reacted: !r.reacted, count: r.count + (r.reacted ? -1 : 1) }
-          : r,
-      ),
-    );
     start(async () => {
+      applyOptimistic(emoji);
       await toggleReactionAction({ postId: post.id, emoji });
       router.refresh();
     });

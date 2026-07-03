@@ -27,12 +27,17 @@ export function FormRenderer({
   async function onSubmit(e: FormEvent): Promise<void> {
     e.preventDefault();
     setState('loading');
-    const res = await fetch(`/api/forms/${formId}/submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers }),
-    });
-    setState(res.ok ? 'success' : 'error');
+    // A rejected fetch (offline, network blip) previously left the form stuck on 'loading' forever.
+    try {
+      const res = await fetch(`/api/forms/${formId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers }),
+      });
+      setState(res.ok ? 'success' : 'error');
+    } catch {
+      setState('error');
+    }
   }
 
   if (state === 'success') {

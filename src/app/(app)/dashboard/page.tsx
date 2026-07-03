@@ -89,7 +89,10 @@ export default async function DashboardPage(): Promise<ReactElement> {
       const goalLb = Math.round(a.goalWeightKg * KG_TO_LB);
       const currentLb = lw ? Math.round(Number(lw.weight_kg) * KG_TO_LB) : startLb;
       const span = Math.abs(startLb - goalLb) || 1;
-      const pct = Math.min(100, Math.round((Math.abs(currentLb - startLb) / span) * 100));
+      // Directional progress: only movement TOWARD the goal counts (abs() made moving away from the
+      // goal fill the bar too). Clamped 0-100.
+      const toward = (currentLb - startLb) * Math.sign(goalLb - startLb);
+      const pct = Math.max(0, Math.min(100, Math.round((toward / span) * 100)));
       weightGoal = { startLb, currentLb, goalLb, pct };
     }
   }

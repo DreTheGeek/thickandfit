@@ -356,5 +356,7 @@ export async function recomputeGamification(
     totalCount: badgeStatuses.length,
   };
 
-  return { snapshot, newlyEarnedKeys, activeDays: activeAsc };
+  // workoutToday drives the dashboard's "today's workout" check: it must reflect an ACTUAL workout
+  // completion today, not streak>0 (any food/weight log kept the old check green all day).
+  return { snapshot, newlyEarnedKeys, activeDays: activeAsc, workoutToday: workoutDays.has(today) };
 }

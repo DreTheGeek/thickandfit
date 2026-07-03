@@ -8,7 +8,7 @@ export type DashboardSummary = {
   hasOnboarded: boolean;
   macros: { calories: number; protein_g: number; carbs_g: number; fat_g: number } | null;
   streak: number;
-  todaysWorkout: { name: string } | null;
+  todaysWorkout: { name: string; done: boolean } | null;
   recentActivity: { label: string; at: string }[];
   // Active weight plateau from the latest nightly insight (null when not flat / no insights yet).
   // Drives the dismissible dashboard banner. Deterministic; populated by the insight engine.
@@ -82,10 +82,12 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
   // badges + fires any newly-earned confetti). Degrades to 0 on any failure, never blocks the home.
   let streak = 0;
   let activeDays: string[] = [];
+  let workoutToday = false;
   try {
     const gam = await recomputeGamification(userId, companyId);
     streak = gam.snapshot.streak.currentStreak;
     activeDays = gam.activeDays;
+    workoutToday = gam.workoutToday;
   } catch (e) {
     console.error('dashboard streak:', e instanceof Error ? e.message : e);
   }
@@ -94,7 +96,7 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
     hasOnboarded: Boolean(onb),
     macros,
     streak,
-    todaysWorkout: planName ? { name: planName } : null,
+    todaysWorkout: planName ? { name: planName, done: workoutToday } : null,
     recentActivity: [],
     plateau,
     pace,
