@@ -132,7 +132,7 @@ typecheck, lint (PostToolUse). Exit 2 blocks the write. Never disable a hook to 
 ## Secret Rotation Log
 | Secret | Rotated | By | Notes |
 |---|---|---|---|
-| (none yet) | | | 90-day cycle for keys |
+| CRON_SECRET | 2026-07-03 | Claude (launch hardening) | rotated to align Vercel prod + pg_cron registrations; old value unrecoverable (encrypted) |
 
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
