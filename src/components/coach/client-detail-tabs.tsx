@@ -10,13 +10,20 @@ import { RecipeImage } from '@/components/coach/recipe-image';
 import { formatCents } from '@/components/coach/money';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
-type Tab = 'overview' | 'health' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
+type Tab = 'overview' | 'health' | 'messages' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
 
 function fmtDate(value: string | null, locale: string): string {
   if (!value) return '-';
   const d = new Date(`${value}T00:00:00`);
   if (Number.isNaN(d.getTime())) return '-';
   return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(d);
+}
+
+function fmtDateTime(value: string | null, locale: string): string {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '-';
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(d);
 }
 
 function fmtBytes(b: number | null): string {
@@ -56,6 +63,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
   const options: TabOption<Tab>[] = [
     { value: 'overview', label: t('tabOverview') },
     ...(hasHealth ? [{ value: 'health' as Tab, label: t('tabHealth') }] : []),
+    ...(detail.totalMessages > 0 ? [{ value: 'messages' as Tab, label: `${t('tabMessages')} (${detail.totalMessages})` }] : []),
     { value: 'billing', label: t('tabBilling') },
     { value: 'payments', label: t('tabPayments') },
     { value: 'nutrition', label: t('tabNutrition') },
@@ -168,24 +176,28 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
           {(detail.progress.weights.length > 0 || detail.progress.measures.length > 0) && (
             <Section title={t('progressHistory')}>
               {detail.progress.weights.length > 0 && (() => {
-                const w = detail.progress.weights;
-                const first = w[0];
-                const last = w[w.length - 1];
-                const delta = last.kg - first.kg;
+                const w = detail.progress.weights; // chronological (oldest->newest of loaded window)
+                const last = w[w.length - 1]; // newest, so genuinely the latest
+                const baseline = detail.progress.weightStartKg ?? w[0].kg; // true first weigh-in
+                const delta = last.kg - baseline;
                 return (
                   <>
-                    <Row label={t('progressWeighIns')} value={`${w.length}`} />
+                    <Row label={t('progressWeighIns')} value={`${detail.progress.weightCount}`} />
+                    {detail.progress.weightStartKg != null && <Row label={t('progressStartWeight')} value={`${baseline.toFixed(1)} kg`} />}
                     <Row label={t('progressLatestWeight')} value={`${last.kg.toFixed(1)} kg (${fmtDate(last.on, locale)})`} />
                     <Row label={t('progressChange')} value={<span className={delta <= 0 ? 'text-good-ink' : 'text-ink'}>{delta >= 0 ? '+' : ''}{delta.toFixed(1)} kg</span>} />
                   </>
                 );
               })()}
-              {detail.progress.measures.length > 0 && <Row label={t('progressMeasurements')} value={`${detail.progress.measures.length}`} />}
+              {detail.progress.measureCount > 0 && <Row label={t('progressMeasurements')} value={`${detail.progress.measureCount}`} />}
               {detail.progress.foodDays > 0 && <Row label={t('progressFoodLogs')} value={`${detail.progress.foodDays}`} />}
             </Section>
           )}
           {detail.progress.photos.length > 0 && (
-            <Section title={`${t('progressPhotos')} (${detail.progress.photos.length})`}>
+            <Section title={`${t('progressPhotos')} (${detail.progress.photoCount})`}>
+              {detail.progress.photoCount > detail.progress.photos.length && (
+                <p className="py-1 text-[11px] text-faint">{t('messagesShowingRecent', { shown: detail.progress.photos.length, total: detail.progress.photoCount })}</p>
+              )}
               <div className="grid grid-cols-3 gap-2 py-2 sm:grid-cols-4">
                 {detail.progress.photos.map((p, i) => (
                   <a key={i} href={p.url} target="_blank" rel="noreferrer" className="tf-press block overflow-hidden rounded-xl border border-line">
@@ -197,6 +209,54 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               </div>
             </Section>
           )}
+        </div>
+      )}
+
+      {tab === 'messages' && (
+        <div className="flex flex-col gap-3">
+          {detail.totalMessages > detail.messages.length && (
+            <p className="rounded-xl border border-line bg-warm/40 px-4 py-2.5 text-center text-[12px] text-muted">
+              {t('messagesShowingRecent', { shown: detail.messages.length, total: detail.totalMessages })}
+            </p>
+          )}
+          <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
+            {[...detail.messages].reverse().map((m) => (
+              <div key={m.id} className={`flex ${m.isFromCoach ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 ${m.isFromCoach ? 'bg-ink text-surface' : 'bg-warm text-ink'}`}>
+                  <div className={`mb-0.5 flex items-center gap-2 text-[10px] ${m.isFromCoach ? 'text-surface/70' : 'text-faint'}`}>
+                    <span className="font-semibold">{m.isFromCoach ? (m.senderName ?? t('messageCoach')) : detail.name}</span>
+                    <span>{fmtDateTime(m.sentAt, locale)}</span>
+                    {m.type && m.type !== 'custom' && <span className="rounded-full bg-black/10 px-1.5 py-px capitalize">{m.type}</span>}
+                  </div>
+                  {m.body && <p className="whitespace-pre-wrap break-words text-[13px] leading-snug">{m.body}</p>}
+                  {(m.attachments.length > 0 || m.attachmentCount > 0) && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {m.attachments.map((a, i) => (
+                        <a key={i} href={a.url} target="_blank" rel="noreferrer" className="tf-press block">
+                          {a.kind === 'image' ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={a.url} alt={a.name ?? ''} className="h-24 w-24 rounded-lg object-cover" loading="lazy" />
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-black/10 px-2 py-1 text-[11px]">
+                              <Icon name="download" className="h-3 w-3" />
+                              {a.name ?? t('messageAttachment')}
+                            </span>
+                          )}
+                        </a>
+                      ))}
+                      {/* attachments that exist but are not yet downloadable still get a marker so nothing looks lost */}
+                      {Array.from({ length: Math.max(0, m.attachmentCount - m.attachments.length) }).map((_, i) => (
+                        <span key={`ph-${i}`} className="inline-flex items-center gap-1 rounded-lg bg-black/10 px-2 py-1 text-[11px] opacity-70">
+                          <Icon name="paperclip" className="h-3 w-3" />
+                          {t('messageAttachment')}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

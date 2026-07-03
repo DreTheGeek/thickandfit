@@ -357,26 +357,33 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     dietary_exclusions: string[] | null; training_experience: string | null; bad_habits: string | null; questionnaire_filled_at: string | null;
   };
   const ir = intakeRow as IntakeRaw | null;
+  // Postgres numeric arrives as a string via PostgREST; coerce every numeric or .toFixed() crashes.
+  const nn = (v: number | string | null): number | null => (v == null ? null : Number(v));
   const intake = ir
     ? {
-        sex: ir.sex, birthDate: ir.birth_date, heightCm: ir.height_cm, startingWeightKg: ir.starting_weight_kg,
-        goalType: ir.goal_type, targetWeightKg: ir.target_weight_kg, bmr: ir.bmr, calorieGoalKcal: ir.calorie_goal_kcal,
+        sex: ir.sex, birthDate: ir.birth_date, heightCm: nn(ir.height_cm), startingWeightKg: nn(ir.starting_weight_kg),
+        goalType: ir.goal_type, targetWeightKg: nn(ir.target_weight_kg), bmr: nn(ir.bmr), calorieGoalKcal: nn(ir.calorie_goal_kcal),
         injuries: ir.injuries, injuriesDescription: ir.injuries_description, medicalConditions: ir.medical_conditions,
         dietaryExclusions: ir.dietary_exclusions, trainingExperience: ir.training_experience, badHabits: ir.bad_habits,
         questionnaireFilledAt: ir.questionnaire_filled_at,
       }
     : null;
 
-  const [{ data: wRows }, { data: mRows }, { data: pRows }, { count: foodDays }] = await Promise.all([
-    sb.from('weight_entries').select('recorded_on, weight_kg').eq('contact_id', contactId).order('recorded_on', { ascending: true }).limit(120),
-    sb.from('body_measurements').select('recorded_on, waist_cm, hips_cm, chest_cm, arms_cm, thighs_cm').eq('contact_id', contactId).order('recorded_on', { ascending: true }).limit(120),
-    sb.from('progress_photos').select('storage_path, taken_on, pose_source').eq('contact_id', contactId).order('taken_on', { ascending: false }).limit(24),
+  // Load the MOST RECENT window (desc + reverse to chronological) so "latest" is truly latest, plus the
+  // exact totals and the true first weigh-in, so the coach never sees a stale value labeled current.
+  const [{ data: wRows, count: weightCount }, { data: mRows, count: measureCount }, { data: pRows, count: photoCount }, { data: wFirst }, { count: foodDays }] = await Promise.all([
+    sb.from('weight_entries').select('recorded_on, weight_kg', { count: 'exact' }).eq('contact_id', contactId).order('recorded_on', { ascending: false }).limit(120),
+    sb.from('body_measurements').select('recorded_on, waist_cm, hips_cm, chest_cm, arms_cm, thighs_cm', { count: 'exact' }).eq('contact_id', contactId).order('recorded_on', { ascending: false }).limit(120),
+    sb.from('progress_photos').select('storage_path, taken_on, pose_source', { count: 'exact' }).eq('contact_id', contactId).order('taken_on', { ascending: false }).limit(60),
+    sb.from('weight_entries').select('weight_kg').eq('contact_id', contactId).order('recorded_on', { ascending: true }).limit(1),
     sb.from('food_log').select('log_date', { count: 'exact', head: true }).eq('contact_id', contactId),
   ]);
-  const weights = ((wRows ?? []) as { recorded_on: string; weight_kg: number }[]).map((w) => ({ on: w.recorded_on, kg: Number(w.weight_kg) }));
-  const measures = ((mRows ?? []) as { recorded_on: string; waist_cm: number | null; hips_cm: number | null; chest_cm: number | null; arms_cm: number | null; thighs_cm: number | null }[]).map((m) => ({
-    on: m.recorded_on, waist: m.waist_cm, hips: m.hips_cm, chest: m.chest_cm, arms: m.arms_cm, thighs: m.thighs_cm,
-  }));
+  const weights = (((wRows ?? []) as { recorded_on: string; weight_kg: number }[]).map((w) => ({ on: w.recorded_on, kg: Number(w.weight_kg) }))).reverse();
+  const nnn = (v: number | string | null): number | null => (v == null ? null : Number(v));
+  const measures = (((mRows ?? []) as { recorded_on: string; waist_cm: number | null; hips_cm: number | null; chest_cm: number | null; arms_cm: number | null; thighs_cm: number | null }[]).map((m) => ({
+    on: m.recorded_on, waist: nnn(m.waist_cm), hips: nnn(m.hips_cm), chest: nnn(m.chest_cm), arms: nnn(m.arms_cm), thighs: nnn(m.thighs_cm),
+  }))).reverse();
+  const weightStartKg = nnn((((wFirst ?? []) as { weight_kg: number }[])[0]?.weight_kg) ?? null);
   // Sign each migrated photo (private bucket) for a short-lived coach view.
   const photoRaw = (pRows ?? []) as { storage_path: string; taken_on: string; pose_source: string | null }[];
   const signed = await Promise.all(
@@ -386,7 +393,45 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     }),
   );
   const photos = signed.filter((p): p is { url: string; on: string; pose: string | null } => p != null);
-  const progress = { weights, measures, photos, foodDays: foodDays ?? 0 };
+  const progress = {
+    weights, weightCount: weightCount ?? weights.length, weightStartKg,
+    measures, measureCount: measureCount ?? measures.length,
+    photos, photoCount: photoCount ?? photos.length,
+    foodDays: foodDays ?? 0,
+  };
+
+  // Migrated conversation history: most recent 200 messages + full count.
+  const { count: totalMessages } = await sb
+    .from('client_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('contact_id', contactId);
+  const { data: msgRows } = await sb
+    .from('client_messages')
+    .select('id, is_from_coach, sender_name, body, msg_type, sent_at, attachments')
+    .eq('contact_id', contactId)
+    .order('sent_at', { ascending: false })
+    .limit(200);
+  type MsgRaw = { id: string; is_from_coach: boolean; sender_name: string | null; body: string | null; msg_type: string | null; sent_at: string; attachments: { name: string | null; kind: string | null; storage_path: string | null }[] | null };
+  const messages = await Promise.all(
+    ((msgRows ?? []) as MsgRaw[]).map(async (m) => {
+      const atts = await Promise.all(
+        (m.attachments ?? []).filter((a) => a.storage_path).map(async (a) => {
+          const { data: s } = await sb.storage.from('chat-attachments').createSignedUrl(a.storage_path as string, 3600);
+          return s?.signedUrl ? { url: s.signedUrl, name: a.name, kind: a.kind } : null;
+        }),
+      );
+      return {
+        id: m.id,
+        isFromCoach: m.is_from_coach,
+        senderName: m.sender_name,
+        body: m.body,
+        type: m.msg_type,
+        sentAt: m.sent_at,
+        attachments: atts.filter((a): a is { url: string; name: string | null; kind: string | null } => a != null),
+        attachmentCount: (m.attachments ?? []).length,
+      };
+    }),
+  );
 
   const t = await getTranslations('app.coach');
   const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || t('noName');
@@ -446,5 +491,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     files,
     intake,
     progress,
+    messages,
+    totalMessages: totalMessages ?? 0,
   };
 }

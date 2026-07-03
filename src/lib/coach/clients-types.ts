@@ -155,11 +155,29 @@ export type ClientDetail = {
   // Migrated-from-Lenus health profile + progress history (null / empty for non-migrated clients).
   intake: ClientIntake | null;
   progress: {
-    weights: { on: string; kg: number }[];
+    weights: { on: string; kg: number }[]; // chronological (oldest->newest of the loaded window)
+    weightCount: number; // true total weigh-ins
+    weightStartKg: number | null; // the very first weigh-in (accurate net-change baseline)
     measures: { on: string; waist: number | null; hips: number | null; chest: number | null; arms: number | null; thighs: number | null }[];
+    measureCount: number;
     photos: { url: string; on: string; pose: string | null }[];
+    photoCount: number; // true total photos
     foodDays: number;
   };
+  // Migrated coach<->client conversation history (most recent first). totalMessages is the full count.
+  messages: ClientMessage[];
+  totalMessages: number;
+};
+
+export type ClientMessage = {
+  id: string;
+  isFromCoach: boolean;
+  senderName: string | null;
+  body: string | null;
+  type: string | null;
+  sentAt: string;
+  attachments: { url: string; name: string | null; kind: string | null }[];
+  attachmentCount: number; // total attachments on the message (incl. any not yet downloadable)
 };
 
 export type ClientIntake = {
