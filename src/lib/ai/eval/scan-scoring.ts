@@ -37,6 +37,15 @@ const STOP = new Set([
   'cocido', 'cocida', 'crudo', 'cruda', 'seco', 'seca', 'a', 'de', 'la', 'el', 'and', 'with', 'con', 'of',
 ]);
 
+// Light singularization so "breadsticks" matches "breadstick" and "tortillas" matches "tortilla".
+// Deliberately minimal English/Spanish plural stripping (no stemming library: deterministic + pure).
+function singular(w: string): string {
+  if (w.length > 4 && w.endsWith('ies')) return `${w.slice(0, -3)}y`; // berries -> berry
+  if (w.length > 3 && w.endsWith('es') && !w.endsWith('ees')) return w.slice(0, -2); // tomatoes -> tomato
+  if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1); // eggs -> egg
+  return w;
+}
+
 export function normalizeFoodName(name: string): string[] {
   return name
     .toLowerCase()
@@ -44,7 +53,8 @@ export function normalizeFoodName(name: string): string[] {
     .replace(/[̀-ͯ]/g, '') // strip accents so "platano" matches "plátano"
     .replace(/[^a-z0-9\s]/gi, ' ')
     .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP.has(w));
+    .filter((w) => w.length > 2 && !STOP.has(w))
+    .map(singular);
 }
 
 function jaccard(a: string[], b: string[]): number {
@@ -96,7 +106,14 @@ export function scoreCase(
 ): CaseScore {
   const kindMatch = expected.kind === actualKind;
   const pairs = kindMatch ? matchItems(expected.items, predicted) : [];
-  const precision = predicted.length ? pairs.length / predicted.length : 0;
+  // The scan prompt REQUIRES a hidden "cooking oil" item on pan-fried/roasted plates. Labels rarely
+  // include it, so an unmatched predicted cooking-oil must not count as a false positive (that would
+  // double-punish mandated behavior). It still matches normally when the label DOES include oil.
+  const matchedPredicted = new Set(pairs.map((p) => p.predicted));
+  const effectivePredicted = predicted.filter(
+    (p) => matchedPredicted.has(p.name) || !/\b(cooking |)oil\b/i.test(p.name),
+  );
+  const precision = effectivePredicted.length ? pairs.length / effectivePredicted.length : 0;
   const recall = expected.items.length ? pairs.length / expected.items.length : 0;
   const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
   const mape = pairs.length
