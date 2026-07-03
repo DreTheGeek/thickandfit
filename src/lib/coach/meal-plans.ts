@@ -21,6 +21,7 @@ type PlanRaw = {
   split_protein_pct: number | null;
   split_carb_pct: number | null;
   split_fat_pct: number | null;
+  is_template: boolean | null;
   plan_jsonb: unknown;
   structured: unknown;
   notes: string | null;
@@ -40,6 +41,7 @@ function mapRow(p: PlanRaw): MealPlanRow {
     id: p.id,
     name: p.name,
     clientName: clientName(one(p.contact)),
+    isTemplate: p.is_template === true,
     calorieGoal: p.calorie_goal,
     proteinG: p.protein_g,
     carbG: p.carb_g,
@@ -50,7 +52,7 @@ function mapRow(p: PlanRaw): MealPlanRow {
 }
 
 const COLS =
-  'id, name, calorie_goal, protein_g, carb_g, fat_g, macro_timing_name, num_meal_groups, split_protein_pct, split_carb_pct, split_fat_pct, contact:contacts(first_name, last_name, email)';
+  'id, name, calorie_goal, protein_g, carb_g, fat_g, macro_timing_name, num_meal_groups, split_protein_pct, split_carb_pct, split_fat_pct, is_template, contact:contacts(first_name, last_name, email)';
 
 export async function getMealPlansPage(companyId: string, filters: MealPlanFilters): Promise<MealPlansPage> {
   const sb = createServiceClient();
@@ -113,6 +115,7 @@ function detailFrom(p: PlanRaw): MealPlanDetail {
     id: base.id,
     name: base.name,
     clientName: base.clientName,
+    isTemplate: base.isTemplate,
     calorieGoal: base.calorieGoal,
     proteinG: base.proteinG,
     carbG: base.carbG,

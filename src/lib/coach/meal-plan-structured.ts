@@ -101,22 +101,34 @@ function stepsOf(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
   return v.map((s) => str(s, 1200)).filter((s) => s.trim().length > 0);
 }
-function recipeOf(v: unknown): PlanRecipe | null {
+function recipeOf(v: unknown, index: number): PlanRecipe | null {
   if (!v || typeof v !== 'object') return null;
   const o = v as Record<string, unknown>;
-  const title = str(o.title, 160).trim();
-  if (!title) return null;
   const note = str(o.note, 600).trim();
+  const macros = macrosOf(o.macros);
+  const ingredients = ingredientsOf(o.ingredients);
+  const spices = ingredientsOf(o.spices);
+  const steps = stepsOf(o.steps);
+  let title = str(o.title, 160).trim();
+  if (!title) {
+    // A blank title with authored content (ingredients, steps, tip, or non-zero macros) is a recipe
+    // the coach wrote but never named; default the name instead of silently dropping their work.
+    // All-zero macros do not count as content: blank builder scaffolds carry {0,0,0} by default.
+    const hasMacros = macros != null && (macros.proteinG !== 0 || macros.carbG !== 0 || macros.fatG !== 0);
+    const hasContent = ingredients.length > 0 || spices.length > 0 || steps.length > 0 || note.length > 0 || hasMacros;
+    if (!hasContent) return null;
+    title = `Recipe ${index + 1}`;
+  }
   return {
     title,
     prepMin: nOrNull(o.prepMin),
     cookMin: nOrNull(o.cookMin),
     kcal: nOrNull(o.kcal),
-    macros: macrosOf(o.macros),
-    ingredients: ingredientsOf(o.ingredients),
-    spices: ingredientsOf(o.spices),
+    macros,
+    ingredients,
+    spices,
     note: note || null,
-    steps: stepsOf(o.steps),
+    steps,
   };
 }
 function slotOf(v: unknown): PlanSlot | null {
@@ -124,7 +136,7 @@ function slotOf(v: unknown): PlanSlot | null {
   const o = v as Record<string, unknown>;
   const name = str(o.name, 80).trim();
   const recipes = Array.isArray(o.recipes)
-    ? o.recipes.map(recipeOf).filter((r): r is PlanRecipe => r != null)
+    ? o.recipes.map((r, i) => recipeOf(r, i)).filter((r): r is PlanRecipe => r != null)
     : [];
   if (!name && recipes.length === 0) return null;
   return { name, kcalTarget: nOrNull(o.kcalTarget), recipes };

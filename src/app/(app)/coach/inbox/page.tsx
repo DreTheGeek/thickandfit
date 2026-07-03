@@ -1,6 +1,7 @@
 // Coach inbox: client threads on the left, the selected conversation on the right (live via Realtime).
 import type { ReactElement } from 'react';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { getThreads, getThread } from '@/lib/messages/messages';
 import { markThreadReadAction } from '@/lib/messages/message-actions';
@@ -14,6 +15,7 @@ export default async function CoachInboxPage({
   searchParams: Promise<{ c?: string }>;
 }): Promise<ReactElement> {
   const ctx = await requireCoach();
+  const t = await getTranslations('app.coach');
   const sp = await searchParams;
   // Opening a client's thread clears its unread badge (mark their messages read before we read the
   // thread list, so the count reflects the now-read state on this same render).
@@ -26,10 +28,10 @@ export default async function CoachInboxPage({
     <div className="flex h-[calc(100dvh-3.5rem)] min-h-[480px]">
       <aside className="w-72 shrink-0 overflow-y-auto border-r border-line">
         <div className="border-b border-line px-4 py-3 text-[11px] font-semibold uppercase tracking-[2px] text-faint">
-          Inbox
+          {t('inboxTitle')}
         </div>
         {threads.length === 0 ? (
-          <p className="p-4 text-[13px] text-faint">No conversations yet.</p>
+          <p className="p-4 text-[13px] text-faint">{t('noConversations')}</p>
         ) : (
           threads.map((t) => (
             <Link
@@ -58,7 +60,7 @@ export default async function CoachInboxPage({
           <MessageThread clientId={selected} viewerId={ctx.userId} initialMessages={messages} />
         ) : (
           <div className="flex h-full items-center justify-center text-[13px] text-faint">
-            Select a conversation.
+            {t('selectConversation')}
           </div>
         )}
       </main>

@@ -83,7 +83,7 @@ export function MealPlansView({ page, filters }: { page: MealPlansPage; filters:
                   }}
                   className="tf-press cursor-pointer border-b border-divider last:border-0 hover:bg-warm/50"
                 >
-                  <td className="px-4 py-3 text-[13px] font-semibold">{r.clientName ?? t('leadUnnamed')}</td>
+                  <td className="px-4 py-3 text-[13px] font-semibold">{r.clientName ?? (r.isTemplate ? t('template') : t('leadUnnamed'))}</td>
                   <td className="hidden px-4 py-3 text-[13px] text-soft sm:table-cell">{r.name}</td>
                   <td className="px-4 py-3 text-right text-[13px] font-semibold tabular-nums">{r.calorieGoal ?? '-'}</td>
                   <td className="hidden px-4 py-3 text-[12px] tabular-nums text-soft md:table-cell">

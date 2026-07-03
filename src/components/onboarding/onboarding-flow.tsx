@@ -323,8 +323,9 @@ export function OnboardingFlow(): ReactElement {
         )}
         {step === 4 && (
           // Onboarding is already persisted (step 3 submit), so the user is fully onboarded. Send
-          // them INTO the app, not to /checkout -- billing is deferred (PRD-05/06) and /checkout is a
-          // ComingSoon stub, which would dead-end the new-user golden path.
+          // them INTO the app. /checkout is a real paywall page now, but requireEntitled deliberately
+          // does not gate while Stripe is unconfigured (guards.ts), so this path stays alive pre-launch
+          // and pay-to-enter turns on automatically when the live keys land.
           <ButtonLink href="/dashboard" size="block">
             {t('toDashboard')}
           </ButtonLink>

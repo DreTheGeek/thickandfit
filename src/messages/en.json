@@ -1023,7 +1023,34 @@
       "assignFormTo": "Assign to...",
       "assignFormCta": "Assign",
       "assignFormDone": "Assigned",
-      "assignFormError": "Could not assign"
+      "assignFormError": "Could not assign",
+      "newChallengeTitle": "New challenge",
+      "challengeNamePh": "Challenge name (e.g. Summer Shred)",
+      "challengeGoalPh": "Goal (optional)",
+      "metricWorkouts": "Workouts",
+      "metricLogs": "Days logged",
+      "challengeStarts": "Starts",
+      "challengeEnds": "Ends",
+      "challengeBadDates": "End date must be after the start date.",
+      "challengeCreateFailed": "Could not create the challenge.",
+      "challengeCreateCta": "Publish challenge",
+      "challengePublishing": "Publishing...",
+      "challengesTitle": "Challenges",
+      "noChallenges": "No challenges yet. Create one above.",
+      "chActive": "Active",
+      "chScheduled": "Scheduled",
+      "chEnded": "Ended",
+      "noConversations": "No conversations yet.",
+      "selectConversation": "Select a conversation.",
+      "billingTitle": "Billing & Renewals",
+      "billingMrr": "MRR",
+      "billingRenewSoon": "Renew in 30d",
+      "billingFailedOverdue": "Failed / overdue",
+      "billingColPrice": "Price",
+      "billingFailed": "Failed",
+      "billingScheduled": "Scheduled",
+      "billingNoSubs": "No subscriptions yet.",
+      "formLabelsRequired": "Every field needs a label (EN) before saving."
     },
     "you": {
       "title": "You",
@@ -1494,6 +1521,11 @@
       "workouts": "Workouts completed",
       "goal": "Goal",
       "note": "This is your history with Stephanie. Your day-to-day tracking starts fresh here."
+    },
+    "messages": {
+      "noMessages": "No messages yet. Say hi.",
+      "messagePlaceholder": "Message...",
+      "send": "Send"
     }
   }
 }

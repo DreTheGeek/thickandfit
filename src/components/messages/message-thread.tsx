@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useTransition, type ReactElement } from 'react';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { sendMessageAction } from '@/lib/messages/message-actions';
 import type { ThreadMessage } from '@/lib/messages/messages';
@@ -18,6 +19,7 @@ export function MessageThread({
   viewerId: string;
   initialMessages: ThreadMessage[];
 }): ReactElement {
+  const t = useTranslations('app.messages');
   const [messages, setMessages] = useState<ThreadMessage[]>(initialMessages);
   const [draft, setDraft] = useState('');
   const [pending, start] = useTransition();
@@ -63,7 +65,7 @@ export function MessageThread({
     <div className="flex h-full flex-col">
       <div className="flex-1 space-y-2 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <p className="pt-8 text-center text-[13px] text-faint">No messages yet. Say hi.</p>
+          <p className="pt-8 text-center text-[13px] text-faint">{t('noMessages')}</p>
         ) : (
           messages.map((m) => {
             const mine = m.senderId === viewerId;
@@ -90,7 +92,7 @@ export function MessageThread({
           onKeyDown={(e) => {
             if (e.key === 'Enter') send();
           }}
-          placeholder="Message..."
+          placeholder={t('messagePlaceholder')}
           className="flex-1 rounded-full border border-line bg-bg px-4 py-2.5 text-[14px] outline-none focus:border-ink"
         />
         <button
@@ -99,7 +101,7 @@ export function MessageThread({
           disabled={pending || !draft.trim()}
           className="tf-press rounded-full bg-ink px-4 py-2.5 text-[13px] font-semibold text-bg disabled:opacity-40"
         >
-          Send
+          {t('send')}
         </button>
       </div>
     </div>

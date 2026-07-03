@@ -2,6 +2,7 @@
 
 import { useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createChallengeAction } from '@/lib/community/challenge-actions';
 
 // Only metrics with a REAL data source: workouts counts workout_logs, logs counts distinct diary
@@ -10,6 +11,7 @@ import { createChallengeAction } from '@/lib/community/challenge-actions';
 const METRICS = ['workouts', 'logs'] as const;
 
 export function CreateChallenge(): ReactElement {
+  const t = useTranslations('app.coach');
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [metric, setMetric] = useState<(typeof METRICS)[number]>('workouts');
@@ -38,7 +40,7 @@ export function CreateChallenge(): ReactElement {
         setEndsOn('');
         router.refresh();
       } else {
-        setErr(res.error === 'bad_dates' ? 'End date must be after the start date.' : 'Could not create the challenge.');
+        setErr(res.error === 'bad_dates' ? t('challengeBadDates') : t('challengeCreateFailed'));
       }
     });
   }
@@ -47,26 +49,26 @@ export function CreateChallenge(): ReactElement {
 
   return (
     <div className="rounded-2xl border border-line p-4">
-      <p className="mb-3 text-[12px] font-semibold uppercase tracking-[1px] text-faint">New challenge</p>
+      <p className="mb-3 text-[12px] font-semibold uppercase tracking-[1px] text-faint">{t('newChallengeTitle')}</p>
       <div className="grid gap-3">
-        <input className={input} placeholder="Challenge name (e.g. Summer Shred)" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input className={input} placeholder={t('challengeNamePh')} value={title} onChange={(e) => setTitle(e.target.value)} />
         <div className="grid grid-cols-2 gap-3">
           <select className={input} value={metric} onChange={(e) => setMetric(e.target.value as (typeof METRICS)[number])}>
             {METRICS.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {m === 'workouts' ? t('metricWorkouts') : t('metricLogs')}
               </option>
             ))}
           </select>
-          <input className={input} type="number" min={1} placeholder="Goal (optional)" value={goal} onChange={(e) => setGoal(e.target.value)} />
+          <input className={input} type="number" min={1} placeholder={t('challengeGoalPh')} value={goal} onChange={(e) => setGoal(e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="text-[11px] text-faint">
-            Starts
+            {t('challengeStarts')}
             <input className={input} type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />
           </label>
           <label className="text-[11px] text-faint">
-            Ends
+            {t('challengeEnds')}
             <input className={input} type="date" value={endsOn} onChange={(e) => setEndsOn(e.target.value)} />
           </label>
         </div>
@@ -77,7 +79,7 @@ export function CreateChallenge(): ReactElement {
           disabled={!valid || pending}
           className="tf-press rounded-full bg-ink py-2.5 text-[13px] font-semibold text-bg disabled:opacity-40"
         >
-          {pending ? 'Publishing...' : 'Publish challenge'}
+          {pending ? t('challengePublishing') : t('challengeCreateCta')}
         </button>
       </div>
     </div>

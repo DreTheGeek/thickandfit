@@ -1023,7 +1023,34 @@
       "assignFormTo": "Asignar a...",
       "assignFormCta": "Asignar",
       "assignFormDone": "Asignado",
-      "assignFormError": "No se pudo asignar"
+      "assignFormError": "No se pudo asignar",
+      "newChallengeTitle": "Nuevo reto",
+      "challengeNamePh": "Nombre del reto (ej. Reto de verano)",
+      "challengeGoalPh": "Meta (opcional)",
+      "metricWorkouts": "Entrenos",
+      "metricLogs": "Días registrados",
+      "challengeStarts": "Inicia",
+      "challengeEnds": "Termina",
+      "challengeBadDates": "La fecha de fin debe ser posterior a la fecha de inicio.",
+      "challengeCreateFailed": "No se pudo crear el reto.",
+      "challengeCreateCta": "Publicar reto",
+      "challengePublishing": "Publicando...",
+      "challengesTitle": "Retos",
+      "noChallenges": "Aún no hay retos. Crea uno arriba.",
+      "chActive": "Activo",
+      "chScheduled": "Programado",
+      "chEnded": "Finalizado",
+      "noConversations": "Aún no hay conversaciones.",
+      "selectConversation": "Selecciona una conversación.",
+      "billingTitle": "Cobros y renovaciones",
+      "billingMrr": "MRR",
+      "billingRenewSoon": "Renuevan en 30 días",
+      "billingFailedOverdue": "Fallidos / vencidos",
+      "billingColPrice": "Precio",
+      "billingFailed": "Fallido",
+      "billingScheduled": "Programado",
+      "billingNoSubs": "Aún no hay suscripciones.",
+      "formLabelsRequired": "Cada campo necesita una etiqueta (EN) antes de guardar."
     },
     "you": {
       "title": "Tú",
@@ -1494,6 +1521,11 @@
       "workouts": "Entrenamientos completados",
       "goal": "Meta",
       "note": "Este es tu historial con Stephanie. Tu seguimiento diario empieza de cero aquí."
+    },
+    "messages": {
+      "noMessages": "Aún no hay mensajes. Saluda.",
+      "messagePlaceholder": "Mensaje...",
+      "send": "Enviar"
     }
   }
 }

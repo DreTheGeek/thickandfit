@@ -1,6 +1,7 @@
 // Coach create-challenge authoring + list. New challenges whose window includes today go live on the
 // subscriber /community leaderboard. Coach-gated.
 import type { ReactElement } from 'react';
+import { getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { listChallenges } from '@/lib/community/challenge-actions';
 import { CreateChallenge } from '@/components/coach/create-challenge';
@@ -11,16 +12,18 @@ export const dynamic = 'force-dynamic';
 
 export default async function CoachChallengesPage(): Promise<ReactElement> {
   const ctx = await requireCoach();
+  const t = await getTranslations('app.coach');
   const challenges = ctx.companyId ? await listChallenges(ctx.companyId) : [];
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="px-[22px] py-6">
-      <PageTitle className="mb-5">Challenges</PageTitle>
+      <PageTitle className="mb-5">{t('challengesTitle')}</PageTitle>
       <CreateChallenge />
 
       <div className="mt-6 space-y-2">
         {challenges.length === 0 ? (
-          <p className="px-1 text-[13px] text-faint">No challenges yet. Create one above.</p>
+          <p className="px-1 text-[13px] text-faint">{t('noChallenges')}</p>
         ) : (
           challenges.map((c) => (
             <div
@@ -35,9 +38,11 @@ export default async function CoachChallengesPage(): Promise<ReactElement> {
                 </div>
               </div>
               {c.active ? (
-                <Tag>Active</Tag>
+                <Tag>{t('chActive')}</Tag>
               ) : (
-                <span className="text-[12px] text-faint">Scheduled</span>
+                <span className="text-[12px] text-faint">
+                  {c.endsOn < today ? t('chEnded') : t('chScheduled')}
+                </span>
               )}
             </div>
           ))

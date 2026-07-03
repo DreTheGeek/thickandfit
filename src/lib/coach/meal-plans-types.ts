@@ -15,6 +15,7 @@ export type MealPlanRow = {
   id: string;
   name: string;
   clientName: string | null;
+  isTemplate: boolean;
   calorieGoal: number | null;
   proteinG: number | null;
   carbG: number | null;

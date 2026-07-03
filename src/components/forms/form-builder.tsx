@@ -56,6 +56,11 @@ export function FormBuilder({ initial }: { initial?: Initial }): ReactElement {
     });
 
   async function save(): Promise<void> {
+    // The API rejects blank labels; catch it here with a clear message instead of an opaque failure.
+    if (fields.some((f) => f.label_en.trim().length === 0)) {
+      setStatus(t('formLabelsRequired'));
+      return;
+    }
     setBusy(true);
     setStatus('');
     const res = await fetch('/api/forms', {
