@@ -50,7 +50,7 @@ export default async function BillingPage(): Promise<ReactElement> {
 
   // Stripe can emit statuses outside our enumerated keys (e.g. incomplete_expired, paused); fall
   // back to the raw-but-readable status instead of rendering a bare i18n key path.
-  const KNOWN_STATUS = ['trialing', 'active', 'past_due', 'canceled', 'incomplete', 'unpaid', 'none'];
+  const KNOWN_STATUS = ['trialing', 'active', 'past_due', 'canceled', 'incomplete', 'unpaid', 'paused', 'none'];
   const statusLabel = sub
     ? KNOWN_STATUS.includes(sub.status)
       ? t(`status.${sub.status}` as never)

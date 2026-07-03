@@ -35,6 +35,7 @@ type Sub = {
 };
 type ContactRow = {
   id: string;
+  profile_id: string | null;
   first_name: string | null;
   last_name: string | null;
   email: string | null;
@@ -53,11 +54,11 @@ type NativeSub = {
 
 export async function getBillingRenewals(companyId: string): Promise<BillingRenewals> {
   const sb = createServiceClient();
-  const [{ data }, { data: nativeData }, { data: linkRows }] = await Promise.all([
+  const [{ data }, { data: nativeData }] = await Promise.all([
     sb
       .from('contacts')
       .select(
-        'id, first_name, last_name, email, client_subscriptions(status, billing_health, grandfathered_price_cents, currency, next_billing_date)',
+        'id, profile_id, first_name, last_name, email, client_subscriptions(status, billing_health, grandfathered_price_cents, currency, next_billing_date)',
       )
       .eq('company_id', companyId)
       .eq('type', 'client')
@@ -70,17 +71,11 @@ export async function getBillingRenewals(companyId: string): Promise<BillingRene
       )
       .eq('company_id', companyId)
       .limit(20000),
-    // Contact<->profile links so a member with BOTH a CRM row and a native sub is not double-counted.
-    sb
-      .from('contacts')
-      .select('profile_id')
-      .eq('company_id', companyId)
-      .not('profile_id', 'is', null)
-      .limit(20000),
   ]);
-  const linkedProfiles = new Set(
-    ((linkRows ?? []) as { profile_id: string | null }[]).map((r) => r.profile_id).filter(Boolean) as string[],
-  );
+  // Dedup ONLY against profiles the CRM loop actually COUNTS (contact-linked AND has a CRM sub row).
+  // Deduping against every contact-linked profile silently dropped native subscribers whose linked
+  // contact had no client_subscriptions row (e.g. a claimed legacy client who then subscribed in-app).
+  const linkedProfiles = new Set<string>();
 
   const now = Date.now();
   const in30 = now + 30 * 86400 * 1000;
@@ -94,6 +89,7 @@ export async function getBillingRenewals(companyId: string): Promise<BillingRene
   for (const c of (data ?? []) as unknown as ContactRow[]) {
     const sub = Array.isArray(c.client_subscriptions) ? c.client_subscriptions[0] : c.client_subscriptions;
     if (!sub) continue;
+    if (c.profile_id) linkedProfiles.add(c.profile_id); // counted here -> suppress the native dupe
     const name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || 'Unknown';
     const status = sub.status ?? null;
     const health = sub.billing_health ?? null;

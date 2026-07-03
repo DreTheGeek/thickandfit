@@ -212,11 +212,19 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
       <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>
           <h2 className="mb-4 font-display text-[20px]">{t('secClientStatus')}</h2>
-          <BarList rows={o.statusBreakdown} t={t} />
+          {o.statusBreakdown.length > 0 ? (
+            <BarList rows={o.statusBreakdown} t={t} />
+          ) : (
+            <p className="py-8 text-center text-sm text-faint">{t('emptyOverview')}</p>
+          )}
         </Card>
         <Card>
           <h2 className="mb-4 font-display text-[20px]">{t('secByProduct')}</h2>
-          <BarList rows={o.productBreakdown} accent t={t} />
+          {o.productBreakdown.length > 0 ? (
+            <BarList rows={o.productBreakdown} accent t={t} />
+          ) : (
+            <p className="py-8 text-center text-sm text-faint">{t('emptyOverview')}</p>
+          )}
         </Card>
       </div>
 
