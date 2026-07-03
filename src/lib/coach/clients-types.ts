@@ -152,6 +152,32 @@ export type ClientDetail = {
   // not anchored to a true zero start and must be hidden rather than shown with wrong values.
   ledgerTruncated: boolean;
   files: ClientFile[];
+  // Migrated-from-Lenus health profile + progress history (null / empty for non-migrated clients).
+  intake: ClientIntake | null;
+  progress: {
+    weights: { on: string; kg: number }[];
+    measures: { on: string; waist: number | null; hips: number | null; chest: number | null; arms: number | null; thighs: number | null }[];
+    photos: { url: string; on: string; pose: string | null }[];
+    foodDays: number;
+  };
+};
+
+export type ClientIntake = {
+  sex: string | null;
+  birthDate: string | null;
+  heightCm: number | null;
+  startingWeightKg: number | null;
+  goalType: string | null;
+  targetWeightKg: number | null;
+  bmr: number | null;
+  calorieGoalKcal: number | null;
+  injuries: string[] | null;
+  injuriesDescription: string | null;
+  medicalConditions: string | null;
+  dietaryExclusions: string[] | null;
+  trainingExperience: string | null;
+  badHabits: string | null;
+  questionnaireFilledAt: string | null;
 };
 
 export const LEDGER_TXN_CAP = 1000;

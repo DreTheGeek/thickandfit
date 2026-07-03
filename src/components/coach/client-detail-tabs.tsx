@@ -10,7 +10,7 @@ import { RecipeImage } from '@/components/coach/recipe-image';
 import { formatCents } from '@/components/coach/money';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
-type Tab = 'overview' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
+type Tab = 'overview' | 'health' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
 
 function fmtDate(value: string | null, locale: string): string {
   if (!value) return '-';
@@ -52,8 +52,10 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
   const photos = detail.files.filter((f) => f.category === 'progress_photos');
   const docs = detail.files.filter((f) => f.category !== 'progress_photos');
 
+  const hasHealth = detail.intake != null || detail.progress.weights.length > 0 || detail.progress.measures.length > 0 || detail.progress.photos.length > 0;
   const options: TabOption<Tab>[] = [
     { value: 'overview', label: t('tabOverview') },
+    ...(hasHealth ? [{ value: 'health' as Tab, label: t('tabHealth') }] : []),
     { value: 'billing', label: t('tabBilling') },
     { value: 'payments', label: t('tabPayments') },
     { value: 'nutrition', label: t('tabNutrition') },
@@ -140,6 +142,59 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
                   <span className="font-medium tabular-nums">{formatCents(e.grossCents, e.currency, locale, 2)}</span>
                 </div>
               ))}
+            </Section>
+          )}
+        </div>
+      )}
+
+      {tab === 'health' && (
+        <div className="flex flex-col gap-4">
+          {detail.intake && (
+            <Section title={t('healthIntake')}>
+              <Row label={t('intakeGoal')} value={<span className="capitalize">{detail.intake.goalType ?? '-'}</span>} />
+              {detail.intake.startingWeightKg != null && <Row label={t('intakeStartWeight')} value={`${detail.intake.startingWeightKg.toFixed(1)} kg`} />}
+              {detail.intake.targetWeightKg != null && <Row label={t('intakeTargetWeight')} value={`${detail.intake.targetWeightKg.toFixed(1)} kg`} />}
+              {detail.intake.heightCm != null && <Row label={t('intakeHeight')} value={`${detail.intake.heightCm.toFixed(0)} cm`} />}
+              {detail.intake.bmr != null && <Row label={t('intakeBmr')} value={`${Math.round(detail.intake.bmr)} kcal`} />}
+              {detail.intake.calorieGoalKcal != null && <Row label={t('intakeCalorieGoal')} value={`${Math.round(detail.intake.calorieGoalKcal)} kcal`} />}
+              {detail.intake.injuries && detail.intake.injuries.length > 0 && <Row label={t('intakeInjuries')} value={detail.intake.injuries.join(', ')} />}
+              {detail.intake.injuriesDescription && <Row label={t('intakeInjuryNotes')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.injuriesDescription}</span>} />}
+              {detail.intake.medicalConditions && <Row label={t('intakeConditions')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.medicalConditions}</span>} />}
+              {detail.intake.dietaryExclusions && detail.intake.dietaryExclusions.length > 0 && <Row label={t('intakeDietary')} value={detail.intake.dietaryExclusions.join(', ')} />}
+              {detail.intake.badHabits && <Row label={t('intakeBadHabits')} value={detail.intake.badHabits} />}
+              {detail.intake.trainingExperience && <Row label={t('intakeTraining')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.trainingExperience}</span>} />}
+            </Section>
+          )}
+          {(detail.progress.weights.length > 0 || detail.progress.measures.length > 0) && (
+            <Section title={t('progressHistory')}>
+              {detail.progress.weights.length > 0 && (() => {
+                const w = detail.progress.weights;
+                const first = w[0];
+                const last = w[w.length - 1];
+                const delta = last.kg - first.kg;
+                return (
+                  <>
+                    <Row label={t('progressWeighIns')} value={`${w.length}`} />
+                    <Row label={t('progressLatestWeight')} value={`${last.kg.toFixed(1)} kg (${fmtDate(last.on, locale)})`} />
+                    <Row label={t('progressChange')} value={<span className={delta <= 0 ? 'text-good-ink' : 'text-ink'}>{delta >= 0 ? '+' : ''}{delta.toFixed(1)} kg</span>} />
+                  </>
+                );
+              })()}
+              {detail.progress.measures.length > 0 && <Row label={t('progressMeasurements')} value={`${detail.progress.measures.length}`} />}
+              {detail.progress.foodDays > 0 && <Row label={t('progressFoodLogs')} value={`${detail.progress.foodDays}`} />}
+            </Section>
+          )}
+          {detail.progress.photos.length > 0 && (
+            <Section title={`${t('progressPhotos')} (${detail.progress.photos.length})`}>
+              <div className="grid grid-cols-3 gap-2 py-2 sm:grid-cols-4">
+                {detail.progress.photos.map((p, i) => (
+                  <a key={i} href={p.url} target="_blank" rel="noreferrer" className="tf-press block overflow-hidden rounded-xl border border-line">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.url} alt={`${p.pose ?? ''} ${fmtDate(p.on, locale)}`} className="aspect-[3/4] w-full object-cover" loading="lazy" />
+                    <span className="block bg-surface px-1.5 py-1 text-[10px] text-faint">{fmtDate(p.on, locale)}{p.pose ? ` - ${p.pose}` : ''}</span>
+                  </a>
+                ))}
+              </div>
             </Section>
           )}
         </div>

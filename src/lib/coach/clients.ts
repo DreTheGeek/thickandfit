@@ -343,6 +343,51 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     bytes: f.bytes,
   }));
 
+  // Migrated-from-Lenus intake/health profile + progress history (keyed to this contact only).
+  const { data: intakeRow } = await sb
+    .from('client_intake')
+    .select('sex, birth_date, height_cm, starting_weight_kg, goal_type, target_weight_kg, bmr, calorie_goal_kcal, injuries, injuries_description, medical_conditions, dietary_exclusions, training_experience, bad_habits, questionnaire_filled_at')
+    .eq('company_id', companyId)
+    .eq('contact_id', contactId)
+    .maybeSingle();
+  type IntakeRaw = {
+    sex: string | null; birth_date: string | null; height_cm: number | null; starting_weight_kg: number | null;
+    goal_type: string | null; target_weight_kg: number | null; bmr: number | null; calorie_goal_kcal: number | null;
+    injuries: string[] | null; injuries_description: string | null; medical_conditions: string | null;
+    dietary_exclusions: string[] | null; training_experience: string | null; bad_habits: string | null; questionnaire_filled_at: string | null;
+  };
+  const ir = intakeRow as IntakeRaw | null;
+  const intake = ir
+    ? {
+        sex: ir.sex, birthDate: ir.birth_date, heightCm: ir.height_cm, startingWeightKg: ir.starting_weight_kg,
+        goalType: ir.goal_type, targetWeightKg: ir.target_weight_kg, bmr: ir.bmr, calorieGoalKcal: ir.calorie_goal_kcal,
+        injuries: ir.injuries, injuriesDescription: ir.injuries_description, medicalConditions: ir.medical_conditions,
+        dietaryExclusions: ir.dietary_exclusions, trainingExperience: ir.training_experience, badHabits: ir.bad_habits,
+        questionnaireFilledAt: ir.questionnaire_filled_at,
+      }
+    : null;
+
+  const [{ data: wRows }, { data: mRows }, { data: pRows }, { count: foodDays }] = await Promise.all([
+    sb.from('weight_entries').select('recorded_on, weight_kg').eq('contact_id', contactId).order('recorded_on', { ascending: true }).limit(120),
+    sb.from('body_measurements').select('recorded_on, waist_cm, hips_cm, chest_cm, arms_cm, thighs_cm').eq('contact_id', contactId).order('recorded_on', { ascending: true }).limit(120),
+    sb.from('progress_photos').select('storage_path, taken_on, pose_source').eq('contact_id', contactId).order('taken_on', { ascending: false }).limit(24),
+    sb.from('food_log').select('log_date', { count: 'exact', head: true }).eq('contact_id', contactId),
+  ]);
+  const weights = ((wRows ?? []) as { recorded_on: string; weight_kg: number }[]).map((w) => ({ on: w.recorded_on, kg: Number(w.weight_kg) }));
+  const measures = ((mRows ?? []) as { recorded_on: string; waist_cm: number | null; hips_cm: number | null; chest_cm: number | null; arms_cm: number | null; thighs_cm: number | null }[]).map((m) => ({
+    on: m.recorded_on, waist: m.waist_cm, hips: m.hips_cm, chest: m.chest_cm, arms: m.arms_cm, thighs: m.thighs_cm,
+  }));
+  // Sign each migrated photo (private bucket) for a short-lived coach view.
+  const photoRaw = (pRows ?? []) as { storage_path: string; taken_on: string; pose_source: string | null }[];
+  const signed = await Promise.all(
+    photoRaw.map(async (p) => {
+      const { data: s } = await sb.storage.from('progress-photos').createSignedUrl(p.storage_path, 3600);
+      return s?.signedUrl ? { url: s.signedUrl, on: p.taken_on, pose: p.pose_source } : null;
+    }),
+  );
+  const photos = signed.filter((p): p is { url: string; on: string; pose: string | null } => p != null);
+  const progress = { weights, measures, photos, foodDays: foodDays ?? 0 };
+
   const t = await getTranslations('app.coach');
   const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || t('noName');
   const startedAt = sub?.started_at ?? null;
@@ -399,5 +444,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     ledger,
     ledgerTruncated,
     files,
+    intake,
+    progress,
   };
 }
