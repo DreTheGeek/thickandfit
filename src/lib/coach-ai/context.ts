@@ -128,7 +128,7 @@ export async function buildCoachContext(
 
   const [profileRes, onbRes, foodRes, weightRes, completionRes, insightRes, msgRes] =
     await Promise.all([
-      sb.from('profiles').select('full_name, content_locale, ui_locale').eq('id', profileId).maybeSingle(),
+      sb.from('profiles').select('full_name, content_locale, ui_locale, email').eq('id', profileId).maybeSingle(),
       sb
         .from('onboarding_responses')
         .select('predicted_goal, computed_targets')
@@ -228,12 +228,32 @@ export async function buildCoachContext(
     createdAt: m.created_at,
   }));
 
-  // Migrated Lenus intake (joined by profile_id from client_intake). Best-effort; null when absent.
-  const { data: intakeRow } = await sb
+  // Migrated Lenus intake. Primary key is client_intake.profile_id (set by the claim RPC), but that
+  // is only populated after a legacy client formally claims. Fall back to their contact - via the
+  // claimed link (contacts.profile_id) or a Lenus-email match - so grounding fires the moment a
+  // migrated client signs in, not only after the claim action. Best-effort; null when truly absent.
+  const intakeCols = 'contact_id, goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions';
+  let { data: intakeRow } = await sb
     .from('client_intake')
-    .select('contact_id, goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions')
+    .select(intakeCols)
     .eq('profile_id', profileId)
     .maybeSingle();
+  if (!intakeRow) {
+    const email = (profileRes.data?.email ?? '').trim().toLowerCase();
+    const orClause = email ? `profile_id.eq.${profileId},email.ilike.${email}` : `profile_id.eq.${profileId}`;
+    const { data: contact } = await sb
+      .from('contacts')
+      .select('id')
+      .eq('company_id', companyId)
+      .or(orClause)
+      .limit(1)
+      .maybeSingle();
+    const contactId = (contact as { id: string } | null)?.id;
+    if (contactId) {
+      const res = await sb.from('client_intake').select(intakeCols).eq('contact_id', contactId).maybeSingle();
+      intakeRow = res.data;
+    }
+  }
   const ik = intakeRow as {
     contact_id: string | null; goal_type: string | null; target_weight_kg: number | string | null;
     injuries: string[] | null; dietary_exclusions: string[] | null; medical_conditions: string | null;

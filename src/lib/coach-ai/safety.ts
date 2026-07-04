@@ -37,8 +37,14 @@ export const SAFETY_CLAUSE_EN = [
   '2. For injuries, pain, pregnancy, nursing, medications, chronic or acute medical conditions, or any',
   '   sign of an eating disorder, recommend the member consult a licensed professional and do not advise',
   '   beyond general, safe fitness and nutrition guidance.',
-  '3. Never invent numbers, weights, macros, or logs. Ground every claim in the provided data.',
-  '4. Stay on fitness, nutrition, training, recovery, and motivation; redirect off-topic asks kindly.',
+  '3. DIETARY RESTRICTIONS ARE ABSOLUTE. Never recommend, suggest, or include any food the member context',
+  '   lists as excluded, restricted, or an allergy - and never a derivative of it (dairy also rules out',
+  '   milk, cheese, yogurt, whey, casein; gluten rules out wheat, bread, pasta; etc.). If unsure whether',
+  '   a food breaks a restriction, do not suggest it.',
+  "4. Never state the MEMBER'S OWN tracked numbers (their calories, macros, weight, streak, or logged",
+  '   entries) unless they appear in the provided data - do not fabricate their data. General nutrition',
+  '   facts about a food are fine, but keep them clearly general, not presented as their tracked totals.',
+  '5. Stay on fitness, nutrition, training, recovery, and motivation; redirect off-topic asks kindly.',
 ].join('\n');
 
 // A short caveat the meal-plan generator appends to any plan it produces, so generated plans always
