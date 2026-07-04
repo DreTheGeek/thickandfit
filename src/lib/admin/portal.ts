@@ -187,3 +187,114 @@ export async function getOverview(companyId: string): Promise<Overview> {
     scans7d: usage.scans7d, openTickets: tickets.openCount, cronFails7d: crons.reduce((a, c) => a + c.fails7d, 0), connectionsMissing,
   };
 }
+
+// ---- Evals (eval_run: one summary row per suite run) -----------------------------------------
+export type EvalRunRow = {
+  id: string; suite: string; cases: number; passed: number; score: number | null;
+  metrics: Record<string, unknown>; commitSha: string | null; createdAt: string;
+};
+export type EvalSuiteSummary = { suite: string; latest: EvalRunRow | null; runs: number; trend: number | null };
+export type Evals = { suites: EvalSuiteSummary[]; history: EvalRunRow[] };
+
+export async function getEvals(limit = 40): Promise<Evals> {
+  const sb = createServiceClient();
+  const { data } = await sb
+    .from('eval_run')
+    .select('id, suite, cases, passed, score, metrics, commit_sha, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  const rows = ((data ?? []) as Record<string, unknown>[]).map((r): EvalRunRow => ({
+    id: r.id as string, suite: r.suite as string, cases: (r.cases as number) ?? 0, passed: (r.passed as number) ?? 0,
+    score: (r.score as number) ?? null, metrics: (r.metrics as Record<string, unknown>) ?? {},
+    commitSha: (r.commit_sha as string) ?? null, createdAt: r.created_at as string,
+  }));
+  const bySuite = new Map<string, EvalRunRow[]>();
+  for (const r of rows) { const a = bySuite.get(r.suite) ?? []; a.push(r); bySuite.set(r.suite, a); }
+  const suites: EvalSuiteSummary[] = [...bySuite.entries()].map(([suite, list]) => {
+    const latest = list[0] ?? null;
+    const prev = list[1] ?? null;
+    const trend = latest?.score != null && prev?.score != null ? latest.score - prev.score : null;
+    return { suite, latest, runs: list.length, trend };
+  });
+  return { suites, history: rows };
+}
+
+// ---- Agent observability (ai_trace: one row per model call) ----------------------------------
+export type TraceRow = {
+  id: number; ts: string; feature: string; operation: string; model: string | null; status: string;
+  latencyMs: number | null; promptTokens: number | null; completionTokens: number | null;
+  retrievalCount: number | null; inputPreview: string | null; outputPreview: string | null; error: string | null;
+};
+export type TraceFeatureStat = { feature: string; calls: number; errors: number; avgLatencyMs: number };
+export type Traces = {
+  total: number; errors: number; last24h: number; avgLatencyMs: number;
+  byFeature: TraceFeatureStat[]; recent: TraceRow[]; recentErrors: TraceRow[];
+};
+
+export async function getTraces(limit = 60): Promise<Traces> {
+  const sb = createServiceClient();
+  const since24 = new Date(Date.now() - 86400000).toISOString();
+  const [{ data: agg }, { data: recent }, { data: errs }, { count: total }, { count: last24h }] = await Promise.all([
+    sb.from('ai_trace').select('feature, status, latency_ms').gte('ts', new Date(Date.now() - 7 * 86400000).toISOString()).limit(20000),
+    sb.from('ai_trace').select('id, ts, feature, operation, model, status, latency_ms, prompt_tokens, completion_tokens, retrieval_count, input_preview, output_preview, error').order('ts', { ascending: false }).limit(limit),
+    sb.from('ai_trace').select('id, ts, feature, operation, model, status, latency_ms, prompt_tokens, completion_tokens, retrieval_count, input_preview, output_preview, error').neq('status', 'ok').order('ts', { ascending: false }).limit(25),
+    sb.from('ai_trace').select('id', { count: 'exact', head: true }),
+    sb.from('ai_trace').select('id', { count: 'exact', head: true }).gte('ts', since24),
+  ]);
+  const rows = (agg ?? []) as { feature: string; status: string; latency_ms: number | null }[];
+  const map = new Map<string, { calls: number; errors: number; latSum: number; latN: number }>();
+  let errors = 0, latSum = 0, latN = 0;
+  for (const r of rows) {
+    const m = map.get(r.feature) ?? { calls: 0, errors: 0, latSum: 0, latN: 0 };
+    m.calls += 1;
+    if (r.status !== 'ok') { m.errors += 1; errors += 1; }
+    if (typeof r.latency_ms === 'number') { m.latSum += r.latency_ms; m.latN += 1; latSum += r.latency_ms; latN += 1; }
+    map.set(r.feature, m);
+  }
+  const toRow = (r: Record<string, unknown>): TraceRow => ({
+    id: r.id as number, ts: r.ts as string, feature: r.feature as string, operation: r.operation as string,
+    model: (r.model as string) ?? null, status: r.status as string, latencyMs: (r.latency_ms as number) ?? null,
+    promptTokens: (r.prompt_tokens as number) ?? null, completionTokens: (r.completion_tokens as number) ?? null,
+    retrievalCount: (r.retrieval_count as number) ?? null, inputPreview: (r.input_preview as string) ?? null,
+    outputPreview: (r.output_preview as string) ?? null, error: (r.error as string) ?? null,
+  });
+  return {
+    total: total ?? 0,
+    errors,
+    last24h: last24h ?? 0,
+    avgLatencyMs: latN ? Math.round(latSum / latN) : 0,
+    byFeature: [...map.entries()]
+      .map(([feature, m]) => ({ feature, calls: m.calls, errors: m.errors, avgLatencyMs: m.latN ? Math.round(m.latSum / m.latN) : 0 }))
+      .sort((a, b) => b.calls - a.calls),
+    recent: ((recent ?? []) as Record<string, unknown>[]).map(toRow),
+    recentErrors: ((errs ?? []) as Record<string, unknown>[]).map(toRow),
+  };
+}
+
+// ---- Knowledge graph (kg_node / kg_edge, built by kg_rebuild) --------------------------------
+export type KgNode = { id: string; type: string; key: string; label: string; weight: number };
+export type KgEdge = { id: string; src_id: string; dst_id: string; rel: string; weight: number };
+export type Graph = { nodes: KgNode[]; edges: KgEdge[]; builtAt: string | null; byType: Record<string, number>; byRel: Record<string, number> };
+
+export async function getGraph(companyId: string): Promise<Graph> {
+  const sb = createServiceClient();
+  // Whole graph in two reads - ~600 nodes / ~1.2K edges is a small payload the client filters in-memory.
+  const [{ data: nodes }, { data: edges }] = await Promise.all([
+    sb.from('kg_node').select('id, type, key, label, weight, updated_at').eq('company_id', companyId).order('weight', { ascending: false }).limit(5000),
+    sb.from('kg_edge').select('id, src_id, dst_id, rel, weight').eq('company_id', companyId).limit(20000),
+  ]);
+  const nodeRows = (nodes ?? []) as (KgNode & { updated_at: string })[];
+  const edgeRows = (edges ?? []) as KgEdge[];
+  const byType: Record<string, number> = {};
+  for (const n of nodeRows) byType[n.type] = (byType[n.type] ?? 0) + 1;
+  const byRel: Record<string, number> = {};
+  for (const e of edgeRows) byRel[e.rel] = (byRel[e.rel] ?? 0) + 1;
+  const builtAt = nodeRows.reduce<string | null>((max, n) => (!max || n.updated_at > max ? n.updated_at : max), null);
+  return {
+    nodes: nodeRows.map(({ id, type, key, label, weight }) => ({ id, type, key, label, weight })),
+    edges: edgeRows,
+    builtAt,
+    byType,
+    byRel,
+  };
+}

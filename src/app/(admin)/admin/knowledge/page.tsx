@@ -3,7 +3,7 @@
 import type { ReactElement } from 'react';
 import Link from 'next/link';
 import { requireOperator } from '@/lib/auth/guards';
-import { getKnowledge } from '@/lib/admin/portal';
+import { getKnowledge, getGraph } from '@/lib/admin/portal';
 import { AdminPage, Card, Stat, Row } from '@/components/admin/ui';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function KnowledgePage(): Promise<ReactElement> {
   const ctx = await requireOperator();
   const k = ctx.companyId ? await getKnowledge(ctx.companyId) : null;
+  const g = ctx.companyId ? await getGraph(ctx.companyId) : null;
 
   return (
     <AdminPage title="Knowledge base" subtitle="What the AI coach retrieves from. Her voice + method, embedded for RAG.">
@@ -32,12 +33,19 @@ export default async function KnowledgePage(): Promise<ReactElement> {
               ))
             )}
           </Card>
-          <Card title="Knowledge graph (roadmap)">
-            <p className="text-[13px] leading-relaxed text-soft">
-              The entity/relationship knowledge graph is Phase 4, gated on RAG being validated in production first (per the FitnessOS architecture doc).
-              This page is that foundation: the corpus above is what the graph will be built from. Today the AI coach already retrieves from it
-              (Stephanie&apos;s real coaching voice + any docs you add).
-            </p>
+          <Card title="Knowledge graph" action={<Link href="/admin/graph" className="text-[12px] font-semibold text-muted hover:text-ink">Open graph</Link>}>
+            {g && g.nodes.length > 0 ? (
+              <p className="text-[13px] leading-relaxed text-soft">
+                Live: <span className="font-semibold text-ink">{g.nodes.length.toLocaleString('en-US')}</span> entities and{' '}
+                <span className="font-semibold text-ink">{g.edges.length.toLocaleString('en-US')}</span> relationships across{' '}
+                {g.byType.client ?? 0} clients, their goals, injuries, dietary rules, plans, and most-logged foods, built from the
+                migrated intake + food-log data. The AI coach reads a client&apos;s graph neighborhood as grounded facts on every chat.
+              </p>
+            ) : (
+              <p className="text-[13px] leading-relaxed text-soft">
+                The knowledge graph is built from client intake, plans, and food logs. Open the graph and rebuild it to populate.
+              </p>
+            )}
           </Card>
         </>
       )}

@@ -6,6 +6,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { logInference, type InferenceFeature, type InferenceRecord } from '@/lib/ai/inferences';
+import { logAiTrace, previewMessages } from '@/lib/telemetry/ai-trace';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_EMBEDDINGS_URL = 'https://openrouter.ai/api/v1/embeddings';
@@ -45,6 +46,11 @@ export type AiJsonOptions = {
   reasoningEffort?: 'low' | 'medium' | 'high';
   providerSort?: 'latency' | 'price' | 'throughput';
   provenance?: ProvenanceContext;
+  // Observability: a stable label when there is no provenance (provenance.feature wins if present),
+  // an optional turn id to stitch multi-call agent turns, and how many RAG docs fed this call.
+  traceFeature?: string;
+  correlationId?: string;
+  retrievalCount?: number;
 };
 
 export type AiJsonResult =
@@ -79,7 +85,29 @@ function lenientParse(content: string): unknown {
 }
 
 export async function callJson(opts: AiJsonOptions): Promise<AiJsonResult> {
-  if (!apiKey) return { status: 'notConfigured' };
+  const feature = opts.provenance?.feature ?? opts.traceFeature ?? 'unknown';
+  const companyId = opts.provenance?.companyId ?? null;
+  const profileId = opts.provenance?.profileId ?? null;
+  const trace = (
+    status: 'ok' | 'error' | 'notConfigured',
+    extra: Partial<Parameters<typeof logAiTrace>[0]>,
+  ): void =>
+    logAiTrace({
+      feature,
+      operation: 'json',
+      status,
+      companyId,
+      profileId,
+      correlationId: opts.correlationId ?? null,
+      retrievalCount: opts.retrievalCount ?? null,
+      inputPreview: previewMessages(opts.messages),
+      ...extra,
+    });
+
+  if (!apiKey) {
+    trace('notConfigured', {});
+    return { status: 'notConfigured' };
+  }
   const chain = opts.models.filter((m, i, a) => a.indexOf(m) === i);
   const timeoutMs = opts.timeoutMs ?? 60_000;
   const t0 = Date.now();
@@ -116,13 +144,17 @@ export async function callJson(opts: AiJsonOptions): Promise<AiJsonResult> {
       console.warn(`ai-client ${m} failed, trying next:`, e instanceof Error ? e.message : String(e));
     }
   }
-  if (!res) return { status: 'error' };
+  if (!res) {
+    trace('error', { model: usedModel, latencyMs: Date.now() - t0, error: 'all models failed' });
+    return { status: 'error' };
+  }
 
   try {
     const json = (await res.json()) as CompletionJson;
     const raw = json?.choices?.[0]?.message?.content?.trim();
     if (!raw) {
       console.error('ai-client: empty content', JSON.stringify(json).slice(0, 300));
+      trace('error', { model: usedModel, latencyMs: Date.now() - t0, error: 'empty content' });
       return { status: 'error' };
     }
     const content = stripFences(raw);
@@ -153,9 +185,17 @@ export async function callJson(opts: AiJsonOptions): Promise<AiJsonResult> {
       else inference = rec; // 'defer': the caller enriches and logs
     }
 
+    trace('ok', {
+      model: usedModel,
+      latencyMs,
+      promptTokens: usage.promptTokens,
+      completionTokens: usage.completionTokens,
+      outputPreview: content,
+    });
     return { status: 'ok', content, model: usedModel, usage, latencyMs, inferenceId, inference };
   } catch (e) {
     console.error('ai-client parse exception:', e instanceof Error ? e.message : String(e));
+    trace('error', { model: usedModel, latencyMs: Date.now() - t0, error: 'parse exception' });
     return { status: 'error' };
   }
 }
@@ -168,10 +208,30 @@ export type AiStreamOptions = {
   model: string;
   messages: unknown[];
   timeoutMs?: number;
+  // Observability (chat has no provenance/JSON return, so it labels its own trace).
+  traceFeature?: string;
+  correlationId?: string;
+  retrievalCount?: number;
+  companyId?: string | null;
+  profileId?: string | null;
 };
 
 export async function openChatStream(opts: AiStreamOptions): Promise<Response | null> {
-  if (!apiKey) return null;
+  const t0 = Date.now();
+  const baseTrace = {
+    feature: opts.traceFeature ?? 'chat',
+    operation: 'stream' as const,
+    model: opts.model,
+    companyId: opts.companyId ?? null,
+    profileId: opts.profileId ?? null,
+    correlationId: opts.correlationId ?? null,
+    retrievalCount: opts.retrievalCount ?? null,
+    inputPreview: previewMessages(opts.messages),
+  };
+  if (!apiKey) {
+    logAiTrace({ ...baseTrace, status: 'notConfigured' });
+    return null;
+  }
   try {
     const res = await fetch(OPENROUTER_URL, {
       method: 'POST',
@@ -182,18 +242,28 @@ export async function openChatStream(opts: AiStreamOptions): Promise<Response | 
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       console.error(`ai-client stream HTTP ${res.status} (${opts.model}):`, body.slice(0, 300));
+      logAiTrace({ ...baseTrace, status: 'error', latencyMs: Date.now() - t0, error: `HTTP ${res.status}` });
       return null;
     }
+    // Latency here is time-to-first-byte (stream opened); the full generation streams to the client.
+    logAiTrace({ ...baseTrace, status: 'ok', latencyMs: Date.now() - t0 });
     return res;
   } catch (e) {
     console.error('ai-client stream exception:', e instanceof Error ? e.message : String(e));
+    logAiTrace({ ...baseTrace, status: 'error', latencyMs: Date.now() - t0, error: 'stream exception' });
     return null;
   }
 }
 
 // Embeddings endpoint (same key, verified live for text-embedding-3-small). Callers validate dims.
-export async function embed(model: string, input: string): Promise<number[] | null> {
-  if (!apiKey) return null;
+// traceFeature lets a caller label the corpus being embedded (knowledge, food-log, voice); defaults 'embed'.
+export async function embed(model: string, input: string, traceFeature = 'embed'): Promise<number[] | null> {
+  const t0 = Date.now();
+  const base = { feature: traceFeature, operation: 'embed' as const, model };
+  if (!apiKey) {
+    logAiTrace({ ...base, status: 'notConfigured' });
+    return null;
+  }
   try {
     const res = await fetch(OPENROUTER_EMBEDDINGS_URL, {
       method: 'POST',
@@ -204,13 +274,16 @@ export async function embed(model: string, input: string): Promise<number[] | nu
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       console.error(`ai-client embed HTTP ${res.status} (${model}):`, body.slice(0, 300));
+      logAiTrace({ ...base, status: 'error', latencyMs: Date.now() - t0, error: `HTTP ${res.status}` });
       return null;
     }
     const json = (await res.json()) as { data?: { embedding?: number[] }[] };
     const vec = json?.data?.[0]?.embedding;
+    logAiTrace({ ...base, status: vec ? 'ok' : 'error', latencyMs: Date.now() - t0 });
     return Array.isArray(vec) && vec.length > 0 ? vec : null;
   } catch (e) {
     console.error('ai-client embed exception:', e instanceof Error ? e.message : String(e));
+    logAiTrace({ ...base, status: 'error', latencyMs: Date.now() - t0, error: 'embed exception' });
     return null;
   }
 }

@@ -219,7 +219,14 @@ export async function streamChat(
   // Thin passthrough: the shared client owns auth/endpoint/error logging; the SSE parse loop,
   // persistence, and cache_control message shaping below stay exactly as they were.
   const t0 = Date.now();
-  const upstream = await openChatStream({ model: CHAT_MODEL, messages });
+  const upstream = await openChatStream({
+    model: CHAT_MODEL,
+    messages,
+    traceFeature: 'chat',
+    companyId,
+    profileId,
+    retrievalCount: memories.length + knowledge.length,
+  });
   if (!upstream || !upstream.body) {
     return { status: 'notConfigured', message: notConfiguredMessage(locale) };
   }

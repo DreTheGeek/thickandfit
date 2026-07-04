@@ -49,6 +49,10 @@ export type CoachContext = {
     dietaryExclusions: string[] | null;
     medicalConditions: string | null;
   } | null;
+  // Knowledge-graph neighborhood (kg_client_facts): the relational facts the flat intake misses -
+  // the foods this client actually eats most and the plan they're on. Grounds the coach in what
+  // they really do, not just what they declared at intake. Null when the client isn't in the graph.
+  graph: { foods: string[]; plans: string[] } | null;
   nutrition: { days: DayMacro[]; avgKcal: number | null; avgProteinG: number | null };
   workouts: WorkoutSummary;
   weight: WeightSummary;
@@ -227,12 +231,12 @@ export async function buildCoachContext(
   // Migrated Lenus intake (joined by profile_id from client_intake). Best-effort; null when absent.
   const { data: intakeRow } = await sb
     .from('client_intake')
-    .select('goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions')
+    .select('contact_id, goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions')
     .eq('profile_id', profileId)
     .maybeSingle();
   const ik = intakeRow as {
-    goal_type: string | null; target_weight_kg: number | string | null; injuries: string[] | null;
-    dietary_exclusions: string[] | null; medical_conditions: string | null;
+    contact_id: string | null; goal_type: string | null; target_weight_kg: number | string | null;
+    injuries: string[] | null; dietary_exclusions: string[] | null; medical_conditions: string | null;
   } | null;
   const health = ik
     ? {
@@ -244,9 +248,25 @@ export async function buildCoachContext(
       }
     : null;
 
+  // Knowledge-graph 1-hop neighborhood for this client (foods they eat, plan they follow). Degrades
+  // silently to null if the client isn't in the graph or the RPC errors - never blocks a chat.
+  let graph: { foods: string[]; plans: string[] } | null = null;
+  if (ik?.contact_id) {
+    try {
+      const { data: facts } = await sb.rpc('kg_client_facts', { p_contact: ik.contact_id });
+      const rows = (facts ?? []) as { rel: string; node_type: string; label: string }[];
+      const foods = rows.filter((r) => r.node_type === 'food').map((r) => r.label).slice(0, 8);
+      const plans = rows.filter((r) => r.node_type === 'plan').map((r) => r.label).slice(0, 3);
+      if (foods.length || plans.length) graph = { foods, plans };
+    } catch (e) {
+      console.warn('kg_client_facts failed (non-fatal):', e instanceof Error ? e.message : String(e));
+    }
+  }
+
   return {
     profile: { name: fullName, goal, locale, targets },
     health,
+    graph,
     nutrition: { days, avgKcal, avgProteinG },
     workouts,
     weight,
@@ -301,6 +321,13 @@ export function renderContextBlock(ctx: CoachContext): string {
     if (h.medicalConditions) lines.push((es ? 'Condiciones medicas: ' : 'Medical conditions: ') + h.medicalConditions);
     if (h.injuries && h.injuries.length) lines.push((es ? 'Lesiones/limitaciones: ' : 'Injuries/limitations: ') + h.injuries.join(', '));
     if (h.targetWeightKg != null) lines.push((es ? 'Peso meta: ' : 'Target weight: ') + `${h.targetWeightKg}kg`);
+  }
+
+  // Knowledge-graph facts: what this client actually eats + the plan they're on. Grounds replies in
+  // real behavior so the coach can reference their staples instead of generic suggestions.
+  if (ctx.graph) {
+    if (ctx.graph.plans.length) lines.push((es ? 'Plan asignado: ' : 'Assigned plan: ') + ctx.graph.plans.join(', '));
+    if (ctx.graph.foods.length) lines.push((es ? 'Alimentos habituales (mas registrados): ' : 'Usual foods (most logged): ') + ctx.graph.foods.join(', '));
   }
 
   if (ctx.nutrition.days.length) {

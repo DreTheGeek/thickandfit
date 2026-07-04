@@ -13,6 +13,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { analyzeSmartPhoto, PROMPT_VERSION } from '@/lib/nutrition/smart-scan';
 import { AI_MODELS } from '@/lib/ai/models';
 import { scoreCase, type ExpectedCase, type PredictedEvalItem } from '@/lib/ai/eval/scan-scoring';
+import { logEvalRun } from '@/lib/ai/eval/ledger';
 
 const DEFAULT_EVAL_NAME = 'smart-scan-golden-v1';
 const BUCKET = 'food-photos';
@@ -226,6 +227,16 @@ export async function runSmartScanEval(evalName?: string): Promise<EvalRunResult
         .eq('run_id', priorRunId);
       if (prevRows?.length) previous = summarize(priorRunId, prevRows as RunRow[]);
     }
+
+    // Roll up into the unified eval ledger so this run shows on the admin Evals timeline.
+    await logEvalRun({
+      companyId: evalRow.company_id,
+      suite: 'smart-scan',
+      cases: current.cases,
+      passed: current.passed,
+      score: current.cases ? current.passed / current.cases : 0,
+      metrics: { model: current.model, avgF1: current.avgF1, avgMape: current.avgMape, avgScore: current.avgScore, avgLatencyMs: current.avgLatencyMs },
+    });
 
     return { status: 'ok', evalId: evalRow.id, current, previous, perCase };
   } catch (e) {
