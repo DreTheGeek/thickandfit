@@ -12,7 +12,18 @@ Legacy clients: **265**  |  with raw archive: **265**  |  with intake profile: *
 | Progress photos | 2286 |
 | Coach notes (reminders) | 455 |
 | Tag links | 316 |
+| Conversation messages | 12021 |
+| Chat attachments re-hosted | 2843 |
 | Raw archive operations | 7134 |
+
+## Conversations (client_messages)
+- **12,021 messages** across **138 clients** (Coach Steph / Daniella / Nathalia + each client); 0 count
+  mismatches vs source, 0 external_ids spanning two clients, 0 orphan rows.
+- **Attachments:** 3,080 total. **2,843 re-hosted** (every image, voice note, PDF, and smaller video).
+  **226 large videos (~22 GB, avg 100 MB)** intentionally NOT re-hosted (owner decision 2026-07-03):
+  Supabase simple upload rejects 100 MB+ files (needs resumable/TUS) and it is an ~8 hr / 22 GB
+  transfer. Originals remain on Lenus until ~Aug 2; the coach view shows a placeholder marker for them.
+  The message rows + attachment metadata are fully preserved; only the video bytes are not re-hosted.
 
 ## Cross-mixing / integrity check (must all be 0 orphans)
 | Table | Orphan rows (contact_id with no contact) |
