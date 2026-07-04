@@ -1,6 +1,6 @@
 // Scheduled GHL -> Supabase opportunity sync. Triggered by Vercel Cron (or any caller with the
 // CRON_SECRET). Secret-gated; runs as the service role. Logs each run to cron_job_log.
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
@@ -20,11 +20,11 @@ async function GET_h(req: NextRequest): Promise<NextResponse> {
   if (error || !co) return NextResponse.json({ error: 'company_not_found' }, { status: 404 });
 
   const result = await syncGhlPipelines(co.id);
-  void sb.from('cron_job_log').insert({
+  after(() => sb.from('cron_job_log').insert({
     job_name: 'ghl-sync-cron',
     status: result.ok ? 'success' : 'error',
     detail: result,
-  });
+  })); // survive the frozen lambda so the run is actually logged
 
   // Maintenance, folded into this daily cron to stay under the Hobby 2-cron cap: prune rate_limit_log
   // rows older than an hour (limiter windows are <= 60s, so anything older is dead weight).

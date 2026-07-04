@@ -3,7 +3,7 @@
 // role. Nudges active subscriptions renewing soon and comped members whose access is about to lapse
 // (notify only: demotion is computed by isEntitled). Logs each run to cron_job_log.
 // Never requires CRON_SECRET at import time (build-safe).
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
@@ -28,11 +28,11 @@ async function run(req: NextRequest): Promise<NextResponse> {
   const result = { ok, renewals, comp };
 
   const sb = createServiceClient();
-  void sb.from('cron_job_log').insert({
+  after(() => sb.from('cron_job_log').insert({
     job_name: 'notify-renewals-cron',
     status: ok ? 'success' : 'error',
     detail: result,
-  });
+  })); // survive the frozen lambda so the run is actually logged
 
   const body = ok
     ? result

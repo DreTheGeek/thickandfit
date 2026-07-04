@@ -3,7 +3,7 @@
 // challenge past its ends_on (award the Challenge Champion badge to the leader + notify all
 // participants), exactly once via challenges.finalized_at. Logs each run to cron_job_log.
 // Never requires CRON_SECRET at import time (build-safe).
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
@@ -22,11 +22,11 @@ async function run(req: NextRequest): Promise<NextResponse> {
   const result = await finalizeEndedChallenges();
 
   const sb = createServiceClient();
-  void sb.from('cron_job_log').insert({
+  after(() => sb.from('cron_job_log').insert({
     job_name: 'close-challenges-cron',
     status: result.ok ? 'success' : 'error',
     detail: result,
-  });
+  })); // survive the frozen lambda so the run is actually logged
 
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });
 }

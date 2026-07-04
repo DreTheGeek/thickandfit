@@ -4,7 +4,7 @@
 // user_insights. Idempotent per (profile_id, generated_at). Logs each run to cron_job_log.
 // NOTE: this route was GET-only while the registered pg_cron job POSTs - the nightly run would have
 // 405'd forever. Both methods now run; auth uses the timing-safe compare like every sibling route.
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
@@ -33,11 +33,11 @@ async function run(req: NextRequest): Promise<NextResponse> {
   }
 
   const sb = createServiceClient();
-  void sb.from('cron_job_log').insert({
+  after(() => sb.from('cron_job_log').insert({
     job_name: 'generate-insights-cron',
     status: result.ok ? 'success' : 'error',
     detail: { insights: result, gamification },
-  });
+  })); // survive the frozen lambda so the run is actually logged
 
   return NextResponse.json({ insights: result, gamification }, { status: result.ok ? 200 : 500 });
 }
