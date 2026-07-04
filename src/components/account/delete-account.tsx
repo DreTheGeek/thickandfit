@@ -9,7 +9,20 @@ import { deleteAccountAction } from '@/lib/account/actions';
 export function DeleteAccount(): ReactElement {
   const t = useTranslations('app');
   const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const doDelete = (): void => {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await deleteAccountAction();
+      } catch {
+        // The action redirects on success; reaching here means it threw (e.g. Stripe cancel failed).
+        setError(t('account.deleteError'));
+      }
+    });
+  };
 
   if (!confirming) {
     return (
@@ -30,7 +43,7 @@ export function DeleteAccount(): ReactElement {
         <button
           type="button"
           disabled={pending}
-          onClick={() => startTransition(() => void deleteAccountAction())}
+          onClick={doDelete}
           className="tf-press flex-1 bg-red-600 py-2.5 text-[12px] font-semibold uppercase tracking-[2px] text-white disabled:opacity-50"
         >
           {pending ? t('account.deleting') : t('account.deleteConfirmCta')}
@@ -43,6 +56,7 @@ export function DeleteAccount(): ReactElement {
           {t('common.cancel')}
         </button>
       </div>
+      {error ? <p className="mt-2 text-[12px] text-alert-ink">{error}</p> : null}
     </div>
   );
 }

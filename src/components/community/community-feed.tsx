@@ -83,25 +83,30 @@ function Composer({ canBroadcast, viewerId }: { canBroadcast: boolean; viewerId:
     setError(null);
     start(async () => {
       let mediaUrl: string | null = null;
+      let uploadedPath: string | null = null;
+      const supabase = createClient();
       if (file) {
-        const supabase = createClient();
-        const path = `${viewerId}/${crypto.randomUUID()}.${extFor(file)}`;
+        uploadedPath = `${viewerId}/${crypto.randomUUID()}.${extFor(file)}`;
         const { error: upErr } = await supabase.storage
           .from(MEDIA_BUCKET)
-          .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+          .upload(uploadedPath, file, { cacheControl: '3600', upsert: false, contentType: file.type });
         if (upErr) {
           setError(t('uploadFailed'));
           return;
         }
-        mediaUrl = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+        mediaUrl = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(uploadedPath).data.publicUrl;
       }
-      const res = await createPostAction({ body: text || ' ', mediaUrl, isBroadcast: broadcast });
+      const res = await createPostAction({ body: text, mediaUrl, isBroadcast: broadcast });
       if (res.ok) {
         setBody('');
         setBroadcast(false);
         clearFile();
         router.refresh();
       } else {
+        // Post rejected after the image uploaded: drop the orphaned object so it does not linger.
+        if (mediaUrl && uploadedPath) {
+          void supabase.storage.from(MEDIA_BUCKET).remove([uploadedPath]);
+        }
         setError(t('uploadFailed'));
       }
     });

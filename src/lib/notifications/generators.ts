@@ -225,6 +225,8 @@ type ReminderRow = {
   ui_locale: string | null;
   timezone: string | null;
   reminder_hour: number | null;
+  role: string;
+  comp_access_until: string | null;
 };
 
 export async function generateLocalTimeReminders(at: Date = new Date()): Promise<GeneratorResult> {
@@ -233,11 +235,16 @@ export async function generateLocalTimeReminders(at: Date = new Date()): Promise
   // The audience: subscribers and free users (the people with a daily-log habit to keep).
   const { data, error } = await svc
     .from('profiles')
-    .select('id, company_id, ui_locale, timezone, reminder_hour')
+    .select('id, company_id, ui_locale, timezone, reminder_hour, role, comp_access_until')
     .in('role', ['subscriber', 'free']);
   if (error) return { ok: false, job: 'reminders', selected: 0, notified: 0, error: error.message };
 
-  const rows = (data ?? []) as ReminderRow[];
+  const nowIso = at.toISOString();
+  const rows = ((data ?? []) as ReminderRow[]).filter(
+    // A free user whose comp has lapsed can't reach the app, so a daily reminder just dead-ends at
+    // /checkout. Only remind subscribers + free users with a still-active comp.
+    (r) => r.role !== 'free' || (r.comp_access_until != null && r.comp_access_until > nowIso),
+  );
   // Keep only members whose local hour right now matches their reminder hour. Doing the hour math
   // in TS (one Intl call per row) avoids a SQL function and stays DST-correct via the IANA name.
   const dueNow = rows.filter((r) => localHour(r.timezone, at) === (r.reminder_hour ?? 19));

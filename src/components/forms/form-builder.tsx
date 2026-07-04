@@ -77,20 +77,20 @@ export function FormBuilder({ initial }: { initial?: Initial }): ReactElement {
     const json = await res.json().catch(() => null);
     if (res.ok && json?.data?.formId) {
       setId(json.data.formId);
-      setStatus('Saved');
+      setStatus(t('formSaved'));
     } else {
-      setStatus('Save failed');
+      setStatus(t('formSaveFailed'));
     }
     setBusy(false);
   }
 
   async function publish(): Promise<void> {
     if (!id) {
-      setStatus('Save first');
+      setStatus(t('formSaveFirst'));
       return;
     }
     const res = await fetch(`/api/forms/${id}/publish`, { method: 'POST' });
-    setStatus(res.ok ? 'Published' : 'Publish failed');
+    setStatus(res.ok ? t('formPublished') : t('formPublishFailed'));
   }
 
   return (

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#E7E5DF; }
+  ::selection{ background:#111; color:#fafafa; }
+  .tf-sc{ overflow-y:auto; scrollbar-width:none; }
+  .tf-sc::-webkit-scrollbar{ display:none; }
+  [style*="cursor:pointer"]{ transition:transform .08s ease, opacity .1s ease, background .15s ease; }
+  [style*="cursor:pointer"]:active{ transform:scale(.985); opacity:.9; }
+  @keyframes tfpop{ from{ opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+</style>
+</helmet>
+
+<div style="background:#E7E5DF; min-height:100vh; font-family:'Inter',sans-serif; color:#111; -webkit-font-smoothing:antialiased; padding:22px 20px 60px;">
+
+  <!-- CONTROL BAR -->
+  <div style="max-width:1360px; margin:0 auto 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:baseline; gap:14px;">
+      <a href="Thick & Fit - Design Hub.dc.html" style="text-decoration:none; color:#111; font-size:11px; letter-spacing:2px; text-transform:uppercase;">← Hub</a>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:.5px; text-transform:uppercase;">Client Portal</span>
+      <span style="font-size:11px; letter-spacing:2px; color:#8a8880; text-transform:uppercase;">Responsive Revamp</span>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div style="display:flex; border:1px solid #111; background:#fff; height:34px;">
+        <div onClick="{{ setDesktop }}" style="{{ dDesk }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg></div>
+        <div onClick="{{ setTablet }}" style="{{ dTab }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M11 18.5h2"/></svg></div>
+        <div onClick="{{ setMobile }}" style="{{ dMob }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></div>
+      </div>
+      <div style="display:flex; border:1px solid #111; background:#fff; height:34px;">
+        <div onClick="{{ setEn }}" style="{{ enSt }}">EN</div>
+        <div onClick="{{ setEs }}" style="{{ esSt }}">ES</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEVICE FRAME -->
+  <div style="margin:0 auto; width:max-content; max-width:100%;">
+  <div style="{{ frameSt }}">
+    <div class="tf-sc" style="{{ screenSt }}">
+      <div style="display:flex; min-height:100%; height:100%;">
+
+        <!-- ============ SIDEBAR (desktop / tablet) ============ -->
+        <sc-if value="{{ showSidebar }}" hint-placeholder-val="{{ true }}">
+        <div style="{{ sidebarSt }}">
+          <div style="{{ sbBrandSt }}">
+            <img src="assets/logo-black.svg" alt="Thick & Fit" style="height:26px; width:auto; display:block;" />
+            <div style="{{ navLabelDisp }} font-size:10px; letter-spacing:3px; color:#9a9a92; text-transform:uppercase; margin-top:6px;">{{ sbTierLabel }}</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:2px; padding:0 12px;">
+            <div onClick="{{ goToday }}" style="{{ navToday }}"><span style="display:inline-flex;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg></span><span style="{{ navLabelDisp }}">{{ t.navToday }}</span></div>
+            <div onClick="{{ goWorkouts }}" style="{{ navWorkouts }}"><span style="display:inline-flex;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></span><span style="{{ navLabelDisp }}">{{ t.navWorkouts }}</span></div>
+            <div onClick="{{ goNutrition }}" style="{{ navNutrition }}"><span style="display:inline-flex;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></span><span style="{{ navLabelDisp }}">{{ t.navNutrition }}</span></div>
+            <div onClick="{{ goProgress }}" style="{{ navProgress }}"><span style="display:inline-flex;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6 20v-6M11 20V8M16 20v-9M21 20V5"/></svg></span><span style="{{ navLabelDisp }}">{{ t.navProgress }}</span></div>
+            <div onClick="{{ goCommunity }}" style="{{ navCommunity }}"><span style="display:inline-flex;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.2a3 3 0 0 1 0 5.6"/><path d="M16.5 13.5a5 5 0 0 1 4 5.5"/></svg></span><span style="{{ navLabelDisp }}">{{ t.navCommunity }}</span></div>
+            <div onClick="{{ goMessages }}" style="{{ navMessages }}"><span style="display:inline-flex; position:relative;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg><span style="position:absolute; top:-3px; right:-4px; width:8px; height:8px; background:#5EBE62; border-radius:99px;"></span></span><span style="{{ navLabelDisp }}">{{ t.navMessages }}</span></div>
+            <div onClick="{{ goAccount }}" style="{{ navAccount }}"><span style="display:inline-flex;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span style="{{ navLabelDisp }}">{{ t.navAccount }}</span></div>
+          </div>
+          <div style="{{ sbBookSt }}">
+            <div onClick="{{ goAccount }}" style="background:#111; color:#fafafa; border-radius:14px; padding:16px; cursor:pointer;">
+              <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#8f8f8f;">{{ t.nextCall }}</div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; margin-top:4px;">May 21 · 2:00 PM</div>
+              <div style="margin-top:12px; background:#fafafa; color:#111; text-align:center; font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:9px;">{{ t.bookCall }}</div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ MAIN ============ -->
+        <div class="tf-sc" style="{{ mainSt }}">
+
+          <!-- MOBILE HEADER -->
+          <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 4px 16px;">
+            <img src="assets/logo-black.svg" alt="Thick & Fit" style="height:22px;" />
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div onClick="{{ goMessages }}" style="width:36px; height:36px; border:1px solid #E4E4E4; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg><span style="position:absolute; top:6px; right:7px; width:7px; height:7px; background:#5EBE62; border-radius:99px;"></span></div>
+              <div style="width:36px; height:36px; border-radius:99px; background:#111; display:flex; align-items:center; justify-content:center;"><svg width="46%" height="46%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- DESKTOP/TABLET TOP BAR -->
+          <sc-if value="{{ showSidebar }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; gap:16px;">
+            <div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; line-height:1;">{{ pageTitle }}</div>
+              <div style="font-size:12px; color:#8a8880; margin-top:3px;">{{ pageSub }}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="display:flex; align-items:center; gap:8px; border:1px solid #E4E4E4; background:#fff; border-radius:100vw; padding:8px 14px; min-width:200px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b0b0a8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg><span style="color:#b0b0a8; font-size:13px;">{{ t.search }}</span></div>
+              <div style="width:38px; height:38px; border:1px solid #E4E4E4; background:#fff; border-radius:99px; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span style="position:absolute; top:8px; right:9px; width:7px; height:7px; background:#5EBE62; border-radius:99px;"></span></div>
+              <div style="width:38px; height:38px; border-radius:99px; background:#111; display:flex; align-items:center; justify-content:center;"><svg width="46%" height="46%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ================= TODAY ================= -->
+          <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+          <div style="">
+
+            <!-- HERO -->
+            <div style="{{ heroSt }}">
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#8f8f8f;">{{ weekLabel }}</div>
+                <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px; text-transform:uppercase; line-height:1; margin-top:6px;">{{ t.hey }}, Kiara</div>
+                <div style="color:#bdbdbd; font-size:14px; margin-top:8px; max-width:420px; line-height:1.5;">{{ heroSubTxt }}</div>
+                <div style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
+                  <div onClick="{{ goCheckin }}" style="background:#fafafa; color:#111; font-size:12px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:11px 20px; cursor:pointer;">{{ t.startCheckin }}</div>
+                  <div onClick="{{ goAccount }}" style="border:1px solid #4a4a4a; color:#fafafa; font-size:12px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:11px 20px; cursor:pointer;">{{ t.bookCall }}</div>
+                </div>
+              </div>
+              <div style="{{ heroStreakSt }}">
+                <div style="width:54px; height:54px; border-radius:99px; background:#1c1c1c; display:flex; align-items:center; justify-content:center;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#5EBE62"><path d="M12 3c.6 3.4 3.8 4.4 3.8 8.6a3.8 3.8 0 0 1-7.6 0c0-1.6.9-2.7 1.6-3.3.2 1.4 1.1 1.8 1.6 1.4.9-.5.6-2.1-.5-3.2 1.4.3 1.6-1.4 1.1-3.5z"/></svg></div>
+                <div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; line-height:1;">12</div><div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#8f8f8f;">{{ t.weekStreak }}</div></div>
+              </div>
+            </div>
+
+            <!-- CONTENT GRID -->
+            <div style="{{ contentGridSt }}">
+
+              <!-- MAIN COLUMN -->
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+
+                <!-- AT A GLANCE -->
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                    <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px;">{{ t.atAGlance }}</div>
+                    <div style="font-size:11px; letter-spacing:1px; color:#9a9a92; text-transform:uppercase;">{{ t.today }}</div>
+                  </div>
+                  <div style="display:grid; gap:12px; grid-template-columns:{{ ringCols }};">
+                    <sc-for list="{{ stats }}" as="s" hint-placeholder-count="6">
+                    <div style="border:1px solid #EFEFEC; border-radius:12px; padding:14px;">
+                      <div style="font-size:10px; letter-spacing:1.5px; color:#9a9a92; text-transform:uppercase;">{{ s.label }}</div>
+                      <div style="display:flex; align-items:baseline; gap:4px; margin:6px 0 10px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px; line-height:.9;">{{ s.big }}</span><span style="font-size:12px; color:#9a9a92;">{{ s.unit }}</span></div>
+                      <div style="height:5px; background:#EDEDEA; border-radius:99px;"><div style="{{ s.barSt }}"></div></div>
+                      <div style="font-size:11px; color:#8a8880; margin-top:7px;">{{ s.sub }}</div>
+                    </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <!-- FUEL TODAY -->
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                    <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px;">{{ t.fuelToday }}</div>
+                    <div onClick="{{ goNutrition }}" style="font-size:11px; letter-spacing:1px; color:#767676; text-transform:uppercase; font-weight:600; cursor:pointer;">{{ t.viewAll }}</div>
+                  </div>
+                  <div style="font-size:13px; color:#6a6a64; line-height:1.5; margin-bottom:16px;">{{ t.fuelGuide }}</div>
+                  <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:space-around;">
+                    <sc-for list="{{ macros }}" as="m" hint-placeholder-count="3">
+                    <div style="text-align:center;">
+                      <div style="width:88px; height:88px; border-radius:99px; display:flex; align-items:center; justify-content:center; {{ m.ringSt }}"><div style="width:66px; height:66px; background:#fff; border-radius:99px; display:flex; flex-direction:column; align-items:center; justify-content:center;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; line-height:.9;">{{ m.val }}</span><span style="font-size:9px; color:#9a9a92;">{{ m.goal }}</span></div></div>
+                      <div style="font-size:11px; color:#8a8880; margin-top:8px; letter-spacing:.5px;">{{ m.label }}</div>
+                    </div>
+                    </sc-for>
+                    <div style="min-width:120px; align-self:center;">
+                      <div style="font-size:10px; letter-spacing:1.5px; color:#9a9a92; text-transform:uppercase;">{{ t.calories }}</div>
+                      <div style="display:flex; align-items:baseline; gap:4px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; line-height:1;">{{ nutriBig }}</span><span style="font-size:12px; color:#9a9a92;">{{ nutriUnit }}</span></div>
+                      <div style="height:6px; background:#EDEDEA; border-radius:99px; margin-top:8px;"><div style="{{ nutriBarSt }}"></div></div>
+                      <div style="font-size:11px; color:#5EBE62; font-weight:600; margin-top:8px;">{{ nutriLeft }} {{ t.calsLeft }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- AI QUICK LOG -->
+                <div style="background:#111; color:#fafafa; border-radius:16px; padding:22px;">
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                    <span style="width:26px; height:26px; border-radius:8px; background:#5EBE62; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/></svg></span>
+                    <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:19px; letter-spacing:.5px;">{{ t.aiLog }}</span>
+                  </div>
+                  <div style="font-size:13px; color:#b3b3b3; line-height:1.5; margin-bottom:14px;">{{ t.aiLogSub }}</div>
+                  <div style="display:flex; align-items:center; gap:10px; background:#1d1d1d; border:1px solid #333; border-radius:12px; padding:12px 14px;">
+                    <span style="color:#7a7a7a; font-size:13px; flex:1;">{{ t.aiPh }}</span>
+                    <div style="width:34px; height:34px; border-radius:99px; background:#333; display:flex; align-items:center; justify-content:center; cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></div>
+                    <div style="width:34px; height:34px; border-radius:99px; background:#5EBE62; display:flex; align-items:center; justify-content:center; cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+                  </div>
+                  <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                    <span style="background:#232323; font-size:12px; color:#cfcfcf; padding:6px 12px; border-radius:100vw;">📷 {{ t.snapPhoto }}</span>
+                    <span style="background:#232323; font-size:12px; color:#cfcfcf; padding:6px 12px; border-radius:100vw;">▥ {{ t.scanBarcode }}</span>
+                  </div>
+                </div>
+
+                <!-- TODAY'S WORKOUT -->
+                <div style="{{ cardSt }} padding:0; overflow:hidden;">
+                  <div style="position:relative; height:150px; background:linear-gradient(180deg,rgba(15,15,15,.15),rgba(15,15,15,.86)), url('assets/img/steph-about.avif') center 18%/cover; display:flex; flex-direction:column; justify-content:flex-end; padding:18px; color:#fff;">
+                    <span style="position:absolute; top:14px; left:16px; background:rgba(0,0,0,.45); backdrop-filter:blur(4px); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; padding:5px 12px; border-radius:100vw;">{{ t.todaysWorkout }}</span>
+                    <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; text-transform:uppercase; line-height:1;">Glute Builder · Day 3</div>
+                    <div style="font-size:12px; color:#d5d5d5; margin-top:4px;">5 {{ t.exercises }} · ~42 {{ t.min }} · {{ t.intermediate }}</div>
+                  </div>
+                  <div style="padding:16px 18px;">
+                    <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #F2F2EF;"><span style="width:34px; height:34px; border-radius:8px; background:#f0f0ec; display:flex; align-items:center; justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></span><span style="flex:1; font-size:13px; font-weight:600;">Hip Thrust</span><span style="font-size:12px; color:#9a9a92;">4 × 12</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #F2F2EF;"><span style="width:34px; height:34px; border-radius:8px; background:#f0f0ec; display:flex; align-items:center; justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></span><span style="flex:1; font-size:13px; font-weight:600;">Bulgarian Split Squat</span><span style="font-size:12px; color:#9a9a92;">3 × 10</span></div>
+                    <div style="display:flex; align-items:center; gap:12px; padding:9px 0;"><span style="width:34px; height:34px; border-radius:8px; background:#f0f0ec; display:flex; align-items:center; justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></span><span style="flex:1; font-size:13px; font-weight:600;">Cable Kickback</span><span style="font-size:12px; color:#9a9a92;">3 × 15</span></div>
+                    <a href="Thick & Fit - Workout Player.dc.html" style="display:block; background:#111; color:#fff; text-decoration:none; text-align:center; font-size:12px; letter-spacing:2px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:13px; margin-top:14px; cursor:pointer;">{{ t.startWorkout }}</a>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- RAIL COLUMN -->
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+
+                <!-- HABITS -->
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                    <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px;">{{ t.habits }}</div>
+                    <span style="font-size:11px; color:#5EBE62; font-weight:600;">3 / 5</span>
+                  </div>
+                  <sc-for list="{{ habits }}" as="h" hint-placeholder-count="5">
+                  <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F2F2EF;">
+                    <div style="{{ h.checkSt }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{ h.tick }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></div>
+                    <div style="flex:1;"><div style="font-size:13px; font-weight:600; {{ h.strike }}">{{ h.name }}</div><div style="font-size:11px; color:#9a9a92;">{{ h.meta }}</div></div>
+                  </div>
+                  </sc-for>
+                </div>
+
+                <!-- GOAL PROGRESS -->
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                    <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px;">{{ t.goalProgress }}</div>
+                    <span style="background:#FBE6A2; color:#6b5200; font-size:11px; font-weight:600; padding:4px 12px; border-radius:100vw;">{{ t.behind }}</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:18px;">
+                    <div style="width:96px; height:96px; border-radius:99px; flex:none; display:flex; align-items:center; justify-content:center; background:conic-gradient(#5EBE62 0% 11.3%, #EDEDEA 11.3% 100%);"><div style="width:72px; height:72px; background:#fff; border-radius:99px; display:flex; flex-direction:column; align-items:center; justify-content:center;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; line-height:.9;">11.3%</span><span style="font-size:9px; color:#9a9a92; letter-spacing:1px; text-transform:uppercase;">{{ t.done }}</span></div></div>
+                    <div style="flex:1;">
+                      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;"><div><div style="font-size:10px; color:#9a9a92; letter-spacing:1px; text-transform:uppercase;">{{ t.now }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">229.6 lb</div></div><div style="text-align:right;"><div style="font-size:10px; color:#9a9a92; letter-spacing:1px; text-transform:uppercase;">{{ t.goal }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">195 lb</div></div></div>
+                      <div style="height:6px; background:#EDEDEA; border-radius:99px;"><div style="height:6px; width:11.3%; background:#5EBE62; border-radius:99px;"></div></div>
+                      <div style="font-size:11px; color:#8a8880; margin-top:8px;">34.6 lb {{ t.toGo }} · {{ t.pace }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- FROM COACH -->
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                    <div style="width:40px; height:40px; border-radius:99px; background:url('assets/img/steph-hero.avif') center/cover, #111; flex:none;"></div>
+                    <div><div style="font-size:13px; font-weight:700;">Coach Steph</div><div style="font-size:11px; color:#9a9a92;">{{ t.coachStatus }}</div></div>
+                  </div>
+                  <div style="background:#F5F5F1; border-radius:12px 12px 12px 4px; padding:12px 14px; font-size:13px; line-height:1.55; color:#333;">{{ t.coachMsg }}</div>
+                  <div onClick="{{ goMessages }}" style="border:1px solid #111; text-align:center; font-size:12px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:10px; margin-top:12px; cursor:pointer;">{{ t.reply }}</div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ================= WORKOUTS ================= -->
+          <sc-if value="{{ isWorkouts }}" hint-placeholder-val="{{ false }}">
+          <div style="">
+            <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; text-transform:uppercase; margin-bottom:14px;">{{ t.navWorkouts }}</div></sc-if>
+            <div style="{{ contentGridSt }}">
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <!-- PLAYER -->
+                <div style="{{ cardSt }} padding:0; overflow:hidden;">
+                  <div style="position:relative; height:230px; background:linear-gradient(160deg,#2c2c2c,#0c0c0c); display:flex; align-items:center; justify-content:center;">
+                    <span style="position:absolute; top:14px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; color:#fff;"><span style="font-weight:600; font-size:14px;">Hip Thrust</span><span style="font-size:12px; color:#bbb;">Set 2 / 4</span></span>
+                    <a href="Thick & Fit - Workout Player.dc.html" style="width:64px; height:64px; border-radius:99px; background:rgba(250,250,250,.95); display:flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none;"><svg width="24" height="24" viewBox="0 0 24 24" fill="#111"><path d="M8 5v14l11-7z"/></svg></a>
+                    <span style="position:absolute; bottom:12px; right:16px; background:rgba(0,0,0,.5); color:#fff; font-size:12px; padding:4px 10px; border-radius:6px;">0:32</span>
+                  </div>
+                  <div style="padding:18px;">
+                    <div style="display:flex; gap:22px; border-bottom:1px solid #E4E4E4; margin-bottom:16px;"><span style="font-size:13px; font-weight:600; padding-bottom:10px; border-bottom:2px solid #111;">{{ t.instructions }}</span><span style="font-size:13px; color:#9a9a92; padding-bottom:10px;">{{ t.muscles }}</span></div>
+                    <div style="display:flex; gap:18px; flex-wrap:wrap;">
+                      <!-- MUSCLE HEATMAP -->
+                      <div style="width:120px; flex:none; text-align:center;">
+                        <svg viewBox="0 0 80 150" style="width:100px; height:auto;">
+                          <path d="M40 8 a8 8 0 1 1 0 16 a8 8 0 1 1 0 -16" fill="#E4E2DC"/>
+                          <path d="M26 28 h28 v20 a14 8 0 0 1 -28 0 z" fill="#E4E2DC"/>
+                          <rect x="20" y="30" width="8" height="26" rx="4" fill="#E4E2DC"/><rect x="52" y="30" width="8" height="26" rx="4" fill="#E4E2DC"/>
+                          <path d="M28 48 h24 v22 h-24 z" fill="#E4E2DC"/>
+                          <path d="M27 70 h26 l-2 30 h-9 l-2 -20 -2 20 h-9 z" fill="#D33F3F"/>
+                          <path d="M30 100 h8 l-1 34 h-7 z" fill="#EABDBD"/><path d="M42 100 h8 l-1 34 h-7 z" fill="#EABDBD"/>
+                        </svg>
+                        <div style="font-size:10px; letter-spacing:1px; color:#9a9a92; text-transform:uppercase; margin-top:6px;">{{ t.activated }}</div>
+                        <div style="display:flex; gap:6px; justify-content:center; margin-top:8px; flex-wrap:wrap;"><span style="background:#D33F3F; color:#fff; font-size:9px; padding:2px 8px; border-radius:100vw;">Glutes</span><span style="background:#EABDBD; color:#7a1f1f; font-size:9px; padding:2px 8px; border-radius:100vw;">Hams</span></div>
+                      </div>
+                      <div style="flex:1; min-width:180px; font-size:13px; line-height:1.8; color:#444;">
+                        <div style="display:flex; gap:10px; margin-bottom:6px;"><span style="color:#767676; font-weight:700;">1.</span><span>{{ t.exStep1 }}</span></div>
+                        <div style="display:flex; gap:10px; margin-bottom:6px;"><span style="color:#767676; font-weight:700;">2.</span><span>{{ t.exStep2 }}</span></div>
+                        <div style="display:flex; gap:10px;"><span style="color:#767676; font-weight:700;">3.</span><span>{{ t.exStep3 }}</span></div>
+                      </div>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-around; gap:14px; margin-top:20px; border-top:1px solid #F2F2EF; padding-top:16px;">
+                      <div style="text-align:center;"><div style="font-size:10px; letter-spacing:1.5px; color:#9a9a92; text-transform:uppercase; margin-bottom:4px;">{{ t.reps }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px;">12</div></div>
+                      <div style="text-align:center;"><div style="font-size:10px; letter-spacing:1.5px; color:#9a9a92; text-transform:uppercase; margin-bottom:4px;">{{ t.weightLbl }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px;">135</div></div>
+                      <div style="background:#111; color:#fff; font-size:12px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:13px 26px; cursor:pointer;">{{ t.logSet }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- EXERCISE PROGRESSION -->
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:2px;">
+                    <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px;">{{ t.progression }}</div>
+                    <span style="display:inline-flex; align-items:center; gap:4px; background:#EAF5EB; color:#2E7D33; font-size:11px; font-weight:700; padding:4px 10px; border-radius:100vw;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>+5 lb {{ t.upWk }}</span>
+                  </div>
+                  <div style="font-size:12px; color:#9a9a92; margin-bottom:14px;">{{ t.progSub }}</div>
+                  <div style="display:flex; flex-direction:column;">
+                    <sc-for list="{{ progression }}" as="ex" hint-placeholder-count="5">
+                      <div style="display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #F2F2EF;">
+                        <div style="flex:1; min-width:0;">
+                          <div style="font-size:14px; font-weight:600; color:#1a1a1a; margin-bottom:5px;">{{ ex.name }}</div>
+                          <div style="display:flex; align-items:center; gap:14px; font-size:11px; color:#9a9a92;">
+                            <span>{{ t.lastTimeLbl }} · <span style="color:#444; font-weight:600;">{{ ex.last }}</span></span>
+                            <span>{{ t.targetLbl }} · <span style="color:#444; font-weight:600;">{{ ex.target }}</span></span>
+                          </div>
+                        </div>
+                        <span style="display:inline-flex; align-items:center; gap:3px; background:#5EBE62; color:#0a2e12; font-size:11px; font-weight:700; padding:4px 9px; border-radius:100vw; flex:none;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>{{ ex.delta }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:4px;">{{ progName }}</div>
+                  <div style="font-size:12px; color:#9a9a92; margin-bottom:12px;">{{ weekLabel }} · {{ t.day3of5 }}</div>
+                  <div style="height:6px; background:#EDEDEA; border-radius:99px;"><div style="height:6px; width:60%; background:#767676; border-radius:99px;"></div></div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:16px;">
+                    <div style="text-align:center; border:1px solid #EFEFEC; border-radius:10px; padding:12px 6px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">4/5</div><div style="font-size:10px; color:#9a9a92;">{{ t.thisWeek }}</div></div>
+                    <div style="text-align:center; border:1px solid #EFEFEC; border-radius:10px; padding:12px 6px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">72</div><div style="font-size:10px; color:#9a9a92;">{{ t.total }}</div></div>
+                    <div style="text-align:center; border:1px solid #EFEFEC; border-radius:10px; padding:12px 6px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">8.2k</div><div style="font-size:10px; color:#9a9a92;">{{ t.volume }}</div></div>
+                  </div>
+                </div>
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:12px;">{{ t.thisWeekPlan }}</div>
+                  <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #F2F2EF;"><span style="width:24px; height:24px; background:#5EBE62; border-radius:99px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px;">✓</span><span style="flex:1; font-size:13px; font-weight:600;">Quads &amp; Glutes</span><span style="font-size:11px; color:#9a9a92;">Mon</span></div>
+                  <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #F2F2EF;"><span style="width:24px; height:24px; background:#5EBE62; border-radius:99px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px;">✓</span><span style="flex:1; font-size:13px; font-weight:600;">Upper Body</span><span style="font-size:11px; color:#9a9a92;">Tue</span></div>
+                  <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #F2F2EF;"><span style="width:24px; height:24px; border:2px solid #111; border-radius:99px;"></span><span style="flex:1; font-size:13px; font-weight:600;">Glute Builder</span><span style="font-size:11px; color:#111; font-weight:600;">{{ t.today }}</span></div>
+                  <div style="display:flex; align-items:center; gap:12px; padding:9px 0;"><span style="width:24px; height:24px; border:2px solid #E4E4E4; border-radius:99px;"></span><span style="flex:1; font-size:13px; color:#9a9a92;">Cardio &amp; Core</span><span style="font-size:11px; color:#9a9a92;">Fri</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ================= NUTRITION ================= -->
+          <sc-if value="{{ isNutrition }}" hint-placeholder-val="{{ false }}">
+          <div style="">
+            <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; text-transform:uppercase; margin-bottom:14px;">{{ t.navNutrition }}</div></sc-if>
+            <div style="{{ contentGridSt }}">
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="background:#111; color:#fafafa; border-radius:16px; padding:22px;">
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;"><span style="width:26px; height:26px; border-radius:8px; background:#5EBE62; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/></svg></span><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:19px;">{{ t.aiLog }}</span></div>
+                  <div style="font-size:13px; color:#b3b3b3; margin-bottom:14px; line-height:1.5;">{{ t.aiLogSub }}</div>
+                  <a href="Thick & Fit - Food Log.dc.html#describe" style="display:flex; align-items:center; gap:10px; background:#1d1d1d; border:1px solid #333; border-radius:12px; padding:12px 14px; text-decoration:none;"><span style="color:#7a7a7a; font-size:13px; flex:1;">{{ t.aiPh }}</span><span style="width:34px; height:34px; border-radius:99px; background:#5EBE62; display:flex; align-items:center; justify-content:center; cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+                  <div style="display:flex; gap:10px; margin-top:12px;">
+                    <a href="Thick & Fit - Food Log.dc.html#camera" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:#5EBE62; color:#0a2e12; text-decoration:none; font-size:12px; font-weight:700; letter-spacing:.5px; border-radius:12px; padding:12px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-2h6l2 2h3v13H4z"/><circle cx="12" cy="13" r="3.5"/></svg>{{ t.snapPhoto }}</a>
+                    <a href="Thick & Fit - Food Log.dc.html#barcode" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; background:#2a2a2a; color:#fafafa; text-decoration:none; font-size:12px; font-weight:700; letter-spacing:.5px; border-radius:12px; padding:12px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.9" stroke-linecap="round"><path d="M4 6v12M8 6v12M11 6v12M14 6v12M17 6v12M20 6v12"/></svg>{{ t.scanBarcode }}</a>
+                  </div>
+                </div>
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:14px;">{{ t.todaysMeals }}</div>
+                  <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #F2F2EF;"><div style="display:flex; align-items:center; gap:12px;"><span style="width:38px; height:38px; border-radius:8px; background:linear-gradient(135deg,#e8c87a,#d6a94a);"></span><div><div style="font-size:13px; font-weight:600;">{{ t.breakfast }}</div><div style="font-size:11px; color:#9a9a92;">Egg whites, oats, berries</div></div></div><span style="font-size:13px; color:#9a9a92;">420</span></div>
+                  <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #F2F2EF;"><div style="display:flex; align-items:center; gap:12px;"><span style="width:38px; height:38px; border-radius:8px; background:linear-gradient(135deg,#b7c98a,#8fae5a);"></span><div><div style="font-size:13px; font-weight:600;">{{ t.lunch }}</div><div style="font-size:11px; color:#9a9a92;">Chicken, rice, broccoli</div></div></div><span style="font-size:13px; color:#9a9a92;">560</span></div>
+                  <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0;"><div style="display:flex; align-items:center; gap:12px;"><span style="width:38px; height:38px; border-radius:8px; background:#f0f0ec; display:flex; align-items:center; justify-content:center; color:#c0c0b8;">+</span><div><div style="font-size:13px; font-weight:600; color:#9a9a92;">{{ t.dinner }}</div><div style="font-size:11px; color:#c0c0b8;">{{ t.notLogged }}</div></div></div><span style="font-size:12px; color:#111; font-weight:600;">{{ t.add }}</span></div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px;">{{ t.macros }}</div><span style="font-size:11px; color:#5EBE62; font-weight:600;">77%</span></div>
+                  <div style="display:flex; gap:14px; justify-content:space-around; flex-wrap:wrap;">
+                    <sc-for list="{{ macros }}" as="m" hint-placeholder-count="3">
+                    <div style="text-align:center;"><div style="width:76px; height:76px; border-radius:99px; display:flex; align-items:center; justify-content:center; {{ m.ringSt }}"><div style="width:58px; height:58px; background:#fff; border-radius:99px; display:flex; flex-direction:column; align-items:center; justify-content:center;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:17px; line-height:.9;">{{ m.val }}</span><span style="font-size:8px; color:#9a9a92;">{{ m.goal }}</span></div></div><div style="font-size:11px; color:#8a8880; margin-top:6px;">{{ m.label }}</div></div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:6px;">{{ t.mealPlan }}</div>
+                  <div style="font-size:12px; color:#8a8880; line-height:1.5; margin-bottom:12px;">{{ t.mealPlanSub }}</div>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap;"><span style="border:1px solid #111; font-size:11px; padding:4px 10px; border-radius:100vw;">{{ t.simple }}</span><span style="border:1px solid #E4E4E4; color:#767676; font-size:11px; padding:4px 10px; border-radius:100vw;">{{ t.budget }}</span><span style="border:1px solid #E4E4E4; color:#767676; font-size:11px; padding:4px 10px; border-radius:100vw;">{{ t.highProtein }}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ================= PROGRESS ================= -->
+          <sc-if value="{{ isProgress }}" hint-placeholder-val="{{ false }}">
+          <div style="">
+            <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; text-transform:uppercase; margin-bottom:14px;">{{ t.navProgress }}</div></sc-if>
+            <div style="{{ contentGridSt }}">
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px;">{{ t.weightTrend }}</div><span style="font-size:11px; color:#5EBE62; font-weight:600;">−4.4 lb {{ t.thisWk }}</span></div>
+                  <svg viewBox="0 0 320 130" style="width:100%; height:130px;"><polyline points="0,20 53,28 106,26 160,48 213,58 266,80 320,92" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/><circle cx="320" cy="92" r="4.5" fill="#5EBE62"/></svg>
+                  <div style="display:flex; justify-content:space-between; font-size:12px; color:#9a9a92; margin-top:4px;"><span>{{ t.start }} 234 lb</span><span style="color:#5EBE62; font-weight:600;">{{ t.now }} 229.6 lb</span></div>
+                </div>
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:14px;">{{ t.progressPhotos }}</div>
+                  <div style="display:flex; gap:8px;"><img src="assets/img/ba-1.avif" alt="" style="flex:1; width:33%; height:140px; object-fit:cover; border-radius:10px;" /><img src="assets/img/ba-2.avif" alt="" style="flex:1; width:33%; height:140px; object-fit:cover; border-radius:10px;" /><img src="assets/img/ba-3.avif" alt="" style="flex:1; width:33%; height:140px; object-fit:cover; border-radius:10px;" /></div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:12px;">{{ t.bodyStats }}</div>
+                  <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; color:#8a8880;">{{ t.bodyFat }}</span><span style="font-size:13px; font-weight:600;">31.2% <span style="color:#5EBE62;">−2.1</span></span></div>
+                  <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; color:#8a8880;">{{ t.waist }}</span><span style="font-size:13px; font-weight:600;">34.5 in <span style="color:#5EBE62;">−1.5</span></span></div>
+                  <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; color:#8a8880;">{{ t.hips }}</span><span style="font-size:13px; font-weight:600;">42.0 in <span style="color:#5EBE62;">+0.5</span></span></div>
+                  <div style="display:flex; justify-content:space-between; padding:10px 0;"><span style="font-size:13px; color:#8a8880;">{{ t.thigh }}</span><span style="font-size:13px; font-weight:600;">24.0 in <span style="color:#5EBE62;">+0.3</span></span></div>
+                  <div style="font-size:11px; color:#c0c0b8; margin-top:10px;">{{ t.dexaNote }}</div>
+                </div>
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:10px;">{{ t.thisWeek }}</div>
+                  <div style="display:flex; justify-content:space-around;">
+                    <div style="text-align:center;"><div style="width:60px; height:60px; border-radius:99px; margin:0 auto; background:conic-gradient(#111 0% 80%,#EDEDEA 80% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:44px; height:44px; background:#fff; border-radius:99px; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px;">4/5</div></div><div style="font-size:10px; color:#9a9a92; margin-top:6px;">{{ t.navWorkouts }}</div></div>
+                    <div style="text-align:center;"><div style="width:60px; height:60px; border-radius:99px; margin:0 auto; background:conic-gradient(#767676 0% 82%,#EDEDEA 82% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:44px; height:44px; background:#fff; border-radius:99px; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px;">82%</div></div><div style="font-size:10px; color:#9a9a92; margin-top:6px;">{{ t.navNutrition }}</div></div>
+                    <div style="text-align:center;"><div style="width:60px; height:60px; border-radius:99px; margin:0 auto; background:conic-gradient(#5EBE62 0% 71%,#EDEDEA 71% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:44px; height:44px; background:#fff; border-radius:99px; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px;">5/7</div></div><div style="font-size:10px; color:#9a9a92; margin-top:6px;">{{ t.habits }}</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ================= COMMUNITY ================= -->
+          <sc-if value="{{ isCommunity }}" hint-placeholder-val="{{ false }}">
+          <div style="">
+            <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; text-transform:uppercase; margin-bottom:14px;">{{ t.navCommunity }}</div></sc-if>
+            <div style="{{ contentGridSt }}">
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; gap:10px; border:1px solid #E4E4E4; border-radius:100vw; padding:10px 14px; margin-bottom:16px;"><div style="width:30px; height:30px; border-radius:99px; background:#111;"></div><span style="flex:1; color:#9a9a92; font-size:13px;">{{ t.shareUpdate }}</span><div style="width:28px; height:28px; background:#111; color:#fff; border-radius:99px; display:flex; align-items:center; justify-content:center;">+</div></div>
+                  <div style="border-bottom:1px solid #F2F2EF; padding-bottom:16px; margin-bottom:16px;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><div style="width:38px; height:38px; border-radius:99px; background:#111;"></div><div style="flex:1;"><div style="font-size:13px; font-weight:700;">Maria Rodriguez</div><div style="font-size:11px; color:#9a9a92;">2h {{ t.ago }}</div></div></div>
+                    <div style="font-size:13px; line-height:1.55; margin-bottom:10px;">{{ t.commPost }}</div>
+                    <div style="display:flex; gap:6px; margin-bottom:10px;"><img src="assets/img/ba-4.avif" alt="" style="flex:1; width:50%; height:150px; object-fit:cover; border-radius:10px;" /><img src="assets/img/ba-5.avif" alt="" style="flex:1; width:50%; height:150px; object-fit:cover; border-radius:10px;" /></div>
+                    <div style="display:flex; gap:18px; color:#767676; font-size:13px;"><span>♥ 124</span><span>💬 28</span></div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px;"><div style="width:38px; height:38px; border-radius:99px; background:#111;"></div><div style="flex:1;"><div style="font-size:13px; font-weight:700;">Camila O.</div><div style="font-size:13px; color:#444; margin-top:2px;">{{ t.commPost2 }}</div></div></div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="{{ cardSt }} padding:0; overflow:hidden;">
+                  <div style="position:relative; height:130px; background:linear-gradient(180deg,rgba(15,15,15,.2),rgba(15,15,15,.86)), url('assets/img/steph-hero.avif') center 14%/cover; padding:16px; color:#fff; display:flex; flex-direction:column; justify-content:flex-end;">
+                    <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; text-transform:uppercase; line-height:1;">Summer Shred</div>
+                    <div style="font-size:11px; color:#d5d5d5; margin-top:4px;">23 {{ t.daysLeft }}</div>
+                  </div>
+                  <div style="padding:16px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px;">72%</span><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px;">#12</span></div>
+                    <div style="height:6px; background:#EDEDEA; border-radius:99px; margin-bottom:14px;"><div style="height:6px; width:72%; background:#767676; border-radius:99px;"></div></div>
+                    <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #F2F2EF;"><span style="width:16px; font-size:12px;">1</span><span style="width:26px; height:26px; border-radius:99px; background:#111;"></span><span style="flex:1; font-size:13px; font-weight:600;">Jessica L.</span><span style="font-size:13px; font-weight:600;">97%</span></div>
+                    <div style="display:flex; align-items:center; gap:10px; padding:8px 0; background:#F7F7F3;"><span style="width:16px; font-size:12px;">12</span><span style="width:26px; height:26px; border-radius:99px; background:#767676;"></span><span style="flex:1; font-size:13px; font-weight:700;">{{ t.you }}</span><span style="font-size:13px; font-weight:700;">72%</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ================= MESSAGES ================= -->
+          <sc-if value="{{ isMessages }}" hint-placeholder-val="{{ false }}">
+          <div style="">
+            <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; text-transform:uppercase; margin-bottom:14px;">{{ t.navMessages }}</div></sc-if>
+            <div style="{{ msgGridSt }}">
+              <div style="{{ cardSt }} padding:0; overflow:hidden;">
+                <div style="padding:14px 16px; border-bottom:1px solid #F2F2EF; font-size:11px; letter-spacing:1.5px; color:#9a9a92; text-transform:uppercase;">{{ t.inbox }}</div>
+                <div style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #F2F2EF; background:#F7F7F3; cursor:pointer;"><div style="width:42px; height:42px; border-radius:99px; background:url('assets/img/steph-hero.avif') center/cover, #111;"></div><div style="flex:1; min-width:0;"><div style="font-size:13px; font-weight:700;">Coach Steph</div><div style="font-size:12px; color:#9a9a92; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.coachMsg }}</div></div><span style="width:18px; height:18px; background:#5EBE62; border-radius:99px; color:#fff; font-size:10px; display:flex; align-items:center; justify-content:center;">2</span></div>
+                <div style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #F2F2EF; cursor:pointer;"><div style="width:42px; height:42px; border-radius:99px; background:#111; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Gulams Condensed',Impact,sans-serif;">AI</div><div style="flex:1; min-width:0;"><div style="font-size:13px; font-weight:700;">{{ t.aiCoach }}</div><div style="font-size:12px; color:#9a9a92; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.aiCoachMsg }}</div></div></div>
+                <div style="display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer;"><div style="width:42px; height:42px; border-radius:99px; background:#f0f0ec; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.2a3 3 0 0 1 0 5.6"/></svg></div><div style="flex:1; min-width:0;"><div style="font-size:13px; font-weight:700;">{{ t.support }}</div><div style="font-size:12px; color:#9a9a92; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.supportMsg }}</div></div></div>
+              </div>
+              <div style="{{ cardSt }} padding:0; display:flex; flex-direction:column; overflow:hidden; {{ chatColSt }}">
+                <div style="display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid #F2F2EF;"><div style="width:40px; height:40px; border-radius:99px; background:url('assets/img/steph-hero.avif') center/cover, #111;"></div><div><div style="font-size:13px; font-weight:700;">Coach Steph</div><div style="font-size:11px; color:#5EBE62;">● {{ t.online }}</div></div></div>
+                <div class="tf-sc" style="flex:1; padding:18px; display:flex; flex-direction:column; gap:12px; background:#FAFAF7; min-height:220px;">
+                  <div style="align-self:flex-start; max-width:78%; background:#fff; border:1px solid #F0F0EC; border-radius:14px 14px 14px 4px; padding:11px 14px; font-size:13px; line-height:1.5;">{{ t.coachMsg }}</div>
+                  <div style="align-self:flex-end; max-width:78%; background:#111; color:#fafafa; border-radius:14px 14px 4px 14px; padding:11px 14px; font-size:13px; line-height:1.5;">{{ t.myReply }}</div>
+                  <div style="align-self:flex-start; max-width:78%; background:#fff; border:1px solid #F0F0EC; border-radius:14px 14px 14px 4px; padding:11px 14px; font-size:13px; line-height:1.5;">{{ t.coachMsg2 }}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:12px 16px; border-top:1px solid #F2F2EF;"><div style="flex:1; background:#F5F5F1; border-radius:100vw; padding:11px 16px; font-size:13px; color:#9a9a92;">{{ t.typeMsg }}</div><div style="width:38px; height:38px; border-radius:99px; background:#111; display:flex; align-items:center; justify-content:center; cursor:pointer;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div></div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ================= ACCOUNT ================= -->
+          <sc-if value="{{ isAccount }}" hint-placeholder-val="{{ false }}">
+          <div style="">
+            <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; text-transform:uppercase; margin-bottom:14px;">{{ t.navAccount }}</div></sc-if>
+            <div style="{{ contentGridSt }}">
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="{{ cardSt }}">
+                  <div style="display:flex; align-items:center; gap:14px;"><div style="width:60px; height:60px; border-radius:99px; background:#111; display:flex; align-items:center; justify-content:center;"><svg width="46%" height="46%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px;">Kiara Johnson</div><div style="font-size:12px; color:#767676; font-weight:600;">{{ memberLabel }}</div><div style="font-size:11px; color:#9a9a92;">{{ t.memberSince }}</div></div></div>
+                </div>
+                <div style="background:#111; color:#fafafa; border-radius:16px; padding:20px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;"><div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8f8f8f;">{{ t.membership }}</div><span style="background:#5EBE62; color:#0a2e12; font-size:10px; font-weight:700; padding:4px 10px; border-radius:100vw;">{{ t.active }}</span></div>
+                  <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:16px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px;">{{ memberPrice }}</span><span style="font-size:12px; color:#8f8f8f;">/{{ t.mo }}</span></div>
+                  <div style="display:flex; justify-content:space-between; font-size:13px; padding:9px 0; border-top:1px solid #2a2a2a;"><span style="color:#8f8f8f;">{{ t.nextCharge }}</span><span style="font-weight:600;">Jun 24, 2026</span></div>
+                  <div style="display:flex; justify-content:space-between; font-size:13px; padding:9px 0; border-top:1px solid #2a2a2a;"><span style="color:#8f8f8f;">{{ t.paymentMethod }}</span><span style="font-weight:600;">Visa · 4242</span></div>
+                  <div style="border:1px solid #4a4a4a; text-align:center; font-size:12px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:11px; margin-top:14px; cursor:pointer;">{{ t.managePlan }}</div>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:6px;">{{ t.nextCall }}</div>
+                  <div style="font-size:13px; color:#8a8880; margin-bottom:12px;">{{ t.nextCallSub }}</div>
+                  <div style="display:flex; align-items:center; gap:12px; background:#F5F5F1; border-radius:12px; padding:14px;"><div style="text-align:center; background:#111; color:#fff; border-radius:8px; padding:8px 12px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; line-height:.9;">21</div><div style="font-size:9px; letter-spacing:1px;">MAY</div></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">Coach Steph · Zoom</div><div style="font-size:11px; color:#9a9a92;">2:00 PM · 30 min</div></div><div style="background:#111; color:#fff; font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:8px 14px; cursor:pointer;">{{ t.book }}</div></div>
+                </div>
+                <div style="{{ cardSt }}">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px; margin-bottom:8px;">{{ t.settings }}</div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; font-weight:500;">{{ t.language }}</span><span style="font-size:12px; color:#9a9a92;">{{ t.langVal }} ›</span></div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; font-weight:500;">{{ t.units }}</span><span style="font-size:12px; color:#9a9a92;">{{ t.unitsVal }} ›</span></div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; font-weight:500;">{{ t.notifications }}</span><span style="color:#c0c0b8;">›</span></div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 0;"><span style="font-size:13px; font-weight:500;">{{ t.help }}</span><span style="color:#c0c0b8;">›</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- ================= CHECK-IN ================= -->
+          <sc-if value="{{ isCheckin }}" hint-placeholder-val="{{ false }}">
+          <div style=" max-width:640px; margin:0 auto;">
+            <div style="{{ cardSt }}">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px; text-transform:uppercase;">{{ t.weeklyCheckin }}</div><div onClick="{{ goToday }}" style="font-size:22px; color:#c0c0b8; cursor:pointer;">✕</div></div>
+              <div style="font-size:13px; color:#8a8880; margin-bottom:20px;">{{ t.checkinSub }}</div>
+              <div style="font-size:13px; font-weight:600; margin-bottom:12px;">{{ t.howFeel }}</div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:22px;">
+                <sc-for list="{{ moods }}" as="mo" hint-placeholder-count="5"><div onClick="{{ mo.on }}" style="{{ mo.st }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r=".7" fill="currentColor" stroke="none"/><path d="{{ mo.mouth }}"/></svg></div></sc-for>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;"><span style="font-size:12px; letter-spacing:1px; text-transform:uppercase;">{{ t.currentWeight }}</span></div>
+              <div style="border:1px solid #E4E4E4; border-radius:10px; padding:12px 14px; font-size:14px; color:#9a9a92; margin-bottom:18px;">229.6 lb</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;"><span style="font-size:12px; letter-spacing:1px; text-transform:uppercase;">{{ t.energy }}</span><span style="font-weight:600;">7 / 10</span></div>
+              <input type="range" min="0" max="10" value="7" style="width:100%; accent-color:#111; margin-bottom:20px;" />
+              <div style="font-size:12px; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">{{ t.notes }}</div>
+              <div style="border:1px solid #E4E4E4; border-radius:10px; padding:14px; min-height:70px; font-size:14px; color:#c0c0b8;">{{ t.notesPh }}</div>
+              <div onClick="{{ goToday }}" style="background:#111; color:#fff; text-align:center; font-size:12px; letter-spacing:2px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:15px; margin-top:20px; cursor:pointer;">{{ t.saveCheckin }}</div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- bottom spacer for mobile nav -->
+          <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="height:70px;"></div></sc-if>
+        </div>
+
+        <!-- ============ MOBILE CAMERA FAB ============ -->
+        <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+        <a href="Thick & Fit - Food Log.dc.html#camera" style="position:absolute; bottom:82px; right:16px; width:56px; height:56px; border-radius:99px; background:#111; display:flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(0,0,0,.3); z-index:45; text-decoration:none;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-2h6l2 2h3v13H4z"/><circle cx="12" cy="13" r="3.5"/></svg></a>
+        </sc-if>
+
+        <!-- ============ MOBILE BOTTOM NAV ============ -->
+        <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; bottom:0; left:0; right:0; display:flex; background:#fff; border-top:1px solid #EEE; padding:10px 8px 14px; z-index:40;">
+          <div onClick="{{ goToday }}" style="{{ mnavToday }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg><span style="font-size:10px;">{{ t.navToday }}</span></div>
+          <div onClick="{{ goWorkouts }}" style="{{ mnavWorkouts }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg><span style="font-size:10px;">{{ t.navWorkouts }}</span></div>
+          <div onClick="{{ goNutrition }}" style="{{ mnavNutrition }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg><span style="font-size:10px;">{{ t.navNutrition }}</span></div>
+          <div onClick="{{ goCommunity }}" style="{{ mnavCommunity }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.2a3 3 0 0 1 0 5.6"/></svg><span style="font-size:10px;">{{ t.navCommunity }}</span></div>
+          <div onClick="{{ goAccount }}" style="{{ mnavAccount }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span style="font-size:10px;">{{ t.navAccount }}</span></div>
+        </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;1440&quot;,&quot;height&quot;:&quot;960&quot;}}">
+class Component extends DCLogic {
+  state = { device:'desktop', lang:'en', page:'today', mood:4, plan:null };
+
+  componentDidMount(){
+    try {
+      const p = JSON.parse(localStorage.getItem('tf_plan') || 'null');
+      if (p && p.cals) this.setState({ plan:p, lang: p.lang || this.state.lang });
+    } catch (e) {}
+  }
+
+  T(){
+    const en = {
+      navToday:'Today', navWorkouts:'Workouts', navNutrition:'Nutrition', navProgress:'Progress', navCommunity:'Community', navMessages:'Messages', navAccount:'Account',
+      search:'Search foods, workouts…', nextCall:'Next coach call', bookCall:'Book a call', book:'Book',
+      week:'Week 12 of 24 · Glute Builder', hey:'Hey', heroSub:'You\u2019re 430 calories and 28g of protein from closing today. Log lunch and you\u2019re on pace.', startCheckin:'Start check-in', weekStreak:'Week streak',
+      atAGlance:'Today at a glance', today:'Today', calories:'Calories', active:'Active', steps:'Steps', water:'Water', protein:'Protein', left:'left', toGo:'to go', goal:'Goal', thisWk:'this wk',
+      fuelToday:'Fuel today', viewAll:'View all', fuelGuide:'You\u2019re short on protein. Add a lean protein at dinner to hit your target and stay in your deficit.', calsLeft:'cals left',
+      aiLog:'Snap & Log', aiLogSub:'Just tell me what you ate — "10oz ribeye and 5 eggs" — and I\u2019ll pull the macros.', aiPh:'I had a chicken bowl and a protein shake…', snapPhoto:'Snap a photo', scanBarcode:'Scan barcode',
+      todaysWorkout:'Today\u2019s workout', exercises:'exercises', min:'min', intermediate:'Intermediate', startWorkout:'Start workout',
+      habits:'Your habits', done:'done', goalProgress:'Goal progress', behind:'Behind', now:'Now', pace:'on pace for Oct',
+      coachStatus:'Usually replies within a day', coachMsg:'Proud of you for showing up today! How are the hip thrusts feeling? Added 10 lbs to your plan.', reply:'Reply',
+      instructions:'Instructions', muscles:'Muscles', activated:'Activated', reps:'Reps', weightLbl:'Weight (lb)', logSet:'Log set',
+      exStep1:'Upper back on the bench, feet hip-width apart.', exStep2:'Drive through heels, lift hips to full extension.', exStep3:'Squeeze glutes at the top, lower with control.',
+      day3of5:'Day 3 of 5', thisWeek:'This week', total:'Total', volume:'Volume (lb)', thisWeekPlan:'This week',
+      progression:'Your progression', progSub:'What you lifted last session — beat it today.', lastTimeLbl:'Last time', targetLbl:'Target', upWk:'this wk',
+      todaysMeals:'Today\u2019s meals', breakfast:'Breakfast', lunch:'Lunch', dinner:'Dinner', notLogged:'Not logged yet', add:'Add', macros:'Macros',
+      mealPlan:'Your meal plan', mealPlanSub:'Simple 3–5 ingredient meals, built for your goal and budget.', simple:'Simple', budget:'Budget-friendly', highProtein:'High protein',
+      weightTrend:'Weight trend', start:'Start', progressPhotos:'Progress photos', bodyStats:'Body stats', bodyFat:'Body fat %', waist:'Waist', hips:'Hips', thigh:'Thigh', dexaNote:'Best measured with a DEXA or InBody scan.',
+      shareUpdate:'Share an update…', ago:'ago', commPost:'Down 5 lbs this week! Feeling so many changes already 🙌', commPost2:'Early morning workout done. Let\u2019s have a great day ladies!', daysLeft:'days left', you:'You',
+      inbox:'Inbox', aiCoach:'Reminders', aiCoachMsg:'Time to log your meals and hit your protein goal.', support:'Support Team', supportMsg:'We got your message and will reply soon.', online:'Active now', myReply:'Felt strong! Hit a new PR on hip thrust.', coachMsg2:'That\u2019s what I love to see. Keep that form tight 🔥', typeMsg:'Message Coach Steph', 
+      premiumMember:'Premium Member', memberSince:'Member since Jan 2025', membership:'Membership', active:'Active', mo:'mo', nextCharge:'Next charge', paymentMethod:'Payment method', managePlan:'Manage plan',
+      nextCallSub:'Twice a month, 1-on-1 with Coach Steph.', settings:'Settings', language:'Language', langVal:'English', units:'Units', unitsVal:'Imperial', notifications:'Notifications', help:'Help & support',
+      weeklyCheckin:'Weekly check-in', checkinSub:'2 minutes · keeps your streak and helps Steph adjust your plan.', howFeel:'How do you feel today?', currentWeight:'Current weight', energy:'Energy level', notes:'Notes (optional)', notesPh:'Feeling strong and motivated!', saveCheckin:'Save check-in'
+    };
+    const es = {
+      navToday:'Hoy', navWorkouts:'Entrenos', navNutrition:'Nutrición', navProgress:'Progreso', navCommunity:'Comunidad', navMessages:'Mensajes', navAccount:'Cuenta',
+      search:'Buscar comidas, entrenos…', nextCall:'Próxima llamada', bookCall:'Agendar llamada', book:'Agendar',
+      week:'Semana 12 de 24 · Glute Builder', hey:'Hola', heroSub:'Te faltan 430 calorías y 28g de proteína para cerrar el día. Registra el almuerzo y vas al ritmo.', startCheckin:'Iniciar check-in', weekStreak:'Racha semanal',
+      atAGlance:'Hoy de un vistazo', today:'Hoy', calories:'Calorías', active:'Activa', steps:'Pasos', water:'Agua', protein:'Proteína', left:'faltan', toGo:'por lograr', goal:'Meta', thisWk:'esta sem',
+      fuelToday:'Nutre tu día', viewAll:'Ver todo', fuelGuide:'Te falta proteína. Agrega una proteína magra en la cena para llegar a tu meta y mantener el déficit.', calsLeft:'cal restantes',
+      aiLog:'Escanea y registra', aiLogSub:'Solo dime qué comiste — "un ribeye de 10oz y 5 huevos" — y saco los macros.', aiPh:'Comí un bowl de pollo y un batido…', snapPhoto:'Tomar foto', scanBarcode:'Escanear código',
+      todaysWorkout:'Entreno de hoy', exercises:'ejercicios', min:'min', intermediate:'Intermedio', startWorkout:'Empezar entreno',
+      habits:'Tus hábitos', done:'listo', goalProgress:'Progreso de meta', behind:'Atrasada', now:'Hoy', pace:'al ritmo para oct',
+      coachStatus:'Suele responder en un día', coachMsg:'¡Orgullosa de que apareciste hoy! ¿Cómo van los hip thrusts? Subí 10 lbs a tu plan.', reply:'Responder',
+      instructions:'Instrucciones', muscles:'Músculos', activated:'Activado', reps:'Reps', weightLbl:'Peso (lb)', logSet:'Registrar serie',
+      exStep1:'Apoya la espalda alta en el banco, pies al ancho de cadera.', exStep2:'Empuja con los talones, eleva la cadera al máximo.', exStep3:'Aprieta los glúteos arriba, baja con control.',
+      day3of5:'Día 3 de 5', thisWeek:'Esta semana', total:'Total', volume:'Volumen (lb)', thisWeekPlan:'Esta semana',
+      progression:'Tu progresión', progSub:'Lo que levantaste la sesión pasada — supéralo hoy.', lastTimeLbl:'Última vez', targetLbl:'Meta', upWk:'esta sem',
+      todaysMeals:'Comidas de hoy', breakfast:'Desayuno', lunch:'Almuerzo', dinner:'Cena', notLogged:'Sin registrar', add:'Agregar', macros:'Macros',
+      mealPlan:'Tu plan de comidas', mealPlanSub:'Comidas simples de 3–5 ingredientes, hechas para tu meta y presupuesto.', simple:'Simple', budget:'Económico', highProtein:'Alta en proteína',
+      weightTrend:'Tendencia de peso', start:'Inicio', progressPhotos:'Fotos de progreso', bodyStats:'Datos corporales', bodyFat:'Grasa corporal %', waist:'Cintura', hips:'Cadera', thigh:'Muslo', dexaNote:'Mejor con un escaneo DEXA o InBody.',
+      shareUpdate:'Comparte algo…', ago:'', commPost:'¡Bajé 5 lbs esta semana! Ya siento muchos cambios 🙌', commPost2:'Entreno de la mañana listo. ¡Vamos por un gran día chicas!', daysLeft:'días restantes', you:'Tú',
+      inbox:'Bandeja', aiCoach:'Recordatorios', aiCoachMsg:'Hora de registrar tus comidas y llegar a tu proteína.', support:'Soporte', supportMsg:'Recibimos tu mensaje y responderemos pronto.', online:'En línea', myReply:'¡Me sentí fuerte! Nuevo récord en hip thrust.', coachMsg2:'¡Eso me encanta ver! Mantén esa técnica firme 🔥', typeMsg:'Mensaje a Coach Steph',
+      premiumMember:'Miembro Premium', memberSince:'Miembro desde ene 2025', membership:'Membresía', active:'Activa', mo:'mes', nextCharge:'Próximo cobro', paymentMethod:'Método de pago', managePlan:'Gestionar plan',
+      nextCallSub:'Dos veces al mes, 1-a-1 con Coach Steph.', settings:'Ajustes', language:'Idioma', langVal:'Español', units:'Unidades', unitsVal:'Imperial', notifications:'Notificaciones', help:'Ayuda y soporte',
+      weeklyCheckin:'Check-in semanal', checkinSub:'2 minutos · mantiene tu racha y ayuda a Steph a ajustar tu plan.', howFeel:'¿Cómo te sientes hoy?', currentWeight:'Peso actual', energy:'Nivel de energía', notes:'Notas (opcional)', notesPh:'¡Me siento fuerte y motivada!', saveCheckin:'Guardar check-in'
+    };
+    return this.state.lang === 'en' ? en : es;
+  }
+
+  ring(pct, color){ return 'background:conic-gradient(' + color + ' 0% ' + pct + '%, #EDEDEA ' + pct + '% 100%);'; }
+  navItem(on, tablet){ return { display:'flex', alignItems:'center', gap: tablet?'0':'12px', justifyContent: tablet?'center':'flex-start', padding: tablet?'12px 0':'11px 14px', borderRadius:'100vw', fontSize:'14px', cursor:'pointer', color: on?'#111':'#8a8880', background: on?'#F0F0EC':'transparent', fontWeight: on?600:500 }; }
+  mnav(on){ return { flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', cursor:'pointer', color: on?'#111':'#c0c0b8' }; }
+
+  renderVals(){
+    const s = this.state, t = this.T();
+    const dev = s.device, tablet = dev==='tablet', mobile = dev==='mobile', desktop = dev==='desktop';
+    const p = s.page;
+
+    // device frame
+    const frames = {
+      desktop: 'width:min(1360px, 94vw); height:860px; background:#fff; border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.16); overflow:hidden; border:1px solid #D8D6CF;',
+      tablet:  'width:834px; max-width:94vw; height:820px; background:#fff; border-radius:26px; box-shadow:0 30px 80px rgba(0,0,0,.18); overflow:hidden; border:10px solid #111;',
+      mobile:  'width:390px; max-width:94vw; height:800px; background:#fff; border-radius:44px; box-shadow:0 30px 80px rgba(0,0,0,.22); overflow:hidden; border:11px solid #111;'
+    };
+    const screenSt = 'position:relative; width:100%; height:100%; background:#F3F3F1; overflow:hidden;';
+
+    // layout metrics
+    const contentCols = desktop ? 'grid-template-columns:1.55fr 1fr; gap:16px; display:grid; align-items:start;'
+                      : tablet  ? 'grid-template-columns:1fr 1fr; gap:16px; display:grid; align-items:start;'
+                      : 'grid-template-columns:1fr; gap:14px; display:flex; flex-direction:column;';
+    const ringCols = desktop ? 'repeat(3,1fr)' : tablet ? 'repeat(3,1fr)' : 'repeat(2,1fr)';
+    const cardSt = 'background:#fff; border:1px solid #EAEAE4; border-radius:16px; padding:20px;';
+
+    const heroSt = 'background:#111; color:#fafafa; border-radius:18px; padding:' + (mobile?'22px':'26px 28px') + '; margin-bottom:16px; display:flex; ' + (mobile?'flex-direction:column; gap:18px;':'align-items:center; gap:24px;') + '';
+    const heroStreakSt = 'display:flex; align-items:center; gap:12px; ' + (mobile?'':'flex:none; border-left:1px solid #2a2a2a; padding-left:24px;') + '';
+
+    // sidebar
+    const sidebarSt = 'flex:none; width:' + (tablet?'78px':'240px') + '; background:#fff; border-right:1px solid #EAEAE4; padding:22px 0; display:flex; flex-direction:column; height:100%;';
+    const sbBrandSt = 'padding:0 ' + (tablet?'0':'24px') + ' 20px; ' + (tablet?'display:flex; justify-content:center;':'') + '';
+    const sbBookSt = 'margin-top:auto; padding:16px 12px 0; ' + (tablet?'display:none;':'');
+    const navLabelDisp = tablet ? 'display:none;' : '';
+
+    const mainSt = 'flex:1; min-width:0; height:100%; padding:' + (mobile?'16px 16px 0':'26px 30px 40px') + '; ' + (mobile?'':'');
+
+    // page title
+    // ---- personalization from onboarding (falls back to demo numbers) ----
+    const P = s.plan;
+    const nf = (n)=> Number(n).toLocaleString('en-US');
+    const calGoal = P ? P.cals : 1850;
+    const protGoal = P ? P.protein : 140;
+    const calNow = P ? Math.round(calGoal*0.767) : 1420;
+    const protNow = P ? Math.round(protGoal*0.80) : 112;
+    const calPct = Math.round(calNow/calGoal*100);
+    const protPct = Math.round(protNow/protGoal*100);
+    const calLeft = calGoal - calNow;
+    const protLeft = protGoal - protNow;
+    const carbGoal = P ? Math.round(calGoal*0.42/4) : 198;
+    const carbNow = P ? Math.round(carbGoal*0.72) : 142;
+    const fatGoal = P ? Math.round(calGoal*0.27/9) : 61;
+    const fatNow = P ? Math.round(fatGoal*0.79) : 48;
+    const progNameMap = { 'Glute Builder':'Glute Builder', 'Fat Loss': s.lang==='es'?'Pérdida de Grasa':'Fat Loss', 'Strength': s.lang==='es'?'Fuerza':'Strength', 'Wellness': s.lang==='es'?'Bienestar':'Wellness' };
+    const progName = P ? (progNameMap[P.program] || P.program) : 'Glute Builder';
+    const weekLabel = P ? ((s.lang==='es'?'Semana 1 de 24 · ':'Week 1 of 24 · ') + progName) : t.week;
+    const heroSubTxt = P ? (s.lang==='es'
+        ? ('Te faltan '+nf(calLeft)+' calorías y '+protLeft+'g de proteína para cerrar el día. Registra el almuerzo y vas al ritmo.')
+        : ('You\u2019re '+nf(calLeft)+' calories and '+protLeft+'g of protein from closing today. Log lunch and you\u2019re on pace.'))
+      : t.heroSub;
+    const memberMap = { self: s.lang==='es'?'Miembro Self-Guided':'Self-Guided Member', coached: s.lang==='es'?'Miembro Coached':'Coached Member', premium: s.lang==='es'?'Miembro Premium':'Premium Member' };
+    const memberLabel = P ? (memberMap[P.tier] || t.premiumMember) : t.premiumMember;
+    const memberPrice = P ? ({ self:'$29', coached:'$99', premium:'$249' }[P.tier] || '$19.99') : '$19.99';
+    const tierShortMap = { self: s.lang==='es'?'Self-Guided':'Self-Guided', coached: s.lang==='es'?'Coached':'Coached', premium: s.lang==='es'?'Premium':'Premium' };
+    const sbTierLabel = 'Kiara · ' + (P ? (tierShortMap[P.tier] || 'Premium') : 'Premium');
+    const nutriBig = nf(calNow), nutriUnit = '/'+nf(calGoal), nutriLeft = nf(calLeft);
+    const nutriBarSt = 'height:6px; width:'+calPct+'%; background:#111; border-radius:99px;';
+
+    const titles = { today:t.navToday, workouts:t.navWorkouts, nutrition:t.navNutrition, progress:t.navProgress, community:t.navCommunity, messages:t.navMessages, account:t.navAccount, checkin:t.weeklyCheckin };
+    const subs = { today:'Tuesday, May 12 · '+weekLabel, workouts:progName+' · '+t.day3of5, nutrition:nutriBig+' / '+nf(calGoal)+' cal · '+calPct+'%', progress:'−4.4 lb '+t.thisWk, community:'Team Thick & Fit · 1,204', messages:'Coach Steph · '+t.aiCoach, account:memberLabel, checkin:'' };
+
+    // stats
+    const bar = (pct,c)=> 'height:5px; width:'+pct+'%; background:'+c+'; border-radius:99px;';
+    const stats = [
+      { label:t.calories, big:nutriBig, unit:nutriUnit, sub:nutriLeft+' '+t.left, barSt:bar(calPct,'#111') },
+      { label:t.protein, big:String(protNow), unit:'/'+protGoal+'g', sub:protLeft+'g '+t.left, barSt:bar(protPct,'#111') },
+      { label:t.active, big:'46', unit:'min', sub:t.goal+' 40', barSt:bar(100,'#5EBE62') },
+      { label:t.steps, big:'8,432', unit:'/10k', sub:'84%', barSt:bar(84,'#111') },
+      { label:t.water, big:'2.0', unit:'/3 L', sub:'1 L '+t.toGo, barSt:bar(66,'#111') },
+      { label:'Weight', big:'229.6', unit:'lb', sub:'−4.4 '+t.thisWk, barSt:bar(60,'#5EBE62') },
+    ];
+    const macros = [
+      { label:t.protein, val:String(protNow), goal:'/'+protGoal+'g', ringSt:this.ring(protPct,'#111') },
+      { label:t.navNutrition==='Nutrición'?'Carbos':'Carbs', val:String(carbNow), goal:'/'+carbGoal+'g', ringSt:this.ring(Math.round(carbNow/carbGoal*100),'#767676') },
+      { label:t.navNutrition==='Nutrición'?'Grasa':'Fat', val:String(fatNow), goal:'/'+fatGoal+'g', ringSt:this.ring(Math.round(fatNow/fatGoal*100),'#5EBE62') },
+    ];
+    const habitData = [
+      { name: s.lang==='en'?'Drink 3L water':'Tomar 3L de agua', meta:'2.0 / 3 L', done:false },
+      { name: s.lang==='en'?'10k steps':'10k pasos', meta:'8,432 / 10,000', done:false },
+      { name: s.lang==='en'?'No alcohol':'Sin alcohol', meta:s.lang==='en'?'On track':'En marcha', done:true },
+      { name: s.lang==='en'?'Hit protein goal':'Meta de proteína', meta:protNow+' / '+protGoal+' g', done:true },
+      { name: s.lang==='en'?'Log a check-in':'Registrar check-in', meta:s.lang==='en'?'Weekly':'Semanal', done:true },
+    ];
+    const habits = habitData.map(h=>({
+      name:h.name, meta:h.meta,
+      checkSt: 'width:22px; height:22px; border-radius:99px; flex:none; display:flex; align-items:center; justify-content:center; ' + (h.done?'background:#5EBE62;':'background:#fff; border:2px solid #E4E4E4;'),
+      tick: h.done?'#fff':'transparent',
+      strike: h.done?'color:#b0b0a8; text-decoration:line-through;':''
+    }));
+
+    const mouths = ['M8.5 16.5c1-1.6 2.2-2.2 3.5-2.2s2.5.6 3.5 2.2','M9 15.8c.9-1 1.9-1.5 3-1.5s2.1.5 3 1.5','M9 15h6','M9 14.4c.9 1 1.9 1.5 3 1.5s2.1-.5 3-1.5','M8.5 14c1 1.6 2.2 2.2 3.5 2.2s2.5-.6 3.5-2.2'];
+    const moods = mouths.map((mouth,i)=>({ mouth, on:()=>this.setState({mood:i+1}),
+      st: 'width:48px; height:48px; border-radius:99px; display:flex; align-items:center; justify-content:center; cursor:pointer; ' + (s.mood===i+1?'background:#111; color:#fff; transform:scale(1.06);':'background:#F0F0EC; color:#555;') }));
+
+    // device toggles
+    const dOn = { background:'#111', color:'#fff', width:'40px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' };
+    const dOff = { background:'#fff', color:'#111', width:'40px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' };
+    const tOn = { background:'#111', color:'#fff', fontSize:'11px', fontWeight:700, letterSpacing:'2px', padding:'0 14px', display:'flex', alignItems:'center', cursor:'pointer' };
+    const tOff = { background:'#fff', color:'#111', fontSize:'11px', fontWeight:700, letterSpacing:'2px', padding:'0 14px', display:'flex', alignItems:'center', cursor:'pointer' };
+
+    const msgGridSt = mobile ? 'display:flex; flex-direction:column; gap:14px;' : 'display:grid; grid-template-columns:300px 1fr; gap:16px; align-items:start;';
+    const chatColSt = mobile ? 'height:auto;' : 'height:520px;';
+
+    const go = (pg)=>()=>this.setState({page:pg});
+
+    return {
+      t, pageTitle: titles[p], pageSub: subs[p],
+      weekLabel, heroSubTxt, progName, memberLabel, memberPrice, sbTierLabel,
+      nutriBig, nutriUnit, nutriLeft, nutriBarSt,
+      // device
+      frameSt: frames[dev], screenSt, showSidebar: !mobile, isMobile: mobile,
+      sidebarSt, sbBrandSt, sbBookSt, navLabelDisp, mainSt, contentGridSt: contentCols, ringCols, cardSt, heroSt, heroStreakSt, msgGridSt, chatColSt,
+      setDesktop:()=>this.setState({device:'desktop'}), setTablet:()=>this.setState({device:'tablet'}), setMobile:()=>this.setState({device:'mobile'}),
+      dDesk: desktop?dOn:dOff, dTab: tablet?dOn:dOff, dMob: mobile?dOn:dOff,
+      setEn:()=>this.setState({lang:'en'}), setEs:()=>this.setState({lang:'es'}), enSt: s.lang==='en'?tOn:tOff, esSt: s.lang==='es'?tOn:tOff,
+      // exercise progression (mirrors the workout player's last-session history)
+      progression: [
+        { name:'Hip Thrust', target:'4 × 12 · 135 lb', last:'12 × 130 lb', delta:'+5 lb', pct:96 },
+        { name:'Romanian Deadlift', target:'4 × 10 · 115 lb', last:'10 × 110 lb', delta:'+5 lb', pct:96 },
+        { name:'Bulgarian Split Squat', target:'3 × 10 · 35 lb', last:'10 × 30 lb', delta:'+5 lb', pct:86 },
+        { name:'Cable Kickback', target:'3 × 15 · 25 lb', last:'15 × 20 lb', delta:'+5 lb', pct:80 },
+        { name:'Walking Lunge', target:'3 × 20 · 30 lb', last:'20 × 25 lb', delta:'+5 lb', pct:83 },
+      ],
+      // pages
+      isToday:p==='today', isWorkouts:p==='workouts', isNutrition:p==='nutrition', isProgress:p==='progress', isCommunity:p==='community', isMessages:p==='messages', isAccount:p==='account', isCheckin:p==='checkin',
+      goToday:go('today'), goWorkouts:go('workouts'), goNutrition:go('nutrition'), goProgress:go('progress'), goCommunity:go('community'), goMessages:go('messages'), goAccount:go('account'), goCheckin:go('checkin'),
+      // nav styles
+      navToday:this.navItem(p==='today',tablet), navWorkouts:this.navItem(p==='workouts',tablet), navNutrition:this.navItem(p==='nutrition',tablet), navProgress:this.navItem(p==='progress',tablet), navCommunity:this.navItem(p==='community',tablet), navMessages:this.navItem(p==='messages',tablet), navAccount:this.navItem(p==='account'||p==='checkin',tablet),
+      mnavToday:this.mnav(p==='today'), mnavWorkouts:this.mnav(p==='workouts'), mnavNutrition:this.mnav(p==='nutrition'), mnavCommunity:this.mnav(p==='community'), mnavAccount:this.mnav(p==='account'||p==='checkin'),
+      // data
+      stats, macros, habits, moods,
+    };
+  }
+}
+</script>
+</body>
+</html>

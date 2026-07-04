@@ -249,6 +249,9 @@
       "projected": "Projected {from} → {to} lb over 12 weeks"
     },
     "exercise": {
+      "back": "Back",
+      "decrease": "Decrease",
+      "increase": "Increase",
       "instructions": "Instructions",
       "muscles": "Muscles",
       "reps": "Reps",
@@ -1076,7 +1079,21 @@
       "billingFailed": "Failed",
       "billingScheduled": "Scheduled",
       "billingNoSubs": "No subscriptions yet.",
-      "formLabelsRequired": "Every field needs a label (EN) before saving."
+      "formLabelsRequired": "Every field needs a label (EN) before saving.",
+      "formSaved": "Saved",
+      "formSaveFailed": "Save failed",
+      "formSaveFirst": "Save first",
+      "formPublished": "Published",
+      "formPublishFailed": "Publish failed",
+      "msgEmailNote": "{name} isn't in the app yet, so this is emailed to them.",
+      "msgPlaceholder": "Message {name}...",
+      "msgSend": "Send",
+      "msgSending": "Sending",
+      "msgSlowDown": "Slow down a moment.",
+      "msgSendFailed": "Could not send.",
+      "msgEmailedTo": "Emailed to {name}.",
+      "msgSavedForJoin": "Saved for when they join.",
+      "msgSent": "Sent."
     },
     "you": {
       "title": "You",
@@ -1229,6 +1246,7 @@
       "fpNotImage": "Please choose an image.",
       "fpTooLarge": "Image is too large (max 10 MB).",
       "fpUploadFailed": "Upload failed. Try again.",
+      "fpDeleteFailed": "Could not delete that photo. Try again.",
       "searchPlaceholder": "Search foods...",
       "add": "Add",
       "grams": "Grams",
@@ -1336,6 +1354,7 @@
       "deleteAccount": "Delete account",
       "deleteConfirmBody": "This permanently deletes your account and all of your data: workouts, nutrition logs, progress photos, and messages. This cannot be undone.",
       "deleting": "Deleting...",
+      "deleteError": "Could not delete your account. If you have an active subscription, we could not cancel it. Contact support.",
       "deleteConfirmCta": "Yes, delete everything",
       "membership": "Membership",
       "manage": "Manage",
@@ -1357,6 +1376,8 @@
       "exportData": "Download my data",
       "exportBody": "Get a copy of everything we hold for you: profile, workouts, nutrition logs, check-ins, messages, and billing history, as one JSON file. Progress photos are included as links, not image files.",
       "exportPending": "Preparing your file...",
+      "exportFoodCsv": "Food log (CSV)",
+      "exportWeightsCsv": "Weights (CSV)",
       "exportError": "We could not build your export. Please try again.",
       "channel": {
         "push": "Push",
@@ -1541,7 +1562,10 @@
     "forms": {
       "submit": "Submit",
       "success": "Thank you. Your response was recorded.",
-      "error": "Could not submit."
+      "error": "Could not submit.",
+      "selectPlaceholder": "Choose one...",
+      "photoUploading": "Uploading photo...",
+      "photoUploaded": "Photo added"
     },
     "claim": {
       "title": "Welcome back",

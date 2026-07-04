@@ -249,6 +249,9 @@
       "projected": "Proyección {from} → {to} lb en 12 semanas"
     },
     "exercise": {
+      "back": "Atrás",
+      "decrease": "Disminuir",
+      "increase": "Aumentar",
       "instructions": "Instrucciones",
       "muscles": "Músculos",
       "reps": "Reps",
@@ -1076,7 +1079,21 @@
       "billingFailed": "Fallido",
       "billingScheduled": "Programado",
       "billingNoSubs": "Aún no hay suscripciones.",
-      "formLabelsRequired": "Cada campo necesita una etiqueta (EN) antes de guardar."
+      "formLabelsRequired": "Cada campo necesita una etiqueta (EN) antes de guardar.",
+      "formSaved": "Guardado",
+      "formSaveFailed": "Error al guardar",
+      "formSaveFirst": "Guarda primero",
+      "formPublished": "Publicado",
+      "formPublishFailed": "Error al publicar",
+      "msgEmailNote": "{name} aún no está en la app, así que esto se le envía por correo.",
+      "msgPlaceholder": "Mensaje para {name}...",
+      "msgSend": "Enviar",
+      "msgSending": "Enviando",
+      "msgSlowDown": "Espera un momento.",
+      "msgSendFailed": "No se pudo enviar.",
+      "msgEmailedTo": "Enviado por correo a {name}.",
+      "msgSavedForJoin": "Guardado para cuando se una.",
+      "msgSent": "Enviado."
     },
     "you": {
       "title": "Tú",
@@ -1229,6 +1246,7 @@
       "fpNotImage": "Elige una imagen.",
       "fpTooLarge": "La imagen es muy grande (máx. 10 MB).",
       "fpUploadFailed": "Falló la carga. Intenta de nuevo.",
+      "fpDeleteFailed": "No se pudo eliminar esa foto. Intenta de nuevo.",
       "searchPlaceholder": "Buscar alimentos...",
       "add": "Agregar",
       "grams": "Gramos",
@@ -1336,6 +1354,7 @@
       "deleteAccount": "Eliminar cuenta",
       "deleteConfirmBody": "Esto elimina permanentemente tu cuenta y todos tus datos: entrenamientos, registros de nutrición, fotos de progreso y mensajes. No se puede deshacer.",
       "deleting": "Eliminando...",
+      "deleteError": "No se pudo eliminar tu cuenta. Si tienes una suscripción activa, no pudimos cancelarla. Contacta a soporte.",
       "deleteConfirmCta": "Sí, eliminar todo",
       "membership": "Membresía",
       "manage": "Administrar",
@@ -1357,6 +1376,8 @@
       "exportData": "Descargar mis datos",
       "exportBody": "Obtén una copia de todo lo que guardamos de ti: perfil, entrenamientos, registros de nutrición, seguimientos, mensajes e historial de facturación, en un solo archivo JSON. Las fotos de progreso se incluyen como enlaces, no como archivos de imagen.",
       "exportPending": "Preparando tu archivo...",
+      "exportFoodCsv": "Comidas (CSV)",
+      "exportWeightsCsv": "Pesos (CSV)",
       "exportError": "No pudimos crear tu exportación. Inténtalo de nuevo.",
       "channel": {
         "push": "Push",
@@ -1541,7 +1562,10 @@
     "forms": {
       "submit": "Enviar",
       "success": "Gracias. Tu respuesta fue registrada.",
-      "error": "No se pudo enviar."
+      "error": "No se pudo enviar.",
+      "selectPlaceholder": "Elige una...",
+      "photoUploading": "Subiendo foto...",
+      "photoUploaded": "Foto agregada"
     },
     "claim": {
       "title": "Bienvenida de nuevo",

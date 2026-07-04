@@ -129,12 +129,15 @@ export function PhotoScan({
   open: openProp,
   onOpenChange,
   hideTrigger = false,
+  logDate,
 }: {
   /** Controlled open state (e.g. driven by the global capture FAB). Omit for the self-contained diary card. */
   open?: boolean;
   onOpenChange?: (v: boolean) => void;
   /** Hide the inline diary entry button (when the FAB owns the trigger). */
   hideTrigger?: boolean;
+  /** ISO date of the day being viewed; omit for today. Logs land on this day, not always today. */
+  logDate?: string;
 } = {}): ReactElement {
   const t = useTranslations('app.nutrition');
   const router = useRouter();
@@ -211,6 +214,7 @@ export function PhotoScan({
       grams,
       source: inferenceId ? 'photo' : 'barcode',
       aiInferenceId: inferenceId ?? undefined,
+      logDate,
     });
     setProductBusy(false);
     if (res.ok) {
@@ -347,6 +351,7 @@ export function PhotoScan({
       predictedFoodId: predictedFoodIds[i] ?? undefined,
       confidence: c.confidence,
       aiInferenceId: inferenceId ?? undefined,
+      logDate,
     });
     setBusy(null);
     if (res.ok) {

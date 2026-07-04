@@ -1,6 +1,5 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions",
     "allow": [
       "Task",
       "Workflow",
@@ -15,7 +14,6 @@
       "Grep",
       "NotebookEdit",
       "Bash(*)",
-      "mcp__*",
       "Skill(gsd:new-project)",
       "Skill(gsd:new-project:*)",
       "Skill(gsd:new-milestone)",
@@ -44,10 +42,35 @@
       "mcp__claude_ai_Vercel__search_vercel_documentation",
       "mcp__claude_ai_Vercel__get_runtime_logs",
       "mcp__claude_ai_Vercel__deploy_to_vercel",
-      "mcp__claude_ai_Vercel__get_deployment"
+      "mcp__claude_ai_Vercel__get_deployment",
+      "Skill(cb-observe)",
+      "Skill(cb-observe:*)",
+      "Skill(cb-act)",
+      "Skill(cb-act:*)",
+      "Skill(cb-screenshot)",
+      "Skill(cb-screenshot:*)",
+      "Skill(cb-debug-page)",
+      "Skill(cb-debug-page:*)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Skill(cb-extract)",
+      "Skill(cb-extract:*)",
+      "Skill(deep-research)",
+      "Skill(deep-research:*)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Skill(launchproof:chrome)",
+      "Skill(launchproof:chrome:*)",
+      "Skill(artifact-design)",
+      "Skill(artifact-design:*)"
     ],
+    "deny": [
+      "PowerShell"
+    ],
+    "defaultMode": "bypassPermissions",
     "additionalDirectories": [
       "c:\\Users\\dre\\.claude\\projects\\c--Users-dre-OneDrive-Desktop-Kaldr-Tech-Website-Building-thickandfit\\memory"
     ]
-  }
+  },
+  "defaultShell": "bash"
 }

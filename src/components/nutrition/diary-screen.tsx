@@ -144,7 +144,7 @@ export function DiaryScreen({
   async function add(): Promise<void> {
     if (!sel || effGrams <= 0) return;
     setBusy(true);
-    const res = await logFoodAction({ foodId: sel.id, name: sel.name, mealSlot: slot, grams: effGrams, portionId, source: selSource });
+    const res = await logFoodAction({ foodId: sel.id, name: sel.name, mealSlot: slot, grams: effGrams, portionId, source: selSource, logDate: isToday ? undefined : date });
     setBusy(false);
     if (res.ok) {
       setSel(null);
@@ -242,9 +242,9 @@ export function DiaryScreen({
         )}
       </div>
 
-      {/* Photo-to-macro: the wedge. Snap a meal, confirm, log. */}
+      {/* Photo-to-macro: the wedge. Snap a meal, confirm, log. Logs land on the viewed day, not today. */}
       <div className="mt-5">
-        <PhotoScan />
+        <PhotoScan logDate={isToday ? undefined : date} />
       </div>
 
       {/* Favorites: starred foods, one tap. */}

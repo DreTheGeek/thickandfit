@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#E7E5DF; }
+  ::selection{ background:#111; color:#fafafa; }
+  .tf-sc{ overflow-y:auto; scrollbar-width:none; }
+  .tf-sc::-webkit-scrollbar{ display:none; }
+  [style*="cursor:pointer"]{ transition:transform .08s ease, opacity .1s ease, border-color .12s ease, background .12s ease; }
+  [style*="cursor:pointer"]:active{ transform:scale(.98); }
+  @keyframes tffade{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:none;} }
+  @keyframes tfspin{ to{ transform:rotate(360deg);} }
+  @keyframes tfbar{ from{ width:0;} to{ width:100%;} }
+  .tf-step{ animation:tffade .28s ease; }
+</style>
+</helmet>
+
+<div style="background:#E7E5DF; min-height:100vh; font-family:'Inter',sans-serif; color:#111; -webkit-font-smoothing:antialiased; padding:22px 20px 60px;">
+
+  <!-- CONTROL BAR -->
+  <div style="max-width:900px; margin:0 auto 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:baseline; gap:14px;">
+      <a href="Thick & Fit - Client Portal.dc.html" style="text-decoration:none; color:#111; font-size:11px; letter-spacing:2px; text-transform:uppercase;">← Portal</a>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:.5px; text-transform:uppercase;">Onboarding</span>
+      <span style="font-size:11px; letter-spacing:2px; color:#8a8880; text-transform:uppercase;">Sign up · Build your plan</span>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div style="display:flex; border:1px solid #111; background:#fff; height:32px;">
+        <div onClick="{{ setEn }}" style="{{ enSt }}">EN</div>
+        <div onClick="{{ setEs }}" style="{{ esSt }}">ES</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHONE -->
+  <div style="margin:0 auto; width:max-content; max-width:100%;">
+    <div style="background:#111; padding:11px; border-radius:46px; box-shadow:0 30px 80px rgba(0,0,0,.24);">
+      <div style="position:relative; width:392px; height:812px; max-width:88vw; background:#F3F3F1; border-radius:36px; overflow:hidden;">
+
+        <!-- STATUS BAR -->
+        <div style="position:absolute; top:0; left:0; right:0; height:44px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; font-size:13px; font-weight:600; z-index:60; {{ statusColor }}">
+          <span>9:41</span>
+          <span style="display:flex; gap:6px; align-items:center; font-size:11px;">▮▮▮ ⌃ ▮</span>
+        </div>
+        <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:116px; height:30px; background:#000; border-radius:99px; z-index:61;"></div>
+
+        <!-- ============ WELCOME ============ -->
+        <sc-if value="{{ sWelcome }}" hint-placeholder-val="{{ true }}">
+        <div class="tf-step" style="position:absolute; inset:0;">
+          <div style="position:absolute; inset:0; background:linear-gradient(180deg,rgba(15,15,15,.05) 0%,rgba(15,15,15,.35) 42%,rgba(15,15,15,.92) 100%), url('assets/img/steph-hero.avif') center 20%/cover;"></div>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:space-between; padding:64px 28px 34px; color:#fff;">
+            <img src="assets/logo-white.svg" alt="Thick & Fit" style="height:26px; align-self:flex-start;" />
+            <div>
+              <div style="font-size:11px; letter-spacing:2.5px; text-transform:uppercase; color:#d7d7d2; margin-bottom:12px;">{{ t.welcomeKicker }}</div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:46px; line-height:.95; text-transform:uppercase; margin-bottom:14px;">{{ t.welcomeTitle }}</div>
+              <div style="font-size:15px; line-height:1.55; color:#e8e8e4; margin-bottom:26px; max-width:300px;">{{ t.welcomeSub }}</div>
+              <div onClick="{{ start }}" style="background:#fafafa; color:#111; text-align:center; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; border-radius:100vw; padding:17px; cursor:pointer;">{{ t.getStarted }}</div>
+              <div style="text-align:center; margin-top:16px; font-size:13px; color:#cfcfca;">{{ t.haveAccount }} <span style="color:#fff; font-weight:600; text-decoration:underline; cursor:pointer;">{{ t.logIn }}</span></div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ QUESTION HEADER (steps 1-7) ============ -->
+        <sc-if value="{{ sQuestion }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; top:44px; left:0; right:0; z-index:40; background:#F3F3F1; padding:10px 22px 14px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div onClick="{{ back }}" style="width:38px; height:38px; border-radius:99px; background:#fff; border:1px solid #E6E6E0; display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+            <div style="flex:1; height:6px; background:#E4E4DE; border-radius:99px; overflow:hidden;"><div style="height:6px; background:#111; border-radius:99px; width:{{ progressPct }}; transition:width .3s ease;"></div></div>
+            <div style="font-size:12px; color:#8a8880; font-weight:600; flex:none;">{{ stepLabel }}</div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ GOAL ============ -->
+        <sc-if value="{{ sGoal }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step tf-sc" style="position:absolute; top:102px; left:0; right:0; bottom:96px; padding:14px 22px 20px;">
+          <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8a8880; margin-bottom:8px;">{{ t.step1 }}</div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:1.02; text-transform:uppercase; margin-bottom:6px;">{{ t.goalQ }}</div>
+          <div style="font-size:13px; color:#9a9a92; margin-bottom:20px;">{{ t.goalSub }}</div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <sc-for list="{{ goals }}" as="g" hint-placeholder-count="4">
+              <div onClick="{{ g.on }}" style="{{ g.st }}">
+                <div style="{{ g.iconSt }}"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:19px;">{{ g.tag }}</span></div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:15px; font-weight:600; color:#1a1a1a;">{{ g.label }}</div>
+                  <div style="font-size:12px; color:#9a9a92; margin-top:2px;">{{ g.desc }}</div>
+                </div>
+                <span style="{{ g.dotSt }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{ g.dotStroke }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ ABOUT YOU ============ -->
+        <sc-if value="{{ sAbout }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step tf-sc" style="position:absolute; top:102px; left:0; right:0; bottom:96px; padding:14px 22px 20px;">
+          <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8a8880; margin-bottom:8px;">{{ t.step2 }}</div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:1.02; text-transform:uppercase; margin-bottom:6px;">{{ t.aboutQ }}</div>
+          <div style="font-size:13px; color:#9a9a92; margin-bottom:18px;">{{ t.aboutSub }}</div>
+
+          <div style="display:flex; justify-content:flex-end; margin-bottom:14px;">
+            <div style="display:flex; background:#fff; border:1px solid #E6E6E0; border-radius:100vw; padding:3px;">
+              <div onClick="{{ setLb }}" style="{{ lbSt }}">lb</div>
+              <div onClick="{{ setKg }}" style="{{ kgSt }}">kg</div>
+            </div>
+          </div>
+
+          <!-- age + height row -->
+          <div style="display:flex; gap:11px; margin-bottom:11px;">
+            <div style="flex:1; background:#fff; border:1px solid #EAEAE4; border-radius:14px; padding:14px;">
+              <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#9a9a92; margin-bottom:10px;">{{ t.age }}</div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div onClick="{{ ageDown }}" style="{{ stepBtn }}">−</div>
+                <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px;">{{ age }}</span>
+                <div onClick="{{ ageUp }}" style="{{ stepBtn }}">+</div>
+              </div>
+            </div>
+            <div style="flex:1; background:#fff; border:1px solid #EAEAE4; border-radius:14px; padding:14px;">
+              <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#9a9a92; margin-bottom:10px;">{{ t.height }}</div>
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div onClick="{{ htDown }}" style="{{ stepBtn }}">−</div>
+                <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px;">{{ heightLabel }}</span>
+                <div onClick="{{ htUp }}" style="{{ stepBtn }}">+</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- current weight -->
+          <div style="background:#fff; border:1px solid #EAEAE4; border-radius:14px; padding:16px; margin-bottom:11px;">
+            <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#9a9a92; margin-bottom:12px;">{{ t.curWeight }}</div>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div onClick="{{ wDown }}" style="{{ stepBtnLg }}">−</div>
+              <div style="text-align:center;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px;">{{ weightLabel }}</span><span style="font-size:14px; color:#9a9a92; margin-left:4px;">{{ unit }}</span></div>
+              <div onClick="{{ wUp }}" style="{{ stepBtnLg }}">+</div>
+            </div>
+          </div>
+
+          <!-- goal weight -->
+          <div style="background:#111; color:#fafafa; border-radius:14px; padding:16px;">
+            <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#b3b3b3; margin-bottom:12px;">{{ t.goalWeight }}</div>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div onClick="{{ gwDown }}" style="{{ stepBtnDark }}">−</div>
+              <div style="text-align:center;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px;">{{ goalWeightLabel }}</span><span style="font-size:14px; color:#b3b3b3; margin-left:4px;">{{ unit }}</span></div>
+              <div onClick="{{ gwUp }}" style="{{ stepBtnDark }}">+</div>
+            </div>
+            <div style="font-size:12px; color:#5EBE62; margin-top:10px; text-align:center;">{{ deltaLabel }}</div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ ACTIVITY ============ -->
+        <sc-if value="{{ sActivity }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step tf-sc" style="position:absolute; top:102px; left:0; right:0; bottom:96px; padding:14px 22px 20px;">
+          <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8a8880; margin-bottom:8px;">{{ t.step3 }}</div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:1.02; text-transform:uppercase; margin-bottom:6px;">{{ t.activityQ }}</div>
+          <div style="font-size:13px; color:#9a9a92; margin-bottom:20px;">{{ t.activitySub }}</div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <sc-for list="{{ activities }}" as="a" hint-placeholder-count="4">
+              <div onClick="{{ a.on }}" style="{{ a.st }}">
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:15px; font-weight:600; color:#1a1a1a;">{{ a.label }}</div>
+                  <div style="font-size:12px; color:#9a9a92; margin-top:2px;">{{ a.desc }}</div>
+                </div>
+                <span style="{{ a.dotSt }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{ a.dotStroke }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ TRAINING ============ -->
+        <sc-if value="{{ sTraining }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step tf-sc" style="position:absolute; top:102px; left:0; right:0; bottom:96px; padding:14px 22px 20px;">
+          <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8a8880; margin-bottom:8px;">{{ t.step4 }}</div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:1.02; text-transform:uppercase; margin-bottom:6px;">{{ t.trainQ }}</div>
+          <div style="font-size:13px; color:#9a9a92; margin-bottom:18px;">{{ t.trainSub }}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:22px;">
+            <sc-for list="{{ dayOpts }}" as="d" hint-placeholder-count="4">
+              <div onClick="{{ d.on }}" style="{{ d.st }}">
+                <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; line-height:1;">{{ d.n }}</div>
+                <div style="font-size:12px; color:#9a9a92;">{{ d.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#8a8880; margin-bottom:11px;">{{ t.trainWhere }}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+            <sc-for list="{{ placeOpts }}" as="p" hint-placeholder-count="2">
+              <div onClick="{{ p.on }}" style="{{ p.st }}">
+                <div style="font-size:15px; font-weight:600;">{{ p.label }}</div>
+                <div style="font-size:12px; color:#9a9a92; margin-top:2px;">{{ p.desc }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ NUTRITION ============ -->
+        <sc-if value="{{ sNutrition }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step tf-sc" style="position:absolute; top:102px; left:0; right:0; bottom:96px; padding:14px 22px 20px;">
+          <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8a8880; margin-bottom:8px;">{{ t.step5 }}</div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:1.02; text-transform:uppercase; margin-bottom:6px;">{{ t.nutQ }}</div>
+          <div style="font-size:13px; color:#9a9a92; margin-bottom:18px;">{{ t.nutSub }}</div>
+          <div style="display:flex; flex-wrap:wrap; gap:10px;">
+            <sc-for list="{{ eatChips }}" as="c" hint-placeholder-count="6">
+              <div onClick="{{ c.on }}" style="{{ c.st }}">{{ c.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ HABITS ============ -->
+        <sc-if value="{{ sHabits }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step tf-sc" style="position:absolute; top:102px; left:0; right:0; bottom:96px; padding:14px 22px 20px;">
+          <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8a8880; margin-bottom:8px;">{{ t.step6 }}</div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:1.02; text-transform:uppercase; margin-bottom:6px;">{{ t.habitQ }}</div>
+          <div style="font-size:13px; color:#9a9a92; margin-bottom:18px;">{{ habitSub }}</div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <sc-for list="{{ habitOpts }}" as="h" hint-placeholder-count="6">
+              <div onClick="{{ h.on }}" style="{{ h.st }}">
+                <span style="{{ h.boxSt }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ h.boxStroke }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>
+                <span style="flex:1; font-size:14px; font-weight:600; color:#1a1a1a;">{{ h.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ TIER ============ -->
+        <sc-if value="{{ sTier }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step tf-sc" style="position:absolute; top:102px; left:0; right:0; bottom:96px; padding:14px 22px 20px;">
+          <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#8a8880; margin-bottom:8px;">{{ t.step7 }}</div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:1.02; text-transform:uppercase; margin-bottom:6px;">{{ t.tierQ }}</div>
+          <div style="font-size:13px; color:#9a9a92; margin-bottom:18px;">{{ t.tierSub }}</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <sc-for list="{{ tiers }}" as="ti" hint-placeholder-count="3">
+              <div onClick="{{ ti.on }}" style="{{ ti.st }}">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; text-transform:uppercase;">{{ ti.name }}</span>
+                    <sc-if value="{{ ti.popular }}" hint-placeholder-val="{{ false }}"><span style="background:#5EBE62; color:#0a2e12; font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:3px 8px; border-radius:100vw;">{{ t.popular }}</span></sc-if>
+                  </div>
+                  <span style="{{ ti.dotSt }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{ ti.dotStroke }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>
+                </div>
+                <div style="display:flex; align-items:baseline; gap:3px; margin-bottom:6px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px;">{{ ti.price }}</span><span style="font-size:12px; color:#9a9a92;">{{ t.perMo }}</span></div>
+                <div style="font-size:12px; color:#767676; line-height:1.4;">{{ ti.desc }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ BUILDING ============ -->
+        <sc-if value="{{ sBuilding }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step" style="position:absolute; inset:0; background:#111; color:#fafafa; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 34px;">
+          <div style="width:64px; height:64px; border-radius:99px; border:4px solid #2c2c2c; border-top-color:#5EBE62; animation:tfspin 1s linear infinite; margin-bottom:28px;"></div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; margin-bottom:10px; text-align:center;">{{ t.buildingTitle }}</div>
+          <div style="font-size:14px; color:#b3b3b3; text-align:center; margin-bottom:28px;">{{ t.buildingSub }}</div>
+          <div style="width:100%; max-width:260px; display:flex; flex-direction:column; gap:12px;">
+            <sc-for list="{{ buildSteps }}" as="b" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; gap:10px; font-size:13px; color:#e8e8e4;"><span style="width:20px; height:20px; border-radius:99px; background:#5EBE62; display:flex; align-items:center; justify-content:center; flex:none;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>{{ b }}</div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ============ READY ============ -->
+        <sc-if value="{{ sReady }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-step tf-sc" style="position:absolute; inset:0; padding:56px 22px 30px;">
+          <div style="text-align:center; margin-bottom:22px;">
+            <div style="width:56px; height:56px; border-radius:99px; background:#5EBE62; display:inline-flex; align-items:center; justify-content:center; margin-bottom:14px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></div>
+            <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; text-transform:uppercase; line-height:1;">{{ t.readyTitle }}</div>
+            <div style="font-size:14px; color:#9a9a92; margin-top:8px;">{{ readySub }}</div>
+          </div>
+
+          <!-- targets -->
+          <div style="background:#111; color:#fafafa; border-radius:16px; padding:20px; margin-bottom:12px;">
+            <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#b3b3b3; margin-bottom:14px;">{{ t.dailyTargets }}</div>
+            <div style="display:flex; justify-content:space-between; text-align:center;">
+              <div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; line-height:1;">{{ targetCals }}</div><div style="font-size:11px; color:#9a9a92; margin-top:4px;">{{ t.calories }}</div></div>
+              <div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; line-height:1; color:#5EBE62;">{{ targetProtein }}g</div><div style="font-size:11px; color:#9a9a92; margin-top:4px;">{{ t.protein }}</div></div>
+              <div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; line-height:1;">{{ trainDays }}×</div><div style="font-size:11px; color:#9a9a92; margin-top:4px;">{{ t.perWeek }}</div></div>
+            </div>
+          </div>
+
+          <!-- plan rows -->
+          <div style="background:#fff; border:1px solid #EAEAE4; border-radius:16px; padding:6px 16px; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; color:#9a9a92;">{{ t.yourGoal }}</span><span style="font-size:13px; font-weight:600;">{{ goalLabel }}</span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; color:#9a9a92;">{{ t.trainingPlan }}</span><span style="font-size:13px; font-weight:600;">{{ splitLabel }}</span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px; color:#9a9a92;">{{ t.startingHabits }}</span><span style="font-size:13px; font-weight:600;">{{ habitCount }}</span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0;"><span style="font-size:13px; color:#9a9a92;">{{ t.membership }}</span><span style="font-size:13px; font-weight:600;">{{ tierName }} · {{ tierPrice }}{{ t.perMo }}</span></div>
+          </div>
+
+          <!-- coach note -->
+          <div style="display:flex; gap:12px; align-items:center; background:#EFF6EF; border-radius:14px; padding:14px; margin-bottom:20px;">
+            <div style="width:42px; height:42px; border-radius:99px; background:url('assets/img/steph-footer.avif') center/cover; flex:none;"></div>
+            <div style="font-size:12px; color:#3a3a34; line-height:1.45;">{{ coachNote }}</div>
+          </div>
+
+          <a href="Thick & Fit - Client Portal.dc.html" onClick="{{ savePlan }}" style="display:block; background:#111; color:#fafafa; text-decoration:none; text-align:center; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; border-radius:100vw; padding:17px;">{{ t.enterApp }}</a>
+        </div>
+        </sc-if>
+
+        <!-- ============ FOOTER NAV (steps 1-7) ============ -->
+        <sc-if value="{{ sQuestion }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; bottom:0; left:0; right:0; padding:14px 22px 26px; background:linear-gradient(180deg,rgba(243,243,241,0),#F3F3F1 34%); z-index:40;">
+          <div onClick="{{ next }}" style="{{ continueSt }}">{{ continueLabel }}</div>
+        </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:16px; font-size:11px; color:#a4a29a; letter-spacing:.3px;">{{ footHint }}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    lang:'en', step:0,
+    goal:null, unit:'lb',
+    age:29, heightIn:65, weight:158, goalWeight:140,
+    activity:null, days:null, place:null,
+    eats:[], habits:[], tier:'coached'
+  };
+
+  // step index map: 0 welcome,1 goal,2 about,3 activity,4 training,5 nutrition,6 habits,7 tier,8 building,9 ready
+  start = () => this.setState({ step:1 });
+  next = () => this.setState(s => {
+    if (s.step === 7) { setTimeout(() => this.setState({ step:9 }), 2200); return { step:8 }; }
+    return { step: Math.min(s.step + 1, 9) };
+  });
+  back = () => this.setState(s => ({ step: Math.max(s.step - 1, 0) }));
+
+  savePlan = () => {
+    const s = this.state;
+    const maint = Math.round(s.weight * 13);
+    const cals = s.goal === 'strong' ? maint + 150 : s.goal === 'glute' ? maint - 100 : s.goal === 'health' ? maint - 200 : maint - 450;
+    const protein = Math.round(s.weight * 0.9);
+    const programMap = { fat:'Fat Loss', glute:'Glute Builder', strong:'Strength', health:'Wellness' };
+    const goalLabelMap = { fat:'Lose fat & tone', glute:'Build glutes & curves', strong:'Get stronger', health:'Feel healthier' };
+    const plan = {
+      goal: s.goal || 'glute',
+      goalLabel: goalLabelMap[s.goal] || goalLabelMap.glute,
+      program: programMap[s.goal] || 'Glute Builder',
+      cals, protein,
+      days: s.days || 4,
+      place: s.place || 'gym',
+      tier: s.tier || 'coached',
+      habits: s.habits || [],
+      lang: s.lang || 'en',
+      ts: Date.now()
+    };
+    try { localStorage.setItem('tf_plan', JSON.stringify(plan)); } catch (e) {}
+  };
+
+  set(k, v) { return () => this.setState({ [k]: v }); }
+  toggle(k, v, max) {
+    return () => this.setState(s => {
+      const has = s[k].includes(v);
+      if (has) return { [k]: s[k].filter(x => x !== v) };
+      if (max && s[k].length >= max) return {};
+      return { [k]: [...s[k], v] };
+    });
+  }
+  adj(k, d, min, max) {
+    return () => this.setState(s => ({ [k]: Math.max(min, Math.min(max, s[k] + d)) }));
+  }
+
+  T() {
+    const en = {
+      welcomeKicker:'Coaching by Steph', welcomeTitle:'Let\u2019s build your plan', welcomeSub:'Answer a few questions and I\u2019ll build a plan around your body, your goal, and your real life.',
+      getStarted:'Get started', haveAccount:'Already a member?', logIn:'Log in',
+      step1:'Step 1 of 7', step2:'Step 2 of 7', step3:'Step 3 of 7', step4:'Step 4 of 7', step5:'Step 5 of 7', step6:'Step 6 of 7', step7:'Step 7 of 7',
+      goalQ:'What\u2019s your main goal?', goalSub:'This sets your calories, training and pace.',
+      goalFat:'Lose fat & tone', goalFatD:'Lean out while keeping your curves', goalGlute:'Build glutes & curves', goalGluteD:'Grow and shape with progressive lifting', goalStrong:'Get stronger', goalStrongD:'Add strength and lift heavier over time', goalHealth:'Feel healthier', goalHealthD:'Energy, habits and consistency first',
+      aboutQ:'About you', aboutSub:'So your targets fit you \u2014 not an average.',
+      age:'Age', height:'Height', curWeight:'Current weight', goalWeight:'Goal weight',
+      activityQ:'How active are you?', activitySub:'Outside of workouts, day to day.',
+      actSed:'Mostly sitting', actSedD:'Desk job, little walking', actLight:'Lightly active', actLightD:'On your feet some of the day', actActive:'Active', actActiveD:'Moving most of the day', actVery:'Very active', actVeryD:'Physical job or lots of steps',
+      trainQ:'How often can you train?', trainSub:'Be honest \u2014 we\u2019ll build around it.', days:'days / week', trainWhere:'Where will you train?',
+      placeHome:'At home', placeHomeD:'Minimal equipment', placeGym:'At a gym', placeGymD:'Full equipment access',
+      nutQ:'How do you like to eat?', nutSub:'Pick all that fit \u2014 your meal plan adapts.',
+      eatProtein:'High protein', eatBudget:'Budget-friendly', eatSimple:'Simple 3\u20135 ingredients', eatMeal:'Meal prep', eatVeg:'Vegetarian', eatDairy:'Dairy-free', eatGluten:'Gluten-free', eatQuick:'Quick (under 20 min)',
+      habitQ:'Pick 3 habits to start', habitSub:'Small daily wins. Choose', habitSubEnd:'to begin.',
+      hWater:'Drink 3L water', hSteps:'Hit 8,000 steps', hProtein:'Protein at every meal', hSleep:'Sleep 7+ hours', hLog:'Log meals daily', hWalk:'10-min walk after dinner',
+      tierQ:'Choose your plan', tierSub:'Change or cancel anytime.', perMo:'/mo', popular:'Most popular',
+      tSelf:'Self-Guided', tSelfD:'Full app, workout & meal plans, habit tracking', tCoach:'Coached', tCoachD:'Everything, plus weekly check-ins & direct messaging with Steph', tPrem:'1:1 Premium', tPremD:'Weekly video calls & fully custom programming',
+      buildingTitle:'Building your plan', buildingSub:'Steph is personalizing everything to you\u2026',
+      bStep1:'Setting your calorie & protein targets', bStep2:'Programming your training split', bStep3:'Matching meals to your taste & budget', bStep4:'Locking in your starting habits',
+      readyTitle:'Your plan is ready', readySubA:'Built for', readySubB:'your goal, your pace.',
+      dailyTargets:'Your daily targets', calories:'Calories', protein:'Protein', perWeek:'Per week',
+      yourGoal:'Goal', trainingPlan:'Training', startingHabits:'Starting habits', membership:'Membership',
+      enterApp:'Enter Thick & Fit', continue:'Continue', lose:'lose', gain:'gain', maintain:'Maintain weight',
+      splitHome:'Home', splitGym:'Gym', habitsWord:'habits', coachNoteTxt:'Welcome to the team. I built this around what you told me \u2014 let\u2019s get to work. You\u2019ve got this. \u2014 Steph',
+      footHint:'Tap through the flow \u2014 it ends in your portal.'
+    };
+    const es = {
+      welcomeKicker:'Coaching con Steph', welcomeTitle:'Creemos tu plan', welcomeSub:'Responde unas preguntas y armar\u00e9 un plan para tu cuerpo, tu meta y tu vida real.',
+      getStarted:'Empezar', haveAccount:'\u00bfYa eres miembro?', logIn:'Iniciar sesi\u00f3n',
+      step1:'Paso 1 de 7', step2:'Paso 2 de 7', step3:'Paso 3 de 7', step4:'Paso 4 de 7', step5:'Paso 5 de 7', step6:'Paso 6 de 7', step7:'Paso 7 de 7',
+      goalQ:'\u00bfCu\u00e1l es tu meta?', goalSub:'Esto define tus calor\u00edas, entreno y ritmo.',
+      goalFat:'Bajar grasa y tonificar', goalFatD:'Def\u00ednete sin perder tus curvas', goalGlute:'Gl\u00fateos y curvas', goalGluteD:'Crece y da forma con carga progresiva', goalStrong:'Ser m\u00e1s fuerte', goalStrongD:'Gana fuerza y levanta m\u00e1s con el tiempo', goalHealth:'Sentirme mejor', goalHealthD:'Energ\u00eda, h\u00e1bitos y constancia primero',
+      aboutQ:'Sobre ti', aboutSub:'Para que tus metas sean tuyas \u2014 no un promedio.',
+      age:'Edad', height:'Estatura', curWeight:'Peso actual', goalWeight:'Peso meta',
+      activityQ:'\u00bfQu\u00e9 tan activa eres?', activitySub:'Fuera de los entrenos, en el d\u00eda.',
+      actSed:'Sentada casi todo', actSedD:'Escritorio, poco caminar', actLight:'Poco activa', actLightD:'De pie parte del d\u00eda', actActive:'Activa', actActiveD:'En movimiento casi todo el d\u00eda', actVery:'Muy activa', actVeryD:'Trabajo f\u00edsico o muchos pasos',
+      trainQ:'\u00bfCu\u00e1nto puedes entrenar?', trainSub:'S\u00e9 honesta \u2014 lo armamos as\u00ed.', days:'d\u00edas / sem', trainWhere:'\u00bfD\u00f3nde entrenar\u00e1s?',
+      placeHome:'En casa', placeHomeD:'Equipo m\u00ednimo', placeGym:'En el gym', placeGymD:'Equipo completo',
+      nutQ:'\u00bfC\u00f3mo te gusta comer?', nutSub:'Elige lo que aplique \u2014 tu plan se adapta.',
+      eatProtein:'Alta en prote\u00edna', eatBudget:'Econ\u00f3mico', eatSimple:'Simple 3\u20135 ingredientes', eatMeal:'Meal prep', eatVeg:'Vegetariano', eatDairy:'Sin l\u00e1cteos', eatGluten:'Sin gluten', eatQuick:'R\u00e1pido (menos de 20 min)',
+      habitQ:'Elige 3 h\u00e1bitos', habitSub:'Peque\u00f1os logros diarios. Elige', habitSubEnd:'para empezar.',
+      hWater:'Tomar 3L de agua', hSteps:'Llegar a 8,000 pasos', hProtein:'Prote\u00edna en cada comida', hSleep:'Dormir 7+ horas', hLog:'Registrar comidas', hWalk:'Caminar 10 min tras cenar',
+      tierQ:'Elige tu plan', tierSub:'Cambia o cancela cuando quieras.', perMo:'/mes', popular:'M\u00e1s popular',
+      tSelf:'Autoguiado', tSelfD:'App completa, planes de entreno y comidas, h\u00e1bitos', tCoach:'Con Coach', tCoachD:'Todo, m\u00e1s check-ins semanales y mensajes directos con Steph', tPrem:'1:1 Premium', tPremD:'Videollamadas semanales y programaci\u00f3n a medida',
+      buildingTitle:'Creando tu plan', buildingSub:'Steph est\u00e1 personalizando todo para ti\u2026',
+      bStep1:'Definiendo calor\u00edas y prote\u00edna', bStep2:'Programando tu split de entreno', bStep3:'Ajustando comidas a tu gusto y presupuesto', bStep4:'Fijando tus h\u00e1bitos iniciales',
+      readyTitle:'Tu plan est\u00e1 listo', readySubA:'Hecho para', readySubB:'tu meta, tu ritmo.',
+      dailyTargets:'Tus metas diarias', calories:'Calor\u00edas', protein:'Prote\u00edna', perWeek:'Por semana',
+      yourGoal:'Meta', trainingPlan:'Entreno', startingHabits:'H\u00e1bitos', membership:'Membres\u00eda',
+      enterApp:'Entrar a Thick & Fit', continue:'Continuar', lose:'bajar', gain:'subir', maintain:'Mantener peso',
+      splitHome:'Casa', splitGym:'Gym', habitsWord:'h\u00e1bitos', coachNoteTxt:'Bienvenida al equipo. Arm\u00e9 esto con lo que me dijiste \u2014 manos a la obra. T\u00fa puedes. \u2014 Steph',
+      footHint:'Recorre el flujo \u2014 termina en tu portal.'
+    };
+    return this.state.lang === 'en' ? en : es;
+  }
+
+  optSt(active) {
+    return `display:flex; align-items:center; gap:14px; padding:15px 16px; border-radius:14px; border:1.5px solid ${active ? '#111' : '#E6E6E0'}; background:${active ? '#fff' : '#fff'}; box-shadow:${active ? '0 8px 20px rgba(0,0,0,.08)' : '0 1px 2px rgba(0,0,0,.03)'}; cursor:pointer;`;
+  }
+  dot(active) {
+    return `width:24px; height:24px; border-radius:99px; border:2px solid ${active ? '#111' : '#D5D5CE'}; background:${active ? '#111' : 'transparent'}; flex:none; display:flex; align-items:center; justify-content:center;`;
+  }
+  box(active) {
+    return `width:26px; height:26px; border-radius:8px; border:2px solid ${active ? '#111' : '#D5D5CE'}; background:${active ? '#111' : 'transparent'}; flex:none; display:flex; align-items:center; justify-content:center;`;
+  }
+  gridCard(active) {
+    return `text-align:center; padding:16px 8px; border-radius:14px; border:1.5px solid ${active ? '#111' : '#E6E6E0'}; background:#fff; box-shadow:${active ? '0 8px 20px rgba(0,0,0,.08)' : '0 1px 2px rgba(0,0,0,.03)'}; cursor:pointer;`;
+  }
+  chip(active) {
+    return `font-size:13px; font-weight:600; padding:11px 16px; border-radius:100vw; border:1.5px solid ${active ? '#111' : '#E0E0DA'}; background:${active ? '#111' : '#fff'}; color:${active ? '#fafafa' : '#3a3a34'}; cursor:pointer;`;
+  }
+
+  renderVals() {
+    const s = this.state, t = this.T();
+    const tOn = 'display:flex; align-items:center; justify-content:center; width:38px; font-size:12px; font-weight:600; letter-spacing:.5px; background:#111; color:#fafafa; cursor:pointer;';
+    const tOff = 'display:flex; align-items:center; justify-content:center; width:38px; font-size:12px; font-weight:600; letter-spacing:.5px; background:#fff; color:#111; cursor:pointer;';
+    const pillOn = 'padding:7px 16px; border-radius:100vw; font-size:12px; font-weight:600; background:#111; color:#fafafa; cursor:pointer;';
+    const pillOff = 'padding:7px 16px; border-radius:100vw; font-size:12px; font-weight:600; background:transparent; color:#767676; cursor:pointer;';
+    const stepBtn = 'width:34px; height:34px; border-radius:99px; background:#F3F3F1; border:1px solid #E6E6E0; display:flex; align-items:center; justify-content:center; font-size:20px; color:#111; cursor:pointer; user-select:none;';
+    const stepBtnLg = 'width:44px; height:44px; border-radius:99px; background:#F3F3F1; border:1px solid #E6E6E0; display:flex; align-items:center; justify-content:center; font-size:24px; color:#111; cursor:pointer; user-select:none;';
+    const stepBtnDark = 'width:44px; height:44px; border-radius:99px; background:#262626; display:flex; align-items:center; justify-content:center; font-size:24px; color:#fafafa; cursor:pointer; user-select:none;';
+
+    // goals
+    const goalDefs = [
+      { k:'fat', label:t.goalFat, desc:t.goalFatD, tag:'01' },
+      { k:'glute', label:t.goalGlute, desc:t.goalGluteD, tag:'02' },
+      { k:'strong', label:t.goalStrong, desc:t.goalStrongD, tag:'03' },
+      { k:'health', label:t.goalHealth, desc:t.goalHealthD, tag:'04' },
+    ];
+    const goals = goalDefs.map(g => {
+      const a = s.goal === g.k;
+      return { ...g, on:this.set('goal', g.k), st:this.optSt(a), dotSt:this.dot(a), dotStroke:a ? '#fff' : 'transparent',
+        iconSt:`width:44px; height:44px; border-radius:12px; flex:none; display:flex; align-items:center; justify-content:center; background:${a ? '#111' : '#F3F3F1'}; color:${a ? '#fafafa' : '#767676'};` };
+    });
+
+    // activities
+    const actDefs = [
+      { k:'sed', label:t.actSed, desc:t.actSedD }, { k:'light', label:t.actLight, desc:t.actLightD },
+      { k:'active', label:t.actActive, desc:t.actActiveD }, { k:'very', label:t.actVery, desc:t.actVeryD },
+    ];
+    const activities = actDefs.map(a => { const on = s.activity === a.k; return { ...a, on:this.set('activity', a.k), st:this.optSt(on), dotSt:this.dot(on), dotStroke:on ? '#fff' : 'transparent' }; });
+
+    // training days
+    const dayDefs = [{ n:'2', k:2 }, { n:'3', k:3 }, { n:'4', k:4 }, { n:'5+', k:5 }];
+    const dayOpts = dayDefs.map(d => ({ n:d.n, label:t.days, on:this.set('days', d.k), st:this.gridCard(s.days === d.k) }));
+    const placeDefs = [{ k:'home', label:t.placeHome, desc:t.placeHomeD }, { k:'gym', label:t.placeGym, desc:t.placeGymD }];
+    const placeOpts = placeDefs.map(p => ({ ...p, on:this.set('place', p.k), st:this.gridCard(s.place === p.k) }));
+
+    // eat chips
+    const eatDefs = [
+      ['protein', t.eatProtein], ['budget', t.eatBudget], ['simple', t.eatSimple], ['meal', t.eatMeal],
+      ['veg', t.eatVeg], ['dairy', t.eatDairy], ['gluten', t.eatGluten], ['quick', t.eatQuick],
+    ];
+    const eatChips = eatDefs.map(([k, label]) => ({ label, on:this.toggle('eats', k), st:this.chip(s.eats.includes(k)) }));
+
+    // habits
+    const habitDefs = [
+      ['water', t.hWater], ['steps', t.hSteps], ['protein', t.hProtein], ['sleep', t.hSleep], ['log', t.hLog], ['walk', t.hWalk],
+    ];
+    const habitOpts = habitDefs.map(([k, label]) => {
+      const a = s.habits.includes(k);
+      return { label, on:this.toggle('habits', k, 3), st:this.optSt(a), boxSt:this.box(a), boxStroke:a ? '#fff' : 'transparent' };
+    });
+
+    // tiers
+    const tierDefs = [
+      { k:'self', name:t.tSelf, price:'$29', desc:t.tSelfD, popular:false },
+      { k:'coached', name:t.tCoach, price:'$99', desc:t.tCoachD, popular:true },
+      { k:'premium', name:t.tPrem, price:'$249', desc:t.tPremD, popular:false },
+    ];
+    const tiers = tierDefs.map(ti => {
+      const a = s.tier === ti.k;
+      return { ...ti, on:this.set('tier', ti.k),
+        st:`border-radius:16px; border:1.5px solid ${a ? '#111' : '#E6E6E0'}; background:#fff; padding:16px; box-shadow:${a ? '0 8px 22px rgba(0,0,0,.09)' : '0 1px 2px rgba(0,0,0,.03)'}; cursor:pointer;`,
+        dotSt:this.dot(a), dotStroke:a ? '#fff' : 'transparent' };
+    });
+
+    // about-you display
+    const kg = s.unit === 'kg';
+    const conv = (lb) => kg ? Math.round(lb / 2.205) : lb;
+    const ft = Math.floor(s.heightIn / 12), inch = s.heightIn % 12;
+    const heightLabel = kg ? (Math.round(s.heightIn * 2.54) + 'cm') : (ft + "'" + inch + '"');
+    const diff = s.weight - s.goalWeight;
+    const deltaLabel = diff > 0 ? (t.lose + ' ' + conv(diff) + ' ' + s.unit) : diff < 0 ? (t.gain + ' ' + conv(-diff) + ' ' + s.unit) : t.maintain;
+
+    // computed targets
+    const maint = Math.round(s.weight * 13);
+    const targetCals = (s.goal === 'strong' ? maint + 150 : s.goal === 'glute' ? maint - 100 : s.goal === 'health' ? maint - 200 : maint - 450).toLocaleString();
+    const targetProtein = Math.round(s.weight * 0.9);
+    const trainDays = s.days ? (s.days === 5 ? 5 : s.days) : 4;
+
+    // summary labels
+    const goalMap = { fat:t.goalFat, glute:t.goalGlute, strong:t.goalStrong, health:t.goalHealth };
+    const goalLabel = goalMap[s.goal] || t.goalGlute;
+    const splitLabel = (s.place === 'home' ? t.splitHome : t.splitGym) + ' · ' + trainDays + '×';
+    const habitCount = (s.habits.length || 3) + ' ' + t.habitsWord;
+    const tierName = { self:t.tSelf, coached:t.tCoach, premium:t.tPrem }[s.tier];
+    const tierPrice = { self:'$29', coached:'$99', premium:'$249' }[s.tier];
+
+    // progress
+    const q = s.step >= 1 && s.step <= 7;
+    const progressPct = Math.round((s.step / 7) * 100) + '%';
+
+    return {
+      t, statusColor: s.step === 0 ? 'color:#fff;' : 'color:#111;',
+      setEn:this.set('lang', 'en'), setEs:this.set('lang', 'es'),
+      enSt: s.lang === 'en' ? tOn : tOff, esSt: s.lang === 'es' ? tOn : tOff,
+      start:this.start, next:this.next, back:this.back,
+      // step flags
+      sWelcome: s.step === 0, sGoal: s.step === 1, sAbout: s.step === 2, sActivity: s.step === 3,
+      sTraining: s.step === 4, sNutrition: s.step === 5, sHabits: s.step === 6, sTier: s.step === 7,
+      sBuilding: s.step === 8, sReady: s.step === 9, sQuestion: q,
+      progressPct, stepLabel: q ? (s.step + '/7') : '',
+      // options
+      goals, activities, dayOpts, placeOpts, eatChips, habitOpts, tiers,
+      // about
+      setLb:this.set('unit', 'lb'), setKg:this.set('unit', 'kg'),
+      lbSt: !kg ? pillOn : pillOff, kgSt: kg ? pillOn : pillOff,
+      age:s.age, ageUp:this.adj('age', 1, 16, 80), ageDown:this.adj('age', -1, 16, 80),
+      heightLabel, htUp:this.adj('heightIn', 1, 54, 84), htDown:this.adj('heightIn', -1, 54, 84),
+      weightLabel:conv(s.weight), wUp:this.adj('weight', 1, 80, 400), wDown:this.adj('weight', -1, 80, 400),
+      goalWeightLabel:conv(s.goalWeight), gwUp:this.adj('goalWeight', 1, 80, 400), gwDown:this.adj('goalWeight', -1, 80, 400),
+      unit:s.unit, deltaLabel, stepBtn, stepBtnLg, stepBtnDark,
+      // habits sub
+      habitSub: t.habitSub + ' ' + s.habits.length + '/3 ' + t.habitSubEnd,
+      // building
+      buildSteps: [t.bStep1, t.bStep2, t.bStep3, t.bStep4],
+      // ready
+      readySub: t.readySubA + ' ' + goalLabel.toLowerCase() + ' — ' + t.readySubB,
+      targetCals, targetProtein, trainDays, goalLabel, splitLabel, habitCount, tierName, tierPrice,
+      coachNote: t.coachNoteTxt, savePlan: this.savePlan,
+      // footer nav
+      continueLabel: t.continue,
+      continueSt: 'background:#111; color:#fafafa; text-align:center; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; border-radius:100vw; padding:17px; cursor:pointer; box-shadow:0 10px 24px rgba(17,17,17,.2);',
+      footHint: t.footHint,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -64,6 +64,14 @@ export function OnboardingFlow(): ReactElement {
   const weightKg = units === 'metric' ? weightVal : weightVal / LB_PER_KG;
   const goalKg = units === 'metric' ? goalVal : goalVal / LB_PER_KG;
 
+  // Client-side bounds mirroring onboardingInputSchema, so a plan is never computed from impossible
+  // numbers (a mistyped height/weight/age). Step 1 collects name + these body fields.
+  const bodyValid =
+    age >= 13 && age <= 100 &&
+    heightCmCanonical >= 100 && heightCmCanonical <= 250 &&
+    weightKg >= 30 && weightKg <= 300;
+  const step1Valid = firstName.trim() !== '' && lastName.trim() !== '' && bodyValid;
+
   const input: OnboardingInput = useMemo(
     () => ({
       sex,
@@ -310,7 +318,7 @@ export function OnboardingFlow(): ReactElement {
         {step < 3 && (
           <Button
             size="block"
-            disabled={step === 1 && (firstName.trim() === '' || lastName.trim() === '')}
+            disabled={step === 1 && !step1Valid}
             onClick={() => setStep((s) => s + 1)}
           >
             {t('continue')}

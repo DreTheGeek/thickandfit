@@ -41,7 +41,7 @@ export default async function ClientFormPage({
   return (
     <div className="px-[22px] pb-7 pt-5">
       <h1 className="tf-display mb-6 text-[30px]">{title}</h1>
-      <FormRenderer formId={id} fields={loaded.fields} />
+      <FormRenderer formId={id} fields={loaded.fields} viewerId={ctx.userId} />
     </div>
   );
 }

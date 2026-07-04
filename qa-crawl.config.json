@@ -10,14 +10,6 @@
       "baseURL": "https://thickandfit.vercel.app",
       "auth": true,
       "routes": [
-        "/",
-        "/about",
-        "/join",
-        "/join/thank-you",
-        "/api-docs",
-        "/auth/sign-in",
-        "/auth/sign-up",
-        "/auth/forgot-password",
         "/onboarding",
         "/dashboard",
         "/exercises",
@@ -25,8 +17,22 @@
         "/forms/[id]",
         "/coach/forms/[id]",
         "/coach/programs",
-        "/workout/[planId]",
-        "/i18n-demo"
+        "/workout/[planId]"
+      ]
+    },
+    {
+      "name": "public",
+      "baseURL": "https://thickandfit.vercel.app",
+      "auth": false,
+      "routes": [
+        "/",
+        "/about",
+        "/join",
+        "/join/thank-you",
+        "/api-docs",
+        "/auth/sign-in",
+        "/auth/sign-up",
+        "/auth/forgot-password"
       ]
     }
   ],

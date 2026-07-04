@@ -11,11 +11,16 @@ import { notifyBroadcast } from '@/lib/notifications/triggers';
 
 export type CommunityResult = { ok: boolean; error?: string };
 
-const PostInput = z.object({
-  body: z.string().trim().min(1).max(2000),
-  mediaUrl: z.string().trim().url().max(2000).nullable().optional(),
-  isBroadcast: z.boolean().optional(),
-});
+const PostInput = z
+  .object({
+    body: z.string().trim().max(2000),
+    mediaUrl: z.string().trim().url().max(2000).nullable().optional(),
+    isBroadcast: z.boolean().optional(),
+  })
+  // A post needs SOMETHING: text or an image. Photo-only posts (empty body + media) are valid.
+  .refine((v) => v.body.length > 0 || (v.mediaUrl != null && v.mediaUrl.length > 0), {
+    message: 'empty',
+  });
 
 export async function createPostAction(input: unknown): Promise<CommunityResult> {
   const parsed = PostInput.safeParse(input);

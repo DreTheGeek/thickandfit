@@ -76,6 +76,10 @@ export async function getFoodDetailAction(foodId: string): Promise<FoodDetail | 
   return getFoodDetail(parsed.data, locale);
 }
 
+// ISO calendar date (YYYY-MM-DD) the member is viewing; lets them backfill a past day. Never a
+// future date (guarded in resolveLogDate). Optional: absent => the user's local today.
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 const LogInput = z.object({
   foodId: z.string().uuid(),
   name: z.string().min(1).max(200),
@@ -85,9 +89,17 @@ const LogInput = z.object({
   // 'photo' covers vision-read packaged products (label scans); provenance links via aiInferenceId.
   source: z.enum(['search', 'barcode', 'text', 'photo']).optional(),
   aiInferenceId: z.string().uuid().optional(),
+  logDate: isoDate.optional(),
 });
 
 export type LogResult = { ok: boolean; error?: string };
+
+// The day to write: the viewed date when it is valid and not in the future, else the user's local today.
+function resolveLogDate(viewed: string | undefined, tz: string): string {
+  const today = localDay(tz);
+  if (!viewed) return today;
+  return viewed <= today ? viewed : today; // never log into the future
+}
 
 export async function logFoodAction(input: unknown): Promise<LogResult> {
   const parsed = LogInput.safeParse(input);
@@ -119,7 +131,7 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
       food_id: parsed.data.foodId,
       portion_id: parsed.data.portionId ?? null,
       meal_slot: parsed.data.mealSlot,
-      log_date: localDay(tz),
+      log_date: resolveLogDate(parsed.data.logDate, tz),
       grams: parsed.data.grams,
       amount: parsed.data.grams,
       source: parsed.data.source ?? 'search',
@@ -170,6 +182,7 @@ const PhotoLogInput = z.object({
   predictedFoodId: z.string().uuid().optional(), // the food the scan matched (identity-swap detection)
   predictedGrams: z.number().positive().max(5000).optional(),
   confidence: z.number().min(0).max(1).optional(),
+  logDate: isoDate.optional(),
 });
 
 export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
@@ -239,7 +252,7 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
       name: parsed.data.name,
       food_id: parsed.data.foodId,
       meal_slot: parsed.data.mealSlot,
-      log_date: localDay(tz),
+      log_date: resolveLogDate(parsed.data.logDate, tz),
       grams: effGrams,
       amount: effGrams,
       source: 'photo',

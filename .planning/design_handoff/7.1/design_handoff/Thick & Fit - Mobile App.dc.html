@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#E7E5DF; }
+  ::selection{ background:#767676; color:#000; }
+  .tf-scroll{ overflow-y:auto; scrollbar-width:none; }
+  .tf-scroll::-webkit-scrollbar{ display:none; }
+  [style*="cursor:pointer"]{ transition:transform .08s ease, opacity .08s ease; }
+  [style*="cursor:pointer"]:active{ transform:scale(.97); opacity:.85; }
+  @keyframes tfconf{ 0%{ transform:translate(-50%,-50%) scale(.3); opacity:1; } 100%{ transform:translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)); opacity:0; } }
+  @keyframes ringfill{ from{ stroke-dashoffset:465; } to{ stroke-dashoffset:107; } }
+</style>
+</helmet>
+
+<div style="background:#E7E5DF; min-height:100vh; font-family:'Inter',sans-serif; color:#111; -webkit-font-smoothing:antialiased; padding:28px 20px 60px;">
+
+  <!-- CONTROL BAR -->
+  <div style="max-width:430px; margin:0 auto 22px; display:flex; align-items:center; justify-content:space-between;">
+    <a href="Thick & Fit - Design Hub.dc.html" style="text-decoration:none; color:#111; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase;">← Hub</a>
+    <div style="display:flex; gap:8px;">
+      <div style="display:flex; border:1px solid #111; height:30px;">
+        <div onClick="{{ setEn }}" style="{{ enSt }}">EN</div>
+        <div onClick="{{ setEs }}" style="{{ esSt }}">ES</div>
+      </div>
+      <div onClick="{{ toggleBezel }}" style="border:1px solid #111; height:30px; display:flex; align-items:center; padding:0 14px; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; background:#fff;">{{ bezelLabel }}</div>
+    </div>
+  </div>
+
+  <!-- PHONE -->
+  <div style="margin:0 auto; width:max-content;">
+    <div style="{{ frameSt }}">
+      <div style="position:relative; width:390px; height:812px; background:#fff; overflow:hidden; {{ screenRadius }}">
+
+        <!-- DYNAMIC ISLAND -->
+        <div style="{{ islandSt }}"></div>
+        {{ confetti }}
+
+        <!-- STATUS BAR -->
+        <div style="height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 26px 0 30px; font-size:14px; font-weight:600; color:#111; flex:none;">
+          <span>9:41</span>
+          <span style="display:flex; gap:6px; align-items:center; font-size:12px;">▮▮▮ &nbsp;<span style="font-size:13px;">⌃</span>&nbsp; ▮</span>
+        </div>
+
+        <!-- SCREEN AREA -->
+        <div class="tf-scroll" style="position:absolute; top:46px; left:0; right:0; bottom:0; display:flex; flex-direction:column;">
+          <div class="tf-scroll" style="flex:1; min-height:0;">
+
+            <!-- ===== HOME ===== -->
+            <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+                <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; white-space:nowrap;"><img src="assets/logo-black.svg" alt="Thick & Fit" style="height:1.4em; width:auto; display:block;" /></div>
+                <div style="width:34px; height:34px; border:1px solid #E4E4E4; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+              </div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; line-height:1; text-transform:uppercase;">{{ t.greeting }}</div>
+              <div style="color:#888; font-size:14px; margin-top:6px;">{{ t.week }}</div>
+
+              <div style="background:#111; color:#fff; border-radius:16px; padding:22px; margin-top:20px; display:flex; gap:16px; align-items:center;">
+                <div style="flex:1;">
+                  <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px; letter-spacing:0.5px; line-height:1.06;">{{ t.checkinTitle }}</div>
+                  <div style="color:#aaa; font-size:13px; line-height:1.5; margin:10px 0 16px;">{{ t.checkinBody }}</div>
+                  <div onClick="{{ goCheckin }}" style="background:#fafafa; color:#0f0f0f; font-family:'Inter',sans-serif; font-size:12px; letter-spacing:2px; text-transform:uppercase; border-radius:100vw; padding:11px 18px; display:inline-block; font-weight:600; cursor:pointer;">{{ t.checkinCta }}</div>
+                </div>
+                <div style="width:84px; height:104px; background:url('assets/img/steph-hero.avif') center 20%/cover; flex:none; border-radius:12px; font-size:0;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></div>
+              </div>
+
+              <div style="font-size:13px; color:#888; margin:22px 0 10px;">{{ t.todayDate }}</div>
+              <div style="display:flex; justify-content:space-between;">
+                <div style="text-align:center;"><div style="font-size:11px; color:#aaa;">S</div><div style="font-size:13px; color:#888; margin-top:8px;">10</div></div>
+                <div style="text-align:center;"><div style="font-size:11px; color:#aaa;">M</div><div style="font-size:13px; color:#888; margin-top:8px;">11</div></div>
+                <div style="text-align:center;"><div style="font-size:11px; color:#aaa;">T</div><div style="width:30px; height:30px; background:#111; color:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:13px; margin-top:4px;">12</div></div>
+                <div style="text-align:center;"><div style="font-size:11px; color:#aaa;">W</div><div style="font-size:13px; color:#888; margin-top:8px;">13</div></div>
+                <div style="text-align:center;"><div style="font-size:11px; color:#aaa;">T</div><div style="font-size:13px; color:#888; margin-top:8px;">14</div></div>
+                <div style="text-align:center;"><div style="font-size:11px; color:#aaa;">F</div><div style="font-size:13px; color:#888; margin-top:8px;">15</div></div>
+                <div style="text-align:center;"><div style="font-size:11px; color:#aaa;">S</div><div style="font-size:13px; color:#888; margin-top:8px;">16</div></div>
+              </div>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; margin:26px 0 12px;">
+                <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:0.5px;">{{ t.todo }}</span>
+                <span style="font-size:12px; color:#767676; font-weight:600;">{{ t.viewall }}</span>
+              </div>
+              <div onClick="{{ goWorkouts }}" style="display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;">
+                <div style="width:38px; height:38px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></div>
+                <div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.morningWorkout }}</div><div style="font-size:12px; color:#999;">Glute Builder · Day 3</div></div>
+                <div style="width:24px; height:24px; background:#5EBE62; border-radius:999px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px;">✓</div>
+              </div>
+              <div onClick="{{ goNutrition }}" style="display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;">
+                <div style="width:38px; height:38px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></div>
+                <div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.logBreakfast }}</div><div style="font-size:12px; color:#999;">245 / 1,850 cals</div></div>
+                <div style="width:24px; height:24px; border:2px solid #E4E4E4; border-radius:999px;"></div>
+              </div>
+              <div style="display:flex; align-items:center; gap:14px; padding:14px 0; cursor:pointer;">
+                <div style="width:38px; height:38px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg></div>
+                <div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.drinkWater }}</div><div style="font-size:12px; color:#999;">2 / 3 L</div></div>
+                <div style="width:24px; height:24px; border:2px solid #E4E4E4; border-radius:999px;"></div>
+              </div>
+            </div>
+            </sc-if>
+
+            <!-- ===== WORKOUTS ===== -->
+            <sc-if value="{{ isWorkouts }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; margin-bottom:16px;">{{ t.nav_workouts }}</div>
+              <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:20px;">
+                <div onClick="{{ wkProgram }}" style="{{ wkProgramSt }}">{{ t.program }}</div>
+                <div onClick="{{ wkLibrary }}" style="{{ wkLibrarySt }}">{{ t.library }}</div>
+                <div onClick="{{ wkHistory }}" style="{{ wkHistorySt }}">{{ t.history }}</div>
+              </div>
+              <div style="position:relative; height:188px; border-radius:16px; background:linear-gradient(180deg,rgba(15,15,15,.2),rgba(15,15,15,.88)), url('assets/img/steph-about.avif') center 16%/cover; display:flex; flex-direction:column; justify-content:flex-end; padding:20px; color:#fff; overflow:hidden;">
+                <div style="position:absolute; right:-10px; bottom:0; font-size:120px; opacity:.18;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></div>
+                <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; line-height:1;">Glute Builder</div>
+                <div style="color:#bbb; font-size:13px; margin-top:6px;">{{ t.weekof }}</div>
+                <div style="margin-top:14px; height:4px; background:rgba(255,255,255,.2);"><div style="height:4px; width:60%; background:#767676;"></div></div>
+                <div style="font-size:11px; color:#aaa; margin-top:8px;">{{ t.day3of5 }}</div>
+              </div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:0.5px; margin:22px 0 10px;">{{ t.todaysWorkout }}</div>
+              <div onClick="{{ goExercise }}" style="display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;">
+                <div style="width:46px; height:46px; border-radius:10px; background:linear-gradient(135deg,#3a3a3a,#111); position:relative; flex:none;"><div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><div style="width:20px; height:20px; border-radius:99px; background:rgba(250,250,250,.92); display:flex; align-items:center; justify-content:center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="#0f0f0f"><path d="M8 5v14l11-7z"/></svg></div></div></div>
+                <div style="flex:1;"><div style="font-weight:600; font-size:14px;">Hip Thrust</div><div style="font-size:12px; color:#999;">4 x 12</div></div>
+                <div style="width:24px; height:24px; background:#5EBE62; border-radius:999px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px;">✓</div>
+              </div>
+              <div onClick="{{ goExercise }}" style="display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;">
+                <div style="width:46px; height:46px; border-radius:10px; background:linear-gradient(135deg,#444,#161616); position:relative; flex:none;"><div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><div style="width:20px; height:20px; border-radius:99px; background:rgba(250,250,250,.92); display:flex; align-items:center; justify-content:center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="#0f0f0f"><path d="M8 5v14l11-7z"/></svg></div></div></div>
+                <div style="flex:1;"><div style="font-weight:600; font-size:14px;">Bulgarian Split Squat</div><div style="font-size:12px; color:#999;">3 x 10 each leg</div></div>
+                <div style="width:24px; height:24px; background:#5EBE62; border-radius:999px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px;">✓</div>
+              </div>
+              <div onClick="{{ goExercise }}" style="display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;">
+                <div style="width:46px; height:46px; border-radius:10px; background:linear-gradient(135deg,#3a3a3a,#0e0e0e); position:relative; flex:none;"><div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><div style="width:20px; height:20px; border-radius:99px; background:rgba(250,250,250,.92); display:flex; align-items:center; justify-content:center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="#0f0f0f"><path d="M8 5v14l11-7z"/></svg></div></div></div>
+                <div style="flex:1;"><div style="font-weight:600; font-size:14px;">Cable Kickback</div><div style="font-size:12px; color:#999;">3 x 15 each leg</div></div>
+                <div style="width:24px; height:24px; border:2px solid #E4E4E4; border-radius:999px;"></div>
+              </div>
+              <div onClick="{{ goExercise }}" style="display:flex; align-items:center; gap:14px; padding:12px 0; cursor:pointer;">
+                <div style="width:46px; height:46px; border-radius:10px; background:linear-gradient(135deg,#454545,#121212); position:relative; flex:none;"><div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><div style="width:20px; height:20px; border-radius:99px; background:rgba(250,250,250,.92); display:flex; align-items:center; justify-content:center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="#0f0f0f"><path d="M8 5v14l11-7z"/></svg></div></div></div>
+                <div style="flex:1;"><div style="font-weight:600; font-size:14px;">Abductions</div><div style="font-size:12px; color:#999;">3 x 20</div></div>
+                <div style="width:24px; height:24px; border:2px solid #E4E4E4; border-radius:999px;"></div>
+              </div>
+            </div>
+            </sc-if>
+
+            <!-- ===== EXERCISE PLAYER ===== -->
+            <sc-if value="{{ isExercise }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="position:relative; height:300px; background:linear-gradient(150deg,#2c2c2c,#0c0c0c); display:flex; align-items:center; justify-content:center;">
+                <div style="position:absolute; top:14px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; color:#fff;">
+                  <div onClick="{{ goWorkouts }}" style="width:34px; height:34px; background:rgba(0,0,0,.4); border-radius:999px; display:flex; align-items:center; justify-content:center; cursor:pointer;">←</div>
+                  <div style="text-align:center;"><div style="font-weight:600;">Hip Thrust</div><div style="font-size:11px; color:#bbb;">4 of 4</div></div>
+                  <div style="width:34px; height:34px; background:rgba(0,0,0,.4); border-radius:999px; display:flex; align-items:center; justify-content:center;">···</div>
+                </div>
+                <div style="font-size:90px; opacity:.5;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></div>
+                <div style="position:absolute; right:16px; bottom:14px; background:rgba(0,0,0,.5); color:#fff; font-size:12px; padding:4px 10px;">1.0x</div>
+              </div>
+              <div style="padding:20px 22px 28px;">
+                <div style="display:flex; gap:24px; border-bottom:1px solid #E4E4E4; margin-bottom:18px;">
+                  <div onClick="{{ exInstr }}" style="{{ exInstrSt }}">{{ t.instructions }}</div>
+                  <div onClick="{{ exMuscles }}" style="{{ exMusclesSt }}">{{ t.muscles }}</div>
+                </div>
+                <div style="font-size:14px; line-height:1.9; color:#333;">
+                  <div style="display:flex; gap:12px; margin-bottom:8px;"><span style="color:#767676; font-weight:700;">1.</span><span>{{ t.exStep1 }}</span></div>
+                  <div style="display:flex; gap:12px; margin-bottom:8px;"><span style="color:#767676; font-weight:700;">2.</span><span>{{ t.exStep2 }}</span></div>
+                  <div style="display:flex; gap:12px; margin-bottom:8px;"><span style="color:#767676; font-weight:700;">3.</span><span>{{ t.exStep3 }}</span></div>
+                  <div style="display:flex; gap:12px;"><span style="color:#767676; font-weight:700;">4.</span><span>{{ t.exStep4 }}</span></div>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:26px;">
+                  <div style="flex:1;">
+                    <div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:2px; color:#999; text-transform:uppercase; text-align:center; margin-bottom:8px;">{{ t.reps }}</div>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:14px;">
+                      <div onClick="{{ repsDown }}" style="width:42px; height:42px; border:1px solid #E4E4E4; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer;">−</div>
+                      <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px; line-height:1; min-width:46px; text-align:center;">{{ reps }}</div>
+                      <div onClick="{{ repsUp }}" style="width:42px; height:42px; background:#111; color:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer;">+</div>
+                    </div>
+                  </div>
+                  <div style="width:1px; height:64px; background:#eee;"></div>
+                  <div style="flex:1;">
+                    <div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:2px; color:#999; text-transform:uppercase; text-align:center; margin-bottom:8px;">{{ t.weight }}</div>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:14px;">
+                      <div onClick="{{ wtDown }}" style="width:42px; height:42px; border:1px solid #E4E4E4; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer;">−</div>
+                      <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px; line-height:1; min-width:64px; text-align:center;">{{ weight }}</div>
+                      <div onClick="{{ wtUp }}" style="width:42px; height:42px; background:#111; color:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer;">+</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:6px; justify-content:center; margin-top:20px;">
+                  <span style="width:30px; height:6px; border-radius:99px; background:#5EBE62;"></span>
+                  <span style="width:30px; height:6px; border-radius:99px; background:#5EBE62;"></span>
+                  <span style="width:30px; height:6px; border-radius:99px; background:#0f0f0f;"></span>
+                  <span style="width:30px; height:6px; border-radius:99px; background:#E4E4E4;"></span>
+                </div>
+                <div style="text-align:center; font-size:12px; color:#999; margin-top:8px;">{{ t.setOf }}</div>
+                <div onClick="{{ logSet }}" style="background:#111; color:#fff; text-align:center; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; border-radius:100vw; padding:15px; margin-top:18px; cursor:pointer;">{{ t.logSet }}</div>
+              </div>
+            </div>
+            </sc-if>
+
+            <!-- ===== NUTRITION ===== -->
+            <sc-if value="{{ isNutrition }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; margin-bottom:16px;">{{ t.nav_nutrition }}</div>
+              <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:18px;">
+                <div onClick="{{ nutLog }}" style="{{ nutLogSt }}">{{ t.log }}</div>
+                <div onClick="{{ nutMeals }}" style="{{ nutMealsSt }}">{{ t.meals }}</div>
+                <div onClick="{{ nutInsights }}" style="{{ nutInsightsSt }}">{{ t.insights }}</div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+                <span style="font-size:18px; color:#ccc;">‹</span>
+                <span style="font-size:14px; font-weight:600;">{{ t.todayDate }}</span>
+                <span style="font-size:18px; color:#ccc;">›</span>
+              </div>
+              <div style="display:flex; justify-content:center; margin-bottom:20px;">
+                <div style="position:relative; width:170px; height:170px;">
+                  <svg viewBox="0 0 170 170" style="width:170px; height:170px; transform:rotate(-90deg);"><circle cx="85" cy="85" r="74" fill="none" stroke="#eeeeee" stroke-width="16"/><circle cx="85" cy="85" r="74" fill="none" stroke="#2A9D8F" stroke-width="16" stroke-dasharray="131 465" stroke-dashoffset="0" style="animation:ringfill 1.1s ease-out;"/><circle cx="85" cy="85" r="74" fill="none" stroke="#E9A23B" stroke-width="16" stroke-dasharray="246 465" stroke-dashoffset="-135"/><circle cx="85" cy="85" r="74" fill="none" stroke="#5EBE62" stroke-width="16" stroke-dasharray="68 465" stroke-dashoffset="-393"/></svg>
+                  <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px; line-height:1;">1,420</div>
+                    <div style="font-size:12px; color:#999;">/ 1,850</div>
+                    <div style="font-family:'Inter',sans-serif; font-size:10px; letter-spacing:2px; color:#999; text-transform:uppercase;">{{ t.calories }}</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-around; border-bottom:1px solid #F0F0EE; padding-bottom:18px; margin-bottom:6px;">
+                <div style="text-align:center;"><div style="font-family:'Inter',sans-serif; font-size:20px; font-weight:600;">112g</div><div style="font-size:11px; color:#999;">{{ t.protein }}</div></div>
+                <div style="text-align:center;"><div style="font-family:'Inter',sans-serif; font-size:20px; font-weight:600;">142g</div><div style="font-size:11px; color:#999;">{{ t.carbs }}</div></div>
+                <div style="text-align:center;"><div style="font-family:'Inter',sans-serif; font-size:20px; font-weight:600;">48g</div><div style="font-size:11px; color:#999;">{{ t.fat }}</div></div>
+              </div>
+              <div onClick="{{ goAddFood }}" style="display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;"><span style="font-weight:600; font-size:14px;">{{ t.breakfast }}</span><span style="display:flex; gap:12px; align-items:center;"><span style="font-size:13px; color:#999;">420 cals</span><span style="color:#767676;">✓</span></span></div>
+              <div onClick="{{ goAddFood }}" style="display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;"><span style="font-weight:600; font-size:14px;">{{ t.lunch }}</span><span style="display:flex; gap:12px; align-items:center;"><span style="font-size:13px; color:#999;">530 cals</span><span style="color:#767676;">✓</span></span></div>
+              <div onClick="{{ goAddFood }}" style="display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;"><span style="font-weight:600; font-size:14px;">{{ t.dinner }}</span><span style="display:flex; gap:12px; align-items:center;"><span style="font-size:13px; color:#999;">470 cals</span><span style="width:18px; height:18px; border:2px solid #E4E4E4; border-radius:999px;"></span></span></div>
+              <div onClick="{{ goAddFood }}" style="display:flex; align-items:center; justify-content:space-between; padding:15px 0; cursor:pointer;"><span style="font-weight:600; font-size:14px;">{{ t.snacks }}</span><span style="display:flex; gap:12px; align-items:center;"><span style="font-size:13px; color:#999;">0 cals</span><span style="width:18px; height:18px; border:2px solid #E4E4E4; border-radius:999px;"></span></span></div>
+              <div onClick="{{ goAddFood }}" style="background:#111; color:#fff; text-align:center; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; border-radius:100vw; padding:14px; margin-top:22px; cursor:pointer;">+ {{ t.addFood }}</div>
+            </div>
+            </sc-if>
+
+            <!-- ===== ADD FOOD ===== -->
+            <sc-if value="{{ isAddFood }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+                <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; text-transform:uppercase;">{{ t.addFood }}</div>
+                <div onClick="{{ goNutrition }}" style="font-size:24px; color:#999; cursor:pointer;">✕</div>
+              </div>
+              <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:16px;">
+                <div onClick="{{ foodSearch }}" style="{{ foodSearchSt }}">{{ t.search }}</div>
+                <div onClick="{{ foodScan }}" style="{{ foodScanSt }}">{{ t.scan }}</div>
+                <div onClick="{{ foodAi }}" style="{{ foodAiSt }}">{{ t.aiPhoto }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; border:1px solid #E4E4E4; padding:12px 14px; margin-bottom:20px;"><span style="color:#999;">⌕</span><span style="color:#999; font-size:14px;">{{ t.searchFood }}</span></div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px; letter-spacing:0.5px; margin-bottom:6px;">{{ t.recent }}</div>
+              <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #F0F0EE;"><div style="width:36px; height:36px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">Chicken Breast</div><div style="font-size:12px; color:#999;">120 cals · 26g P</div></div><div style="width:26px; height:26px; border:1px solid #E4E4E4; display:flex; align-items:center; justify-content:center; color:#767676; font-size:18px;">+</div></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #F0F0EE;"><div style="width:36px; height:36px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">White Rice</div><div style="font-size:12px; color:#999;">200 cals · 4g P</div></div><div style="width:26px; height:26px; border:1px solid #E4E4E4; display:flex; align-items:center; justify-content:center; color:#767676; font-size:18px;">+</div></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #F0F0EE;"><div style="width:36px; height:36px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">Avocado</div><div style="font-size:12px; color:#999;">160 cals · 2g P</div></div><div style="width:26px; height:26px; border:1px solid #E4E4E4; display:flex; align-items:center; justify-content:center; color:#767676; font-size:18px;">+</div></div>
+              <div style="background:#f0f0f0; border-radius:100vw; text-align:center; font-size:13px; font-weight:600; padding:13px; margin:14px 0 22px; cursor:pointer;">{{ t.viewAllFoods }}</div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px; letter-spacing:0.5px; margin-bottom:10px;">{{ t.quickAdd }}</div>
+              <div style="display:flex; gap:10px;">
+                <div style="flex:1; border:1px solid #E4E4E4; text-align:center; padding:18px 0;"><div style="font-size:22px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></div><div style="font-size:12px; margin-top:6px;">{{ t.meal }}</div></div>
+                <div style="flex:1; border:1px solid #E4E4E4; text-align:center; padding:18px 0;"><div style="font-size:22px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M4 5a1.5 1.5 0 0 1 1.5-1.5H19V19H6a2 2 0 0 0-2 2z"/><path d="M4 19.5A1.5 1.5 0 0 1 5.5 18H19"/></svg></div><div style="font-size:12px; margin-top:6px;">{{ t.recipe }}</div></div>
+                <div style="flex:1; border:1px solid #E4E4E4; text-align:center; padding:18px 0;"><div style="font-size:22px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M6 3h12v18l-6-4-6 4z"/></svg></div><div style="font-size:12px; margin-top:6px;">{{ t.saved }}</div></div>
+              </div>
+            </div>
+            </sc-if>
+
+            <!-- ===== COMMUNITY ===== -->
+            <sc-if value="{{ isCommunity }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; margin-bottom:16px;">{{ t.nav_community }}</div>
+              <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:18px;">
+                <div onClick="{{ commFeed }}" style="{{ commFeedSt }}">{{ t.feed }}</div>
+                <div onClick="{{ commGroups }}" style="{{ commGroupsSt }}">{{ t.groups }}</div>
+                <div onClick="{{ goChallenges }}" style="{{ commChalSt }}">{{ t.challenges }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; border:1px solid #E4E4E4; padding:11px 14px; margin-bottom:20px;"><div style="width:30px; height:30px; border-radius:999px; background:#ddd;"></div><span style="flex:1; color:#999; font-size:14px;">{{ t.whatsOnMind }}</span><div style="width:26px; height:26px; background:#111; color:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center;">+</div></div>
+              <div style="border-bottom:1px solid #F0F0EE; padding-bottom:18px; margin-bottom:18px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;"><div style="width:38px; height:38px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">Maria Rodriguez</div><div style="font-size:11px; color:#999;">2h ago</div></div><span style="color:#bbb;">···</span></div>
+                <div style="font-size:14px; line-height:1.5; margin-bottom:12px;">Down 5lbs this week! Feeling so many changes already.</div>
+                <div style="display:flex; gap:6px; margin-bottom:12px;"><img src="assets/img/ba-1.avif" alt="" style="flex:1; width:50%; height:130px; object-fit:cover; border-radius:8px;" /><img src="assets/img/ba-2.avif" alt="" style="flex:1; width:50%; height:130px; object-fit:cover; border-radius:8px;" /></div>
+                <div style="display:flex; gap:18px; align-items:center; color:#666; font-size:13px;"><span>♥ 124</span><span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg> 28</span><span style="margin-left:auto;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M6 3h12v18l-6-4-6 4z"/></svg></span></div>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;"><div style="width:38px; height:38px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">Camila O.</div><div style="font-size:11px; color:#999;">5h ago</div></div><span style="color:#bbb;">···</span></div>
+                <div style="font-size:14px; line-height:1.5;">Early morning workout done. Let's have a great day ladies!</div>
+              </div>
+            </div>
+            </sc-if>
+
+            <!-- ===== CHALLENGES ===== -->
+            <sc-if value="{{ isChallenges }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase; margin-bottom:16px;">{{ t.challenges }}</div>
+              <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:18px;">
+                <div onClick="{{ goChallenges }}" style="{{ chalActiveSt }}">{{ t.active }}</div>
+                <div style="{{ segOff }}">{{ t.upcoming }}</div>
+                <div style="{{ segOff }}">{{ t.past }}</div>
+              </div>
+              <div style="position:relative; height:170px; border-radius:16px; background:linear-gradient(180deg,rgba(15,15,15,.25),rgba(15,15,15,.85)), url('assets/img/steph-hero.avif') center 14%/cover; padding:22px; color:#fff; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden;">
+                <div style="position:absolute; right:-10px; bottom:-6px; font-size:120px; opacity:.16;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></div>
+                <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:0.95; text-transform:uppercase;">Summer Shred<br>Challenge</div>
+                <div style="font-size:12px; color:#bbb; margin-top:8px;">May 1 – May 31</div>
+                <div style="display:flex; align-items:baseline; gap:8px; margin-top:6px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px;">23</span><span style="font-size:12px; color:#bbb;">{{ t.daysLeft }}</span></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin:20px 0 6px;"><span style="font-size:13px; color:#999;">{{ t.yourProgress }}</span><span style="font-size:13px; color:#999;">{{ t.rank }}</span></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">72%</span><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">#12</span></div>
+              <div style="height:6px; background:#E4E4E4; margin-bottom:22px;"><div style="height:6px; width:72%; background:#767676;"></div></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F0F0EE;"><span style="font-family:'Inter',sans-serif; width:16px;">1</span><div style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><span style="flex:1; font-weight:600; font-size:14px;">Jessica L.</span><span style="font-weight:600; font-size:14px;">97%</span></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F0F0EE;"><span style="font-family:'Inter',sans-serif; width:16px;">2</span><div style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><span style="flex:1; font-weight:600; font-size:14px;">Maria R.</span><span style="font-weight:600; font-size:14px;">89%</span></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid #F0F0EE; background:#F7F7F5;"><span style="font-family:'Inter',sans-serif; width:16px;">3</span><div style="width:30px; height:30px; border-radius:999px; background:#767676;"></div><span style="flex:1; font-weight:700; font-size:14px;">{{ t.nav_you }}</span><span style="font-weight:700; font-size:14px;">72%</span></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:11px 0;"><span style="font-family:'Inter',sans-serif; width:16px;">4</span><div style="width:30px; height:30px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><span style="flex:1; font-weight:600; font-size:14px;">Valeria S.</span><span style="font-weight:600; font-size:14px;">61%</span></div>
+            </div>
+            </sc-if>
+
+            <!-- ===== HABITS ===== -->
+            <sc-if value="{{ isHabits }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;"><div onClick="{{ goYou }}" style="font-size:18px; color:#999; cursor:pointer;">←</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase;">{{ t.habits }}</div></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;"><span style="font-size:18px; color:#ccc;">‹</span><span style="font-size:14px; font-weight:600;">{{ t.todayDate }}</span><span style="font-size:18px; color:#ccc;">›</span></div>
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid #F0F0EE;"><div style="width:40px; height:40px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.drink3L }}</div><div style="font-size:12px; color:#999;">2.1 / 3 L</div></div><div style="width:30px; height:30px; border-radius:999px; background:conic-gradient(#767676 0% 70%, #E4E4E4 70% 100%);"></div></div>
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid #F0F0EE;"><div style="width:40px; height:40px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 12h4l2 6 4-14 2.5 8H21"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.tenkSteps }}</div><div style="font-size:12px; color:#999;">8,432 / 10,000</div></div><div style="width:28px; height:28px; background:#5EBE62; border-radius:999px; display:flex; align-items:center; justify-content:center; color:#fff;">✓</div></div>
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid #F0F0EE;"><div style="width:40px; height:40px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6 18.4 18.4"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.noAlcohol }}</div><div style="font-size:12px; color:#999;">{{ t.onTrack }}</div></div><div style="width:28px; height:28px; background:#5EBE62; border-radius:999px; display:flex; align-items:center; justify-content:center; color:#fff;">✓</div></div>
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid #F0F0EE;"><div style="width:40px; height:40px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M4 5a1.5 1.5 0 0 1 1.5-1.5H19V19H6a2 2 0 0 0-2 2z"/><path d="M4 19.5A1.5 1.5 0 0 1 5.5 18H19"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.read10 }}</div><div style="font-size:12px; color:#999;">7 / 10</div></div><div style="width:28px; height:28px; border:2px solid #E4E4E4; border-radius:999px;"></div></div>
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 0;"><div style="width:40px; height:40px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L19 6h0a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.takePhoto }}</div><div style="font-size:12px; color:#999;">{{ t.weekly }}</div></div><div style="width:28px; height:28px; border:2px solid #E4E4E4; border-radius:999px;"></div></div>
+            </div>
+            </sc-if>
+
+            <!-- ===== MESSAGES ===== -->
+            <sc-if value="{{ isMessages }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px; position:relative;">
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase;">{{ t.messages }}</div></div>
+              <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:18px;">
+                <div onClick="{{ msgCoach }}" style="{{ msgCoachSt }}">{{ t.coach }}</div>
+                <div onClick="{{ msgAi }}" style="{{ msgAiSt }}">{{ t.aiCoach }}</div>
+                <div onClick="{{ msgTeam }}" style="{{ msgTeamSt }}">{{ t.team }}</div>
+              </div>
+              <div onClick="{{ goChat }}" style="display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;"><div style="width:46px; height:46px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">Coach Steph</div><div style="font-size:12px; color:#999; line-height:1.4;">Proud of you! Keep showing up every single day.</div></div><div style="width:20px; height:20px; background:#5EBE62; border-radius:999px; color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center;">2</div></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid #F0F0EE;"><div style="width:46px; height:46px; border-radius:999px; background:#111; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Gulams Condensed',Impact,sans-serif;">AI</div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.aiCoach }}</div><div style="font-size:12px; color:#999; line-height:1.4;">Time to log your meals and hit your protein goal.</div></div><div style="width:20px; height:20px; background:#767676; border-radius:999px; color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center;">1</div></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:14px 0;"><div style="width:46px; height:46px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">Support Team</div><div style="font-size:12px; color:#999; line-height:1.4;">We got your message and will get back to you soon.</div></div><div style="width:20px; height:20px; background:#767676; border-radius:999px; color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center;">1</div></div>
+              <div onClick="{{ goCommunity }}" style="display:flex; align-items:center; gap:12px; padding:14px 0; border-top:1px solid #F0F0EE; cursor:pointer;"><div style="width:46px; height:46px; border-radius:999px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.2a3 3 0 0 1 0 5.6"/><path d="M16.5 13.5a5 5 0 0 1 4 5.5"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">{{ t.communityGroup }}</div><div style="font-size:12px; color:#999; line-height:1.4;">{{ t.communityGroupSub }}</div></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+            </sc-if>
+
+            <!-- ===== CHAT THREAD ===== -->
+            <sc-if value="{{ isChat }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column; height:100%;">
+              <div style="display:flex; align-items:center; gap:12px; padding:10px 20px 14px; border-bottom:1px solid #F0F0EE;"><div onClick="{{ goMessages }}" style="font-size:18px; color:#999; cursor:pointer;">←</div><div style="width:40px; height:40px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div style="flex:1;"><div style="font-weight:600; font-size:14px;">Coach Steph</div><div style="font-size:11px; color:#5EBE62;">● {{ t.online }}</div></div></div>
+              <div style="flex:1; padding:18px 20px; display:flex; flex-direction:column; gap:14px; background:#fafafa;">
+                <div style="text-align:center; font-size:11px; color:#bbb;">{{ t.todayLabel }}</div>
+                <div style="align-self:flex-start; max-width:80%; background:#fff; border:1px solid #f0f0f0; border-radius:16px 16px 16px 4px; padding:11px 14px; font-size:13px; line-height:1.5;">{{ t.chat1 }}</div>
+                <div style="align-self:flex-start; max-width:84%; background:#fff; border:1px solid #f0f0f0; border-radius:16px; padding:10px 12px; display:flex; align-items:center; gap:10px;"><div style="width:34px; height:34px; border-radius:999px; background:#0f0f0f; color:#fff; display:flex; align-items:center; justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div><svg viewBox="0 0 120 24" style="flex:1; height:24px;"><g fill="#5EBE62"><rect x="0" y="9" width="3" height="6" rx="1.5"/><rect x="6" y="6" width="3" height="12" rx="1.5"/><rect x="12" y="3" width="3" height="18" rx="1.5"/><rect x="18" y="7" width="3" height="10" rx="1.5"/><rect x="24" y="10" width="3" height="4" rx="1.5"/><rect x="30" y="5" width="3" height="14" rx="1.5"/><rect x="36" y="8" width="3" height="8" rx="1.5"/></g><g fill="#d6d6d6"><rect x="42" y="4" width="3" height="16" rx="1.5"/><rect x="48" y="9" width="3" height="6" rx="1.5"/><rect x="54" y="6" width="3" height="12" rx="1.5"/><rect x="60" y="10" width="3" height="4" rx="1.5"/><rect x="66" y="7" width="3" height="10" rx="1.5"/><rect x="72" y="3" width="3" height="18" rx="1.5"/><rect x="78" y="8" width="3" height="8" rx="1.5"/><rect x="84" y="10" width="3" height="4" rx="1.5"/><rect x="90" y="6" width="3" height="12" rx="1.5"/><rect x="96" y="9" width="3" height="6" rx="1.5"/></g></svg><span style="font-size:11px; color:#999;">0:14</span></div>
+                <div style="align-self:flex-start; max-width:84%; background:#fff; border:1px solid #f0f0f0; border-radius:16px; padding:12px; display:flex; align-items:center; gap:12px;"><div style="width:40px; height:40px; border-radius:10px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M7 3h8l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg></div><div style="flex:1;"><div style="font-size:13px; font-weight:600;">new_workout-plan.pdf</div><div style="font-size:11px; color:#999;">PDF · 480 KB</div></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></div>
+                <div style="align-self:flex-end; max-width:80%; background:#0f0f0f; color:#fafafa; border-radius:16px 16px 4px 16px; padding:11px 14px; font-size:13px; line-height:1.5;">{{ t.chat2 }}</div>
+                <div style="align-self:flex-end; max-width:80%; background:#0f0f0f; color:#fafafa; border-radius:16px 16px 4px 16px; padding:11px 14px; font-size:13px; line-height:1.5;">{{ t.chat3 }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; padding:12px 18px; border-top:1px solid #F0F0EE; background:#fff;"><div style="width:34px; height:34px; border-radius:999px; background:#f0f0f0; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12.5 12 22a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 8"/></svg></div><div style="flex:1; background:#f0f0f0; border-radius:100vw; padding:10px 14px; font-size:13px; color:#999;">{{ t.typeMsg }}</div><div style="width:38px; height:38px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div></div>
+            </div>
+            </sc-if>
+
+            <!-- ===== YOU ===== -->
+            <sc-if value="{{ isYou }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase;">{{ t.nav_you }}</div><div style="font-size:20px; color:#999;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.5M12 19v2.5M3 12h2.5M18.5 12H21M5.2 5.2l1.8 1.8M17 17l1.8 1.8M18.8 5.2 17 7M7 17l-1.8 1.8"/></svg></div></div>
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;"><div style="width:64px; height:64px; border-radius:999px; background:#0f0f0f; display:flex; align-items:center; justify-content:center;"><svg width="44%" height="44%" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="1.6"><circle cx="12" cy="8.5" r="3.3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke-linecap="round"/></svg></div><div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; letter-spacing:0.5px;">Kiara Johnson</div><div style="font-size:13px; color:#767676; font-weight:600;">{{ t.premiumMember }}</div><div style="font-size:12px; color:#999;">{{ t.memberSince }}</div></div></div>
+              <div style="display:flex; border:1px solid #F0F0EE; margin-bottom:22px;">
+                <div style="flex:1; text-align:center; padding:16px 0; border-right:1px solid #F0F0EE;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px;">72</div><div style="font-size:11px; color:#999;">{{ t.workouts }}</div></div>
+                <div style="flex:1; text-align:center; padding:16px 0; border-right:1px solid #F0F0EE;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px;">12</div><div style="font-size:11px; color:#999;">{{ t.weekStreak }}</div></div>
+                <div style="flex:1; text-align:center; padding:16px 0;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; color:#5EBE62;">-18</div><div style="font-size:11px; color:#999;">lbs {{ t.progress }}</div></div>
+              </div>
+              <div style="background:#0f0f0f; color:#fafafa; border-radius:16px; padding:20px; margin-bottom:22px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;"><span style="font-family:'Inter',sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#b7b7b7;">{{ t.yourGoal }}</span><span style="font-size:11px; color:#5EBE62; font-weight:600;">72% {{ t.there }}</span></div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px;"><div><div style="font-size:11px; color:#888;">{{ t.start }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px;">114</div></div><div style="text-align:center;"><div style="font-size:11px; color:#5EBE62;">{{ t.current }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; color:#5EBE62;">121</div></div><div style="text-align:right;"><div style="font-size:11px; color:#888;">{{ t.goal }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px;">145</div></div></div>
+                <div style="height:6px; background:#2a2a2a; border-radius:99px; position:relative;"><div style="height:6px; width:23%; background:#5EBE62; border-radius:99px;"></div><div style="position:absolute; left:23%; top:-3px; width:12px; height:12px; background:#fff; border-radius:99px; transform:translateX(-50%);"></div></div>
+                <div style="font-size:11px; color:#888; margin-top:10px;">{{ t.lbsToGo }}</div>
+              </div>
+              <div onClick="{{ goProgress }}" style="display:flex; align-items:center; gap:12px; padding:15px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;"><span style="font-size:16px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L19 6h0a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg></span><span style="flex:1; font-weight:500; font-size:14px;">{{ t.myPhotos }}</span><span style="color:#ccc;">›</span></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:15px 0; border-bottom:1px solid #F0F0EE;"><span style="font-size:16px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 16.5 16.5 3 21 7.5 7.5 21z"/><path d="M7.5 12l1.8 1.8M11 8.5l1.8 1.8M14.5 5l1.8 1.8"/></svg></span><span style="flex:1; font-weight:500; font-size:14px;">{{ t.measurements }}</span><span style="color:#ccc;">›</span></div>
+              <div onClick="{{ goWorkouts }}" style="display:flex; align-items:center; gap:12px; padding:15px 0; border-bottom:1px solid #F0F0EE; cursor:pointer;"><span style="font-size:16px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M9 10h6M9 14h6"/></svg></span><span style="flex:1; font-weight:500; font-size:14px;">{{ t.myProgram }}</span><span style="font-size:12px; color:#999;">Glute Builder ›</span></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:15px 0; border-bottom:1px solid #F0F0EE;"><span style="font-size:16px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.5M12 19v2.5M3 12h2.5M18.5 12H21M5.2 5.2l1.8 1.8M17 17l1.8 1.8M18.8 5.2 17 7M7 17l-1.8 1.8"/></svg></span><span style="flex:1; font-weight:500; font-size:14px;">{{ t.accountSettings }}</span><span style="color:#ccc;">›</span></div>
+              <div style="display:flex; align-items:center; gap:12px; padding:15px 0;"><span style="font-size:16px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 0 1 4 1.8c0 1.5-2 1.9-2 3.2"/><circle cx="11.5" cy="17.4" r=".6" fill="currentColor" stroke="none"/></svg></span><span style="flex:1; font-weight:500; font-size:14px;">{{ t.help }}</span><span style="color:#ccc;">›</span></div>
+            </div>
+            </sc-if>
+
+            <!-- ===== PROGRESS ===== -->
+            <sc-if value="{{ isProgress }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;"><div onClick="{{ goYou }}" style="font-size:18px; color:#999; cursor:pointer;">←</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase;">{{ t.progress }}</div></div>
+              <div style="display:inline-flex; background:#f0f0f0; border-radius:100vw; padding:4px; margin-bottom:20px;">
+                <div onClick="{{ progOverview }}" style="{{ progOverviewSt }}">{{ t.overview }}</div>
+                <div onClick="{{ goHabits }}" style="{{ progHabitsSt }}">{{ t.habits }}</div>
+                <div style="{{ segOff }}">{{ t.photos }}</div>
+              </div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:0.5px; margin-bottom:10px;">{{ t.todayDate }}</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid #F0F0EE;"><div><div style="font-size:13px; color:#999;">{{ t.steps }}</div><div style="font-family:'Inter',sans-serif; font-size:18px; font-weight:600;">8,432 / 10,000</div></div><span style="font-size:18px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M3 12h4l2 6 4-14 2.5 8H21"/></svg></span></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid #F0F0EE;"><div><div style="font-size:13px; color:#999;">{{ t.calories }}</div><div style="font-family:'Inter',sans-serif; font-size:18px; font-weight:600;">1,420 / 1,850</div></div><span style="font-size:18px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg></span></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid #F0F0EE;"><div><div style="font-size:13px; color:#999;">{{ t.protein }}</div><div style="font-family:'Inter',sans-serif; font-size:18px; font-weight:600;">112 / 140g</div></div><span style="font-size:18px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></span></div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:0.5px; margin:22px 0 12px;">{{ t.thisWeek }}</div>
+              <div style="display:flex; justify-content:space-around;">
+                <div style="text-align:center;"><div style="width:64px; height:64px; border-radius:999px; background:conic-gradient(#111 0% 80%, #E4E4E4 80% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:46px; height:46px; background:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; font-weight:600;">4/5</div></div><div style="font-size:11px; color:#999; margin-top:8px;">{{ t.workouts }}</div></div>
+                <div style="text-align:center;"><div style="width:64px; height:64px; border-radius:999px; background:conic-gradient(#767676 0% 82%, #E4E4E4 82% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:46px; height:46px; background:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; font-weight:600;">82%</div></div><div style="font-size:11px; color:#999; margin-top:8px;">{{ t.nutrition }}</div></div>
+                <div style="text-align:center;"><div style="width:64px; height:64px; border-radius:999px; background:conic-gradient(#111 0% 71%, #E4E4E4 71% 100%); display:flex; align-items:center; justify-content:center;"><div style="width:46px; height:46px; background:#fff; border-radius:999px; display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; font-weight:600;">5/7</div></div><div style="font-size:11px; color:#999; margin-top:8px;">{{ t.habits }}</div></div>
+              </div>
+            </div>
+            </sc-if>
+
+            <!-- ===== CHECK-IN ===== -->
+            <sc-if value="{{ isCheckin }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:8px 22px 28px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; text-transform:uppercase;">{{ t.checkInTitle }}</div><div onClick="{{ goHome }}" style="font-size:22px; color:#999; cursor:pointer;">✕</div></div>
+              <div style="font-size:13px; color:#999; margin-bottom:22px;">May 12, 2025</div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:0.5px; margin-bottom:14px;">{{ t.howFeel }}</div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:28px;">
+                <div onClick="{{ mood1 }}" style="{{ mood1St }}"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="vertical-align:middle"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r=".7" fill="currentColor" stroke="none"/><path d="M8.5 16.5c1-1.6 2.2-2.2 3.5-2.2s2.5.6 3.5 2.2"/></svg></div>
+                <div onClick="{{ mood2 }}" style="{{ mood2St }}"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="vertical-align:middle"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r=".7" fill="currentColor" stroke="none"/><path d="M9 15.8c.9-1 1.9-1.5 3-1.5s2.1.5 3 1.5"/></svg></div>
+                <div onClick="{{ mood3 }}" style="{{ mood3St }}"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="vertical-align:middle"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r=".7" fill="currentColor" stroke="none"/><path d="M9 15h6"/></svg></div>
+                <div onClick="{{ mood4 }}" style="{{ mood4St }}"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="vertical-align:middle"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r=".7" fill="currentColor" stroke="none"/><path d="M9 14.4c.9 1 1.9 1.5 3 1.5s2.1-.5 3-1.5"/></svg></div>
+                <div onClick="{{ mood5 }}" style="{{ mood5St }}"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="vertical-align:middle"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r=".7" fill="currentColor" stroke="none"/><path d="M8.5 14c1 1.6 2.2 2.2 3.5 2.2s2.5-.6 3.5-2.2"/></svg></div>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;"><span style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px; text-transform:uppercase;">{{ t.energy }}</span><span style="font-weight:600;">{{ energy }} / 10</span></div>
+              <input type="range" min="0" max="10" value="{{ energy }}" onChange="{{ setEnergy }}" style="width:100%; accent-color:#111; margin-bottom:22px;" />
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;"><span style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px; text-transform:uppercase;">{{ t.sleep }}</span><span style="font-weight:600;">{{ sleep }} / 10</span></div>
+              <input type="range" min="0" max="10" value="{{ sleep }}" onChange="{{ setSleep }}" style="width:100%; accent-color:#111; margin-bottom:22px;" />
+              <div style="font-family:'Inter',sans-serif; font-size:13px; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">{{ t.notesOpt }}</div>
+              <div style="border:1px solid #E4E4E4; padding:14px; min-height:80px; font-size:14px; color:#999;">{{ t.notesPh }}</div>
+              <div onClick="{{ saveCheckin }}" style="background:#111; color:#fff; text-align:center; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:2px; text-transform:uppercase; border-radius:100vw; padding:15px; margin-top:22px; cursor:pointer;">{{ t.saveCheckin }}</div>
+            </div>
+            </sc-if>
+
+            <!-- SCREENS-END -->
+          </div>
+
+          <!-- BOTTOM NAV -->
+          <div style="{{ navWrapSt }}">
+            <div onClick="{{ goHome }}" style="{{ navTodaySt }}"><div style="font-size:18px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg></div><div style="font-size:10px;">{{ t.nav_today }}</div></div>
+            <div onClick="{{ goMessages }}" style="{{ navCommSt }}"><div style="font-size:18px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg></div><div style="font-size:10px;">{{ t.nav_community }}</div></div>
+            <div onClick="{{ goWorkouts }}" style="{{ navWkSt }}"><div style="font-size:18px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/></svg></div><div style="font-size:10px;">{{ t.nav_workouts }}</div></div>
+            <div onClick="{{ goNutrition }}" style="{{ navNutSt }}"><div style="font-size:18px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M7 3v7M5 3v4a2 2 0 0 0 4 0V3M7 10v11"/><path d="M16 3c-1.2 0-2 2-2 5s.8 4 2 4m0 0v9"/></svg></div><div style="font-size:10px;">{{ t.nav_nutrition }}</div></div>
+            <div onClick="{{ goYou }}" style="{{ navYouSt }}"><div style="font-size:18px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></div><div style="font-size:10px;">{{ t.nav_you }}</div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;440&quot;,&quot;height&quot;:&quot;900&quot;}}">
+class Component extends DCLogic {
+  state = { lang:'en', screen:'home', bezel:true,
+    wkTab:'program', commTab:'feed', progTab:'overview', nutTab:'log', msgTab:'coach',
+    foodTab:'search', exTab:'instructions', reps:15, weight:135, mood:5, energy:7, sleep:7 };
+
+  T() {
+    const en = {
+      nav_today:'Today', nav_community:'Chat', nav_workouts:'Activities', nav_nutrition:'Nutrition', nav_you:'You',
+      greeting:'Hey Kiara', week:"You're in week 12 of 24",
+      checkinTitle:'Time for a check-in', checkinBody:'Share your progress and keep your streak alive.', checkinCta:'Start Check-in',
+      todayDate:'Today, May 12', todo:'Things to do', viewall:'View all',
+      morningWorkout:'Morning Workout', logBreakfast:'Log Breakfast', drinkWater:'Drink Water',
+      program:'Program', library:'Library', history:'History', weekof:'Week 12 of 24', day3of5:'Day 3 of 5',
+      todaysWorkout:"Today's Workout", instructions:'Instructions', muscles:'Muscles', reps:'Reps', weight:'Weight (lb)', setOf:'Set 3 of 4', logSet:'Log Set',
+      exStep1:'Place your upper back on the bench and feet hip-width apart.',
+      exStep2:'Drive through your heels and lift your hips until fully extended.',
+      exStep3:'Squeeze your glutes at the top.',
+      exStep4:'Lower with control and repeat.',
+      log:'Log', meals:'Meals', insights:'Insights', calories:'Calories', protein:'Protein', carbs:'Carbs', fat:'Fat',
+      breakfast:'Breakfast', lunch:'Lunch', dinner:'Dinner', snacks:'Snacks',
+      addFood:'Add Food', search:'Search', scan:'Scan', aiPhoto:'Photo', searchFood:'Search for a food', recent:'Recent', quickAdd:'Quick Add', viewAllFoods:'View All Foods', meal:'Meal', recipe:'Recipe', saved:'Saved',
+      feed:'Feed', groups:'Groups', challenges:'Challenges', whatsOnMind:"What's on your mind?",
+      active:'Active', upcoming:'Upcoming', past:'Past', yourProgress:'Your Progress', rank:'Rank', daysLeft:'Days Left',
+      overview:'Overview', habits:'Habits', photos:'Photos', steps:'Steps', thisWeek:'This Week', nutrition:'Nutrition', currentProgram:'Current Program',
+      coach:'Coach', aiCoach:'AI Coach', team:'Team', messages:'Messages',
+      communityGroup:'Thick & Fit Community Group', communityGroupSub:'1,204 members · tap to open the feed', online:'Active now', todayLabel:'Today', chat1:'Hey Kiara! How did today\u2019s session feel? Sent over your updated plan.', chat2:'Felt strong! Hit a new PR on hip thrust.', chat3:'Listening to your voice note now, thank you coach!', typeMsg:'Message Coach Steph', yourGoal:'Your Goal', there:'there', start:'Start', current:'Current', goal:'Goal', lbsToGo:'24 lbs to go - you\u2019ve got this', premiumMember:'Premium Member', memberSince:'Member since Jan 1, 2025', workouts:'Workouts', weekStreak:'Week Streak', progress:'Progress',
+      myPhotos:'My Progress Photos', measurements:'Measurements', myProgram:'My Program', accountSettings:'Account Settings', help:'Help & Support', settings:'Settings',
+      checkInTitle:'Check-In', howFeel:'How do you feel today?', energy:'Energy Level', sleep:'Sleep Quality', notesOpt:'Notes (optional)', saveCheckin:'Save Check-In', notesPh:'Feeling strong and motivated! Let\u2019s get it',
+      drink3L:'Drink 3L of water', tenkSteps:'10k Steps', noAlcohol:'No Alcohol', onTrack:'Stay on track', read10:'Read 10 Pages', takePhoto:'Take Progress Photo', weekly:'Weekly habit'
+    };
+    const es = {
+      nav_today:'Hoy', nav_community:'Chat', nav_workouts:'Actividades', nav_nutrition:'Nutrición', nav_you:'Tú',
+      greeting:'Hola Kiara', week:'Estás en la semana 12 de 24',
+      checkinTitle:'Hora de tu check-in', checkinBody:'Comparte tu progreso y mantén tu racha viva.', checkinCta:'Iniciar Check-in',
+      todayDate:'Hoy, 12 de mayo', todo:'Por hacer', viewall:'Ver todo',
+      morningWorkout:'Entreno de la mañana', logBreakfast:'Registrar desayuno', drinkWater:'Tomar agua',
+      program:'Programa', library:'Biblioteca', history:'Historial', weekof:'Semana 12 de 24', day3of5:'Día 3 de 5',
+      todaysWorkout:'Entreno de hoy', instructions:'Instrucciones', muscles:'Músculos', reps:'Reps', weight:'Peso (lb)', setOf:'Serie 3 de 4', logSet:'Registrar serie',
+      exStep1:'Apoya la parte alta de la espalda en el banco, pies al ancho de cadera.',
+      exStep2:'Empuja con los talones y eleva la cadera hasta extender por completo.',
+      exStep3:'Aprieta los glúteos arriba.',
+      exStep4:'Baja con control y repite.',
+      log:'Registro', meals:'Comidas', insights:'Datos', calories:'Calorías', protein:'Proteína', carbs:'Carbos', fat:'Grasa',
+      breakfast:'Desayuno', lunch:'Almuerzo', dinner:'Cena', snacks:'Snacks',
+      addFood:'Agregar comida', search:'Buscar', scan:'Escanear', aiPhoto:'Foto', searchFood:'Busca una comida', recent:'Recientes', quickAdd:'Agregar rápido', viewAllFoods:'Ver todas', meal:'Comida', recipe:'Receta', saved:'Guardado',
+      feed:'Feed', groups:'Grupos', challenges:'Retos', whatsOnMind:'¿Qué piensas hoy?',
+      active:'Activos', upcoming:'Próximos', past:'Pasados', yourProgress:'Tu progreso', rank:'Puesto', daysLeft:'Días restantes',
+      overview:'Resumen', habits:'Hábitos', photos:'Fotos', steps:'Pasos', thisWeek:'Esta semana', nutrition:'Nutrición', currentProgram:'Programa actual',
+      coach:'Coach', aiCoach:'Coach IA', team:'Equipo', messages:'Mensajes',
+      communityGroup:'Grupo Thick & Fit', communityGroupSub:'1,204 miembros · toca para abrir', online:'En línea', todayLabel:'Hoy', chat1:'¡Hola Kiara! ¿Cómo se sintió la sesión de hoy? Te envié tu plan actualizado.', chat2:'¡Me sentí fuerte! Nuevo récord en hip thrust.', chat3:'Escuchando tu nota de voz ahora, ¡gracias coach!', typeMsg:'Mensaje a Coach Steph', yourGoal:'Tu Meta', there:'logrado', start:'Inicio', current:'Actual', goal:'Meta', lbsToGo:'24 lbs por lograr - tú puedes', premiumMember:'Miembro Premium', memberSince:'Miembro desde 1 ene 2025', workouts:'Entrenos', weekStreak:'Racha semanal', progress:'Progreso',
+      myPhotos:'Mis fotos de progreso', measurements:'Medidas', myProgram:'Mi programa', accountSettings:'Ajustes de cuenta', help:'Ayuda y soporte', settings:'Ajustes',
+      checkInTitle:'Check-In', howFeel:'¿Cómo te sientes hoy?', energy:'Nivel de energía', sleep:'Calidad del sueño', notesOpt:'Notas (opcional)', saveCheckin:'Guardar Check-In', notesPh:'¡Me siento fuerte y motivada! Vamos por ello',
+      drink3L:'Tomar 3L de agua', tenkSteps:'10k Pasos', noAlcohol:'Sin alcohol', onTrack:'Sigue firme', read10:'Leer 10 páginas', takePhoto:'Foto de progreso', weekly:'Hábito semanal'
+    };
+    return this.state.lang === 'en' ? en : es;
+  }
+
+  seg(on){ return on
+    ? { background:'#111', color:'#fff', fontFamily:"'Inter',sans-serif", fontSize:'12px', letterSpacing:'1px', textTransform:'uppercase', padding:'8px 16px', borderRadius:'100vw', cursor:'pointer' }
+    : { color:'#888', fontFamily:"'Inter',sans-serif", fontSize:'12px', letterSpacing:'1px', textTransform:'uppercase', padding:'8px 16px', borderRadius:'100vw', cursor:'pointer' }; }
+  ut(on){ return on
+    ? { fontSize:'14px', fontWeight:600, color:'#111', paddingBottom:'12px', borderBottom:'2px solid #111', cursor:'pointer' }
+    : { fontSize:'14px', color:'#999', paddingBottom:'12px', cursor:'pointer' }; }
+  navItem(on){ return { flex:1, textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:'3px', cursor:'pointer', color: on ? '#111' : '#bbb', opacity: on ? 1 : .8 }; }
+  moodFace(on){ return { width:'48px', height:'48px', borderRadius:'999px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', cursor:'pointer', background: on ? '#111' : '#f0f0f0', color: on ? '#fff' : '#555', transform: on ? 'scale(1.05)' : 'none' }; }
+
+  fire(){ this.setState({burst:Date.now()}); clearTimeout(this._bt); this._bt=setTimeout(()=>this.setState({burst:0}),1400); }
+  buildConfetti(){ const R=React,a=[]; for(let i=0;i<36;i++){ const x=(Math.random()*280-140).toFixed(0)+'px',y=(Math.random()*-300-60).toFixed(0)+'px',r=(Math.random()*600-300).toFixed(0)+'deg',c=i%3===0?'#0f0f0f':(i%3===1?'#767676':'#b7b7b7'); a.push(R.createElement('div',{key:i,style:{position:'absolute',left:'50%',top:'48%',width:i%2?'7px':'9px',height:i%2?'11px':'7px',background:c,borderRadius:i%4?'2px':'99px','--x':x,'--y':y,'--r':r,animation:'tfconf 1.15s cubic-bezier(.15,.6,.3,1) forwards',animationDelay:(Math.random()*0.12).toFixed(2)+'s'}})); } return R.createElement('div',{style:{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none',zIndex:80}},a); }
+  renderVals(){
+    const s = this.state, t = this.T();
+    const onTog = { background:'#111', color:'#fff', fontFamily:"'Inter',sans-serif", fontSize:'11px', letterSpacing:'2px', padding:'0 14px', display:'flex', alignItems:'center', cursor:'pointer' };
+    const offTog = { background:'#fff', color:'#111', fontFamily:"'Inter',sans-serif", fontSize:'11px', letterSpacing:'2px', padding:'0 14px', display:'flex', alignItems:'center', cursor:'pointer' };
+    const navHidden = ['exercise','addfood','checkin'].includes(s.screen);
+    const frameBezel = 'background:#111; padding:13px; border-radius:54px; box-shadow:0 30px 80px rgba(0,0,0,.28);';
+    const frameBare = 'background:#fff; padding:0; border-radius:0; box-shadow:0 1px 3px rgba(0,0,0,.12); border:1px solid #E4E4E4;';
+    return {
+      t,
+      setEn:()=>this.setState({lang:'en'}), setEs:()=>this.setState({lang:'es'}),
+      enSt: s.lang==='en'?onTog:offTog, esSt: s.lang==='es'?onTog:offTog,
+      toggleBezel:()=>this.setState({bezel:!s.bezel}), bezelLabel: s.bezel? 'Bare' : 'Bezel',
+      frameSt: s.bezel?frameBezel:frameBare,
+      screenRadius: s.bezel? 'border-radius:42px;' : 'border-radius:0;',
+      islandSt: s.bezel? 'position:absolute; top:12px; left:50%; transform:translateX(-50%); width:118px; height:32px; background:#000; border-radius:999px; z-index:30;' : 'display:none;',
+      // screen flags
+      isHome: s.screen==='home', isWorkouts: s.screen==='workouts', isExercise: s.screen==='exercise',
+      isNutrition: s.screen==='nutrition', isAddFood: s.screen==='addfood', isCommunity: s.screen==='community',
+      isChallenges: s.screen==='challenges', isHabits: s.screen==='habits', isMessages: s.screen==='messages',
+      isYou: s.screen==='you', isCheckin: s.screen==='checkin', isProgress: s.screen==='progress', isChat: s.screen==='chat',
+      goChat:()=>this.setState({screen:'chat'}),
+      // nav
+      goHome:()=>this.setState({screen:'home'}), goWorkouts:()=>this.setState({screen:'workouts'}),
+      goExercise:()=>this.setState({screen:'exercise'}), goNutrition:()=>this.setState({screen:'nutrition'}),
+      goAddFood:()=>this.setState({screen:'addfood'}), goCommunity:()=>this.setState({screen:'community'}),
+      goChallenges:()=>this.setState({screen:'challenges'}), goHabits:()=>this.setState({screen:'habits'}),
+      goMessages:()=>this.setState({screen:'messages'}), goYou:()=>this.setState({screen:'you'}),
+      goCheckin:()=>this.setState({screen:'checkin'}), goProgress:()=>this.setState({screen:'progress'}),
+      navWrapSt: { display: navHidden?'none':'flex', borderTop:'1px solid #EEE', padding:'10px 14px 14px', flex:'none', background:'#fff' },
+      navTodaySt:this.navItem(s.screen==='home'), navCommSt:this.navItem(s.screen==='messages'||s.screen==='chat'||s.screen==='community'||s.screen==='challenges'),
+      navWkSt:this.navItem(s.screen==='workouts'||s.screen==='exercise'), navNutSt:this.navItem(s.screen==='nutrition'||s.screen==='addfood'),
+      navYouSt:this.navItem(s.screen==='you'||s.screen==='progress'||s.screen==='habits'||s.screen==='messages'||s.screen==='checkin'),
+      // workouts subtabs
+      wkProgram:()=>this.setState({wkTab:'program'}), wkLibrary:()=>this.setState({wkTab:'library'}), wkHistory:()=>this.setState({wkTab:'history'}),
+      wkProgramSt:this.seg(s.wkTab==='program'), wkLibrarySt:this.seg(s.wkTab==='library'), wkHistorySt:this.seg(s.wkTab==='history'),
+      // exercise tabs + reps
+      exInstr:()=>this.setState({exTab:'instructions'}), exMuscles:()=>this.setState({exTab:'muscles'}),
+      exInstrSt:this.ut(s.exTab==='instructions'), exMusclesSt:this.ut(s.exTab==='muscles'),
+      reps:s.reps, repsUp:()=>this.setState({reps:s.reps+1}), repsDown:()=>this.setState({reps:Math.max(0,s.reps-1)}),
+      weight:s.weight, wtUp:()=>this.setState({weight:s.weight+5}), wtDown:()=>this.setState({weight:Math.max(0,s.weight-5)}),
+      segOff:this.seg(false),
+      // nutrition subtabs
+      nutLog:()=>this.setState({nutTab:'log'}), nutMeals:()=>this.setState({nutTab:'meals'}), nutInsights:()=>this.setState({nutTab:'insights'}),
+      nutLogSt:this.seg(s.nutTab==='log'), nutMealsSt:this.seg(s.nutTab==='meals'), nutInsightsSt:this.seg(s.nutTab==='insights'),
+      // add food subtabs
+      foodSearch:()=>this.setState({foodTab:'search'}), foodScan:()=>this.setState({foodTab:'scan'}), foodAi:()=>this.setState({foodTab:'aiphoto'}),
+      foodSearchSt:this.seg(s.foodTab==='search'), foodScanSt:this.seg(s.foodTab==='scan'), foodAiSt:this.seg(s.foodTab==='aiphoto'),
+      // community subtabs
+      commFeed:()=>this.setState({commTab:'feed'}), commGroups:()=>this.setState({commTab:'groups'}),
+      commFeedSt:this.seg(s.commTab==='feed'&&s.screen==='community'), commGroupsSt:this.seg(s.commTab==='groups'&&s.screen==='community'), commChalSt:this.seg(s.screen==='challenges'),
+      chalActiveSt:this.seg(true),
+      // messages subtabs
+      msgCoach:()=>this.setState({msgTab:'coach'}), msgAi:()=>this.setState({msgTab:'aicoach'}), msgTeam:()=>this.setState({msgTab:'team'}),
+      msgCoachSt:this.seg(s.msgTab==='coach'), msgAiSt:this.seg(s.msgTab==='aicoach'), msgTeamSt:this.seg(s.msgTab==='team'),
+      // progress subtabs
+      progOverview:()=>this.setState({progTab:'overview'}),
+      progOverviewSt:this.seg(s.screen==='progress'), progHabitsSt:this.seg(false),
+      // check-in mood + sliders
+      mood1:()=>this.setState({mood:1}), mood2:()=>this.setState({mood:2}), mood3:()=>this.setState({mood:3}), mood4:()=>this.setState({mood:4}), mood5:()=>this.setState({mood:5}),
+      mood1St:this.moodFace(s.mood===1), mood2St:this.moodFace(s.mood===2), mood3St:this.moodFace(s.mood===3), mood4St:this.moodFace(s.mood===4), mood5St:this.moodFace(s.mood===5),
+      energy:s.energy, setEnergy:(e)=>this.setState({energy:+e.target.value}),
+      sleep:s.sleep, setSleep:(e)=>this.setState({sleep:+e.target.value}),
+      confetti: s.burst ? this.buildConfetti() : null,
+      saveCheckin:()=>{ this.fire(); clearTimeout(this._nt); this._nt=setTimeout(()=>this.setState({screen:'home'}),1100); },
+      logSet:()=>{ this.fire(); clearTimeout(this._nt); this._nt=setTimeout(()=>this.setState({screen:'workouts'}),1100); },
+    };
+  }
+}
+</script>
+</body>
+</html>

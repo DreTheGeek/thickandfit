@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#E7E5DF; }
+  ::selection{ background:#111; color:#fafafa; }
+  .tf-sc{ overflow-y:auto; scrollbar-width:none; }
+  .tf-sc::-webkit-scrollbar{ display:none; }
+  [style*="cursor:pointer"]{ transition:transform .08s ease, opacity .1s ease; }
+  [style*="cursor:pointer"]:active{ transform:scale(.97); }
+  @keyframes tfpulse{ 0%,100%{ opacity:1;} 50%{ opacity:.55;} }
+  @keyframes tfrise{ from{ transform:translate(-50%,20px); opacity:0;} to{ transform:translate(-50%,0); opacity:1;} }
+  @keyframes tfrestin{ from{ transform:translateY(100%);} to{ transform:none;} }
+</style>
+</helmet>
+
+<div style="background:#E7E5DF; min-height:100vh; font-family:'Inter',sans-serif; color:#111; -webkit-font-smoothing:antialiased; padding:22px 20px 60px;">
+
+  <!-- CONTROL BAR -->
+  <div style="max-width:900px; margin:0 auto 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:baseline; gap:14px;">
+      <a href="Thick & Fit - Client Portal.dc.html" style="text-decoration:none; color:#111; font-size:11px; letter-spacing:2px; text-transform:uppercase;">← Portal</a>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:.5px; text-transform:uppercase;">Workout Player</span>
+      <span style="font-size:11px; letter-spacing:2px; color:#8a8880; text-transform:uppercase;">Muscle-activation heatmap</span>
+    </div>
+    <div style="display:flex; border:1px solid #111; background:#fff; height:32px;">
+      <div onClick="{{ setEn }}" style="{{ enSt }}">EN</div>
+      <div onClick="{{ setEs }}" style="{{ esSt }}">ES</div>
+    </div>
+  </div>
+
+  <!-- PHONE -->
+  <div style="margin:0 auto; width:max-content; max-width:100%;">
+    <div style="background:#111; padding:11px; border-radius:46px; box-shadow:0 30px 80px rgba(0,0,0,.24);">
+      <div style="position:relative; width:392px; height:812px; max-width:88vw; background:#0d0d0d; border-radius:36px; overflow:hidden;">
+
+        <!-- STATUS BAR -->
+        <div style="position:absolute; top:0; left:0; right:0; height:44px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; font-size:13px; font-weight:600; z-index:60; color:#fafafa;">
+          <span>9:41</span><span style="font-size:11px;">▮▮▮ ⌃ ▮</span>
+        </div>
+        <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:116px; height:30px; background:#000; border-radius:99px; z-index:61;"></div>
+
+        <!-- TOAST -->
+        <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; bottom:26px; left:50%; z-index:95; background:#fafafa; color:#111; border-radius:100vw; padding:12px 20px; display:flex; align-items:center; gap:10px; box-shadow:0 12px 30px rgba(0,0,0,.4); animation:tfrise .3s ease; white-space:nowrap;">
+          <span style="width:22px; height:22px; border-radius:99px; background:#5EBE62; display:flex; align-items:center; justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>
+          <span style="font-size:13px; font-weight:600;">{{ toastMsg }}</span>
+        </div>
+        </sc-if>
+
+        <!-- ================= FINISHED ================= -->
+        <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-sc" style="position:absolute; inset:0; background:#F3F3F1; color:#111; padding:70px 22px 30px; text-align:center;">
+          <div style="width:70px; height:70px; border-radius:99px; background:#5EBE62; margin:0 auto 20px; display:flex; align-items:center; justify-content:center;"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:40px; text-transform:uppercase; line-height:.95;">{{ t.crushed }}</div>
+          <div style="font-size:14px; color:#8a8880; margin-top:8px;">Glute Builder · Day 3</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:24px 0;">
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:14px; padding:16px 8px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px;">5</div><div style="font-size:10px; color:#9a9a92;">{{ t.exercises }}</div></div>
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:14px; padding:16px 8px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px;">{{ elapsed }}</div><div style="font-size:10px; color:#9a9a92;">{{ t.time }}</div></div>
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:14px; padding:16px 8px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px;">8.4k</div><div style="font-size:10px; color:#9a9a92;">{{ t.volumeLb }}</div></div>
+          </div>
+          <div style="background:#fff; border:1px solid #EAEAE4; border-radius:16px; padding:18px; text-align:left; margin-bottom:14px;">
+            <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#9a9a92; margin-bottom:12px;">{{ t.musclesTrained }}</div>
+            <div style="display:flex; align-items:center; gap:20px;">
+              <div style="flex:none;">{{ bodySmall }}</div>
+              <div style="flex:1; font-size:13px; color:#444; line-height:1.7;">{{ t.doneBody }}</div>
+            </div>
+          </div>
+          <a href="Thick & Fit - Client Portal.dc.html" style="display:block; background:#111; color:#fff; text-decoration:none; text-align:center; font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:15px;">{{ t.backHome }}</a>
+        </div>
+        </sc-if>
+
+        <!-- ================= PLAYER ================= -->
+        <sc-if value="{{ isPlaying }}" hint-placeholder-val="{{ true }}">
+        <div class="tf-sc" style="position:absolute; inset:0; background:#0d0d0d;">
+
+          <!-- VIDEO STAGE -->
+          <div style="position:relative; height:340px; background:radial-gradient(120% 90% at 50% 20%,#3a3a3a,#0d0d0d);">
+            <div style="position:absolute; top:52px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; z-index:10;">
+              <a href="Thick & Fit - Client Portal.dc.html" style="width:38px; height:38px; border-radius:99px; background:rgba(255,255,255,.14); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; color:#fff; text-decoration:none; font-size:18px;">✕</a>
+              <div style="text-align:center; color:#fff;"><div style="font-size:11px; letter-spacing:1px; color:#bbb;">Glute Builder · Day 3</div><div style="font-size:12px; font-weight:600;">{{ t.exercise }} {{ exNum }}/5</div></div>
+              <div style="width:38px; height:38px; border-radius:99px; background:rgba(255,255,255,.14); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Gulams Condensed',Impact,sans-serif; font-size:15px;">{{ elapsed }}</div>
+            </div>
+
+            <!-- progress segments -->
+            <div style="position:absolute; top:98px; left:16px; right:16px; display:flex; gap:4px; z-index:10;">
+              <sc-for list="{{ exBars }}" as="b" hint-placeholder-count="5"><div style="{{ b }}"></div></sc-for>
+            </div>
+
+            <!-- silhouette demo figure -->
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding-top:40px;">
+              <div style="{{ demoPulse }}">{{ demoFigure }}</div>
+            </div>
+
+            <!-- play + scrubber -->
+            <div style="position:absolute; bottom:14px; left:16px; right:16px; z-index:10;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div onClick="{{ togglePlay }}" style="width:44px; height:44px; border-radius:99px; background:#fafafa; display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none;">{{ playIcon }}</div>
+                <div style="flex:1; height:4px; background:rgba(255,255,255,.25); border-radius:99px; position:relative;"><div style="position:absolute; left:0; top:0; height:4px; width:46%; background:#5EBE62; border-radius:99px;"></div><div style="position:absolute; left:46%; top:-3px; width:10px; height:10px; border-radius:99px; background:#fff;"></div></div>
+                <span style="color:#eee; font-size:11px; flex:none;">0:14</span>
+              </div>
+              <div style="display:flex; gap:8px; margin-top:12px;">
+                <sc-for list="{{ angles }}" as="a" hint-placeholder-count="3"><div onClick="{{ a.on }}" style="{{ a.st }}">{{ a.label }}</div></sc-for>
+              </div>
+            </div>
+          </div>
+
+          <!-- SHEET -->
+          <div style="background:#F3F3F1; border-radius:22px 22px 0 0; margin-top:-14px; position:relative; padding:20px 20px 150px;">
+            <div style="width:40px; height:4px; background:#D8D6CE; border-radius:99px; margin:0 auto 16px;"></div>
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:32px; text-transform:uppercase; line-height:.95;">{{ ex.name }}</div>
+              <span style="flex:none; border:1px solid #DADAD2; border-radius:100vw; font-size:11px; letter-spacing:.5px; color:#767676; padding:6px 12px;">{{ ex.equip }}</span>
+            </div>
+            <!-- set dots -->
+            <div style="display:flex; align-items:center; gap:8px; margin:14px 0 20px;">
+              <span style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#9a9a92; margin-right:4px;">{{ t.sets }}</span>
+              <sc-for list="{{ setDots }}" as="d" hint-placeholder-count="4"><div style="{{ d }}"></div></sc-for>
+            </div>
+
+            <!-- logged this session -->
+            <sc-if value="{{ hasLogged }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:-8px 0 18px;">
+              <span style="font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#b6b4ab; margin-right:2px;">{{ t.thisSession }}</span>
+              <sc-for list="{{ loggedRows }}" as="r" hint-placeholder-count="2"><span style="{{ r.st }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#2E7D33" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg>{{ r.label }} · {{ r.val }}</span></sc-for>
+            </div>
+            </sc-if>
+
+            <!-- MUSCLE HEATMAP -->
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:18px; padding:18px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:19px; letter-spacing:.5px;">{{ t.activation }}</span>
+                <span style="font-size:11px; color:#9a9a92;">{{ t.front }} · {{ t.back }}</span>
+              </div>
+              <div style="display:flex; justify-content:center; padding:8px 0;">{{ bodyFigure }}</div>
+              <!-- activated chips -->
+              <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:6px;">
+                <sc-for list="{{ ex.chips }}" as="c" hint-placeholder-count="3"><span style="{{ c.st }}">{{ c.name }}</span></sc-for>
+              </div>
+              <!-- legend -->
+              <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:14px; padding-top:12px; border-top:1px solid #F2F2EF;">
+                <span style="font-size:10px; color:#9a9a92; letter-spacing:1px; text-transform:uppercase;">{{ t.less }}</span>
+                <div style="display:flex; gap:3px;"><span style="width:20px; height:8px; border-radius:2px; background:#EAE7DF;"></span><span style="width:20px; height:8px; border-radius:2px; background:#F6D9A0;"></span><span style="width:20px; height:8px; border-radius:2px; background:#EFA24A;"></span><span style="width:20px; height:8px; border-radius:2px; background:#E4632E;"></span><span style="width:20px; height:8px; border-radius:2px; background:#D0342B;"></span></div>
+                <span style="font-size:10px; color:#9a9a92; letter-spacing:1px; text-transform:uppercase;">{{ t.more }}</span>
+              </div>
+            </div>
+
+            <!-- FORM CUES -->
+            <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:19px; letter-spacing:.5px; margin:20px 0 10px;">{{ t.formCues }}</div>
+            <sc-for list="{{ ex.cues }}" as="cue" hint-placeholder-count="3">
+            <div style="display:flex; gap:10px; margin-bottom:8px; font-size:13px; color:#444; line-height:1.5;"><span style="color:#5EBE62;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5EBE62" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span><span>{{ cue }}</span></div>
+            </sc-for>
+
+            <!-- coach note -->
+            <div style="display:flex; gap:10px; align-items:center; background:#fff; border:1px solid #EAEAE4; border-radius:12px; padding:12px 14px; margin-top:14px;">
+              <div style="width:34px; height:34px; border-radius:99px; background:url('assets/img/steph-hero.avif') center/cover, #111; flex:none;"></div>
+              <div style="flex:1; font-size:12px; color:#444; line-height:1.45;">{{ ex.coach }}</div>
+            </div>
+          </div>
+
+          <!-- REST OVERLAY -->
+          <sc-if value="{{ resting }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; background:rgba(10,10,10,.94); z-index:80; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; animation:tfrestin .3s ease;">
+            <div style="font-size:12px; letter-spacing:3px; text-transform:uppercase; color:#8a8a8a; margin-bottom:20px;">{{ t.rest }}</div>
+            <div style="position:relative; width:180px; height:180px; margin-bottom:24px;">
+              <svg viewBox="0 0 180 180" style="width:180px; height:180px; transform:rotate(-90deg);"><circle cx="90" cy="90" r="82" fill="none" stroke="#242424" stroke-width="6"/><circle cx="90" cy="90" r="82" fill="none" stroke="#5EBE62" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{ restDash }}"/></svg>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:56px; color:#fff; line-height:.9;">{{ rest }}</span><span style="font-size:11px; color:#8a8a8a; letter-spacing:1px;">{{ t.seconds }}</span></div>
+            </div>
+            <div style="color:#bbb; font-size:13px; margin-bottom:26px;">{{ t.nextUp }} <span style="color:#fff; font-weight:600;">{{ nextLabel }}</span></div>
+            <div style="display:flex; gap:10px;">
+              <div onClick="{{ addRest }}" style="border:1px solid #3a3a3a; color:#fff; font-size:12px; letter-spacing:1px; text-transform:uppercase; border-radius:100vw; padding:13px 22px; cursor:pointer;">+20s</div>
+              <div onClick="{{ skipRest }}" style="background:#fafafa; color:#111; font-size:12px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:13px 26px; cursor:pointer;">{{ t.skip }}</div>
+            </div>
+          </div>
+          </sc-if>
+
+          <!-- FIXED LOGGER -->
+          <div style="position:absolute; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #EAEAE4; padding:12px 18px 22px; z-index:40;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+              <div style="display:flex; align-items:center; gap:14px; font-size:11px; color:#9a9a92; min-width:0;">
+                <span style="white-space:nowrap;">{{ t.lastTime }} · <span style="color:#111; font-weight:600;">{{ lastLabel }}</span></span>
+                <span style="white-space:nowrap;">{{ t.target }} · <span style="color:#111; font-weight:600;">{{ targetLabel }}</span></span>
+              </div>
+              <sc-if value="{{ showOverload }}" hint-placeholder-val="{{ false }}"><span style="{{ overloadSt }}"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>{{ overloadTxt }}</span></sc-if>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="flex:1; text-align:center;">
+                <div style="font-size:10px; letter-spacing:1.5px; color:#9a9a92; text-transform:uppercase; margin-bottom:4px;">{{ t.reps }}</div>
+                <div style="display:flex; align-items:center; justify-content:center; gap:12px;"><div onClick="{{ repDown }}" style="width:26px; height:26px; border-radius:99px; border:1px solid #E4E4E4; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#767676;">−</div><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; min-width:34px;">{{ reps }}</span><div onClick="{{ repUp }}" style="width:26px; height:26px; border-radius:99px; border:1px solid #E4E4E4; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#767676;">+</div></div>
+              </div>
+              <div style="width:1px; height:44px; background:#F0F0EC;"></div>
+              <div style="flex:1; text-align:center;">
+                <div style="font-size:10px; letter-spacing:1.5px; color:#9a9a92; text-transform:uppercase; margin-bottom:4px;">{{ t.weightLb }}</div>
+                <div style="display:flex; align-items:center; justify-content:center; gap:12px;"><div onClick="{{ wtDown }}" style="width:26px; height:26px; border-radius:99px; border:1px solid #E4E4E4; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#767676;">−</div><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px; min-width:44px;">{{ weight }}</span><div onClick="{{ wtUp }}" style="width:26px; height:26px; border-radius:99px; border:1px solid #E4E4E4; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#767676;">+</div></div>
+              </div>
+            </div>
+            <div onClick="{{ logSet }}" style="background:#111; color:#fff; text-align:center; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:15px; margin-top:12px; cursor:pointer;">{{ logLabel }}</div>
+          </div>
+        </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;460&quot;,&quot;height&quot;:&quot;920&quot;}}">
+class Component extends DCLogic {
+  state = { lang:'en', screen:'play', exIndex:0, set:1, reps:12, weight:135, resting:false, rest:60, playing:true, elapsedSec:1362, toast:false, angle:'front', logged:{} };
+
+  EXS(){
+    return [
+      { name:'Hip Thrust', equip:'Barbell', sets:4, reps:12, weight:135,
+        last:[{reps:12,weight:130},{reps:12,weight:130},{reps:11,weight:130},{reps:10,weight:130}],
+        muscles:{ glutes:1, hams:0.6, quads:0.3, lowerback:0.3, abs:0.2 },
+        cuesEn:['Upper back on the bench, feet hip-width.','Drive through heels to full hip extension.','Squeeze glutes hard at the top, lower slow.'],
+        cuesEs:['Espalda alta en el banco, pies al ancho de cadera.','Empuja con los talones a extensión completa.','Aprieta glúteos arriba, baja lento.'],
+        coachEn:'This is your money mover, Kiara. Pause 1s at the top every rep.',
+        coachEs:'Este es tu ejercicio estrella, Kiara. Pausa 1s arriba cada rep.' },
+      { name:'Bulgarian Split Squat', equip:'Dumbbell', sets:3, reps:10, weight:35,
+        last:[{reps:10,weight:30},{reps:10,weight:30},{reps:9,weight:30}],
+        muscles:{ quads:0.9, glutes:0.8, hams:0.4, calves:0.3, abs:0.3 },
+        cuesEn:['Back foot elevated, torso tall.','Drop straight down, front knee tracks toes.','Push through the front heel to stand.'],
+        cuesEs:['Pie trasero elevado, torso erguido.','Baja recto, rodilla sigue los dedos.','Empuja con el talón delantero.'],
+        coachEn:'Keep 80% of the weight on the front leg. Control the descent.',
+        coachEs:'Mantén el 80% del peso en la pierna delantera. Controla la bajada.' },
+      { name:'Romanian Deadlift', equip:'Barbell', sets:4, reps:10, weight:115,
+        last:[{reps:10,weight:110},{reps:10,weight:110},{reps:9,weight:110},{reps:8,weight:110}],
+        muscles:{ hams:1, glutes:0.7, lowerback:0.6, traps:0.3, forearms:0.3 },
+        cuesEn:['Soft knees, hinge from the hips.','Bar close to legs, feel the hamstring stretch.','Drive hips forward to lock out.'],
+        cuesEs:['Rodillas suaves, bisagra desde la cadera.','Barra cerca, siente el estiramiento.','Empuja la cadera para bloquear.'],
+        coachEn:'Feel it in your hamstrings, not your lower back. Slow eccentric.',
+        coachEs:'Siéntelo en isquios, no en la espalda baja. Excéntrica lenta.' },
+      { name:'Cable Kickback', equip:'Cable', sets:3, reps:15, weight:25,
+        last:[{reps:15,weight:20},{reps:15,weight:20},{reps:14,weight:20}],
+        muscles:{ glutes:1, hams:0.4, lowerback:0.2 },
+        cuesEn:['Hinge slightly, brace your core.','Kick straight back, squeeze the glute.','No swinging — control the return.'],
+        cuesEs:['Inclínate un poco, activa el core.','Patea atrás, aprieta el glúteo.','Sin balanceo — controla el regreso.'],
+        coachEn:'Isolation finisher. Chase the burn, high reps.',
+        coachEs:'Finalizador de aislamiento. Busca el ardor, altas reps.' },
+      { name:'Walking Lunge', equip:'Dumbbell', sets:3, reps:20, weight:30,
+        last:[{reps:20,weight:25},{reps:18,weight:25},{reps:16,weight:25}],
+        muscles:{ quads:0.8, glutes:0.8, hams:0.4, calves:0.4, abs:0.3 },
+        cuesEn:['Long step, both knees to 90°.','Torso upright, core braced.','Push off the front heel into the next step.'],
+        cuesEs:['Paso largo, ambas rodillas a 90°.','Torso erguido, core activo.','Empuja con el talón al siguiente paso.'],
+        coachEn:'Finish strong. 20 total, 10 each leg. You\u2019ve got this.',
+        coachEs:'Termina fuerte. 20 en total, 10 por pierna. Tú puedes.' }
+    ];
+  }
+
+  T(){
+    const en = { exercise:'Exercise', sets:'Sets', activation:'Muscle activation', front:'Front', back:'Back', less:'Less', more:'More', formCues:'Form cues', reps:'Reps', weightLb:'Weight (lb)', rest:'Rest', seconds:'seconds', nextUp:'Next up:', skip:'Skip', crushed:'Workout crushed', exercises:'Exercises', time:'Time', volumeLb:'Volume (lb)', musclesTrained:'Muscles trained today', backHome:'Back to portal', doneBody:'Glutes and hamstrings took the load today — exactly what your Glute Builder block is targeting. Recovery: 48h.', logSet:'Log set', nextExercise:'Next exercise', finishWorkout:'Finish workout', lastTime:'Last time', target:'Target', firstTime:'First time — set your baseline', repsShort:'reps', newBest:'New best', matched:'Matched', thisSession:'This session' };
+    const es = { exercise:'Ejercicio', sets:'Series', activation:'Activación muscular', front:'Frente', back:'Espalda', less:'Menos', more:'Más', formCues:'Técnica', reps:'Reps', weightLb:'Peso (lb)', rest:'Descanso', seconds:'segundos', nextUp:'Sigue:', skip:'Saltar', crushed:'Entreno completado', exercises:'Ejercicios', time:'Tiempo', volumeLb:'Volumen (lb)', musclesTrained:'Músculos entrenados hoy', backHome:'Volver al portal', doneBody:'Glúteos e isquios cargaron el trabajo hoy — justo lo que busca tu bloque Glute Builder. Recuperación: 48h.', logSet:'Registrar serie', nextExercise:'Siguiente ejercicio', finishWorkout:'Terminar entreno', lastTime:'Última vez', target:'Meta', firstTime:'Primera vez — marca tu base', repsShort:'reps', newBest:'Nuevo récord', matched:'Igualado', thisSession:'Esta sesión' };
+    return this.state.lang==='en'?en:es;
+  }
+
+  heatColor(v){ if(!v) return '#EAE7DF'; if(v<0.35) return '#F6D9A0'; if(v<0.6) return '#EFA24A'; if(v<0.85) return '#E4632E'; return '#D0342B'; }
+
+  // maps exercise muscle keys -> figure group colors
+  groupColors(m){
+    const g = k => this.heatColor(m[k]||0);
+    return {
+      delts:g('delts'), pecs:g('pecs'), biceps:g('biceps'), forearms:g('forearms'), abs:g('abs'), quads:g('quads'), shins:g('calves'),
+      traps:g('traps'), lats:g('lats'), triceps:g('triceps'), lowerback:g('lowerback'), glutes:g('glutes'), hams:g('hams'), calves:g('calves')
+    };
+  }
+
+  bodySvg(h, scale){
+    const sk='#DFDCD3', out='#C9C6BC', st={stroke:out, strokeWidth:0.8};
+    const E=(cx,cy,rx,ry,f)=>React.createElement('ellipse',{cx,cy,rx,ry,fill:f,...st});
+    const R=(x,y,w,ht,r,f)=>React.createElement('rect',{x,y,width:w,height:ht,rx:r,fill:f,...st});
+    const P=(d,f)=>React.createElement('path',{d,fill:f,...st});
+    const front = [
+      React.createElement('circle',{key:'fh',cx:50,cy:12,r:8,fill:sk,...st}),
+      R(46,19,8,5,2,sk),
+      E(36,32,9,6,h.delts), E(64,32,9,6,h.delts),
+      R(39,29,10,13,3,h.pecs), R(51,29,10,13,3,h.pecs),
+      E(30,48,5,10,h.biceps), E(70,48,5,10,h.biceps),
+      E(26,66,4.5,11,h.forearms), E(74,66,4.5,11,h.forearms),
+      R(43,43,14,24,3,h.abs),
+      E(43,98,8,22,h.quads), E(57,98,8,22,h.quads),
+      E(43,138,5.5,17,h.shins), E(57,138,5.5,17,h.shins)
+    ];
+    const back = [
+      React.createElement('circle',{key:'bh',cx:130,cy:12,r:8,fill:sk,...st}),
+      P('M116 26 q14 -8 28 0 q-4 8 -14 8 q-10 0 -14 -8 z', h.traps),
+      P('M117 36 q-3 16 4 27 l8 -3 v-25 z', h.lats), P('M143 36 q3 16 -4 27 l-8 -3 v-25 z', h.lats),
+      E(110,50,5,10,h.triceps), E(150,50,5,10,h.triceps),
+      R(122,52,16,15,3,h.lowerback),
+      E(123,76,9,9,h.glutes), E(137,76,9,9,h.glutes),
+      E(123,104,7.5,19,h.hams), E(137,104,7.5,19,h.hams),
+      E(123,140,5.5,15,h.calves), E(137,140,5.5,15,h.calves)
+    ];
+    return React.createElement('svg',{viewBox:'0 0 180 165', style:{width:(scale||150)+'px', height:'auto'}}, ...front, ...back);
+  }
+
+  demoSvg(){
+    const sk='#4a4a4a', out='#5a5a5a', st={stroke:out, strokeWidth:0.8};
+    const E=(cx,cy,rx,ry)=>React.createElement('ellipse',{cx,cy,rx,ry,fill:sk,...st});
+    return React.createElement('svg',{viewBox:'0 0 100 165', style:{width:'150px', height:'auto', opacity:0.9}},
+      React.createElement('circle',{cx:50,cy:14,r:9,fill:sk,...st}),
+      E(50,40,16,20), E(38,54,5,12), E(62,54,5,12),
+      E(43,100,8,24), E(57,100,8,24), E(43,142,6,18), E(57,142,6,18),
+      React.createElement('rect',{x:20,y:120,width:60,height:8,rx:4,fill:'#5EBE62',opacity:0.85})
+    );
+  }
+
+  tick(){
+    clearInterval(this._iv);
+    this._iv=setInterval(()=>{ if(this.state.playing && this.state.screen==='play' && !this.state.resting){ this.setState(s=>({elapsedSec:s.elapsedSec+1})); } }, 1000);
+  }
+  componentDidMount(){ this.tick(); }
+  componentWillUnmount(){ clearInterval(this._iv); clearInterval(this._rv); }
+
+  startRest(sec){ clearInterval(this._rv); this.setState({resting:true, rest:sec}); this._rv=setInterval(()=>{ const n=this.state.rest-1; if(n<=0){ clearInterval(this._rv); this.setState({resting:false}); } else { this.setState({rest:n}); } },1000); }
+  skipRest(){ clearInterval(this._rv); this.setState({resting:false}); }
+  addRest(){ this.setState(s=>({rest:s.rest+20})); }
+
+  showToast(msg){ this._toastMsg=msg; this.setState({toast:true}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:false}),2200); }
+
+  recordSet(){
+    const i=this.state.exIndex, r=this.state.reps, w=this.state.weight;
+    this.setState(s=>{ const lg={...s.logged}; const arr=(lg[i]||[]).slice(); arr[s.set-1]={reps:r,weight:w}; lg[i]=arr; return {logged:lg}; });
+  }
+
+  logSet(){
+    const exs=this.EXS(); const ex=exs[this.state.exIndex];
+    this.recordSet();
+    if(this.state.set < ex.sets){
+      this.showToast('Set '+this.state.set+' logged · '+this.state.reps+'×'+this.state.weight);
+      this.setState(s=>({set:s.set+1}));
+      this.startRest(60);
+    } else if(this.state.exIndex < exs.length-1){
+      const ni=this.state.exIndex+1; const nx=exs[ni];
+      this.showToast(ex.name+' complete');
+      this.setState({exIndex:ni, set:1, reps:nx.reps, weight:nx.weight});
+      this.startRest(90);
+    } else {
+      this.showToast('Workout complete!');
+      this.setState({screen:'done'});
+    }
+  }
+
+  renderVals(){
+    const s=this.state, t=this.T(), en=s.lang==='en', exs=this.EXS(), ex=exs[s.exIndex];
+    const heat=this.groupColors(ex.muscles);
+    const mm=Math.floor(s.elapsedSec/60), ss=String(s.elapsedSec%60).padStart(2,'0');
+
+    const tOn={ background:'#111', color:'#fff', fontSize:'11px', fontWeight:700, letterSpacing:'2px', padding:'0 12px', display:'flex', alignItems:'center', cursor:'pointer' };
+    const tOff={ background:'#fff', color:'#111', fontSize:'11px', fontWeight:700, letterSpacing:'2px', padding:'0 12px', display:'flex', alignItems:'center', cursor:'pointer' };
+
+    const exBars = exs.map((_,i)=> 'flex:1; height:4px; border-radius:99px; background:'+(i<s.exIndex?'#5EBE62':(i===s.exIndex?'rgba(255,255,255,.9)':'rgba(255,255,255,.25)')) );
+    const setDots = Array.from({length:ex.sets}).map((_,i)=> 'width:26px; height:8px; border-radius:99px; background:'+(i<s.set-1?'#5EBE62':(i===s.set-1?'#111':'#DEDCD4')) );
+
+    const chipColors=[['glutes','Glutes','Glúteos'],['hams','Hamstrings','Isquios'],['quads','Quads','Cuádriceps'],['lowerback','Lower back','Espalda baja'],['calves','Calves','Pantorrillas'],['abs','Core','Core'],['traps','Traps','Trapecios'],['forearms','Forearms','Antebrazos']];
+    const chips = chipColors.filter(c=> (ex.muscles[c[0]]||0) >= 0.3).sort((a,b)=> (ex.muscles[b[0]]||0)-(ex.muscles[a[0]]||0)).map(c=>{
+      const col=this.heatColor(ex.muscles[c[0]]); const dark=ex.muscles[c[0]]>=0.6;
+      return { name: en?c[1]:c[2], st:'background:'+col+'; color:'+(dark?'#fff':'#5a3a12')+'; font-size:10px; font-weight:600; padding:3px 10px; border-radius:100vw;' };
+    });
+
+    const angleList=[['front', en?'Front':'Frente'],['side', en?'Side':'Lateral'],['slow', en?'Slow-mo':'Cámara lenta']];
+    const angles=angleList.map(a=>({ label:a[1], on:()=>this.setState({angle:a[0]}), st:'font-size:11px; font-weight:600; padding:7px 14px; border-radius:99px; cursor:pointer; '+(s.angle===a[0]?'background:#fafafa; color:#111;':'background:rgba(255,255,255,.14); color:#eee;') }));
+
+    const playIcon = s.playing
+      ? React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'#111'}, React.createElement('rect',{x:6,y:5,width:4,height:14,rx:1}), React.createElement('rect',{x:14,y:5,width:4,height:14,rx:1}))
+      : React.createElement('svg',{width:20,height:20,viewBox:'0 0 24 24',fill:'#111'}, React.createElement('path',{d:'M8 5v14l11-7z'}));
+
+    const restDash = Math.round(515 * Math.max(0, s.rest/ (60)) ) + ' 515';
+    const nextLabel = s.set<=ex.sets && s.set>1 ? (ex.name+' · '+t.sets+' '+s.set) : (exs[Math.min(s.exIndex+1,exs.length-1)].name);
+    const logLabel = (s.set<ex.sets) ? t.logSet : (s.exIndex<exs.length-1 ? t.nextExercise : t.finishWorkout);
+
+    // ---- Progressive overload: last-session history + live delta ----
+    const lastArr = ex.last || [];
+    const lastSet = lastArr[s.set-1] || null;
+    const lastLabel = lastSet ? (lastSet.reps+' × '+lastSet.weight+' lb') : t.firstTime;
+    const targetLabel = ex.reps+' × '+ex.weight+' lb';
+    let overloadTxt=null, overloadTone=null;
+    if(lastSet){
+      const lastVol = lastSet.reps*lastSet.weight, curVol = s.reps*s.weight;
+      if(s.weight>lastSet.weight) { overloadTxt='+'+(s.weight-lastSet.weight)+' lb'; overloadTone='up'; }
+      else if(s.weight===lastSet.weight && s.reps>lastSet.reps) { overloadTxt='+'+(s.reps-lastSet.reps)+' '+t.repsShort; overloadTone='up'; }
+      else if(curVol>lastVol) { overloadTxt=t.newBest; overloadTone='up'; }
+      else if(curVol===lastVol) { overloadTxt=t.matched; overloadTone='even'; }
+      else { overloadTxt=(s.weight-lastSet.weight)+' lb'; overloadTone='down'; }
+    }
+    const otUp='background:#5EBE62; color:#0a2e12;', otEven='background:#EDEBE4; color:#767676;', otDown='background:#F6E3D6; color:#B4501E;';
+    const overloadSt='display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; letter-spacing:.3px; padding:4px 10px; border-radius:100vw; '+(overloadTone==='up'?otUp:(overloadTone==='down'?otDown:otEven));
+
+    // logged sets this session for current exercise
+    const loggedArr = (s.logged[s.exIndex]||[]);
+    const loggedRows = loggedArr.map((x,i)=>({ label:'S'+(i+1), val:x.reps+'×'+x.weight, st:'display:inline-flex; align-items:center; gap:5px; background:#EAF5EB; color:#2E7D33; font-size:10px; font-weight:600; padding:4px 9px; border-radius:100vw;' }));
+
+    return {
+      t,
+      setEn:()=>this.setState({lang:'en'}), setEs:()=>this.setState({lang:'es'}), enSt:en?tOn:tOff, esSt:en?tOff:tOn,
+      isPlaying: s.screen==='play', isDone: s.screen==='done', resting: s.resting, toast:s.toast, toastMsg:this._toastMsg,
+      exNum: s.exIndex+1, elapsed: mm+':'+ss, exBars, setDots,
+      ex:{ name:ex.name, equip:ex.equip, cues: en?ex.cuesEn:ex.cuesEs, coach: en?ex.coachEn:ex.coachEs, chips },
+      bodyFigure: this.bodySvg(heat, 158), bodySmall: this.bodySvg(this.groupColors({glutes:1,hams:0.7,quads:0.4,lowerback:0.4,calves:0.3}), 110),
+      demoFigure: this.demoSvg(), demoPulse: s.playing?'animation:tfpulse 2.4s ease-in-out infinite;':'',
+      angles, playIcon, togglePlay:()=>this.setState(x=>({playing:!x.playing})),
+      reps:s.reps, weight:s.weight,
+      repUp:()=>this.setState(x=>({reps:x.reps+1})), repDown:()=>this.setState(x=>({reps:Math.max(1,x.reps-1)})),
+      wtUp:()=>this.setState(x=>({weight:x.weight+5})), wtDown:()=>this.setState(x=>({weight:Math.max(0,x.weight-5)})),
+      logSet:()=>this.logSet(), logLabel,
+      lastLabel, targetLabel, overloadTxt, overloadSt, showOverload: !!overloadTxt,
+      loggedRows, hasLogged: loggedRows.length>0,
+      rest:s.rest, restDash, nextLabel, skipRest:()=>this.skipRest(), addRest:()=>this.addRest()
+    };
+  }
+}
+</script>
+</body>
+</html>

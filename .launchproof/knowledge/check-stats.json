@@ -1,11 +1,11 @@
 {
   "db:rls-permissive-policy": {
-    "kept": 13,
+    "kept": 21,
     "dismissed": 0,
     "runs": 0
   },
   "db:fk-missing": {
-    "kept": 15,
+    "kept": 16,
     "dismissed": 0,
     "runs": 0
   },
@@ -15,21 +15,91 @@
     "runs": 0
   },
   "db:empty-table": {
-    "kept": 27,
+    "kept": 28,
     "dismissed": 0,
     "runs": 0
   },
   "orphans:orphan-route": {
-    "kept": 11,
+    "kept": 20,
     "dismissed": 0,
     "runs": 0
   },
   "orphans:route-coverage": {
-    "kept": 1,
+    "kept": 4,
     "dismissed": 0,
     "runs": 0
   },
   "expectations:orphaned-server-capability": {
+    "kept": 2,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "crawl:dead-control": {
+    "kept": 71,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "a11y:a11y-color-contrast": {
+    "kept": 3,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "completeness:dead-end-shell": {
+    "kept": 2,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "completeness:empty-page": {
+    "kept": 3,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "visual:visual-regression": {
+    "kept": 28,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "analytics:analytics-missing": {
+    "kept": 1,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "crawl:error-on-actuate": {
+    "kept": 1,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "seo:description-length": {
+    "kept": 6,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "seo:missing-canonical": {
+    "kept": 8,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "seo:missing-og": {
+    "kept": 8,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "seo:public-noindex": {
+    "kept": 1,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "seo:duplicate-title": {
+    "kept": 4,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "seo:og-image-missing": {
+    "kept": 1,
+    "dismissed": 0,
+    "runs": 0
+  },
+  "expectations:unmet-spec-expectation": {
     "kept": 1,
     "dismissed": 0,
     "runs": 0

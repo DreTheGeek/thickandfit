@@ -164,10 +164,12 @@ export async function recomputeGamification(
   // and the activity rows agree.
   const { data: tzRow } = await svc
     .from('profiles')
-    .select('timezone')
+    .select('timezone, content_locale, ui_locale')
     .eq('id', profileId)
     .maybeSingle();
   const tz = resolveTimezone((tzRow as { timezone: string | null } | null)?.timezone);
+  const profLocale = (tzRow as { content_locale: string | null; ui_locale: string | null } | null);
+  const isEs = (profLocale?.content_locale ?? profLocale?.ui_locale ?? 'en') === 'es';
   const today = localDay(tz);
   const since = isoMinusDays(today, LOOKBACK_DAYS);
 
@@ -340,8 +342,8 @@ export async function recomputeGamification(
     if (!b) continue;
     void createNotification(companyId, profileId, {
       type: 'streak',
-      title: `${b.icon} ${b.nameEn}`,
-      body: b.descriptionEn,
+      title: `${b.icon} ${(isEs && b.nameEs) || b.nameEn}`,
+      body: (isEs && b.descriptionEs) || b.descriptionEn,
       link: '/you',
     });
   }

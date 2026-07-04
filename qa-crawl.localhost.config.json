@@ -1,0 +1,86 @@
+{
+  "repoRoot": ".",
+  "stage": "pre-launch",
+  "priority": "the-works",
+  "safeTarget": "http://localhost:3000",
+
+  "surfaces": [
+    {
+      "name": "app",
+      "baseURL": "http://localhost:3000",
+      "auth": true,
+      "routes": [
+        "/dashboard",
+        "/nutrition",
+        "/community",
+        "/progress",
+        "/you",
+        "/workouts",
+        "/inbox",
+        "/coach-chat",
+        "/checkin",
+        "/notifications",
+        "/account",
+        "/account/billing",
+        "/disclaimer",
+        "/claim",
+        "/coach",
+        "/coach/billing",
+        "/coach/clients",
+        "/coach/leads",
+        "/coach/inbox",
+        "/coach/community",
+        "/coach/challenges",
+        "/coach/drafts",
+        "/coach/approvals",
+        "/coach/assignments",
+        "/coach/programs",
+        "/coach/exercises",
+        "/coach/tool/recipes",
+        "/coach/tool/recipe-books",
+        "/coach/tool/meal-plans",
+        "/coach/forms",
+        "/coach/settings",
+        "/coach/settings/knowledge",
+        "/coach/health"
+      ]
+    }
+  ],
+
+  "roles": [
+    {
+      "name": "coach",
+      "surface": "app",
+      "loginUrl": "http://localhost:3000/auth/sign-in",
+      "credEnv": {
+        "email": "LP_COACH_EMAIL",
+        "password": "LP_COACH_PASSWORD"
+      }
+    },
+    {
+      "name": "subscriber",
+      "surface": "app",
+      "loginUrl": "http://localhost:3000/auth/sign-in",
+      "credEnv": {
+        "email": "LP_SUBSCRIBER_EMAIL",
+        "password": "LP_SUBSCRIBER_PASSWORD"
+      }
+    }
+  ],
+
+  "supabase": {
+    "projectRef": "cpwesaeyhklmjbqppeah",
+    "tokenEnv": "LP_SUPABASE_ACCESS_TOKEN"
+  },
+
+  "loginSelectors": {
+    "emailField": "input[type=email]",
+    "passwordField": "input[type=password]",
+    "submitButton": "button[type=submit]"
+  },
+
+  "destructive": false,
+  "sandbox": true,
+
+  "credsFile": ".env.launchproof"
+}

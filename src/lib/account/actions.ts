@@ -10,6 +10,8 @@ import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { ackHealth } from '@/lib/billing/entitlement';
+import { getSubscriptionForProfile } from '@/lib/billing/subscriptions';
+import { isStripeConfigured, cancelSubscriptionNow } from '@/lib/billing/stripe';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 
 // Record acceptance of the health / assumption-of-risk disclaimer, then continue into the app.
@@ -21,6 +23,20 @@ export async function acceptHealthAction(): Promise<void> {
 
 export async function deleteAccountAction(): Promise<void> {
   const ctx = await requireAuth();
+
+  // Cancel any live Stripe subscription FIRST, so a deleted account is never billed again (the profile
+  // row cascades away on deleteUser, after which no webhook can resolve the tenant to stop billing).
+  if (isStripeConfigured()) {
+    const sub = await getSubscriptionForProfile(ctx.userId);
+    if (sub?.stripe_subscription_id) {
+      const res = await cancelSubscriptionNow(sub.stripe_subscription_id);
+      if (!res.ok) {
+        // Do NOT erase the account while it still has an active paid subscription we could not cancel.
+        console.error('deleteAccountAction cancel:', res.error);
+        throw new Error('cancel_failed');
+      }
+    }
+  }
 
   const svc = createServiceClient();
   const { error } = await svc.auth.admin.deleteUser(ctx.userId);

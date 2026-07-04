@@ -323,7 +323,7 @@ export function WorkoutPlayer({
           <button
             type="button"
             onClick={() => router.push('/workouts')}
-            aria-label="Back"
+            aria-label={t('back')}
             className="tf-press flex h-[34px] w-[34px] items-center justify-center rounded-full bg-black/40"
           >
             <Icon name="arrowLeft" size={18} />
@@ -402,6 +402,8 @@ export function WorkoutPlayer({
             value={String(reps)}
             onDec={() => setReps((r) => Math.max(0, r - 1))}
             onInc={() => setReps((r) => r + 1)}
+            decAria={t('decrease')}
+            incAria={t('increase')}
           />
           <div className="h-16 w-px bg-line" />
           <Stepper
@@ -409,6 +411,8 @@ export function WorkoutPlayer({
             value={String(weight)}
             onDec={() => setWeight((w) => Math.max(0, w - 5))}
             onInc={() => setWeight((w) => w + 5)}
+            decAria={t('decrease')}
+            incAria={t('increase')}
           />
         </div>
 
@@ -687,11 +691,15 @@ function Stepper({
   value,
   onDec,
   onInc,
+  decAria,
+  incAria,
 }: {
   label: string;
   value: string;
   onDec: () => void;
   onInc: () => void;
+  decAria: string;
+  incAria: string;
 }): ReactElement {
   return (
     <div className="flex-1">
@@ -702,7 +710,7 @@ function Stepper({
         <button
           type="button"
           onClick={onDec}
-          aria-label="decrease"
+          aria-label={decAria}
           className="tf-press flex h-[42px] w-[42px] items-center justify-center rounded-full border border-line text-xl"
         >
           <Icon name="minus" size={18} />
@@ -713,7 +721,7 @@ function Stepper({
         <button
           type="button"
           onClick={onInc}
-          aria-label="increase"
+          aria-label={incAria}
           className="tf-press flex h-[42px] w-[42px] items-center justify-center rounded-full bg-ink text-bg"
         >
           <Icon name="plus" size={18} />

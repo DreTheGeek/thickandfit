@@ -78,14 +78,53 @@ export default async function WorkoutsPage({
         });
       }
 
+      // Real completion state: the latest logged session for THIS day marks which exercises are done
+      // and the session completion %, and the assignment date tells us which week the client is in -
+      // instead of the old hardcoded week 1 / 0% / all-unchecked hero.
+      let pct = 0;
+      const svc2 = createServiceClient();
+      if (session) {
+        const { data: lastLog } = await svc2
+          .from('workout_logs')
+          .select('id, completion_pct')
+          .eq('profile_id', ctx.userId)
+          .eq('session_id', session.id)
+          .order('performed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const log = lastLog as { id: string; completion_pct: number | null } | null;
+        if (log) {
+          const { data: setRows } = await svc2.from('set_logs').select('exercise_id').eq('workout_log_id', log.id);
+          const doneIds = new Set(((setRows ?? []) as { exercise_id: string }[]).map((s) => s.exercise_id));
+          exercises = exercises.map((e) => ({ ...e, done: doneIds.has(e.id) }));
+          const doneCount = exercises.filter((e) => e.done).length;
+          pct = log.completion_pct ?? (exercises.length ? Math.round((doneCount / exercises.length) * 100) : 0);
+        }
+      }
+      // Week = whole weeks elapsed since the plan was assigned (1-based), clamped to the plan length.
+      let week = 1;
+      const { data: asn } = await svc2
+        .from('plan_assignments')
+        .select('assigned_at')
+        .eq('profile_id', ctx.userId)
+        .eq('plan_id', plan.id)
+        .order('assigned_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const assignedAt = (asn as { assigned_at: string | null } | null)?.assigned_at;
+      if (assignedAt) {
+        const elapsedWeeks = Math.floor((Date.now() - Date.parse(assignedAt)) / (7 * 86400000));
+        week = Math.min(Math.max(1, elapsedWeeks + 1), plan.weeks || 1);
+      }
+
       program = {
         planId: plan.id,
         name: (locale === 'es' && plan.name_es) || plan.name_en,
-        week: 1,
+        week,
         totalWeeks: plan.weeks,
         day: dayIndex + 1,
         totalDays: sessions.length || 1,
-        pct: 0,
+        pct,
         days: sessions.map((s, i) => ({
           index: i,
           label: s.day_label || `Day ${i + 1}`,

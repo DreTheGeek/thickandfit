@@ -285,8 +285,8 @@ async function wasPlateauPreviously(
 async function notifyPlateau(sub: ActiveSubscriber, plateau: PlateauInsight): Promise<void> {
   await createNotification(sub.companyId, sub.profileId, {
     type: 'plateau',
-    title: notifText(sub.locale, 'plateau.title'),
-    body: notifText(sub.locale, 'plateau.body', { days: String(plateau.days_flat) }),
+    title: notifText(sub.locale, 'plateauTitle'),
+    body: notifText(sub.locale, 'plateauBody', { days: String(plateau.days_flat) }),
     link: '/coach-chat',
   });
 }

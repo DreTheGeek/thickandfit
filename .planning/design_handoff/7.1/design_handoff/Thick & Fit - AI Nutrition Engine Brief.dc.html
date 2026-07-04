@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  doc-page:not(:defined){ visibility:hidden; }
+  h1,h2,h3{ font-family:'Gulams Condensed',Impact,sans-serif; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin:0; line-height:.95; }
+  p,li,td,th{ font-family:'Inter',sans-serif; color:#1c1c1c; }
+  .eyebrow{ font-family:'Inter',sans-serif; font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:#8a8a82; font-weight:600; }
+  .sec{ border-top:2px solid #111; padding-top:12px; margin:34px 0 16px; display:flex; align-items:baseline; gap:14px; }
+  .sec span.n{ font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; }
+  .sec h2{ font-size:30px; }
+  p{ font-size:12.5px; line-height:1.62; margin:0 0 11px; }
+  li{ font-size:12.5px; line-height:1.55; margin-bottom:6px; }
+  pre{ font-family:'JetBrains Mono',monospace; font-size:10.5px; line-height:1.5; background:#141414; color:#eaeaea; border-radius:8px; padding:14px 16px; overflow-x:auto; white-space:pre; margin:0 0 12px; }
+  pre .k{ color:#7fd18a; } pre .c{ color:#8a8a82; }
+  code{ font-family:'JetBrains Mono',monospace; font-size:11px; background:#EEEDE8; padding:1px 5px; border-radius:4px; }
+  .card{ border:1px solid #E1E0D9; border-radius:10px; padding:16px 18px; margin-bottom:12px; }
+  .cardhd{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .tag{ font-size:9.5px; letter-spacing:1px; text-transform:uppercase; font-weight:700; padding:3px 9px; border-radius:99px; }
+  table{ width:100%; border-collapse:collapse; margin:0 0 12px; }
+  th,td{ text-align:left; font-size:11.5px; padding:8px 10px; border-bottom:1px solid #E7E6DF; vertical-align:top; }
+  th{ font-size:9.5px; letter-spacing:1.2px; text-transform:uppercase; color:#8a8a82; font-weight:700; }
+  .lead{ font-size:14px; line-height:1.6; color:#333; }
+  .rule{ background:#111; color:#fafafa; border-radius:12px; padding:20px 22px; }
+  .rule p{ color:#e6e6e6; }
+</style>
+</helmet>
+
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.7in" hint-size="100%,100%">
+
+  <div slot="header" style="display:flex; align-items:center; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid #E7E6DF;">
+    <img src="assets/logo-black.svg" alt="Thick & Fit" style="height:15px;" />
+    <span style="font-family:'Inter',sans-serif; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:#a0a098;">AI Nutrition Engine · Build Brief · v1</span>
+  </div>
+  <div slot="footer" style="display:flex; align-items:center; justify-content:space-between; padding-top:8px; border-top:1px solid #E7E6DF; font-family:'Inter',sans-serif; font-size:9px; color:#a0a098; letter-spacing:1px;">
+    <span>CONFIDENTIAL — Team Thick &amp; Fit</span><span>Hand-off to engineering</span>
+  </div>
+
+  <!-- TITLE -->
+  <div style="margin-bottom:6px;" class="eyebrow">Backend &amp; data architecture · for Claude Code / engineering</div>
+  <h1 style="font-size:60px; margin:8px 0 0;">AI Nutrition<br>Engine</h1>
+  <p class="lead" style="margin-top:16px; max-width:640px;">Everything needed to wire the photo-scan, describe-it, barcode and search food-logging system behind the Thick &amp; Fit client app — the exact stack, real APIs, data model, model prompts, and grounding logic that make it <em>more accurate</em> than Cal AI. Built for a Next.js + Supabase codebase.</p>
+
+  <!-- GOLDEN RULE -->
+  <div class="sec"><span class="n">00</span><h2>The one rule that makes or breaks accuracy</h2></div>
+  <div class="rule">
+    <div class="eyebrow" style="color:#8f8f8f; margin-bottom:8px;">Non-negotiable</div>
+    <p style="font-size:15px; line-height:1.55; margin:0 0 10px;"><strong style="color:#fff;">The LLM identifies the food and estimates the portion. The LLM does NOT invent the macro numbers.</strong> Every calorie/protein/carb/fat value shown to a client must come from a real nutrition database, keyed off what the model recognized.</p>
+    <p style="margin:0;">This is exactly how Cal AI and MyFitnessPal work. Cal AI uses a GPT-4-Vision-class model to recognize the dish + estimate portion, then maps it to a nutrition database for the actual grams. MyFitnessPal's moat was never a model — it's a ~20M-item food database; the AI sits on top. If you let the LLM free-hand the numbers, you get confident, wrong data — the fastest way to lose Steph's trust. <strong style="color:#fff;">Accuracy is the wedge; the database is the product.</strong></p>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div class="sec"><span class="n">01</span><h2>The pipeline — four ways in, one way out</h2></div>
+  <p>Every input path converges on the same "resolve → ground → coach → log" spine. Build the spine once; the four entry points feed it.</p>
+  <pre><span class="c"># INPUT                    # MODEL / PARSER            # GROUND-TRUTH SOURCE            # OUTPUT</span>
+📷 Photo of meal      →   Vision LLM (Claude/GPT-4o) → your food DB + USDA lookup    →  ┐
+🗣  "10 nuggets &amp; a   →   Text LLM parse → items      → Nutritionix NL / USDA        →  │  normalized
+    shake"                                                                               ├→ log entry
+▥  Barcode scan       →   (no LLM) UPC number         → Open Food Facts / Nutritionix →  │  {food, qty,
+🔎 Search box         →   autocomplete                → your DB → USDA/Nutritionix    →  ┘   macros, src}
+                                                                                            │
+                          COACH LAYER (your logic): goal-impact, "fits your plan",          ▼
+                          Steph swaps, PCOS/budget flags, remaining macros            →  written to Supabase</pre>
+  <p><strong>Why this wins:</strong> the model only does what models are good at (recognition + language). Numbers are grounded in validated data, cached, and correctable by the user ("Fix results"). The Thick &amp; Fit coaching layer is yours alone — no competitor has Steph's goal-aware logic on top.</p>
+
+  <!-- RECOMMENDED STACK -->
+  <div class="sec"><span class="n">02</span><h2>Recommended stack (and the cheap path to launch)</h2></div>
+  <table>
+    <tr><th>Layer</th><th>Launch / MVP (low cost)</th><th>Scale (paid, best UX)</th></tr>
+    <tr><td><strong>Vision — photo → food + portion</strong></td><td>Claude Sonnet (vision) or GPT-4o vision, structured-JSON prompt</td><td>Same, + a fine-tuned portion prompt and a fallback to a food-recognition API</td></tr>
+    <tr><td><strong>Natural language — "what I ate"</strong></td><td>Claude/GPT parse → USDA lookup; or API Ninjas Nutrition (cheap NL)</td><td>Nutritionix <code>/natural/nutrients</code> (purpose-built, chain restaurants)</td></tr>
+    <tr><td><strong>Ground-truth macros DB</strong></td><td><strong>USDA FoodData Central</strong> (free, ~400K foods) + your own custom foods table</td><td>Nutritionix (1.9M foods, branded + restaurant) or Edamam</td></tr>
+    <tr><td><strong>Barcode</strong></td><td><strong>Open Food Facts</strong> (free, 2.5M products, no key)</td><td>Nutritionix UPC or Chomp for US branded depth</td></tr>
+    <tr><td><strong>App backend / DB / auth / storage</strong></td><td colspan="2">Your existing <strong>Next.js (App Router) + Supabase</strong> (Postgres + Storage + Edge Functions). You already have <code>/api/nutrition/photo</code> and <code>/api/coach-ai</code> scaffolded.</td></tr>
+  </table>
+  <p><strong>My call for Thick &amp; Fit:</strong> Launch on <strong>Claude Sonnet vision (photo + describe) → USDA FoodData Central + your custom-foods table (free) → Open Food Facts for barcodes (free)</strong>. That ships a working, grounded system for ~the cost of LLM tokens only. Add <strong>Nutritionix</strong> later when you want restaurant/branded depth and their turnkey natural-language endpoint. This combo beats Cal AI because every number is DB-grounded and Steph's coaching sits on top.</p>
+
+  <!-- REAL API REFERENCE -->
+  <div class="sec"><span class="n">03</span><h2>Real API reference (endpoints, auth, limits)</h2></div>
+
+  <div class="card">
+    <div class="cardhd"><h3 style="font-size:20px;">USDA FoodData Central</h3><span class="tag" style="background:#EAF5EB; color:#1c5222;">FREE · PUBLIC DOMAIN</span></div>
+    <p style="margin-bottom:8px;">Government-validated, commercial-use OK, no licensing fees. ~400K foods across Foundation, SR Legacy, Branded, and Survey (FNDDS). US-focused, English only, updates quarterly. <strong>Best free base for generic/whole foods.</strong> Get a free key at <code>fdc.nal.usda.gov/api-key-signup</code>. Limit: <strong>1,000 req/hr/IP</strong> (DEMO_KEY only 30/hr — don't ship it). Returns HTTP 429 when exceeded.</p>
+    <pre><span class="c"># search</span>
+GET https://api.nal.usda.gov/fdc/v1/foods/search?query=grilled+chicken+breast&amp;dataType=Foundation,SR%20Legacy&amp;pageSize=5&amp;api_key=$KEY
+<span class="c"># full nutrient detail for one food</span>
+GET https://api.nal.usda.gov/fdc/v1/food/171077?api_key=$KEY
+<span class="c"># nutrient numbers you care about: 208=kcal 203=protein 204=fat 205=carbs 291=fiber 269=sugar 307=sodium</span></pre>
+    <p style="margin:0;"><span style="color:#8a1f1f;">⚠ Gaps:</span> no image recognition, no barcode, no natural-language, thin on restaurant/branded chains. Default missing nutrients to <code>null</code>, not <code>0</code>.</p>
+  </div>
+
+  <div class="card">
+    <div class="cardhd"><h3 style="font-size:20px;">Nutritionix (Track API v2)</h3><span class="tag" style="background:#FBE6A2; color:#6b5200;">PAID · TRIAL VIA SALES</span></div>
+    <p style="margin-bottom:8px;">1.9M+ foods, the strongest branded + <strong>chain-restaurant</strong> catalog, and a purpose-built natural-language endpoint. 24 languages, imperial units, integrates with Apple Health. Auth via <code>x-app-id</code> + <code>x-app-key</code> headers. Note: the old public free tier was <strong>discontinued</strong> (abuse); you now request a trial through their sales team, and enterprise plans start around <strong>$1,850/mo</strong>. Worth it once you need restaurant accuracy.</p>
+    <pre><span class="c"># natural language → macros (the "10 chicken nuggets and a shake" endpoint)</span>
+POST https://trackapi.nutritionix.com/v2/natural/nutrients
+     headers: x-app-id, x-app-key, Content-Type: application/json
+     body:    { "query": "10 chicken nuggets and a protein shake" }
+<span class="c"># instant autocomplete (search box) · UPC/barcode lookup</span>
+GET  https://trackapi.nutritionix.com/v2/search/instant?query=oatmeal
+GET  https://trackapi.nutritionix.com/v2/search/item?upc=049000042566</pre>
+    <p style="margin:0;"><span style="color:#1c5222;">✔ Use for:</span> the describe-it feature (turnkey), restaurant meals, and US branded/UPC when Open Food Facts misses.</p>
+  </div>
+
+  <div class="card">
+    <div class="cardhd"><h3 style="font-size:20px;">Open Food Facts</h3><span class="tag" style="background:#EAF5EB; color:#1c5222;">FREE · NO KEY · ODbL</span></div>
+    <p style="margin-bottom:8px;">Crowd-sourced, 2.5M+ packaged products, strongest in Europe. <strong>No API key, no signup</strong> — just send a descriptive <code>User-Agent</code> identifying the app (e.g. <code>ThickAndFit/1.0 (dev@teamthickandfit.com)</code>). Returns a <code>nutriments</code> object (per 100g <em>and</em> per serving), Nutri-Score, NOVA processing group, allergens, and product images. Because it's crowd-sourced, <strong>check each field exists before trusting it.</strong></p>
+    <pre><span class="c"># barcode lookup — request only the fields you need</span>
+GET https://world.openfoodfacts.org/api/v2/product/3017624010701.json?fields=product_name,brands,nutriments,serving_size,image_url,nutriscore_grade
+     header: User-Agent: ThickAndFit/1.0 (contact@teamthickandfit.com)
+<span class="c"># status:1 = found, status:0 = not in DB → fall back to Nutritionix UPC or manual add</span></pre>
+    <p style="margin:0;"><span style="color:#8a1f1f;">⚠ Rate limits:</span> <strong>15 req/min/IP</strong> for product reads, <strong>10 req/min/IP</strong> for search — never wire it to search-as-you-type; you'll be blocked. Cache aggressively (see §07). For heavy volume, self-host or use their daily data export.</p>
+  </div>
+
+  <p style="margin-top:4px;"><strong>Also worth knowing:</strong> <em>Edamam</em> (NLP + 900K foods + 680K UPCs + 2.3M recipes; free → $999/mo) is a solid single-vendor alternative. <em>API Ninjas Nutrition</em> (absorbed CalorieNinjas) is a cheap lightweight NL endpoint for MVP. <em>Chomp</em> is barcode-focused with a free tier. Market context to keep in mind: US nutrition apps were a $2.14B market in 2024, and ~70% of users abandon a tracker within two weeks if logging feels slow — <strong>which is exactly why the snap/describe flow, not manual entry, is the whole game.</strong></p>
+
+  <!-- DATA MODEL -->
+  <div class="sec"><span class="n">04</span><h2>Data model (Supabase / Postgres)</h2></div>
+  <p>Minimum tables to back the flow. Everything the app shows is derived from <code>food_logs</code> joined to <code>foods</code>, reconciled against the user's <code>nutrition_targets</code>. Cache external lookups in <code>foods</code> so you never pay for or wait on the same food twice.</p>
+  <pre><span class="k">foods</span>                         <span class="c">-- canonical + cached external foods (your growing DB)</span>
+  id uuid pk · name text · brand text · source enum('usda','nutritionix','off','custom','ai')
+  source_ref text            <span class="c">-- fdcId / nix id / barcode</span>
+  serving_qty numeric · serving_unit text · grams_per_serving numeric
+  kcal numeric · protein_g numeric · carbs_g numeric · fat_g numeric
+  fiber_g numeric · sugar_g numeric · sodium_mg numeric
+  verified bool · created_by uuid · created_at timestamptz
+
+<span class="k">food_logs</span>                     <span class="c">-- one row per logged item</span>
+  id uuid pk · user_id uuid fk · food_id uuid fk · logged_at timestamptz
+  meal enum('breakfast','lunch','dinner','snack')
+  servings numeric           <span class="c">-- multiplier on foods.serving_*</span>
+  source enum('photo','describe','barcode','search','manual')
+  photo_path text            <span class="c">-- Supabase Storage key, nullable</span>
+  ai_confidence numeric · user_edited bool
+
+<span class="k">ai_estimates</span>                  <span class="c">-- audit trail: what the model guessed vs what was logged</span>
+  id uuid pk · food_log_id uuid fk · model text · input_type text
+  raw_response jsonb · matched_food_id uuid · portion_reasoning text
+
+<span class="k">nutrition_targets</span>             <span class="c">-- per user, set at onboarding, recomputed on goal change</span>
+  user_id uuid pk · kcal int · protein_g int · carbs_g int · fat_g int
+  goal enum('fat_loss','recomp','gain','maintain') · goal_weight_lb numeric
+  deadline date · activity_level text · pcos bool · diet text</pre>
+  <p><strong>Targets math:</strong> compute BMR with <strong>Mifflin–St Jeor</strong>, multiply by activity factor for TDEE, then apply the goal delta (e.g. −500 kcal/day for fat loss) and project the goal-weight date from the deficit. Recompute whenever weight, goal, or deadline changes. This is what powers the "on pace for 195 lb by October" line in the UI.</p>
+
+  <!-- LLM CONTRACTS -->
+  <div class="sec"><span class="n">05</span><h2>Model contracts (exact prompts + JSON)</h2></div>
+  <p>Standardize on <strong>strict JSON output</strong> from every model call so the backend can parse deterministically. Three calls: (A) vision, (B) natural-language, (C) the coach layer. Numbers from A/B are treated as <em>guesses to be reconciled against the DB</em> — see §07.</p>
+
+  <p style="margin-bottom:6px;"><strong>A · Vision (photo → items + portions).</strong> Send the image + this system prompt to Claude Sonnet / GPT-4o:</p>
+  <pre><span class="c">SYSTEM:</span> You are a food-recognition engine for a fitness app. Look at the meal photo.
+Return ONLY minified JSON, no prose:
+{"dish":string,"confidence":0-1,"items":[
+   {"name":string,"portion_desc":string,"est_grams":number,"basis":string}]}
+Identify each distinct food. Estimate portion in grams from visual cues
+(plate size, utensils, references). "basis" = how you judged the portion.
+Do NOT output calories or macros — those are looked up downstream.</pre>
+
+  <p style="margin-bottom:6px;"><strong>B · Natural language ("what I ate" → items).</strong> Text-only; hand each parsed item to the DB. If you use Nutritionix, its <code>/natural/nutrients</code> does B <em>and</em> the lookup in one call — prefer that at scale.</p>
+  <pre><span class="c">SYSTEM:</span> Parse the user's meal description into structured items.
+Return ONLY minified JSON:
+{"items":[{"name":string,"qty":number,"unit":string,"prep":string}]}
+Normalize units. Resolve counts ("a dozen"→12). Keep brand names if given.
+Do NOT estimate macros.
+<span class="c">USER:</span> "10 chicken nuggets, a 10oz ribeye and 5 fried eggs"</pre>
+
+  <p style="margin-bottom:6px;"><strong>C · Coach layer (grounded totals → Steph's guidance).</strong> Runs <em>after</em> the DB gives real numbers. This is the Thick &amp; Fit differentiator.</p>
+  <pre><span class="c">SYSTEM:</span> You are Coach Steph. Given the logged meal's real macros, the user's
+remaining daily targets, their goal, and flags (pcos, budget, diet), write ONE short,
+warm, specific line and an optional swap. Return JSON:
+{"health_score":1-10,"fits_plan":bool,"line":string,"swap":string|null}
+Rules: if pcos, prefer lower-starch/higher-fiber swaps. If budget, keep swaps cheap.
+Never shame. Reference the goal ("keeps you on pace for 195 lb").</pre>
+
+  <!-- BACKEND ROUTES -->
+  <div class="sec"><span class="n">06</span><h2>Backend routes to build (Next.js)</h2></div>
+  <table>
+    <tr><th>Route</th><th>Does</th></tr>
+    <tr><td><code>POST /api/nutrition/photo</code> <span style="color:#8a8a82;">(exists)</span></td><td>Upload image → Storage → call A → for each item, resolve+ground (§07) → call C → return draft log. User confirms → write.</td></tr>
+    <tr><td><code>POST /api/nutrition/describe</code></td><td>Text → call B (or Nutritionix NL) → ground → call C → draft log.</td></tr>
+    <tr><td><code>GET /api/nutrition/barcode/:upc</code></td><td>Open Food Facts → (fallback Nutritionix UPC) → normalize → draft log.</td></tr>
+    <tr><td><code>GET /api/nutrition/search?q=</code></td><td>Your <code>foods</code> first (fast, cached) → USDA/Nutritionix instant → merge, dedupe.</td></tr>
+    <tr><td><code>POST /api/nutrition/log</code> · <code>PATCH /:id</code></td><td>Write/confirm/edit a <code>food_logs</code> row (the "Fix results" + serving edit).</td></tr>
+    <tr><td><code>GET /api/dashboard/summary</code> <span style="color:#8a8a82;">(exists)</span></td><td>Remaining kcal + macros vs targets for the day (drives the home rings).</td></tr>
+  </table>
+  <p>Keep all third-party keys server-side (Edge Functions / route handlers) — never in the client bundle. USDA/Nutritionix will deactivate keys found in public repos.</p>
+
+  <!-- ACCURACY -->
+  <div class="sec"><span class="n">07</span><h2>Grounding &amp; accuracy strategy</h2></div>
+  <ul>
+    <li><strong>Reconcile, don't trust.</strong> For each recognized item: search your <code>foods</code> table → then USDA/Nutritionix. Take the DB macros per 100g, scale by the model's <code>est_grams</code>. The model supplies <em>what</em> and <em>how much</em>; the DB supplies the <em>per-gram truth</em>.</li>
+    <li><strong>Cache every external hit</strong> into <code>foods</code> (with <code>source</code> + <code>source_ref</code>). Second time anyone logs that food, it's instant and free — this is how you respect Open Food Facts' 15 req/min limit and cut LLM/Nutritionix cost.</li>
+    <li><strong>Confidence + the "Fix results" loop.</strong> Show <code>ai_confidence</code>; when low, prompt the user to confirm portion. Every correction updates the log and can seed a verified custom food. This is Cal AI's "Fix Results" — and your correction data compounds into a better DB over time.</li>
+    <li><strong>Portion is where accuracy lives.</strong> Photos over-/under-estimate grams; let users tap a serving stepper (the numpad screen) to adjust. Default to conservative portions.</li>
+    <li><strong>Custom foods &amp; Steph's recipes.</strong> Let clients (and Steph) save foods/meals once and re-log instantly — fills the gaps USDA/OFF miss, and makes her meal-plan recipes one-tap loggable.</li>
+  </ul>
+
+  <!-- COACHING LAYER -->
+  <div class="sec"><span class="n">08</span><h2>The Thick &amp; Fit layer (what no competitor has)</h2></div>
+  <p>Cal AI stops at "here are your macros." Thick &amp; Fit continues: <strong>goal-aware coaching</strong> computed from <code>nutrition_targets</code> and Steph's rules.</p>
+  <ul>
+    <li><strong>Fits-your-plan:</strong> after logging, show remaining kcal/macros and whether they're still on pace for their goal-weight deadline (Mifflin–St Jeor projection).</li>
+    <li><strong>Steph swaps:</strong> the coach model suggests a realistic substitution ("cauliflower rice saves ~180 cal, keeps protein"). Tune to tier and to flags.</li>
+    <li><strong>PCOS &amp; budget aware:</strong> PCOS clients get lower-starch/higher-fiber/higher-fat guidance; budget clients get cheap swaps and simple 3–5 ingredient meals.</li>
+    <li><strong>Tier-driven:</strong> habits, coach-call reminders (Calendly), and depth of guidance scale with high/mid/low ticket.</li>
+    <li><strong>Bilingual &amp; units:</strong> every string EN/ES; imperial + metric. Store canonical values in metric grams; convert at display.</li>
+  </ul>
+
+  <!-- BUILD ORDER -->
+  <div class="sec"><span class="n">09</span><h2>Build order</h2></div>
+  <table>
+    <tr><th>Milestone</th><th>Ship</th></tr>
+    <tr><td><strong>M1 — Grounded search + log</strong></td><td>USDA + custom foods, search → log, targets + dashboard rings. No AI yet. Proves the spine.</td></tr>
+    <tr><td><strong>M2 — Describe-it</strong></td><td>Text LLM parse → ground → log. Fastest AI win, cheapest tokens.</td></tr>
+    <tr><td><strong>M3 — Barcode</strong></td><td>Open Food Facts read + cache. Near-zero cost.</td></tr>
+    <tr><td><strong>M4 — Photo scan</strong></td><td>Vision LLM + portion + Fix-results loop. The hero feature.</td></tr>
+    <tr><td><strong>M5 — Coach layer + Nutritionix</strong></td><td>Steph guidance, restaurant/branded depth, PCOS/budget rules.</td></tr>
+  </table>
+
+  <!-- KICKOFF PROMPT -->
+  <div class="sec"><span class="n">10</span><h2>Paste this to Claude Code to start</h2></div>
+  <pre>Build the AI nutrition-logging backend for our Next.js + Supabase fitness app
+(Thick &amp; Fit). Follow this architecture:
+
+GOLDEN RULE: the LLM identifies food + estimates portion; it NEVER supplies the
+macro numbers. All calories/macros come from a nutrition DB, keyed to what the
+model recognized, then cached.
+
+1. Supabase schema: foods, food_logs, ai_estimates, nutrition_targets (see spec).
+2. Ground-truth data: USDA FoodData Central (free key, 1000 req/hr) for generic
+   foods; Open Food Facts (no key, 15 req/min, send User-Agent) for barcodes;
+   leave a Nutritionix adapter interface for later (branded/restaurant + NL).
+3. Routes: /api/nutrition/{photo,describe,barcode,search,log}, /api/dashboard/summary.
+4. Models: Claude Sonnet vision for photo→items+grams (strict JSON, no macros);
+   text LLM for "what I ate"→items; a coach call that turns grounded totals +
+   remaining targets into ONE Steph line + optional swap (JSON).
+5. Reconcile model grams × DB per-100g macros. Cache every external hit into
+   `foods`. Expose ai_confidence + a Fix-results PATCH. Keep all keys server-side.
+6. Targets: Mifflin–St Jeor → TDEE → goal delta → project goal-weight date.
+   Bilingual EN/ES, imperial+metric (store metric grams, convert on display).
+
+Start with M1 (grounded search + log + dashboard), then M2 describe-it.
+Ask me for the USDA key and Supabase project ref before wiring env vars.</pre>
+  <p style="color:#8a8a82; font-size:11px; margin-top:2px;">Figures current as of mid-2026 and drawn from the official USDA FoodData Central, Nutritionix, and Open Food Facts developer docs. Confirm live pricing/limits before contracts — vendor terms change.</p>
+
+</x-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

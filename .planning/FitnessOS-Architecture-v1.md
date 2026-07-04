@@ -173,6 +173,32 @@ Ship Stephanie first; white-label is a revenue line, not a retention risk.
 | Federated model + digital-twin prediction | BUILD-LATER | XL | Ph5+ |
 | Backfill `food_log.confidence_score` historical rows | BUILD-LATER | M | `scripts/backfill-food-log.ts` |
 
+## 8.1 Build Log: Intelligence Layer (2026-07-02, shipped)
+
+The learning-loop build closed most ADOPT-NOW/DESIGN-NOW rows in one run (16 commits, migrations
+0062-0066 applied to prod):
+
+- DONE Shared AI client (`src/lib/ai/client.ts`): fallback chains, timeouts, provenance modes.
+  All 10 OpenRouter call sites converted; every AI feature logs to ai_inferences with a
+  PROMPT_VERSION (was 1 of 7). The 2 hardcoded models moved into AI_MODELS.
+- DONE Correction capture widened: item-level merge (fixes multi-item overwrite), identity swaps
+  via threaded predictedFoodId, accepted-as-is (user_marked_correct), text-macro provenance.
+- DONE Scan images persisted (`ai-scans/<inference_id>`): corrected scans = automatic gold evals.
+- DONE domain_events (0063) + typed fire-and-forget emitEvent; wired: food_logged, food_corrected,
+  workout_logged, weight_logged, checkin_submitted, insight_generated, protein_goal_hit,
+  micronutrient_low (coverage-gated). Reserved: goal_updated, recommendation_*.
+- DONE foods micronutrient panel (0064, 14 columns) parsed from USDA (numbers live-verified;
+  606 = sat fat, 417 = folate) + OFF (minerals only; vitamins skipped on unit chaos).
+- DONE Eval harness: scan-scoring + runner + internal route + `pnpm eval:scan` / `pnpm eval:seed`
+  (manifest gold mode; --from-corrections silver mode). 0065 run provenance, 0066 profile index.
+- DONE Loop closure: scan_quality in nightly InsightPayload -> coach chat context lines.
+- DONE /coach/intelligence dashboard (pure SVG) + confidence-tiered scan UX (0.9/0.7 tiers).
+- DONE Security: match RPCs revoked to service-only (0062). RLS isolation 36/36.
+- Router bug (smart-scan hardcoded model): was already fixed pre-build; PROMPT_VERSION now exported.
+- DEFERRED (unchanged): per-user portion bias (F4 spec, eval-gated), knowledge-graph
+  materialization (trigger: 10k+ domain_events or 90 days post-launch), event emission stays
+  telemetry-only (no subscribers/projections).
+
 ## 9. Open Questions for the Founder
 
 1. **Mobile:** is a mobile app scoped, and does it call REST or RPC? Decides whether engine facades

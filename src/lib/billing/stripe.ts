@@ -157,6 +157,13 @@ export async function reactivate(
   });
 }
 
+/** Cancel a subscription IMMEDIATELY (used on account deletion so a deleted user is never billed). */
+export async function cancelSubscriptionNow(
+  subscriptionId: string,
+): Promise<StripeResult<StripeSubscription>> {
+  return stripeRequest<StripeSubscription>('DELETE', `/subscriptions/${subscriptionId}`);
+}
+
 // --- Webhook signature verification (no SDK) --------------------------------
 // Implements Stripe's scheme: header `t=timestamp,v1=signature`; signed payload is
 // `${timestamp}.${rawBody}`, HMAC-SHA256 with the webhook signing secret.

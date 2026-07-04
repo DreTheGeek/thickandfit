@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face{ font-family:'Gulams Condensed'; src:url('assets/fonts/gulams.woff2') format('woff2'); font-weight:600; font-style:normal; font-display:swap; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#E7E5DF; }
+  ::selection{ background:#111; color:#fafafa; }
+  .tf-sc{ overflow-y:auto; scrollbar-width:none; }
+  .tf-sc::-webkit-scrollbar{ display:none; }
+  [style*="cursor:pointer"]{ transition:transform .08s ease, opacity .1s ease; }
+  [style*="cursor:pointer"]:active{ transform:scale(.97); opacity:.9; }
+  @keyframes tfsheet{ from{ transform:translateY(30px); opacity:0;} to{ transform:none; opacity:1;} }
+  @keyframes tfscan{ 0%{ top:8%;} 50%{ top:88%;} 100%{ top:8%;} }
+  @keyframes tfspin{ to{ transform:rotate(360deg);} }
+  @keyframes tfrise{ from{ transform:translate(-50%,20px); opacity:0;} to{ transform:translate(-50%,0); opacity:1;} }
+</style>
+</helmet>
+
+<div style="background:#E7E5DF; min-height:100vh; font-family:'Inter',sans-serif; color:#111; -webkit-font-smoothing:antialiased; padding:22px 20px 60px;">
+
+  <!-- CONTROL BAR -->
+  <div style="max-width:900px; margin:0 auto 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:baseline; gap:14px;">
+      <a href="Thick & Fit - Client Portal.dc.html" style="text-decoration:none; color:#111; font-size:11px; letter-spacing:2px; text-transform:uppercase;">← Portal</a>
+      <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; letter-spacing:.5px; text-transform:uppercase;">Food Log</span>
+      <span style="font-size:11px; letter-spacing:2px; color:#8a8880; text-transform:uppercase;">Snap · Describe · Track</span>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <span style="font-size:11px; color:#8a8880; letter-spacing:1px;">{{ hint }}</span>
+      <div style="display:flex; border:1px solid #111; background:#fff; height:32px;">
+        <div onClick="{{ setEn }}" style="{{ enSt }}">EN</div>
+        <div onClick="{{ setEs }}" style="{{ esSt }}">ES</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHONE -->
+  <div style="margin:0 auto; width:max-content; max-width:100%;">
+    <div style="background:#111; padding:11px; border-radius:46px; box-shadow:0 30px 80px rgba(0,0,0,.24);">
+      <div style="position:relative; width:392px; height:812px; max-width:88vw; background:#F3F3F1; border-radius:36px; overflow:hidden;">
+
+        <!-- STATUS BAR -->
+        <div style="position:absolute; top:0; left:0; right:0; height:44px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; font-size:13px; font-weight:600; z-index:60; {{ statusColor }}">
+          <span>9:41</span>
+          <span style="display:flex; gap:6px; align-items:center; font-size:11px;">▮▮▮ ⌃ ▮</span>
+        </div>
+        <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:116px; height:30px; background:#000; border-radius:99px; z-index:61;"></div>
+
+        <!-- TOAST -->
+        <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; bottom:104px; left:50%; z-index:90; background:#111; color:#fafafa; border-radius:100vw; padding:12px 20px; display:flex; align-items:center; gap:10px; box-shadow:0 12px 30px rgba(0,0,0,.3); animation:tfrise .3s ease; white-space:nowrap;">
+          <span style="width:22px; height:22px; border-radius:99px; background:#5EBE62; display:flex; align-items:center; justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>
+          <span style="font-size:13px; font-weight:600;">{{ t.loggedToast }}</span>
+        </div>
+        </sc-if>
+
+        <!-- ================= HOME ================= -->
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div class="tf-sc" style="position:absolute; inset:0; padding:52px 20px 96px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <img src="assets/logo-black.svg" alt="Thick & Fit" style="height:22px;" />
+            <div style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #EAEAE4; border-radius:100vw; padding:6px 12px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="#5EBE62"><path d="M12 3c.6 3.4 3.8 4.4 3.8 8.6a3.8 3.8 0 0 1-7.6 0c0-1.6.9-2.7 1.6-3.3.2 1.4 1.1 1.8 1.6 1.4.9-.5.6-2.1-.5-3.2 1.4.3 1.6-1.4 1.1-3.5z"/></svg><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:16px;">12</span></div>
+          </div>
+          <!-- WEEK STRIP -->
+          <div style="display:flex; justify-content:space-between; margin-bottom:18px;">
+            <sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+            <div style="text-align:center;"><div style="font-size:10px; color:#a8a8a0; margin-bottom:6px;">{{ d.dow }}</div><div style="{{ d.st }}">{{ d.n }}</div></div>
+            </sc-for>
+          </div>
+
+          <!-- CALORIES CARD -->
+          <div style="background:#111; color:#fafafa; border-radius:20px; padding:22px; display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <div>
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:52px; line-height:.85;">430</div>
+              <div style="font-size:12px; color:#9a9a9a; letter-spacing:.5px; margin-top:4px;">{{ t.calsLeft }}</div>
+              <div style="font-size:11px; color:#5EBE62; font-weight:600; margin-top:10px;">1,420 / 1,850 {{ t.eaten }}</div>
+            </div>
+            <div style="position:relative; width:96px; height:96px;">
+              <svg viewBox="0 0 96 96" style="width:96px; height:96px; transform:rotate(-90deg);"><circle cx="48" cy="48" r="40" fill="none" stroke="#2a2a2a" stroke-width="9"/><circle cx="48" cy="48" r="40" fill="none" stroke="#fafafa" stroke-width="9" stroke-dasharray="193 251" stroke-linecap="round"/></svg>
+              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fafafa"><path d="M12 3c.6 3.4 3.8 4.4 3.8 8.6a3.8 3.8 0 0 1-7.6 0c0-1.6.9-2.7 1.6-3.3.2 1.4 1.1 1.8 1.6 1.4.9-.5.6-2.1-.5-3.2 1.4.3 1.6-1.4 1.1-3.5z"/></svg></div>
+            </div>
+          </div>
+
+          <!-- MACRO CARDS -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
+            <sc-for list="{{ macros }}" as="m" hint-placeholder-count="3">
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:16px; padding:14px 12px;">
+              <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; line-height:.9;">{{ m.left }}</div>
+              <div style="font-size:10px; color:#9a9a92; margin:3px 0 12px;">{{ m.label }}</div>
+              <div style="position:relative; width:44px; height:44px; margin:0 auto;">
+                <svg viewBox="0 0 44 44" style="width:44px; height:44px; transform:rotate(-90deg);"><circle cx="22" cy="22" r="18" fill="none" stroke="#EDEDEA" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="{{ m.color }}" stroke-width="5" stroke-dasharray="{{ m.dash }}" stroke-linecap="round"/></svg>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:{{ m.color }};"><span style="width:7px; height:7px; border-radius:99px; background:{{ m.color }};"></span></div>
+              </div>
+            </div>
+            </sc-for>
+          </div>
+
+          <!-- COACH NUDGE -->
+          <div style="background:#EAF5EB; border:1px solid #CDE9CF; border-radius:14px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start; margin-bottom:18px;">
+            <span style="width:26px; height:26px; border-radius:99px; background:#5EBE62; flex:none; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></span>
+            <div><div style="font-size:12px; font-weight:700; color:#1c5222;">{{ t.coachNudgeT }}</div><div style="font-size:12px; color:#2e6b34; line-height:1.45; margin-top:2px;">{{ t.coachNudge }}</div></div>
+          </div>
+
+          <!-- RECENTLY LOGGED -->
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; letter-spacing:.5px;">{{ t.recentlyLogged }}</span>
+            <span style="font-size:11px; color:#767676; font-weight:600; letter-spacing:.5px;">{{ t.today }}</span>
+          </div>
+          <sc-for list="{{ recent }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex; align-items:center; gap:12px; background:#fff; border:1px solid #EAEAE4; border-radius:14px; padding:10px; margin-bottom:10px;">
+            <div style="width:52px; height:52px; border-radius:10px; flex:none; {{ r.thumb }}"></div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</span><span style="font-size:10px; color:#b0b0a8;">{{ r.time }}</span></div>
+              <div style="display:flex; align-items:center; gap:5px; margin:3px 0 5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#111"><path d="M12 3c.6 3.4 3.8 4.4 3.8 8.6a3.8 3.8 0 0 1-7.6 0c0-1.6.9-2.7 1.6-3.3.2 1.4 1.1 1.8 1.6 1.4.9-.5.6-2.1-.5-3.2 1.4.3 1.6-1.4 1.1-3.5z"/></svg><span style="font-size:12px; font-weight:600;">{{ r.cal }} {{ t.cal }}</span></div>
+              <div style="display:flex; gap:10px; font-size:11px; color:#8a8880;"><span style="color:#B5514D;">P {{ r.p }}</span><span style="color:#C0873F;">C {{ r.c }}</span><span style="color:#5E86B0;">F {{ r.f }}</span></div>
+            </div>
+          </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- ================= CAMERA ================= -->
+        <sc-if value="{{ isCamera }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:linear-gradient(160deg,#3a352e,#15120e);">
+          <div style="position:absolute; top:52px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; z-index:20;">
+            <div onClick="{{ goHome }}" style="width:38px; height:38px; border-radius:99px; background:rgba(0,0,0,.4); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; cursor:pointer;">✕</div>
+            <div style="color:#fff; font-size:13px; letter-spacing:1px; font-weight:600;">{{ t.scanMeal }}</div>
+            <div style="width:38px; height:38px; border-radius:99px; background:rgba(0,0,0,.4); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; color:#fff;">?</div>
+          </div>
+          <!-- viewfinder -->
+          <div style="position:absolute; top:120px; left:34px; right:34px; bottom:250px;">
+            <div style="position:absolute; top:0; left:0; width:34px; height:34px; border-top:3px solid #fff; border-left:3px solid #fff; border-radius:6px 0 0 0;"></div>
+            <div style="position:absolute; top:0; right:0; width:34px; height:34px; border-top:3px solid #fff; border-right:3px solid #fff; border-radius:0 6px 0 0;"></div>
+            <div style="position:absolute; bottom:0; left:0; width:34px; height:34px; border-bottom:3px solid #fff; border-left:3px solid #fff; border-radius:0 0 0 6px;"></div>
+            <div style="position:absolute; bottom:0; right:0; width:34px; height:34px; border-bottom:3px solid #fff; border-right:3px solid #fff; border-radius:0 0 6px 0;"></div>
+            <div style="position:absolute; left:8px; right:8px; height:2px; background:linear-gradient(90deg,transparent,#5EBE62,transparent); animation:tfscan 2.4s ease-in-out infinite;"></div>
+            <!-- food mock -->
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
+              <div style="width:180px; height:180px; border-radius:99px; background:radial-gradient(circle at 40% 35%,#f4f2ee,#d9d5cd 60%,#c7c2b8); box-shadow:0 20px 50px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center;">
+                <div style="width:120px; height:120px; border-radius:99px; background:radial-gradient(circle at 45% 40%,#d9963f,#a5602a 70%,#7d4620);"></div>
+              </div>
+            </div>
+          </div>
+          <!-- describe bar -->
+          <div onClick="{{ goSearch }}" style="position:absolute; left:20px; right:20px; bottom:200px; background:rgba(255,255,255,.14); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.25); border-radius:100vw; padding:12px 16px; display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/></svg>
+            <span style="flex:1; color:#f0f0f0; font-size:13px;">{{ t.describeInstead }}</span>
+            <span style="color:#cfcfcf;">›</span>
+          </div>
+          <!-- mode chips -->
+          <div style="position:absolute; left:0; right:0; bottom:118px; display:flex; gap:8px; padding:0 16px; overflow-x:auto; justify-content:center;">
+            <sc-for list="{{ modes }}" as="md" hint-placeholder-count="4"><div onClick="{{ md.on }}" style="{{ md.st }}"><span style="font-size:15px;">{{ md.icon }}</span>{{ md.label }}</div></sc-for>
+          </div>
+          <!-- shutter -->
+          <div style="position:absolute; left:0; right:0; bottom:40px; display:flex; align-items:center; justify-content:center; gap:44px;">
+            <div style="width:44px; height:44px; border-radius:99px; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v3M20 5l-2 2M21 12h-3M5 19l2-2M3 12h3M5 5l2 2" stroke-linecap="round"/></svg></div>
+            <div onClick="{{ snap }}" style="width:74px; height:74px; border-radius:99px; border:4px solid #fff; background:#fff; cursor:pointer; box-shadow:0 0 0 3px rgba(255,255,255,.25);"></div>
+            <div onClick="{{ goSearch }}" style="width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 15 5-4 4 3 4-4 5 5"/></svg></div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ================= SCANNING ================= -->
+        <sc-if value="{{ isScanning }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:linear-gradient(160deg,#3a352e,#15120e); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px;">
+          <div style="position:relative; width:150px; height:150px; margin-bottom:34px;">
+            <div style="position:absolute; inset:0; border-radius:99px; background:radial-gradient(circle at 42% 38%,#d9963f,#7d4620); box-shadow:0 16px 44px rgba(0,0,0,.45);"></div>
+            <svg viewBox="0 0 150 150" style="position:absolute; inset:0; width:150px; height:150px; transform:rotate(-90deg);"><circle cx="75" cy="75" r="70" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="5"/><circle cx="75" cy="75" r="70" fill="none" stroke="#5EBE62" stroke-width="5" stroke-linecap="round" stroke-dasharray="{{ scanDash }}"/></svg>
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:36px; color:#fff;">{{ prog }}%</span></div>
+          </div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:26px; color:#fff; text-transform:uppercase;">{{ t.reading }}</div>
+          <div style="font-size:13px; color:#c8c4bc; margin-top:8px; text-align:center; line-height:1.5;">{{ t.readingSub }}</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:26px; width:100%; max-width:260px;">
+            <sc-for list="{{ scanSteps }}" as="ss" hint-placeholder-count="3"><div style="display:flex; align-items:center; gap:10px; font-size:12px; color:{{ ss.col }};"><span style="{{ ss.dot }}"></span>{{ ss.label }}</div></sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ================= RESULT ================= -->
+        <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:#F3F3F1;">
+          <!-- photo hero -->
+          <div style="position:absolute; top:0; left:0; right:0; height:280px; background:radial-gradient(circle at 50% 42%,#e6bd7a,#b9843e 60%,#8a5c28);">
+            <div style="position:absolute; top:52px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; z-index:5;">
+              <div onClick="{{ goCamera }}" style="width:38px; height:38px; border-radius:99px; background:rgba(255,255,255,.85); display:flex; align-items:center; justify-content:center; cursor:pointer;">←</div>
+              <div style="display:flex; gap:8px;"><div style="width:38px; height:38px; border-radius:99px; background:rgba(255,255,255,.85); display:flex; align-items:center; justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg></div><div style="width:38px; height:38px; border-radius:99px; background:rgba(255,255,255,.85); display:flex; align-items:center; justify-content:center;">···</div></div>
+            </div>
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><div style="width:150px; height:150px; border-radius:99px; background:radial-gradient(circle at 42% 38%,#f4f0ea,#cfc9bd); display:flex; align-items:center; justify-content:center; box-shadow:0 16px 40px rgba(0,0,0,.25);"><div style="width:104px; height:104px; border-radius:99px; background:radial-gradient(circle at 45% 40%,#d5993f,#8a5322);"></div></div></div>
+          </div>
+          <!-- sheet -->
+          <div class="tf-sc" style="position:absolute; top:250px; left:0; right:0; bottom:0; background:#fff; border-radius:26px 26px 0 0; padding:20px 20px 110px;">
+            <div style="width:40px; height:4px; background:#E4E4E4; border-radius:99px; margin:0 auto 16px;"></div>
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+              <div style="flex:1;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b0b0a8" stroke-width="1.8"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span style="font-size:11px; color:#b0b0a8;">17:20 · {{ t.aiDetected }}</span></div>
+                <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; line-height:.95; text-transform:uppercase;">{{ food.name }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; border:1px solid #E4E4E4; border-radius:100vw; padding:9px 14px; flex:none;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px;">{{ serving }}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5 16.5 3 21 7.5 7.5 21z"/></svg></div>
+            </div>
+
+            <!-- calories -->
+            <div style="display:flex; align-items:center; gap:14px; background:#F5F5F1; border-radius:16px; padding:16px; margin:16px 0;">
+              <span style="width:44px; height:44px; border-radius:12px; background:#111; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fafafa"><path d="M12 3c.6 3.4 3.8 4.4 3.8 8.6a3.8 3.8 0 0 1-7.6 0c0-1.6.9-2.7 1.6-3.3.2 1.4 1.1 1.8 1.6 1.4.9-.5.6-2.1-.5-3.2 1.4.3 1.6-1.4 1.1-3.5z"/></svg></span>
+              <div style="flex:1;"><div style="font-size:11px; color:#9a9a92; letter-spacing:.5px;">{{ t.calories }}</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; line-height:.9;">{{ food.cal }}</div></div>
+            </div>
+
+            <!-- macros -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+              <div style="border:1px solid #EFEFEC; border-radius:14px; padding:14px;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;"><span style="width:9px; height:9px; border-radius:99px; background:#B5514D;"></span><span style="font-size:11px; color:#8a8880;">{{ t.protein }}</span></div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px;">{{ food.p }}</div></div>
+              <div style="border:1px solid #EFEFEC; border-radius:14px; padding:14px;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;"><span style="width:9px; height:9px; border-radius:99px; background:#C0873F;"></span><span style="font-size:11px; color:#8a8880;">{{ t.carbs }}</span></div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px;">{{ food.c }}</div></div>
+              <div style="border:1px solid #EFEFEC; border-radius:14px; padding:14px;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;"><span style="width:9px; height:9px; border-radius:99px; background:#5E86B0;"></span><span style="font-size:11px; color:#8a8880;">{{ t.fats }}</span></div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px;">{{ food.f }}</div></div>
+            </div>
+
+            <!-- FITS YOUR PLAN (the T&F edge) -->
+            <div style="background:#111; color:#fafafa; border-radius:16px; padding:16px; margin-top:14px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;"><span style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#8f8f8f;">{{ t.fitsPlan }}</span><span style="background:#5EBE62; color:#0a2e12; font-size:10px; font-weight:700; padding:3px 10px; border-radius:100vw;">{{ t.onTrack }}</span></div>
+              <div style="display:flex; align-items:baseline; gap:6px;"><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:28px;">{{ food.after }}</span><span style="font-size:12px; color:#9a9a9a;">{{ t.calsLeftAfter }}</span></div>
+              <div style="font-size:12px; color:#b3b3b3; line-height:1.5; margin-top:6px;">{{ t.fitsBody }}</div>
+            </div>
+
+            <!-- HEALTH SCORE -->
+            <div style="display:flex; align-items:center; gap:14px; margin-top:16px;">
+              <span style="width:30px; height:30px; border-radius:8px; background:#EAF5EB; display:flex; align-items:center; justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5EBE62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg></span>
+              <div style="flex:1;"><div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;"><span style="font-size:13px; font-weight:600;">{{ t.healthScore }}</span><span style="font-size:13px; font-weight:700;">{{ food.hs }} / 10</span></div><div style="height:6px; background:#EDEDEA; border-radius:99px;"><div style="{{ food.hsBar }}"></div></div></div>
+            </div>
+
+            <!-- COACH SWAP (the edge) -->
+            <div style="display:flex; gap:10px; align-items:center; background:#F5F5F1; border-radius:12px; padding:12px 14px; margin-top:12px;">
+              <div style="width:32px; height:32px; border-radius:99px; background:url('assets/img/steph-hero.avif') center/cover, #111; flex:none;"></div>
+              <div style="flex:1; font-size:12px; color:#444; line-height:1.45;">{{ t.coachSwap }}</div>
+            </div>
+
+            <!-- ingredients -->
+            <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:18px; letter-spacing:.5px; margin:18px 0 8px;">{{ t.ingredients }}</div>
+            <sc-for list="{{ food.ingredients }}" as="ing" hint-placeholder-count="3">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid #F2F2EF;"><span style="font-size:13px;">{{ ing.name }}</span><span style="font-size:12px; color:#9a9a92;">{{ ing.cal }} {{ t.cal }} ›</span></div>
+            </sc-for>
+            <div onClick="{{ goSearch }}" style="display:flex; align-items:center; gap:8px; color:#767676; font-size:12px; font-weight:600; margin-top:12px; cursor:pointer;"><span style="width:22px; height:22px; border:1px solid #E4E4E4; border-radius:99px; display:flex; align-items:center; justify-content:center;">+</span>{{ t.addIngredient }}</div>
+          </div>
+          <!-- fixed footer -->
+          <div style="position:absolute; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #F2F2EF; padding:14px 20px 22px; display:flex; gap:10px;">
+            <div style="flex:none; border:1px solid #111; border-radius:100vw; padding:14px 18px; display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2 2M16.4 16.4l2 2M18.4 5.6l-2 2M7.6 16.4l-2 2"/></svg>{{ t.fixAi }}</div>
+            <div onClick="{{ logIt }}" style="flex:1; background:#111; color:#fff; text-align:center; font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:14px; cursor:pointer;">{{ t.logIt }}</div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ================= SEARCH / DESCRIBE ================= -->
+        <sc-if value="{{ isSearch }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-sc" style="position:absolute; inset:0; background:#F3F3F1; padding:52px 20px 40px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;"><div onClick="{{ goCamera }}" style="font-size:20px; color:#767676; cursor:pointer;">←</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:24px; text-transform:uppercase;">{{ t.logFood }}</div></div>
+          <!-- NL bar -->
+          <div style="background:#111; border-radius:14px; padding:14px; margin-bottom:16px;">
+            <div style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#8f8f8f; margin-bottom:8px;">{{ t.describeMeal }}</div>
+            <div style="display:flex; align-items:center; gap:10px; background:#1d1d1d; border:1px solid #333; border-radius:12px; padding:11px 14px;"><input value="{{ nlText }}" onInput="{{ setNl }}" placeholder="{{ t.nlExample }}" style="flex:1; min-width:0; background:transparent; border:none; outline:none; color:#fff; font-size:13px;" /><div style="width:32px; height:32px; border-radius:99px; background:#333; display:flex; align-items:center; justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></div><div onClick="{{ sendNl }}" style="width:32px; height:32px; border-radius:99px; background:#5EBE62; display:flex; align-items:center; justify-content:center; cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0a2e12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>
+          </div>
+          <!-- search -->
+          <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #E4E4E4; border-radius:12px; padding:12px 14px; margin-bottom:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b0b0a8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg><span style="color:#b0b0a8; font-size:14px;">{{ t.searchIngredient }}</span></div>
+          <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#9a9a92; margin-bottom:8px;">{{ t.suggestions }}</div>
+          <sc-for list="{{ suggestions }}" as="sg" hint-placeholder-count="4">
+          <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #F2F2EF;">
+            <div style="width:40px; height:40px; border-radius:10px; flex:none; {{ sg.thumb }}"></div>
+            <div style="flex:1;"><div style="font-size:13px; font-weight:600;">{{ sg.name }}</div><div style="font-size:11px; color:#9a9a92;">{{ sg.cal }} {{ t.cal }} · {{ sg.unit }}</div></div>
+            <div onClick="{{ sg.on }}" style="width:30px; height:30px; border:1px solid #E4E4E4; border-radius:99px; display:flex; align-items:center; justify-content:center; color:#767676; font-size:18px; cursor:pointer;">+</div>
+          </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- ================= BARCODE ================= -->
+        <sc-if value="{{ isBarcode }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; inset:0; background:linear-gradient(160deg,#2a2620,#0f0d0a);">
+          <div style="position:absolute; top:52px; left:16px; right:16px; display:flex; align-items:center; justify-content:space-between; z-index:20;">
+            <div onClick="{{ goCamera }}" style="width:38px; height:38px; border-radius:99px; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; cursor:pointer;">✕</div>
+            <div style="color:#fff; font-size:13px; letter-spacing:1px; font-weight:600;">Barcode</div>
+            <div style="width:38px; height:38px; border-radius:99px; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; color:#fff;">?</div>
+          </div>
+          <div style="position:absolute; top:150px; left:40px; right:40px; height:150px; border:2px solid rgba(255,255,255,.5); border-radius:14px; overflow:hidden;">
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:3px; opacity:.55;"><span style="width:3px; height:80px; background:#fff;"></span><span style="width:6px; height:80px; background:#fff;"></span><span style="width:2px; height:80px; background:#fff;"></span><span style="width:8px; height:80px; background:#fff;"></span><span style="width:3px; height:80px; background:#fff;"></span><span style="width:5px; height:80px; background:#fff;"></span><span style="width:2px; height:80px; background:#fff;"></span><span style="width:7px; height:80px; background:#fff;"></span><span style="width:3px; height:80px; background:#fff;"></span><span style="width:4px; height:80px; background:#fff;"></span></div>
+            <div style="position:absolute; left:0; right:0; top:50%; height:2px; background:#5EBE62; box-shadow:0 0 10px #5EBE62;"></div>
+          </div>
+          <div style="position:absolute; top:320px; left:0; right:0; text-align:center; color:#c8c4bc; font-size:12px;">{{ t.scanBarcode }}</div>
+          <!-- found product -->
+          <div style="position:absolute; left:16px; right:16px; bottom:36px; background:#fff; border-radius:20px; padding:16px; animation:tfsheet .35s ease;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:54px; height:54px; border-radius:12px; flex:none; background:radial-gradient(circle at 40% 35%,#cbb6a0,#7d6650);"></div>
+              <div style="flex:1;"><div style="font-size:14px; font-weight:700;">Quest Protein Bar</div><div style="font-size:11px; color:#9a9a92;">Chocolate Chip · 60g · UPC 888849000012</div></div>
+              <span style="font-size:10px; font-weight:700; color:#1c5222; background:#EAF5EB; padding:4px 9px; border-radius:99px;">{{ t.found }}</span>
+            </div>
+            <div style="display:flex; gap:8px; margin:14px 0;">
+              <div style="flex:1; text-align:center; background:#F5F5F1; border-radius:10px; padding:8px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px;">200</div><div style="font-size:9px; color:#9a9a92; letter-spacing:.5px;">{{ t.cal }}</div></div>
+              <div style="flex:1; text-align:center; background:#F5F5F1; border-radius:10px; padding:8px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; color:#B5514D;">21g</div><div style="font-size:9px; color:#9a9a92; letter-spacing:.5px;">{{ t.protein }}</div></div>
+              <div style="flex:1; text-align:center; background:#F5F5F1; border-radius:10px; padding:8px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; color:#C0873F;">21g</div><div style="font-size:9px; color:#9a9a92; letter-spacing:.5px;">{{ t.carbs }}</div></div>
+              <div style="flex:1; text-align:center; background:#F5F5F1; border-radius:10px; padding:8px;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:20px; color:#5E86B0;">8g</div><div style="font-size:9px; color:#9a9a92; letter-spacing:.5px;">{{ t.fats }}</div></div>
+            </div>
+            <div onClick="{{ logIt }}" style="background:#111; color:#fff; text-align:center; font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:13px; cursor:pointer;">{{ t.logIt }}</div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- ================= INGREDIENT EDITOR ================= -->
+        <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+        <div class="tf-sc" style="position:absolute; inset:0; background:#F3F3F1; padding:52px 20px 40px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;"><div onClick="{{ goSearch }}" style="font-size:20px; color:#767676; cursor:pointer;">←</div><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; text-transform:uppercase;">{{ t.addIngredient }}</div></div>
+          <div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:34px; text-transform:uppercase; line-height:.95; margin-bottom:14px;">{{ editName }}</div>
+          <div style="font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#9a9a92; margin-bottom:8px;">{{ t.measurement }}</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;">
+            <sc-for list="{{ editMeasures }}" as="em" hint-placeholder-count="5"><div style="{{ em.st }}">{{ em.label }}</div></sc-for>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;"><span style="font-size:13px; color:#767676;">{{ t.numServings }}</span><span style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:30px; border-bottom:2px solid #111; min-width:60px; text-align:center;">{{ editServ }}</span></div>
+          <!-- live macros -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-bottom:18px;">
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:12px; padding:12px 8px; text-align:center;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px;">{{ editCal }}</div><div style="font-size:9px; color:#9a9a92; letter-spacing:.5px;">{{ t.cal }}</div></div>
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:12px; padding:12px 8px; text-align:center;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; color:#B5514D;">{{ editP }}</div><div style="font-size:9px; color:#9a9a92; letter-spacing:.5px;">{{ t.protein }}</div></div>
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:12px; padding:12px 8px; text-align:center;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; color:#C0873F;">{{ editC }}</div><div style="font-size:9px; color:#9a9a92; letter-spacing:.5px;">{{ t.carbs }}</div></div>
+            <div style="background:#fff; border:1px solid #EAEAE4; border-radius:12px; padding:12px 8px; text-align:center;"><div style="font-family:'Gulams Condensed',Impact,sans-serif; font-size:22px; color:#5E86B0;">{{ editF }}</div><div style="font-size:9px; color:#9a9a92; letter-spacing:.5px;">{{ t.fats }}</div></div>
+          </div>
+          <!-- numpad -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;">
+            <sc-for list="{{ padBtns }}" as="pb" hint-placeholder-count="12"><div onClick="{{ pb.on }}" style="background:#fff; border:1px solid #EAEAE4; border-radius:12px; padding:15px 0; text-align:center; font-size:20px; font-weight:600; cursor:pointer;">{{ pb.label }}</div></sc-for>
+          </div>
+          <div onClick="{{ addFromEditor }}" style="background:#111; color:#fff; text-align:center; font-size:13px; letter-spacing:1px; text-transform:uppercase; font-weight:600; border-radius:100vw; padding:15px; cursor:pointer;">{{ t.addToLog }}</div>
+        </div>
+        </sc-if>
+
+        <!-- ================= BOTTOM NAV + FAB (home only) ================= -->
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ goCamera }}" style="position:absolute; bottom:82px; right:20px; width:60px; height:60px; border-radius:99px; background:#111; display:flex; align-items:center; justify-content:center; box-shadow:0 12px 30px rgba(0,0,0,.3); z-index:50; cursor:pointer;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div style="position:absolute; bottom:0; left:0; right:0; display:flex; background:#fff; border-top:1px solid #EEE; padding:10px 8px 16px; z-index:40;">
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#111;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg><span style="font-size:10px;">{{ t.navHome }}</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#c0c0b8;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 20v-6M11 20V8M16 20v-9M21 20V5"/></svg><span style="font-size:10px;">{{ t.navProgress }}</span></div>
+          <div style="flex:1;"></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#c0c0b8;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.5A8 8 0 1 1 21 11.5z"/></svg><span style="font-size:10px;">{{ t.navCoach }}</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:#c0c0b8;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span style="font-size:10px;">{{ t.navYou }}</span></div>
+        </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;460&quot;,&quot;height&quot;:&quot;920&quot;}}">
+class Component extends DCLogic {
+  state = { lang:'en', screen:'home', prog:0, serving:1, mode:'scan', toast:false, recentBoost:false, food:null, nlText:'', editItem:null, editServ:'1' };
+
+  T(){
+    const en = {
+      navHome:'Home', navProgress:'Progress', navCoach:'Coach', navYou:'You',
+      calsLeft:'Calories left', eaten:'eaten', cal:'cal', calories:'Calories', protein:'Protein', carbs:'Carbs', fats:'Fats',
+      coachNudgeT:'Coach nudge', coachNudge:'You\u2019re short on protein. Add a lean protein at dinner to hit 140g and stay in your deficit.',
+      recentlyLogged:'Recently logged', today:'Today',
+      scanMeal:'Scan your meal', describeInstead:'or just describe it — "10 nuggets & a shake"',
+      reading:'Reading your plate', readingSub:'Identifying food, portion and ingredients from your photo.',
+      aiDetected:'Detected', fitsPlan:'Fits your plan', onTrack:'On track', calsLeftAfter:'cal left after this', fitsBody:'Logs into lunch. You\u2019re still on pace for 195 lb by October.',
+      healthScore:'Health score', coachSwap:'Swap white rice → cauliflower rice to save ~180 cal and keep the protein. — Coach Steph',
+      ingredients:'Ingredients', addIngredient:'Add ingredient', fixAi:'Fix results', logIt:'Log it', loggedToast:'Logged to lunch · 573 cal',
+      logFood:'Log food', describeMeal:'Describe your meal', nlExample:'I had a chicken bowl and a protein shake…', searchIngredient:'Search for an ingredient', suggestions:'Suggestions',
+      scanIdent:'Identifying food', scanPortion:'Estimating portion', scanMacro:'Calculating macros',
+      scanBarcode:'Point at the barcode', found:'Found', measurement:'Measurement', numServings:'Number of servings', addToLog:'Add to log'
+    };
+    const es = {
+      navHome:'Inicio', navProgress:'Progreso', navCoach:'Coach', navYou:'Tú',
+      calsLeft:'Calorías restantes', eaten:'consumidas', cal:'cal', calories:'Calorías', protein:'Proteína', carbs:'Carbos', fats:'Grasas',
+      coachNudgeT:'Consejo de coach', coachNudge:'Te falta proteína. Agrega una proteína magra en la cena para llegar a 140g y mantener tu déficit.',
+      recentlyLogged:'Registrado hoy', today:'Hoy',
+      scanMeal:'Escanea tu comida', describeInstead:'o solo descríbela — "10 nuggets y un batido"',
+      reading:'Leyendo tu plato', readingSub:'Identificando comida, porción e ingredientes desde tu foto.',
+      aiDetected:'Detectado', fitsPlan:'Encaja en tu plan', onTrack:'Al ritmo', calsLeftAfter:'cal restantes tras esto', fitsBody:'Se registra en el almuerzo. Sigues al ritmo para 195 lb en octubre.',
+      healthScore:'Puntaje saludable', coachSwap:'Cambia arroz blanco → arroz de coliflor para ahorrar ~180 cal y mantener la proteína. — Coach Steph',
+      ingredients:'Ingredientes', addIngredient:'Agregar ingrediente', fixAi:'Corregir resultados', logIt:'Registrar', loggedToast:'Registrado en almuerzo · 573 cal',
+      logFood:'Registrar comida', describeMeal:'Describe tu comida', nlExample:'Comí un bowl de pollo y un batido…', searchIngredient:'Busca un ingrediente', suggestions:'Sugerencias',
+      scanIdent:'Identificando comida', scanPortion:'Estimando porción', scanMacro:'Calculando macros',
+      scanBarcode:'Apunta al código de barras', found:'Encontrado', measurement:'Medida', numServings:'Número de porciones', addToLog:'Agregar al registro'
+    };
+    return this.state.lang==='en'?en:es;
+  }
+
+  componentDidMount(){
+    try{
+      const h = (location.hash||'').replace('#','');
+      const map = { camera:'camera', barcode:'barcode', describe:'search', search:'search', result:'result' };
+      if(map[h]) this.setState({ screen: map[h] });
+    }catch(e){}
+  }
+  runScan(){
+    clearInterval(this._iv); clearTimeout(this._t); clearTimeout(this._hard);
+    const start = Date.now(), dur = 1500;
+    this.setState({ prog:0 });
+    this._iv = setInterval(()=>{
+      const p = Math.min(100, Math.round((Date.now()-start)/dur*100));
+      this.setState({ prog:p });
+      if(p>=100){ clearInterval(this._iv); this._t = setTimeout(()=>this.setState({screen:'result'}), 300); }
+    }, 60);
+    this._hard = setTimeout(()=>{ clearInterval(this._iv); this.setState({ prog:100, screen:'result' }); }, dur + 600);
+  }
+  showToast(msg){ this._toastMsg = msg || null; this.setState({toast:true}); clearTimeout(this._tt); this._tt = setTimeout(()=>this.setState({toast:false}), 2600); }
+
+  // REAL model call — parses "what you ate" into structured macros. No mock data.
+  // Swap window.claude.complete for your production endpoint (Claude Sonnet vision + Nutritionix).
+  async parseAI(){
+    const text = (this.state.nlText || '').trim();
+    if(!text) return;
+    this.setState({ screen:'scanning', food:null }); this.runScan();
+    try{
+      if(window.claude && window.claude.complete){
+        const prompt = 'You are the nutrition engine for a fitness app. The user ate: "' + text + '". '
+          + 'Reply with ONLY minified JSON, no prose, no code fences, shape: '
+          + '{"name":string,"cal":int,"p":int,"c":int,"f":int,"hs":int,"ingredients":[{"name":string,"cal":int}]} '
+          + 'where p/c/f are grams of protein/carbs/fat and hs is a 1-10 healthfulness score. '
+          + 'Use realistic USDA-style values for the described portions.';
+        let raw = await window.claude.complete(prompt);
+        raw = String(raw);
+        const j = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
+        this.setState({ food:j });
+      }
+    }catch(e){ /* API absent in preview — falls back to the demo item */ }
+    this.setState({ nlText:'' });
+  }
+
+  openEditor(item){ this.setState({ screen:'editor', editItem:item, editServ:'1' }); }
+  pad(k){ let v=this.state.editServ; if(k==='del'){ v=v.length>1?v.slice(0,-1):'0'; } else if(k==='.'){ if(!v.includes('.')) v=v+'.'; } else { v = (v==='0') ? String(k) : v + String(k); } this.setState({editServ:v}); }
+  addFromEditor(){ this.setState({ screen:'home', recentBoost:true }); this.showToast(); }
+
+  renderVals(){
+    const s=this.state, t=this.T(), en = s.lang==='en';
+    const scr = s.screen;
+
+    const weekData = [['M',8],['T',9],['W',10],['T',11],['F',12],['S',13],['S',14]];
+    const week = weekData.map((d,i)=>({ dow:d[0], n:d[1],
+      st: i===4 ? 'width:30px; height:30px; margin:0 auto; border-radius:99px; background:#111; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600;'
+        : i<4 ? 'width:30px; height:30px; margin:0 auto; border-radius:99px; border:2px solid #5EBE62; display:flex; align-items:center; justify-content:center; font-size:13px; color:#111;'
+        : 'width:30px; height:30px; margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:13px; color:#b0b0a8;' }));
+
+    const macros = [
+      { label: en?'Protein left':'Proteína', left:'28g', color:'#B5514D', dash:'90 113' },
+      { label: en?'Carbs left':'Carbos', left:'56g', color:'#C0873F', dash:'82 113' },
+      { label: en?'Fat left':'Grasa', left:'13g', color:'#5E86B0', dash:'96 113' },
+    ];
+
+    const thumbs = [
+      'background:radial-gradient(circle at 40% 35%,#e6bd7a,#8a5c28);',
+      'background:radial-gradient(circle at 40% 35%,#c7d89a,#6f8a45);',
+      'background:radial-gradient(circle at 40% 35%,#d8b48a,#9c6b3e);',
+      'background:radial-gradient(circle at 40% 35%,#cbb6a0,#7d6650);'
+    ];
+    const baseRecent = [
+      { name:'Chicken & Egg Fried Rice', cal:'573', p:'51g', c:'43g', f:'18g', time:'17:20', thumb:thumbs[0] },
+      { name:'Greek Yogurt & Berries', cal:'210', p:'18g', c:'24g', f:'4g', time:'14:05', thumb:thumbs[1] },
+      { name:'Protein Shake', cal:'160', p:'30g', c:'6g', f:'3g', time:'09:12', thumb:thumbs[3] },
+    ];
+    const recent = s.recentBoost ? [{ name:'Chicken & Egg Fried Rice', cal:'573', p:'51g', c:'43g', f:'18g', time:t.navHome==='Inicio'?'ahora':'now', thumb:thumbs[0] }, ...baseRecent.slice(1)] : baseRecent;
+
+    const modeList = [ ['scan','◎', en?'Scan':'Escanear'], ['barcode','▥', en?'Barcode':'Código'], ['label','🏷', en?'Label':'Etiqueta'], ['gallery','▤', en?'Gallery':'Galería'] ];
+    const modes = modeList.map(m=>({ icon:m[1], label:m[2], on: m[0]==='barcode' ? ()=>this.setState({screen:'barcode'}) : ()=>this.setState({mode:m[0]}),
+      st: 'display:flex; align-items:center; gap:6px; white-space:nowrap; font-size:12px; font-weight:600; padding:10px 14px; border-radius:12px; cursor:pointer; ' + (s.mode===m[0] ? 'background:#fff; color:#111;' : 'background:rgba(255,255,255,.14); color:#f0f0f0;') }));
+
+    const scanDash = Math.round(440 * (s.prog/100)) + ' 440';
+    const scanSteps = [
+      { label:t.scanIdent, done: s.prog>25 },
+      { label:t.scanPortion, done: s.prog>60 },
+      { label:t.scanMacro, done: s.prog>90 },
+    ].map(x=>({ label:x.label, col: x.done?'#5EBE62':'#8a8477',
+      dot: 'width:16px; height:16px; border-radius:99px; flex:none; display:inline-flex; ' + (x.done?'background:#5EBE62;':'border:2px solid #55504a;') }));
+
+    const sugData = [
+      { name:'Peanut Butter', cal:94, unit:'1 tbsp', p:4, c:3, f:8, thumb:thumbs[3] },
+      { name:'Avocado', cal:130, unit:'1 serving', p:2, c:9, f:12, thumb:thumbs[1] },
+      { name:'Egg', cal:74, unit:'1 large', p:6, c:0, f:5, thumb:thumbs[2] },
+      { name:'Chicken Breast', cal:120, unit:'100 g', p:26, c:0, f:2, thumb:thumbs[0] },
+    ];
+    const suggestions = sugData.map(x=>({ name:x.name, cal:String(x.cal), unit:x.unit, thumb:x.thumb, on:()=>this.openEditor(x) }));
+
+    const tOn={ background:'#111', color:'#fff', fontSize:'11px', fontWeight:700, letterSpacing:'2px', padding:'0 12px', display:'flex', alignItems:'center', cursor:'pointer' };
+    const tOff={ background:'#fff', color:'#111', fontSize:'11px', fontWeight:700, letterSpacing:'2px', padding:'0 12px', display:'flex', alignItems:'center', cursor:'pointer' };
+
+    const hints = { home:en?'Tap + to log':'Toca + para registrar', camera:en?'Tap the shutter':'Toca el obturador', scanning:'', result:en?'Review & log':'Revisa y registra', search:en?'Describe or search':'Describe o busca' };
+
+    // Result food: AI-parsed if present, else the demo item
+    const F = s.food || { name:'Chicken & Egg Fried Rice', cal:573, p:51, c:43, f:18, hs:8, ingredients:[{name:'Chicken breast',cal:292},{name:'Egg fried rice',cal:270},{name:'Spices & oil',cal:11}] };
+    const after = Math.max(0, 1850 - 430 - (Number(F.cal)||0));
+    const food = {
+      name: F.name, cal: F.cal, p:(F.p||0)+'g', c:(F.c||0)+'g', f:(F.f||0)+'g',
+      hs: F.hs||8, after: after,
+      hsBar: 'height:6px; width:'+((F.hs||8)*10)+'%; background:#5EBE62; border-radius:99px;',
+      ingredients: (F.ingredients||[]).map(x=>({ name:x.name, cal:String(x.cal) }))
+    };
+
+    // Ingredient editor
+    const ei = s.editItem || { name:'Ketchup', cal:20, p:0, c:5, f:0, unit:'1 tbsp' };
+    const mult = parseFloat(s.editServ)||0;
+    const measures = ['Serving','Tbsp','Cup','Oz','G'];
+    const editMeasures = measures.map((m,i)=>({ label:m, st: 'font-size:12px; font-weight:600; padding:8px 14px; border-radius:100vw; cursor:pointer; '+(i===0?'background:#111; color:#fff;':'background:#F0F0EC; color:#767676;') }));
+    const padKeys = ['1','2','3','4','5','6','7','8','9','.','0','del'];
+    const padBtns = padKeys.map(k=>({ k, label: k==='del'?'⌫':k, on:()=>this.pad(k) }));
+
+    return {
+      t, hint: hints[scr]||'',
+      isBarcode: scr==='barcode', isEditor: scr==='editor',
+      goBarcode:()=>this.setState({screen:'barcode'}),
+      nlText: s.nlText, setNl:(e)=>this.setState({nlText:e.target.value}), sendNl:()=>this.parseAI(),
+      food,
+      suggestions,
+      editName: ei.name, editServ: s.editServ, editMeasures, padBtns,
+      editCal: Math.round((Number(ei.cal)||0)*mult), editP: Math.round((ei.p||0)*mult)+'g', editC: Math.round((ei.c||0)*mult)+'g', editF: Math.round((ei.f||0)*mult)+'g',
+      addFromEditor:()=>this.addFromEditor(),
+      toastMsg: this._toastMsg,
+      setEn:()=>this.setState({lang:'en'}), setEs:()=>this.setState({lang:'es'}), enSt: en?tOn:tOff, esSt: en?tOff:tOn,
+      statusColor: (scr==='camera'||scr==='scanning'||scr==='barcode') ? 'color:#fafafa;' : 'color:#111;',
+      isHome: scr==='home', isCamera: scr==='camera', isScanning: scr==='scanning', isResult: scr==='result', isSearch: scr==='search',
+      goHome:()=>this.setState({screen:'home'}), goCamera:()=>this.setState({screen:'camera'}), goSearch:()=>this.setState({screen:'search'}),
+      snap:()=>{ this.setState({screen:'scanning'}); this.runScan(); },
+      logIt:()=>{ this.setState({screen:'home', recentBoost:true}); this.showToast(); },
+      week, macros, recent, modes, scanDash, scanSteps, suggestions, prog:s.prog, serving:s.serving, toast:s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

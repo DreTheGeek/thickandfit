@@ -95,7 +95,12 @@ export function FoodPhotosScreen({
   function remove(id: string): void {
     start(async () => {
       const res = await deleteFoodPhotoAction({ id });
-      if (res.ok) setPhotos(await listMyFoodPhotos());
+      if (res.ok) {
+        setError(null);
+        setPhotos(await listMyFoodPhotos());
+      } else {
+        setError(t('fpDeleteFailed'));
+      }
     });
   }
 
