@@ -45,6 +45,20 @@ export function ExportData(): ReactElement {
       >
         {pending ? t('exportPending') : t('exportData')}
       </button>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <a
+          href="/api/account/export?type=food"
+          className="tf-press border border-line py-3 text-center text-[11px] font-semibold uppercase tracking-[1.5px] text-muted"
+        >
+          {t('exportFoodCsv')}
+        </a>
+        <a
+          href="/api/account/export?type=weights"
+          className="tf-press border border-line py-3 text-center text-[11px] font-semibold uppercase tracking-[1.5px] text-muted"
+        >
+          {t('exportWeightsCsv')}
+        </a>
+      </div>
       {error ? <p className="mt-2 text-[12px] text-alert">{error}</p> : null}
     </div>
   );
