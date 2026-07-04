@@ -120,7 +120,7 @@ function computeStreak(completedDays: Set<string>): number {
 
 export async function buildCoachContext(
   profileId: string,
-  _companyId: string,
+  companyId: string,
 ): Promise<CoachContext> {
   const sb = createServiceClient();
   const since14 = isoDaysAgo(14);
@@ -253,7 +253,7 @@ export async function buildCoachContext(
   let graph: { foods: string[]; plans: string[] } | null = null;
   if (ik?.contact_id) {
     try {
-      const { data: facts } = await sb.rpc('kg_client_facts', { p_contact: ik.contact_id });
+      const { data: facts } = await sb.rpc('kg_client_facts', { p_contact: ik.contact_id, p_company: companyId });
       const rows = (facts ?? []) as { rel: string; node_type: string; label: string }[];
       const foods = rows.filter((r) => r.node_type === 'food').map((r) => r.label).slice(0, 8);
       const plans = rows.filter((r) => r.node_type === 'plan').map((r) => r.label).slice(0, 3);
