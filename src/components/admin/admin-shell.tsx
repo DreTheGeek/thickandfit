@@ -6,6 +6,7 @@ import { useState, type ReactElement, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from '@/components/ui/icons';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { signOutAction } from '@/lib/auth/actions';
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
@@ -53,7 +54,11 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
         <NavLinks pathname={pathname} onNavigate={onNavigate} />
       </nav>
-      <div className="shrink-0 border-t border-line p-3">
+      <div className="shrink-0 space-y-1 border-t border-line p-3">
+        <div className="flex items-center justify-between px-3 py-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">Theme</span>
+          <ThemeToggle />
+        </div>
         <form action={signOutAction}>
           <button type="submit" className="tf-press w-full rounded-lg px-3 py-2.5 text-left text-[12px] font-semibold uppercase tracking-[0.12em] text-muted hover:text-ink">
             Sign out

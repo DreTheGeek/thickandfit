@@ -3,6 +3,7 @@ import { BottomNav } from '@/components/nav/bottom-nav';
 import { SubscriberRail } from '@/components/nav/subscriber-rail';
 import { SubscriberTopBar } from '@/components/notifications/subscriber-topbar';
 import { CaptureFab } from '@/components/app/capture-fab';
+import { SupportWidget } from '@/components/support/support-widget';
 import { resolveAuth } from '@/lib/auth/session';
 import { getUnreadCount } from '@/lib/notifications/queries';
 
@@ -29,6 +30,7 @@ export async function SubscriberShell({
         <BottomNav />
         <CaptureFab />
       </div>
+      <SupportWidget />
     </div>
   );
 }

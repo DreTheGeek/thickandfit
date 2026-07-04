@@ -39,5 +39,25 @@ export async function setQaStatusAction(input: unknown): Promise<QaResult> {
     return { ok: false };
   }
   revalidatePath('/admin');
+  revalidatePath('/admin/qa');
+  return { ok: true };
+}
+
+// Assign (or clear) a tester on a checklist item (Rodney / LaSean / Shakira).
+const Assign = z.object({ id: z.string().uuid(), tester: z.enum(['Rodney', 'LaSean', 'Shakira']).nullable() });
+
+export async function assignTesterAction(input: unknown): Promise<QaResult> {
+  const parsed = Assign.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  const ctx = await requireOperator();
+  if (!ctx.companyId) return { ok: false };
+  const svc = createServiceClient();
+  const { error } = await svc
+    .from('qa_checklist')
+    .update({ assigned_tester: parsed.data.tester })
+    .eq('id', parsed.data.id)
+    .eq('company_id', ctx.companyId);
+  if (error) { console.error('assignTesterAction:', error.message); return { ok: false }; }
+  revalidatePath('/admin/qa');
   return { ok: true };
 }
