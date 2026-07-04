@@ -60,7 +60,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
   const photos = detail.files.filter((f) => f.category === 'progress_photos');
   const docs = detail.files.filter((f) => f.category !== 'progress_photos');
 
-  const hasHealth = detail.intake != null || detail.progress.weights.length > 0 || detail.progress.measures.length > 0 || detail.progress.photos.length > 0;
+  const hasHealth = detail.intake != null || detail.progress.weights.length > 0 || detail.progress.measures.length > 0 || detail.progress.photos.length > 0 || detail.progress.workoutCount > 0;
   const options: TabOption<Tab>[] = [
     { value: 'overview', label: t('tabOverview') },
     ...(hasHealth ? [{ value: 'health' as Tab, label: t('tabHealth') }] : []),
@@ -192,6 +192,22 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               })()}
               {detail.progress.measureCount > 0 && <Row label={t('progressMeasurements')} value={`${detail.progress.measureCount}`} />}
               {detail.progress.foodDays > 0 && <Row label={t('progressFoodLogs')} value={`${detail.progress.foodDays}`} />}
+            </Section>
+          )}
+          {detail.progress.workoutCount > 0 && (
+            <Section title={`${t('progressTraining')} (${detail.progress.workoutCount})`}>
+              {detail.progress.recentWorkouts.map((w, i) => (
+                <div key={i} className="flex items-center justify-between border-b border-divider py-2 text-[13px] last:border-0">
+                  <div className="min-w-0">
+                    <span className="font-medium text-ink">{w.name ?? '-'}</span>
+                    {w.plan && <span className="ml-1.5 text-[11px] text-faint">{w.plan}</span>}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 text-faint">
+                    {w.pct != null && <span className={w.pct >= 80 ? 'text-good-ink' : ''}>{w.pct}%</span>}
+                    <span>{fmtDate(w.on.slice(0, 10), locale)}</span>
+                  </div>
+                </div>
+              ))}
             </Section>
           )}
           {detail.progress.photos.length > 0 && (

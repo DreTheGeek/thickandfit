@@ -87,6 +87,8 @@ export const APPROVER_ROLES: Role[] = ['coach', 'operator'];
 // subscribers/free go to onboarding until they've completed it, then the dashboard.
 // NEVER returns '/' (the marketing landing): an authed user should land in the app.
 export async function homePathForUser(userId: string, role: Role): Promise<string> {
+  // Operators run the QA/ops portal, not Stephanie's coaching console: land them on /admin.
+  if (role === 'operator') return '/admin';
   if (COACH_ROLES.includes(role)) return '/coach';
   const svc = createServiceClient();
   const { data } = await svc

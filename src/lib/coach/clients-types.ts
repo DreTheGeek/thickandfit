@@ -163,6 +163,8 @@ export type ClientDetail = {
     photos: { url: string; on: string; pose: string | null }[];
     photoCount: number; // true total photos
     foodDays: number;
+    workoutCount: number; // migrated Lenus workout sessions
+    recentWorkouts: { on: string; name: string | null; plan: string | null; pct: number | null }[];
   };
   // Migrated coach<->client conversation history (most recent first). totalMessages is the full count.
   messages: ClientMessage[];

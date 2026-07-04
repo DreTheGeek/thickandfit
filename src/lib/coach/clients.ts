@@ -394,11 +394,23 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     }),
   );
   const photos = signed.filter((p): p is { url: string; on: string; pose: string | null } => p != null);
+
+  // Migrated Lenus workout history (session summaries): total + the most recent handful.
+  const [{ count: workoutCount }, { data: woRows }] = await Promise.all([
+    sb.from('client_workout_history').select('id', { count: 'exact', head: true }).eq('contact_id', contactId),
+    sb.from('client_workout_history').select('performed_at, session_name, plan_name, completion_pct').eq('contact_id', contactId).order('performed_at', { ascending: false }).limit(8),
+  ]);
+  const recentWorkouts = ((woRows ?? []) as { performed_at: string; session_name: string | null; plan_name: string | null; completion_pct: number | null }[]).map((w) => ({
+    on: w.performed_at, name: w.session_name, plan: w.plan_name, pct: w.completion_pct,
+  }));
+
   const progress = {
     weights, weightCount: weightCount ?? weights.length, weightStartKg,
     measures, measureCount: measureCount ?? measures.length,
     photos, photoCount: photoCount ?? photos.length,
     foodDays: foodDays ?? 0,
+    workoutCount: workoutCount ?? recentWorkouts.length,
+    recentWorkouts,
   };
 
   // Migrated conversation history: most recent 200 messages + full count.
