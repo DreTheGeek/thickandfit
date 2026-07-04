@@ -24,7 +24,7 @@ export default async function KnowledgePage(): Promise<ReactElement> {
             <Stat label="Chunks" value={String(k.totalChunks)} />
             <Stat label="Embedded (RAG-ready)" value={`${k.embedded}/${k.totalChunks}`} tone={k.embedded === k.totalChunks ? 'good' : 'warn'} />
           </div>
-          <Card title="Sources" action={<Link href="/coach/settings/knowledge" className="text-[12px] font-semibold text-muted hover:text-ink">Add / manage</Link>}>
+          <Card title="Sources">
             {k.sources.length === 0 ? (
               <p className="py-6 text-center text-[13px] text-faint">No knowledge ingested yet.</p>
             ) : (
