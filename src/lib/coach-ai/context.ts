@@ -40,6 +40,15 @@ export type CoachContext = {
     locale: CoachLocale;
     targets: { kcal: number; proteinG: number; carbG: number; fatG: number } | null;
   };
+  // Migrated Lenus intake: health context the coach knows, so the AI never suggests a food they
+  // cannot eat or an exercise their injury forbids.
+  health: {
+    goalType: string | null;
+    targetWeightKg: number | null;
+    injuries: string[] | null;
+    dietaryExclusions: string[] | null;
+    medicalConditions: string | null;
+  } | null;
   nutrition: { days: DayMacro[]; avgKcal: number | null; avgProteinG: number | null };
   workouts: WorkoutSummary;
   weight: WeightSummary;
@@ -215,8 +224,29 @@ export async function buildCoachContext(
     createdAt: m.created_at,
   }));
 
+  // Migrated Lenus intake (joined by profile_id from client_intake). Best-effort; null when absent.
+  const { data: intakeRow } = await sb
+    .from('client_intake')
+    .select('goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions')
+    .eq('profile_id', profileId)
+    .maybeSingle();
+  const ik = intakeRow as {
+    goal_type: string | null; target_weight_kg: number | string | null; injuries: string[] | null;
+    dietary_exclusions: string[] | null; medical_conditions: string | null;
+  } | null;
+  const health = ik
+    ? {
+        goalType: ik.goal_type,
+        targetWeightKg: ik.target_weight_kg != null ? Number(ik.target_weight_kg) : null,
+        injuries: ik.injuries,
+        dietaryExclusions: ik.dietary_exclusions,
+        medicalConditions: ik.medical_conditions,
+      }
+    : null;
+
   return {
     profile: { name: fullName, goal, locale, targets },
+    health,
     nutrition: { days, avgKcal, avgProteinG },
     workouts,
     weight,
@@ -260,6 +290,17 @@ export function renderContextBlock(ctx: CoachContext): string {
   if (ctx.profile.targets) {
     const t = ctx.profile.targets;
     lines.push(`${L.targets}: ${t.kcal} kcal, ${t.proteinG}g ${L.protein}, ${t.carbG}g carbs, ${t.fatG}g fat`);
+  }
+
+  // Migrated health context: HARD safety constraints the coach must respect in every reply.
+  if (ctx.health) {
+    const h = ctx.health;
+    if (h.dietaryExclusions && h.dietaryExclusions.length) {
+      lines.push((es ? 'NO RECOMENDAR estos alimentos (restriccion): ' : 'NEVER recommend these foods (restriction): ') + h.dietaryExclusions.join(', '));
+    }
+    if (h.medicalConditions) lines.push((es ? 'Condiciones medicas: ' : 'Medical conditions: ') + h.medicalConditions);
+    if (h.injuries && h.injuries.length) lines.push((es ? 'Lesiones/limitaciones: ' : 'Injuries/limitations: ') + h.injuries.join(', '));
+    if (h.targetWeightKg != null) lines.push((es ? 'Peso meta: ' : 'Target weight: ') + `${h.targetWeightKg}kg`);
   }
 
   if (ctx.nutrition.days.length) {

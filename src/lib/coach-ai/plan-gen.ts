@@ -147,6 +147,13 @@ type MemberContext = {
   firstName: string | null;
   latestWeightKg: number | null;
   topFoods: string[]; // what they actually eat + log, most-logged first
+  // From the migrated Lenus intake (client_intake): the coaching context that must shape the plan.
+  goalType: string | null;
+  targetWeightKg: number | null;
+  injuries: string[] | null;
+  dietaryExclusions: string[] | null;
+  medicalConditions: string | null;
+  trainingExperience: string | null;
 };
 
 // Pull the member's REAL data so the plan is personal, not generic: their name (the Dear-letter),
@@ -181,10 +188,30 @@ async function loadMemberContext(
   }
   const topFoods = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([n]) => n);
   const fullName = ((prof as { full_name: string | null } | null)?.full_name ?? '').trim();
+
+  // Migrated intake: joined via the contact this profile claimed. This is the health context (injuries,
+  // dietary exclusions, conditions, goal) the coach expects the plan to respect - now the AI sees it too.
+  const { data: intakeRow } = await sb
+    .from('client_intake')
+    .select('goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions, training_experience')
+    .eq('company_id', companyId)
+    .eq('profile_id', profileId)
+    .maybeSingle();
+  const ik = intakeRow as {
+    goal_type: string | null; target_weight_kg: number | string | null; injuries: string[] | null;
+    dietary_exclusions: string[] | null; medical_conditions: string | null; training_experience: string | null;
+  } | null;
+
   return {
     firstName: fullName ? fullName.split(/\s+/)[0] : null,
     latestWeightKg: w ? Number((w as { weight_kg: number }).weight_kg) : null,
     topFoods,
+    goalType: ik?.goal_type ?? null,
+    targetWeightKg: ik?.target_weight_kg != null ? Number(ik.target_weight_kg) : null,
+    injuries: ik?.injuries ?? null,
+    dietaryExclusions: ik?.dietary_exclusions ?? null,
+    medicalConditions: ik?.medical_conditions ?? null,
+    trainingExperience: ik?.training_experience ?? null,
   };
 }
 
@@ -202,12 +229,20 @@ function buildUserPrompt(
     `Member goal: ${goal ?? 'not set'}`,
     `Computed targets: ${targets ? JSON.stringify(targets) : 'not set'}`,
     `Latest logged weight (kg): ${member.latestWeightKg ?? 'none'}`,
+    member.targetWeightKg != null ? `Target weight (kg): ${member.targetWeightKg} (direction: ${member.goalType ?? 'unspecified'})` : '',
     `Foods this member already eats and logs (build around these first): ${member.topFoods.length ? member.topFoods.join(', ') : 'no logs yet'}`,
+    // Migrated health context: HARD constraints the plan must honor.
+    member.dietaryExclusions && member.dietaryExclusions.length
+      ? `MUST EXCLUDE these foods/ingredients (dietary restriction, do not include any): ${member.dietaryExclusions.join(', ')}`
+      : '',
+    member.medicalConditions ? `Medical conditions to respect: ${member.medicalConditions}` : '',
+    member.injuries && member.injuries.length ? `Injuries/limitations: ${member.injuries.join(', ')}` : '',
+    member.trainingExperience ? `Training background: ${member.trainingExperience.slice(0, 300)}` : '',
     `Intake answers: ${answers ? JSON.stringify(answers).slice(0, 2000) : 'none'}`,
     '',
     'Coaching method (ground the plan in this; empty means use general best practice):',
     knowledge || '(none provided yet)',
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 function parsePlan(raw: string): ParsedPlan | null {
