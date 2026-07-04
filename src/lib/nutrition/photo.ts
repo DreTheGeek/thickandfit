@@ -1,19 +1,11 @@
-// Photo-to-macro pipeline (the wedge). A meal photo becomes loggable, macro-scaled food rows:
-//   1. Gemini (via the lazy OpenRouter client) predicts [{ name, grams, confidence }] from the image.
-//   2. Each predicted name is matched to the shared public.foods corpus via FTS (ilike on search_text).
-//   3. cooked_uncooked_ratios + per-100g scaling produce real macros for the predicted grams.
-// No OPENROUTER_API_KEY => the route returns a clean "not configured" state. It never crashes.
+// Food-resolution layer: turn predicted items [{ name, grams, confidence }] into loggable, macro-scaled
+// food rows. Each predicted name is matched to the shared public.foods corpus via FTS (ilike on
+// search_text), then cooked_uncooked_ratios + per-100g scaling produce real macros for the predicted
+// grams. Shared by the text-to-macro pipeline; the photo path lives in smart-scan.ts. Never crashes.
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite, type MacroTotals } from '@/lib/nutrition/macros';
-import { AI_MODELS } from '@/lib/ai/models';
 import { groundFoodByName } from '@/lib/nutrition/external-foods';
-
-const apiKey = process.env.OPENROUTER_API_KEY;
-
-// The moat. Flagship vision (routed centrally) + the structured-context portion step below; the owner
-// will not sacrifice accuracy on photos. Portion estimation, not food ID, is the weak link to beat.
-const VISION_MODEL = AI_MODELS.photoMacro;
 
 export type PredictedItem = { name: string; grams: number; confidence: number; basis?: string };
 
@@ -35,91 +27,6 @@ export type PhotoResult =
   | { status: 'notConfigured' }
   | { status: 'noFood' }
   | { status: 'error' };
-
-function clampConfidence(n: unknown): number {
-  const v = typeof n === 'number' ? n : Number(n);
-  if (!Number.isFinite(v)) return 0.5;
-  return Math.min(1, Math.max(0, v));
-}
-
-function clampGrams(n: unknown): number {
-  const v = typeof n === 'number' ? n : Number(n);
-  if (!Number.isFinite(v) || v <= 0) return 100;
-  return Math.min(5000, Math.round(v));
-}
-
-// The STRUCTURED-CONTEXT portion step (the single highest-impact accuracy lever from the research:
-// roughly halves portion error, model-agnostic). Portion estimation, not food ID, is the weak link in
-// every nutrition app. Instead of letting the model guess grams directly, we force an explicit
-// reference -> area/volume -> density -> grams chain, and capture the reasoning so it can be audited
-// and graded by the eval. The scaffolding is what improves the number; the captured "basis" is the proof.
-const VISION_PROMPT = [
-  'You are a precise bilingual (English/Spanish) nutrition vision model for a fitness coaching app.',
-  'Accurate PORTION estimation is the hardest and most important part. Do NOT guess grams directly.',
-  'Reason through these steps for the image before answering:',
-  '1. SCALE: find a real-world size reference in the frame and state it. Typical sizes: dinner plate 26-28cm wide, salad/side plate ~20cm, dinner fork ~19cm long, soup spoon bowl ~4.5cm, soda can ~6.6cm wide x 12cm tall, smartphone ~14.7cm tall, a credit card 8.6cm. Pick the clearest one.',
-  '2. For EACH distinct food: estimate the area it covers relative to that reference and its average height/thickness, to get an approximate volume in milliliters.',
-  '3. Convert volume to edible weight in grams using the food\'s typical density (cooked rice/pasta ~0.8 g/mL, cooked meat/poultry/fish ~1.05 g/mL, dense stew/beans ~1.0 g/mL, leafy greens ~0.2 g/mL, bread ~0.3 g/mL, oils/butter ~0.92 g/mL, liquids ~1.0 g/mL).',
-  'Critical rules:',
-  '- Account for hidden cooking oil and butter: if a food looks pan-fried, sauteed, roasted, or glistening, add a separate "cooking oil" item with its estimated grams (a typical restaurant saute adds 7-15g of oil).',
-  '- State whether each item is cooked or raw in its name when it matters (for example "cooked white rice", "grilled chicken breast", "raw spinach").',
-  '- Use common, searchable food names, not brand names. Prefer the singular generic form (for example "chicken breast", not "Tyson chicken").',
-  'Return ONLY minified JSON of this exact shape, no prose, no markdown fences:',
-  '{"reference":string,"items":[{"name":string,"grams":number,"confidence":number,"basis":string}]}',
-  'reference = the size reference and its assumed real size you used for scale.',
-  'basis = a short note of your area/volume/density reasoning for that item (for example "covers ~half a 26cm plate, ~1.5cm deep, ~310mL rice @0.8 g/mL = ~250g").',
-  'confidence is 0 to 1. If you cannot identify any food, return {"reference":"","items":[]}.',
-].join('\n');
-
-// Calls the vision model and parses its prediction. Returns null on any failure (caller degrades).
-async function predictItems(image: string): Promise<PredictedItem[] | null> {
-  if (!apiKey) return null;
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(90_000),
-      body: JSON.stringify({
-        model: VISION_MODEL,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: VISION_PROMPT },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: 'Estimate the foods and their portions in grams for this meal photo. Use a size reference and show your area/volume/density basis for each item.' },
-              { type: 'image_url', image_url: { url: image } },
-            ],
-          },
-        ],
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      console.error(`photo predictItems HTTP ${res.status} (${VISION_MODEL}):`, body.slice(0, 400));
-      return null;
-    }
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const raw = json?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return null;
-    const cleaned = raw.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-    const parsed = JSON.parse(cleaned) as { items?: unknown };
-    if (!Array.isArray(parsed.items)) return null;
-    return parsed.items
-      .map((it): PredictedItem | null => {
-        if (!it || typeof it !== 'object') return null;
-        const o = it as Record<string, unknown>;
-        const name = typeof o.name === 'string' ? o.name.trim() : '';
-        if (!name) return null;
-        const basis = typeof o.basis === 'string' && o.basis.trim() ? o.basis.trim() : undefined;
-        return { name, grams: clampGrams(o.grams), confidence: clampConfidence(o.confidence), basis };
-      })
-      .filter((x): x is PredictedItem => x !== null)
-      .slice(0, 12);
-  } catch {
-    return null;
-  }
-}
 
 type FoodRaw = {
   id: string;
@@ -316,13 +223,4 @@ export async function resolvePredictedItems(
   );
 
   return { status: 'ok', candidates, totals };
-}
-
-// LEGACY, superseded by smart-scan.ts analyzeSmartPhoto (which classifies meal-vs-product and adds
-// label transcription). No live callers; kept for API compatibility until the next cleanup pass.
-// Deliberately NOT converted to the shared AI client: no risk budget on dead code.
-export async function analyzeMealPhoto(image: string, locale: string): Promise<PhotoResult> {
-  const items = await predictItems(image);
-  if (items === null) return apiKey ? { status: 'error' } : { status: 'notConfigured' };
-  return resolvePredictedItems(items, locale);
 }
