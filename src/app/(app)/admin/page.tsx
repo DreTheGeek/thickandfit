@@ -1,5 +1,6 @@
-// Operator portal: the QA/bug-test board + ops quick links. Operator-ONLY (requireOperator) so
-// Stephanie's coach view never grows ops clutter - her QA team signs in with operator accounts.
+// Operator portal: the QA/bug-test board + build-status board + ops quick links. Operator-ONLY
+// (requireOperator) AND passcode-walled (ADMIN_PASSCODE via hasAdminGateAccess) so Stephanie's coach
+// view never grows ops clutter and a stolen operator session alone cannot open the board.
 // Internal ops tool: English-only by design (the audience is the QA team, not members).
 import type { ReactElement } from 'react';
 import Link from 'next/link';
@@ -7,6 +8,8 @@ import { requireOperator } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { PageHeader } from '@/components/ui/page-header';
 import { QaChecklist, type QaItem } from '@/components/admin/qa-checklist';
+import { AdminPasscodeGate, TeamAccess } from '@/components/admin/admin-gate';
+import { hasAdminGateAccess } from '@/lib/admin/passcode';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,16 +32,26 @@ type Row = {
 
 export default async function AdminPage(): Promise<ReactElement> {
   const ctx = await requireOperator();
+
+  // Second factor: the shared admin passcode (30-day cookie). Operators without it see the wall.
+  if (!(await hasAdminGateAccess())) {
+    return <AdminPasscodeGate />;
+  }
+
   let items: QaItem[] = [];
+  let operators: { name: string; email: string }[] = [];
   if (ctx.companyId) {
     const svc = createServiceClient();
-    const { data } = await svc
-      .from('qa_checklist')
-      .select('id, category, title, detail, status, notes, checked_by')
-      .eq('company_id', ctx.companyId)
-      .order('category', { ascending: true })
-      .order('sort', { ascending: true })
-      .limit(500);
+    const [{ data }, { data: ops }] = await Promise.all([
+      svc
+        .from('qa_checklist')
+        .select('id, category, title, detail, status, notes, checked_by')
+        .eq('company_id', ctx.companyId)
+        .order('category', { ascending: true })
+        .order('sort', { ascending: true })
+        .limit(500),
+      svc.from('profiles').select('full_name, email').eq('company_id', ctx.companyId).eq('role', 'operator'),
+    ]);
     items = ((data ?? []) as Row[]).map((r) => ({
       id: r.id,
       category: r.category,
@@ -47,6 +60,10 @@ export default async function AdminPage(): Promise<ReactElement> {
       status: r.status,
       notes: r.notes,
       checkedBy: r.checked_by,
+    }));
+    operators = ((ops ?? []) as { full_name: string | null; email: string | null }[]).map((o) => ({
+      name: o.full_name ?? '',
+      email: o.email ?? '',
     }));
   }
 
@@ -67,6 +84,9 @@ export default async function AdminPage(): Promise<ReactElement> {
             {l.label}
           </Link>
         ))}
+      </div>
+      <div className="mb-6">
+        <TeamAccess operators={operators} />
       </div>
       {items.length === 0 ? (
         <p className="rounded-2xl border border-line p-6 text-center text-sm text-faint">
