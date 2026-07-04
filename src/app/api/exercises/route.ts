@@ -1,12 +1,13 @@
 // Exercise search (authed). Filters by name, muscle group, equipment, difficulty.
 // RLS scope applied manually (service client): shared system seed + this company's customs.
 import { resolveAuth } from '@/lib/auth/session';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+async function GET_h(req: Request) {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
 
@@ -39,3 +40,5 @@ export async function GET(req: Request) {
   const { data } = await query.order('name_en', { ascending: true }).limit(60);
   return apiSuccess({ exercises: data ?? [] });
 }
+
+export const GET = withApiLog(GET_h);

@@ -7,6 +7,7 @@
 // Key-gating: with no OPENROUTER_API_KEY it returns HTTP 200 { status: 'notConfigured' } and writes
 // nothing. It never crashes without the key. SCOPE: meal plans only (no workout-program gen).
 import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { apiError } from '@/lib/api/auth';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { generateMealPlan, type PlanLocale } from '@/lib/coach-ai/plan-gen';
@@ -22,7 +23,7 @@ const PlanRequest = z.object({
   locale: z.enum(['en', 'es']).optional(),
 });
 
-export async function POST(req: Request): Promise<Response> {
+async function POST_h(req: Request): Promise<Response> {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
@@ -70,3 +71,5 @@ export async function POST(req: Request): Promise<Response> {
     { status: 200 },
   );
 }
+
+export const POST = withApiLog(POST_h);

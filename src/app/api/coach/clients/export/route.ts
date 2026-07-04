@@ -1,12 +1,13 @@
 // GET /api/coach/clients/export -> CSV of every client contact in the coach's company. Coach-gated.
 import { NextResponse } from 'next/server';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { toCsv } from '@/lib/csv/csv';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(): Promise<Response> {
+async function GET_h(): Promise<Response> {
   const ctx = await requireCoach();
   if (!ctx.companyId) return NextResponse.json({ error: 'no_company' }, { status: 400 });
 
@@ -49,3 +50,5 @@ export async function GET(): Promise<Response> {
     },
   });
 }
+
+export const GET = withApiLog(GET_h);

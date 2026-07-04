@@ -2,12 +2,13 @@
 // Rate limited per IP because every accepted submission creates a GHL contact + sends a Resend email
 // (cost/spam/sender-reputation vector on an unauthenticated, pre-launch endpoint).
 import { apiSuccess, apiError } from '@/lib/api/auth';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { waitlistSchema, submitWaitlist } from '@/lib/marketing/waitlist';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request): Promise<Response> {
+async function POST_h(req: Request): Promise<Response> {
   if (!(await checkRateLimit(await clientIp(), 'waitlist', 5, 60))) {
     return apiError('Too many requests. Please try again in a minute.', 429);
   }
@@ -29,3 +30,5 @@ export async function POST(req: Request): Promise<Response> {
     return apiError('Could not join waitlist', 500);
   }
 }
+
+export const POST = withApiLog(POST_h);

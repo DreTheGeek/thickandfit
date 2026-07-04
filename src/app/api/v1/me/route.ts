@@ -1,11 +1,12 @@
 // Authenticated endpoint. Validates SHA-256 API key, returns the key's company scope.
 // Demonstrates AC-1 (auth + consistent shape) and AC-3 (usage logging with real status + latency).
 import { validateApiKey, bearerFrom, apiSuccess, apiError, logApiUsage } from '@/lib/api/auth';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+async function GET_h(req: Request) {
   const start = Date.now();
   const ctx = await validateApiKey(bearerFrom(req));
 
@@ -39,3 +40,5 @@ export async function GET(req: Request) {
 
   return apiSuccess({ company, api_key_id: ctx.apiKeyId });
 }
+
+export const GET = withApiLog(GET_h);

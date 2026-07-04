@@ -4,11 +4,12 @@
 // during which this warms the EXACT Lambda + primes the DB connection, so the real POST lands hot.
 // Does zero vision work (no accuracy impact); fire-and-forget from the client.
 import { createServiceClient } from '@/lib/supabase/service';
+import { withApiLog } from '@/lib/telemetry/request-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(): Promise<Response> {
+async function GET_h(): Promise<Response> {
   // Eagerly load the hot-path module + prime the Supabase connection this instance will reuse.
   void import('@/lib/nutrition/smart-scan');
   try {
@@ -18,3 +19,5 @@ export async function GET(): Promise<Response> {
   }
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } });
 }
+
+export const GET = withApiLog(GET_h);

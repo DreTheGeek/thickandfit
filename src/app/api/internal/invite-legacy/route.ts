@@ -6,6 +6,7 @@
 // requires an explicit dryRun:false AND a verified Resend domain AND RESEND_API_KEY.)
 // Auth: CRON_SECRET bearer (operator-run via curl/console, same trust as the other internal jobs).
 import { NextResponse, type NextRequest } from 'next/server';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
@@ -21,7 +22,7 @@ const Body = z
   })
   .strict();
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+async function POST_h(req: NextRequest): Promise<NextResponse> {
   const secret = process.env.CRON_SECRET;
   const auth = req.headers.get('authorization');
   if (!secret || !safeEqual(auth, `Bearer ${secret}`)) {
@@ -60,3 +61,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Return the summary + outcomes (operator reads this from the curl response).
   return NextResponse.json({ ok: true, ...result });
 }
+
+export const POST = withApiLog(POST_h);

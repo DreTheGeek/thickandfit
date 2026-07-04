@@ -1,5 +1,6 @@
 // Client submits a published, assigned form. POST { answers: { [fieldId]: value } }.
 import { z } from 'zod';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { resolveAuth } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { submitResponse } from '@/lib/forms/engine';
@@ -8,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const schema = z.object({ answers: z.record(z.string(), z.unknown()) });
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+async function POST_h(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
@@ -31,3 +32,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return apiError('Could not submit form', 400);
   }
 }
+
+export const POST = withApiLog(POST_h);

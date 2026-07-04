@@ -6,6 +6,7 @@
 // Key-gating: with no OPENROUTER_API_KEY set it returns HTTP 200 with a clean "not configured"
 // body ({ ok: false, status: 'notConfigured', message }). It never crashes without the key.
 import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { apiError } from '@/lib/api/auth';
 import { isEntitled } from '@/lib/billing/entitlement';
 import { checkRateLimit } from '@/lib/security/rate-limit';
@@ -15,7 +16,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-export async function POST(req: Request): Promise<Response> {
+async function POST_h(req: Request): Promise<Response> {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
@@ -63,3 +64,5 @@ export async function POST(req: Request): Promise<Response> {
     },
   });
 }
+
+export const POST = withApiLog(POST_h);

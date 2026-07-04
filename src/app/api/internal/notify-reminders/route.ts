@@ -4,6 +4,7 @@
 // "7pm in each user's zone" works off a single UTC-hourly cron. Logs each run to cron_job_log.
 // Mirrors generate-insights/route.ts. Never requires CRON_SECRET at import time (build-safe).
 import { NextResponse, type NextRequest } from 'next/server';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
 import { generateLocalTimeReminders } from '@/lib/notifications/generators';
@@ -32,10 +33,13 @@ async function run(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json(body, { status: result.ok ? 200 : 500 });
 }
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+async function GET_h(req: NextRequest): Promise<NextResponse> {
   return run(req);
 }
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+async function POST_h(req: NextRequest): Promise<NextResponse> {
   return run(req);
 }
+
+export const GET = withApiLog(GET_h);
+export const POST = withApiLog(POST_h);

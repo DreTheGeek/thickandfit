@@ -1,11 +1,12 @@
 // Save a form (coach). POST { title_en, title_es?, type?, fields:[...] }. Field order = array index.
 import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { saveFormSchema, saveForm } from '@/lib/forms/engine';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
+async function POST_h(req: Request) {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!hasRole(ctx.role, COACH_ROLES)) return apiError('Forbidden', 403);
@@ -23,3 +24,5 @@ export async function POST(req: Request) {
   const result = await saveForm(ctx.companyId, ctx.userId, parsed.data);
   return apiSuccess(result, 201);
 }
+
+export const POST = withApiLog(POST_h);

@@ -1,13 +1,14 @@
 // GET /api/account/export?type=food|weights -> CSV of the signed-in member's own logged data.
 // Data portability (GDPR/CCPA friendly) + lets a member keep their history. Owner-scoped.
 import { NextResponse } from 'next/server';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { requireAuth } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { toCsv } from '@/lib/csv/csv';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request): Promise<Response> {
+async function GET_h(req: Request): Promise<Response> {
   const ctx = await requireAuth();
   const type = new URL(req.url).searchParams.get('type') === 'weights' ? 'weights' : 'food';
   const svc = createServiceClient();
@@ -49,3 +50,5 @@ export async function GET(req: Request): Promise<Response> {
     },
   });
 }
+
+export const GET = withApiLog(GET_h);

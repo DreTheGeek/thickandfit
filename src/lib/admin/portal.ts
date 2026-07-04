@@ -105,6 +105,64 @@ export async function getKnowledge(companyId: string): Promise<{ sources: Knowle
   return { sources: [...map.values()].sort((a, b) => b.chunks - a.chunks), totalChunks: rows.length, embedded };
 }
 
+export type ApiAnalytics = {
+  totals: { requests: number; errors: number; error_rate: number; p95: number; p99: number; anon: number; auth_fail: number; public_hits: number };
+  volume: { day: string; requests: number; errors: number }[];
+  endpoints: { path: string; method: string; requests: number; error_rate: number; avg_ms: number }[];
+  latency: { path: string; requests: number; p50: number; p95: number; p99: number }[];
+  consumers: { email: string; requests: number; errors: number; last: string }[];
+  recent_errors: { ts: string; status: number; method: string; path: string; duration_ms: number | null; email: string; error: string | null }[];
+  rate_limits: { ts: string; path: string; email: string }[];
+};
+
+export async function getApiAnalytics(days = 30): Promise<ApiAnalytics | null> {
+  const sb = createServiceClient();
+  const { data, error } = await sb.rpc('api_analytics', { days });
+  if (error || !data) return null;
+  return data as ApiAnalytics;
+}
+
+export type Learning = {
+  knowledge: { chunks: number; sources: number; addedThisWeek: number; growth: { day: string; count: number }[] };
+  corrections: { total: number; last30: number; topFoods: { name: string; n: number }[] };
+  scans: { total: number; last7: number; withCorrection: number };
+  insights: { total: number; last7: number };
+};
+
+// The learning loop: knowledge growing, corrections teaching the food matcher, scans + insights.
+export async function getLearning(companyId: string): Promise<Learning> {
+  const sb = createServiceClient();
+  const wk = new Date(Date.now() - 7 * 86400000).toISOString();
+  const mo = new Date(Date.now() - 30 * 86400000).toISOString();
+  // Corrections = food_log rows the member re-portioned (corrected_at set) - the supervised signal that
+  // teaches portion estimation (the hardest problem). This is the AI's training data, growing per log.
+  const [{ data: kn }, { count: corrTotal }, { count: corr30 }, { data: corrRows }, { count: scanTotal }, { count: scan7 }, { count: insTotal }, { count: ins7 }] = await Promise.all([
+    sb.from('coach_knowledge').select('source_id, created_at').eq('company_id', companyId).limit(6000),
+    sb.from('food_log').select('id', { count: 'exact', head: true }).eq('company_id', companyId).not('corrected_at', 'is', null),
+    sb.from('food_log').select('id', { count: 'exact', head: true }).eq('company_id', companyId).not('corrected_at', 'is', null).gte('corrected_at', mo),
+    sb.from('food_log').select('name').eq('company_id', companyId).not('corrected_at', 'is', null).limit(2000),
+    sb.from('ai_inferences').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+    sb.from('ai_inferences').select('id', { count: 'exact', head: true }).eq('company_id', companyId).gte('created_at', wk),
+    sb.from('user_insights').select('id', { count: 'exact', head: true }),
+    sb.from('user_insights').select('id', { count: 'exact', head: true }).gte('created_at', wk),
+  ]);
+  const knRows = (kn ?? []) as { source_id: string; created_at: string }[];
+  const sources = new Set(knRows.map((k) => k.source_id)).size;
+  const addedThisWeek = knRows.filter((k) => k.created_at >= wk).length;
+  const byDay = new Map<string, number>();
+  for (const k of knRows) { const d = k.created_at.slice(0, 10); byDay.set(d, (byDay.get(d) ?? 0) + 1); }
+  const growth = [...byDay.entries()].sort().slice(-30).map(([day, count]) => ({ day, count }));
+  const foodCounts = new Map<string, number>();
+  for (const r of (corrRows ?? []) as { name: string | null }[]) { const n = (r.name ?? '').trim(); if (n) foodCounts.set(n, (foodCounts.get(n) ?? 0) + 1); }
+  const topFoods = [...foodCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, n]) => ({ name, n }));
+  return {
+    knowledge: { chunks: knRows.length, sources, addedThisWeek, growth },
+    corrections: { total: corrTotal ?? 0, last30: corr30 ?? 0, topFoods },
+    scans: { total: scanTotal ?? 0, last7: scan7 ?? 0, withCorrection: corrTotal ?? 0 },
+    insights: { total: insTotal ?? 0, last7: ins7 ?? 0 },
+  };
+}
+
 export type Overview = {
   members: number; clients: number; activeSubs: number; mrrCents: number;
   scans7d: number; openTickets: number; cronFails7d: number; connectionsMissing: number;

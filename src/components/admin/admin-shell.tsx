@@ -13,9 +13,11 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin', label: 'Overview', icon: 'grid' },
   { href: '/admin/health', label: 'System health', icon: 'pulse' },
   { href: '/admin/connections', label: 'Connections', icon: 'bolt' },
+  { href: '/admin/api', label: 'API analytics', icon: 'pulse' },
   { href: '/admin/usage', label: 'AI usage & spend', icon: 'sparkles' },
   { href: '/admin/status', label: 'Status & crons', icon: 'refresh' },
   { href: '/admin/support', label: 'Support tickets', icon: 'chat' },
+  { href: '/admin/learning', label: 'AI learning', icon: 'sparkles' },
   { href: '/admin/knowledge', label: 'Knowledge base', icon: 'book' },
   { href: '/admin/qa', label: 'Launch QA board', icon: 'clipboard' },
 ];

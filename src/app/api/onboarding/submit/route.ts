@@ -1,5 +1,6 @@
 // Onboarding submit: compute the prediction + targets, store one row per profile.
 import { z } from 'zod';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { cookies } from 'next/headers';
 import { resolveAuth } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
@@ -21,7 +22,7 @@ const submitSchema = onboardingInputSchema.extend({
   tier: z.enum(['self', 'team', 'steph']).optional(),
 });
 
-export async function POST(req: Request) {
+async function POST_h(req: Request) {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
@@ -68,3 +69,5 @@ export async function POST(req: Request) {
 
   return apiSuccess({ plan });
 }
+
+export const POST = withApiLog(POST_h);

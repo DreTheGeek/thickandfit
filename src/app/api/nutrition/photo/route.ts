@@ -3,6 +3,7 @@
 // runs the analyze pipeline, and returns confidence-scored candidates with scaled macros.
 // With no OPENROUTER_API_KEY set it returns { status: 'notConfigured' } and 200 — never crashes.
 import { z } from 'zod';
+import { withApiLog } from '@/lib/telemetry/request-log';
 import { after } from 'next/server';
 import { getLocale } from 'next-intl/server';
 import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
@@ -32,7 +33,7 @@ const Body = z
   })
   .strict();
 
-export async function POST(req: Request): Promise<Response> {
+async function POST_h(req: Request): Promise<Response> {
   const t0 = Date.now();
   // Parse the (large base64) body in parallel with the auth/entitlement DB round-trips instead of after
   // them, so the parse overlaps the serial pre-vision latency.
@@ -76,3 +77,5 @@ export async function POST(req: Request): Promise<Response> {
   }
   return apiSuccess(result);
 }
+
+export const POST = withApiLog(POST_h);
