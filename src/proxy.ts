@@ -8,7 +8,22 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { localeForCountry } from '@/lib/i18n/geo';
 
+// On the admin.<domain> host, only the admin portal + auth are reachable; everything else (all of
+// /coach and the member app) redirects to /admin, so the ops surface is fully isolated.
+const ADMIN_ALLOW = [/^\/admin(\/|$)/, /^\/auth\//];
+
 export async function proxy(req: NextRequest): Promise<NextResponse> {
+  const host = (req.headers.get('host') || '').toLowerCase();
+  if (host.startsWith('admin.')) {
+    const { pathname } = req.nextUrl;
+    if (!ADMIN_ALLOW.some((re) => re.test(pathname))) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/admin';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+  }
+
   let res = NextResponse.next({ request: req });
 
   const supabase = createServerClient(

@@ -18,8 +18,8 @@ export function CoachShell({ children, bell }: { children: ReactNode; bell?: Rea
 
   return (
     <div className="flex min-h-screen bg-bg text-ink">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r border-line bg-surface lg:block">
+      {/* Desktop sidebar: viewport-height + sticky so the nav scrolls internally and Sign out stays pinned. */}
+      <aside className="hidden w-64 shrink-0 border-r border-line bg-surface lg:sticky lg:top-0 lg:block lg:h-screen">
         <CoachNav />
       </aside>
 
