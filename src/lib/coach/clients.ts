@@ -270,6 +270,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     source: string | null;
     legacy_source: string | null;
     lenus_id: string | null;
+    profile_id: string | null;
     client_subscriptions: FullSub | FullSub[] | null;
     legacy_client_snapshot: Snap | Snap[] | null;
     contact_tags: TagJoinRaw[] | null;
@@ -493,5 +494,6 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     progress,
     messages,
     totalMessages: totalMessages ?? 0,
+    hasAccount: raw.profile_id != null,
   };
 }

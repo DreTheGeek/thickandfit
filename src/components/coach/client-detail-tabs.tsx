@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { formatCents } from '@/components/coach/money';
+import { ClientReplyBox } from '@/components/messages/client-reply-box';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
 type Tab = 'overview' | 'health' | 'messages' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
@@ -63,7 +64,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
   const options: TabOption<Tab>[] = [
     { value: 'overview', label: t('tabOverview') },
     ...(hasHealth ? [{ value: 'health' as Tab, label: t('tabHealth') }] : []),
-    ...(detail.totalMessages > 0 ? [{ value: 'messages' as Tab, label: `${t('tabMessages')} (${detail.totalMessages})` }] : []),
+    { value: 'messages' as Tab, label: detail.totalMessages > 0 ? `${t('tabMessages')} (${detail.totalMessages})` : t('tabMessages') },
     { value: 'billing', label: t('tabBilling') },
     { value: 'payments', label: t('tabPayments') },
     { value: 'nutrition', label: t('tabNutrition') },
@@ -214,6 +215,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
 
       {tab === 'messages' && (
         <div className="flex flex-col gap-3">
+          <ClientReplyBox contactId={detail.id} name={detail.name} hasAccount={detail.hasAccount} />
           {detail.totalMessages > detail.messages.length && (
             <p className="rounded-xl border border-line bg-warm/40 px-4 py-2.5 text-center text-[12px] text-muted">
               {t('messagesShowingRecent', { shown: detail.messages.length, total: detail.totalMessages })}

@@ -3,6 +3,7 @@
 import { useRef, useState, type ReactElement } from 'react';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
+import { ClientsDataTools } from '@/components/coach/clients-data-tools';
 import { useClientFilterUrl } from '@/components/coach/use-client-filters';
 import { buildActiveChips } from '@/components/coach/client-labels';
 import { SaveSegmentDialog } from '@/components/coach/save-segment-dialog';
@@ -64,6 +65,8 @@ export function ClientsToolbar({
         >
           <Icon name="bookmark" size={14} /> {t('saveSmartList')}
         </button>
+
+        <ClientsDataTools />
       </div>
 
       {chips.length > 0 && (

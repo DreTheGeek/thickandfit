@@ -167,6 +167,7 @@ export type ClientDetail = {
   // Migrated coach<->client conversation history (most recent first). totalMessages is the full count.
   messages: ClientMessage[];
   totalMessages: number;
+  hasAccount: boolean; // client has claimed an app profile (messages go in-app vs by email)
 };
 
 export type ClientMessage = {

@@ -130,13 +130,15 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
             <Tag outlined={false}>{data.locale === 'es' ? t('spanish') : t('english')}</Tag>
             {data.legacy && <Badge variant="legacy">{t('legacy')}</Badge>}
           </div>
-          <Link
-            href={`/coach/inbox?c=${data.id}`}
-            className="tf-press mt-3 inline-flex items-center gap-1.5 border border-ink bg-ink px-3.5 py-2 text-[12px] font-semibold uppercase tracking-[1px] text-bg"
-          >
-            <Icon name="chat" size={14} />
-            {t('messageClient')}
-          </Link>
+          {data.contactId && (
+            <Link
+              href={`/coach/inbox?c=${data.contactId}`}
+              className="tf-press mt-3 inline-flex items-center gap-1.5 border border-ink bg-ink px-3.5 py-2 text-[12px] font-semibold uppercase tracking-[1px] text-bg"
+            >
+              <Icon name="chat" size={14} />
+              {t('messageClient')}
+            </Link>
+          )}
         </div>
         <div className="flex shrink-0 border border-divider">
           <Stat value={String(data.workouts)} label={t('stat_workouts')} divider />

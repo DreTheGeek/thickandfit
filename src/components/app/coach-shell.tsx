@@ -12,7 +12,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
  * - lg+ : fixed left sidebar.
  * - < lg: top bar with a hamburger that opens a slide-in drawer.
  */
-export function CoachShell({ children }: { children: ReactNode }): ReactElement {
+export function CoachShell({ children, bell }: { children: ReactNode; bell?: ReactNode }): ReactElement {
   const [open, setOpen] = useState(false);
   const c = useTranslations('app.common');
 
@@ -30,6 +30,7 @@ export function CoachShell({ children }: { children: ReactNode }): ReactElement 
             <CoachTopWordmark />
           </div>
           <div className="ml-auto flex items-center gap-3">
+            {bell}
             <ThemeToggle />
             <button
               type="button"
