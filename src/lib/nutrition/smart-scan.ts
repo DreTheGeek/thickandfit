@@ -180,6 +180,9 @@ export async function analyzeSmartPhoto(
       providerSort: 'latency',
       reasoningEffort: 'low',
       messages,
+      // Provenance is deferred (enriched + logged after resolve), so label the trace explicitly here
+      // or the scan - the moat surface - aggregates under 'unknown' on /admin/traces.
+      traceFeature: 'photo-scan',
     });
     if (call.status === 'notConfigured') return { status: 'notConfigured' };
     if (call.status !== 'ok') return { status: 'error' };

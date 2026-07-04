@@ -65,6 +65,7 @@ async function translateBatch(rows: EsFillRow[]): Promise<EsFillDraft[] | null> 
     const res = await callJson({
       models: [AI_MODELS.esFill],
       timeoutMs: 60_000,
+      traceFeature: 'es-fill',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: JSON.stringify({ items: payload }) },

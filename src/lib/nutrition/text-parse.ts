@@ -69,6 +69,8 @@ export async function analyzeMealText(
   const call = await callJson({
     models: [AI_MODELS.textMacro],
     timeoutMs: 30_000, // previously unbounded; a hung provider now fails cleanly
+    traceFeature: 'text-macro', // else it aggregates under 'unknown' on /admin/traces
+    ...(ctx ? { companyId: ctx.companyId, profileId: ctx.profileId } : {}),
     messages: [
       { role: 'system', content: PARSE_PROMPT },
       { role: 'user', content: text },

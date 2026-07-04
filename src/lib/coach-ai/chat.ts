@@ -242,12 +242,13 @@ export async function streamChat(
       try {
         const { done, value } = await reader.read();
         if (done) {
-          // Persist the assembled assistant reply (fire-and-forget; do not block the close).
+          // AWAIT the persist BEFORE closing: the client already has every streamed delta, so a few
+          // ms here costs nothing, but a bare void would die with the frozen lambda after close and
+          // silently drop the coach's reply from coach_messages. Never blocks the user-visible stream.
           if (assistantText.trim()) {
-            void persistMessage(companyId, profileId, 'assistant', assistantText.trim());
-            // Provenance for the turn (fire-and-forget, off the stream's hot path). rawOutput is
-            // bounded; full history lives in coach_messages.
-            void logInference({
+            await persistMessage(companyId, profileId, 'assistant', assistantText.trim());
+            // Provenance for the turn. rawOutput bounded; full history lives in coach_messages.
+            await logInference({
               companyId,
               profileId,
               feature: 'coach-chat',
@@ -285,9 +286,10 @@ export async function streamChat(
           }
         }
       } catch {
-        // Upstream read failure: persist whatever we have, then end the stream cleanly.
+        // Upstream read failure: persist whatever we have (awaited, so it survives the lambda),
+        // then end the stream cleanly.
         if (assistantText.trim()) {
-          void persistMessage(companyId, profileId, 'assistant', assistantText.trim());
+          await persistMessage(companyId, profileId, 'assistant', assistantText.trim());
         }
         controller.close();
       }

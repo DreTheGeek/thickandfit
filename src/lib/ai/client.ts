@@ -48,9 +48,12 @@ export type AiJsonOptions = {
   provenance?: ProvenanceContext;
   // Observability: a stable label when there is no provenance (provenance.feature wins if present),
   // an optional turn id to stitch multi-call agent turns, and how many RAG docs fed this call.
+  // companyId/profileId let a provenance-less caller still tag the trace's tenant + member.
   traceFeature?: string;
   correlationId?: string;
   retrievalCount?: number;
+  companyId?: string;
+  profileId?: string | null;
 };
 
 export type AiJsonResult =
@@ -86,8 +89,8 @@ function lenientParse(content: string): unknown {
 
 export async function callJson(opts: AiJsonOptions): Promise<AiJsonResult> {
   const feature = opts.provenance?.feature ?? opts.traceFeature ?? 'unknown';
-  const companyId = opts.provenance?.companyId ?? null;
-  const profileId = opts.provenance?.profileId ?? null;
+  const companyId = opts.provenance?.companyId ?? opts.companyId ?? null;
+  const profileId = opts.provenance?.profileId ?? opts.profileId ?? null;
   const trace = (
     status: 'ok' | 'error' | 'notConfigured',
     extra: Partial<Parameters<typeof logAiTrace>[0]>,

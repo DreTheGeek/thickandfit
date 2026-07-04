@@ -237,7 +237,7 @@ export async function getTraces(limit = 60): Promise<Traces> {
   const [{ data: agg }, { data: recent }, { data: errs }, { count: total }, { count: last24h }] = await Promise.all([
     sb.from('ai_trace').select('feature, status, latency_ms').gte('ts', new Date(Date.now() - 7 * 86400000).toISOString()).limit(20000),
     sb.from('ai_trace').select('id, ts, feature, operation, model, status, latency_ms, prompt_tokens, completion_tokens, retrieval_count, input_preview, output_preview, error').order('ts', { ascending: false }).limit(limit),
-    sb.from('ai_trace').select('id, ts, feature, operation, model, status, latency_ms, prompt_tokens, completion_tokens, retrieval_count, input_preview, output_preview, error').neq('status', 'ok').order('ts', { ascending: false }).limit(25),
+    sb.from('ai_trace').select('id, ts, feature, operation, model, status, latency_ms, prompt_tokens, completion_tokens, retrieval_count, input_preview, output_preview, error').eq('status', 'error').order('ts', { ascending: false }).limit(25),
     sb.from('ai_trace').select('id', { count: 'exact', head: true }),
     sb.from('ai_trace').select('id', { count: 'exact', head: true }).gte('ts', since24),
   ]);
@@ -247,7 +247,8 @@ export async function getTraces(limit = 60): Promise<Traces> {
   for (const r of rows) {
     const m = map.get(r.feature) ?? { calls: 0, errors: 0, latSum: 0, latN: 0 };
     m.calls += 1;
-    if (r.status !== 'ok') { m.errors += 1; errors += 1; }
+    // Only 'error' is a failure. 'notConfigured' is a benign key-gated no-op and must not inflate the error rate.
+    if (r.status === 'error') { m.errors += 1; errors += 1; }
     if (typeof r.latency_ms === 'number') { m.latSum += r.latency_ms; m.latN += 1; latSum += r.latency_ms; latN += 1; }
     map.set(r.feature, m);
   }

@@ -29,7 +29,9 @@ export function logAiTrace(t: AiTrace): void {
     try {
       const svc = createServiceClient();
       await svc.from('ai_trace').insert({
-        company_id: t.companyId ?? null,
+        // company_id is NOT NULL with a single-tenant default; OMIT it when unknown (embeds, eval
+        // traces) so the column default applies instead of a null that would reject the insert.
+        ...(t.companyId ? { company_id: t.companyId } : {}),
         profile_id: t.profileId ?? null,
         feature: t.feature,
         operation: t.operation,

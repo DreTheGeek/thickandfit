@@ -16,6 +16,7 @@ export async function explainRecommendation(
     models: [AI_MODELS.overloadExplain],
     responseFormat: 'text',
     timeoutMs: 20_000,
+    traceFeature: 'overload-explain',
     messages: [
       {
         role: 'system',
