@@ -27,11 +27,14 @@ async function GET_h(req: NextRequest): Promise<NextResponse> {
   })); // survive the frozen lambda so the run is actually logged
 
   // Maintenance, folded into this daily cron to stay under the Hobby 2-cron cap: prune rate_limit_log
-  // rows older than an hour (limiter windows are <= 60s, so anything older is dead weight).
-  void sb
-    .from('rate_limit_log')
-    .delete()
-    .lt('hit_at', new Date(Date.now() - 3_600_000).toISOString());
+  // rows older than an hour (limiter windows are <= 60s, so anything older is dead weight). after() so
+  // the DELETE is actually dispatched + completes before the lambda freezes (a bare void could drop it).
+  after(async () => {
+    await sb
+      .from('rate_limit_log')
+      .delete()
+      .lt('hit_at', new Date(Date.now() - 3_600_000).toISOString());
+  });
 
   // The full result (including any raw upstream error string) is persisted to cron_job_log.detail
   // above; don't echo the raw error back in the HTTP response.
