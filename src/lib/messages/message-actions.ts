@@ -104,19 +104,3 @@ export async function sendMessageAction(targetClientId: unknown, body: unknown):
   revalidatePath('/messages');
   return { ok: true };
 }
-
-// Coach marks a client's unread (client-sent) messages as read.
-export async function markThreadReadAction(clientId: unknown): Promise<MsgResult> {
-  const parsed = z.string().uuid().safeParse(clientId);
-  if (!parsed.success) return { ok: false, error: 'invalid' };
-  const ctx = await requireAuth();
-  if (!hasRole(ctx.role, COACH_ROLES)) return { ok: false, error: 'forbidden' };
-  const sb = await createClient();
-  await sb
-    .from('messages')
-    .update({ read_at: new Date().toISOString() })
-    .eq('client_id', parsed.data)
-    .eq('sender_id', parsed.data)
-    .is('read_at', null);
-  return { ok: true };
-}
