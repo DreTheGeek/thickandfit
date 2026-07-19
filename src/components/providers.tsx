@@ -9,9 +9,15 @@ import { ThemeProvider } from 'next-themes';
  * available via the toggle but we do NOT auto-follow the OS (no enableSystem) so the app matches
  * the handoff out of the box.
  */
-export function Providers({ children }: { children: ReactNode }): ReactElement {
+export function Providers({
+  children,
+  nonce,
+}: {
+  children: ReactNode;
+  nonce?: string;
+}): ReactElement {
   return (
-    <ThemeProvider attribute="data-theme" defaultTheme="light" disableTransitionOnChange>
+    <ThemeProvider attribute="data-theme" defaultTheme="light" disableTransitionOnChange nonce={nonce}>
       {children}
     </ThemeProvider>
   );

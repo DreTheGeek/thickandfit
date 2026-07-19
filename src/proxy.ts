@@ -12,6 +12,27 @@ import { localeForCountry } from '@/lib/i18n/geo';
 // /coach and the member app) redirects to /admin, so the ops surface is fully isolated.
 const ADMIN_ALLOW = [/^\/admin(\/|$)/, /^\/auth\//];
 
+// Per-request CSP with a script nonce (Next.js reads it from the request CSP header during SSR and
+// stamps it onto every framework + app inline script). script-src is now nonce + strict-dynamic
+// instead of 'unsafe-inline', which is the XSS-relevant hardening. style-src keeps 'unsafe-inline':
+// the app renders React inline styles (Framer Motion, dynamic sizing) that a strict style policy
+// would break, and injected styles are a far weaker XSS vector than scripts.
+function buildCsp(nonce: string, isDev: boolean): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''} https://*.mux.com https://*.posthog.com`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    // data: for the landing page's base64-embedded webfonts (lifted Webflow CSS).
+    "font-src 'self' data:",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.r2.dev https://*.mux.com https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    'upgrade-insecure-requests',
+  ].join('; ');
+}
+
 export async function proxy(req: NextRequest): Promise<NextResponse> {
   const host = (req.headers.get('host') || '').toLowerCase();
   if (host.startsWith('admin.')) {
@@ -24,7 +45,14 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     }
   }
 
-  let res = NextResponse.next({ request: req });
+  // Fresh nonce per request, exposed to the render via x-nonce and enforced via the CSP header.
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const csp = buildCsp(nonce, process.env.NODE_ENV !== 'production');
+  const reqHeaders = new Headers(req.headers);
+  reqHeaders.set('x-nonce', nonce);
+  reqHeaders.set('Content-Security-Policy', csp);
+
+  let res = NextResponse.next({ request: { headers: reqHeaders } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,7 +64,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
-          res = NextResponse.next({ request: req });
+          res = NextResponse.next({ request: { headers: reqHeaders } });
           cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
         },
       },
@@ -55,6 +83,8 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     });
   }
 
+  // The response carries the same CSP the render was nonced against.
+  res.headers.set('Content-Security-Policy', csp);
   return res;
 }
 
