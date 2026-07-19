@@ -6,6 +6,7 @@ import { resolveAuth } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { onboardingInputSchema, computePlan } from '@/lib/onboarding/prediction';
 import { createServiceClient } from '@/lib/supabase/service';
+import { ensureCrmContact } from '@/lib/crm/ensure-contact';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,6 +60,22 @@ async function POST_h(req: Request) {
     profileUpdate.content_locale = parsed.data.language;
   }
   await supabase.from('profiles').update(profileUpdate).eq('id', ctx.userId);
+
+  // Surface the new member in the Clients CRM. Signup alone never wrote a contacts row, so app
+  // members were invisible at /coach/clients. Best-effort: a CRM failure must not fail onboarding.
+  if (ctx.role === 'subscriber' || ctx.role === 'free') {
+    try {
+      await ensureCrmContact({
+        profileId: ctx.userId,
+        companyId: ctx.companyId,
+        firstName: parsed.data.firstName,
+        lastName: parsed.data.lastName,
+        language: parsed.data.language ?? null,
+      });
+    } catch (e) {
+      console.error('onboarding ensureCrmContact:', e instanceof Error ? e.message : e);
+    }
+  }
 
   // Apply the chosen language immediately via cookies so the dashboard loads in it.
   if (parsed.data.language) {
