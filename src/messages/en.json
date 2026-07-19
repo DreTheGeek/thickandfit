@@ -79,6 +79,8 @@
       "composerPlaceholder": "Share a win, ask a question, or hype the crew...",
       "post": "Post",
       "posting": "Posting...",
+      "deletePost": "Delete post",
+      "deleteConfirm": "Delete this post? This can't be undone.",
       "addPhoto": "Photo",
       "removePhoto": "Remove photo",
       "notImage": "Please choose an image.",

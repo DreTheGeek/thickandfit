@@ -79,6 +79,8 @@
       "composerPlaceholder": "Comparte un logro, haz una pregunta o anima al equipo...",
       "post": "Publicar",
       "posting": "Publicando...",
+      "deletePost": "Eliminar publicación",
+      "deleteConfirm": "¿Eliminar esta publicación? No se puede deshacer.",
       "addPhoto": "Foto",
       "removePhoto": "Quitar foto",
       "notImage": "Elige una imagen.",

@@ -2,9 +2,11 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { COACH_ROLES } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { getComments } from '@/lib/community/feed';
 import { REACTION_EMOJIS, type FeedComment } from '@/lib/community/types';
 import { notifyBroadcast } from '@/lib/notifications/triggers';
@@ -61,6 +63,49 @@ export async function createPostAction(input: unknown): Promise<CommunityResult>
     }).then(undefined, (e: unknown) =>
       console.error('createPostAction notifyBroadcast:', e instanceof Error ? e.message : e),
     );
+  }
+
+  revalidatePath('/community');
+  return { ok: true };
+}
+
+// Delete a post: authorization lives in RLS (community_posts_delete allows the author OR a coach),
+// so the delete runs through the RLS-bound client and a non-owner simply deletes zero rows.
+// Comments and reactions cascade at the DB. The attached image is removed after the row delete
+// succeeds, via after() so the cleanup survives the frozen lambda and never blocks the response.
+export async function deletePostAction(postId: unknown): Promise<CommunityResult> {
+  const parsed = z.string().uuid().safeParse(postId);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireAuth();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+  const sb = await createClient();
+
+  const { data: post } = await sb
+    .from('community_posts')
+    .select('id, media_url')
+    .eq('id', parsed.data)
+    .maybeSingle();
+  if (!post) return { ok: false, error: 'not_found' };
+
+  const { error, count } = await sb
+    .from('community_posts')
+    .delete({ count: 'exact' })
+    .eq('id', parsed.data);
+  if (error) {
+    console.error('deletePostAction:', error.message);
+    return { ok: false, error: 'delete_failed' };
+  }
+  if (!count) return { ok: false, error: 'not_allowed' }; // RLS filtered it: not the author, not a coach
+
+  const mediaUrl = (post as { media_url: string | null }).media_url;
+  const marker = '/community-media/';
+  const idx = mediaUrl ? mediaUrl.indexOf(marker) : -1;
+  if (mediaUrl && idx !== -1) {
+    const path = decodeURIComponent(mediaUrl.slice(idx + marker.length));
+    after(async () => {
+      const { error: rmErr } = await createServiceClient().storage.from('community-media').remove([path]);
+      if (rmErr) console.error('deletePostAction media cleanup:', rmErr.message);
+    });
   }
 
   revalidatePath('/community');

@@ -18,6 +18,7 @@ import {
 import {
   addCommentAction,
   createPostAction,
+  deletePostAction,
   fetchCommentsAction,
   joinChallengeAction,
   toggleReactionAction,
@@ -310,7 +311,37 @@ function Comments({ postId, count }: { postId: string; count: number }): ReactEl
   );
 }
 
-function PostCard({ post }: { post: FeedPost }): ReactElement {
+function DeleteButton({ postId, dark }: { postId: string; dark?: boolean }): ReactElement {
+  const t = useTranslations('app.community');
+  const router = useRouter();
+  const [pending, start] = useTransition();
+
+  function remove(): void {
+    if (pending) return;
+    if (!window.confirm(t('deleteConfirm'))) return;
+    start(async () => {
+      const res = await deletePostAction(postId);
+      if (res.ok) router.refresh();
+    });
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={remove}
+      disabled={pending}
+      aria-label={t('deletePost')}
+      className={[
+        'tf-press ml-auto shrink-0 rounded-full p-2 transition-colors disabled:opacity-40',
+        dark ? 'text-bg/55 hover:text-bg' : 'text-faint hover:text-ink',
+      ].join(' ')}
+    >
+      <Icon name="trash" size={16} />
+    </button>
+  );
+}
+
+function PostCard({ post, canDelete }: { post: FeedPost; canDelete: boolean }): ReactElement {
   const locale = useLocale();
   const t = useTranslations('app.community');
   return (
@@ -324,6 +355,7 @@ function PostCard({ post }: { post: FeedPost }): ReactElement {
           </div>
           <span className="text-[12px] text-faint">{relativeTime(post.createdAt, locale)}</span>
         </div>
+        {canDelete ? <DeleteButton postId={post.id} /> : null}
       </div>
       <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-soft">{post.body}</p>
       {post.mediaUrl ? (
@@ -338,14 +370,15 @@ function PostCard({ post }: { post: FeedPost }): ReactElement {
   );
 }
 
-function Broadcast({ post }: { post: FeedPost }): ReactElement {
+function Broadcast({ post, canDelete }: { post: FeedPost; canDelete: boolean }): ReactElement {
   const t = useTranslations('app.community');
   const locale = useLocale();
   return (
     <Card dark className="p-5">
-      <div className="mb-2 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
+      <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
         <Icon name="megaphone" size={14} />
         {t('coachBroadcast')}
+        {canDelete ? <DeleteButton postId={post.id} dark /> : null}
       </div>
       <div className="mb-3 flex items-center gap-3">
         <Avatar initials={post.author.initials} size={36} tone="warm" />
@@ -392,7 +425,12 @@ export function CommunityFeed({
 
       <Composer canBroadcast={canBroadcast} viewerId={viewerId} />
 
-      {data.broadcast ? <Broadcast post={data.broadcast} /> : null}
+      {data.broadcast ? (
+        <Broadcast
+          post={data.broadcast}
+          canDelete={canBroadcast || data.broadcast.author.id === viewerId}
+        />
+      ) : null}
 
       {empty ? (
         <Card className="p-8 text-center">
@@ -400,7 +438,9 @@ export function CommunityFeed({
           <p className="mt-1 text-[13px] text-muted">{t('emptyBody')}</p>
         </Card>
       ) : (
-        data.posts.map((p) => <PostCard key={p.id} post={p} />)
+        data.posts.map((p) => (
+          <PostCard key={p.id} post={p} canDelete={canBroadcast || p.author.id === viewerId} />
+        ))
       )}
     </div>
   );

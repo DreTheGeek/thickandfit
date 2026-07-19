@@ -120,6 +120,12 @@ const PATHS = {
     </>
   ),
   menu: <path d="M3 6h18M3 12h18M3 18h18" />,
+  trash: (
+    <>
+      <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M10 11v6M14 11v6" />
+    </>
+  ),
   bolt: <path d="M13 3 5 13h6l-1 8 8-11h-6z" />,
   megaphone: (
     <>
