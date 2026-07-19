@@ -1,0 +1,224 @@
+{
+  "category": "saas/dashboard",
+  "steal": [
+    {
+      "title": "Fewest-taps logging + human-verified food data (MacroFactor)",
+      "impact": "high",
+      "effort": "med",
+      "note": "Match MacroFactor's ~50% fewer taps and human-vetted entries to kill the category's #1 friction and the duplicate-entry problem",
+      "source": "macrofactor.com/fastest-food-logger-2025"
+    },
+    {
+      "title": "Snap-first onboarding (Cal AI UX, not its billing)",
+      "impact": "high",
+      "effort": "med",
+      "note": "Adopt the frictionless 'just take a photo' first-run; reject the hidden pricing that got Cal AI pulled from the App Store",
+      "source": "techcrunch.com 2026-03"
+    },
+    {
+      "title": "Streaks with grace days (Duolingo)",
+      "impact": "high",
+      "effort": "low",
+      "note": "Streak shields lifted long-term retention; pairs with a daily nutrition log or workout check-in",
+      "source": "routyne.fit/blog/streak-based-fitness"
+    },
+    {
+      "title": "Creator monetization track (Trainerize)",
+      "impact": "med",
+      "effort": "high",
+      "note": "On-demand + phased programs, membership bundles, challenges as digital products in her brand",
+      "source": "trainerize.com/creators-influencers"
+    },
+    {
+      "title": "Automated onboarding + at-risk flows (Everfit Autoflow)",
+      "impact": "high",
+      "effort": "med",
+      "note": "Scheduled onboarding sequences and re-engagement triggers",
+      "source": "help.everfit.io/en/articles/3661707"
+    },
+    {
+      "title": "15-min re-engagement workouts + before/after sharing (Sweat)",
+      "impact": "med",
+      "effort": "med",
+      "note": "Short workouts win back lapsed users; before/after community sharing is the belief loop that built a $100M app",
+      "source": "techaheadcorp.com"
+    },
+    {
+      "title": "Founding-member launch cohort",
+      "impact": "high",
+      "effort": "low",
+      "note": "500-spot locked-price cohort to the 256 existing clients + waitlist; seeds the community with believers",
+      "source": "membership.io/blog/founding-member-pricing"
+    },
+    {
+      "title": "Country-filterable Latin food DB + cooked/raw toggle (Fitia)",
+      "impact": "high",
+      "effort": "high",
+      "note": "Match Fitia's LATAM food depth and native raw/cooked toggle, wrapped in Steph's voice",
+      "source": "fitia.app/learn/article/how-to-weigh-food-raw-or-cooked"
+    }
+  ],
+  "whitespace": [
+    {
+      "title": "Creator-led bilingual full-stack for Latina women",
+      "impact": "high",
+      "effort": "high",
+      "note": "The intersection nobody owns: Fitia owns faceless bilingual nutrition, Peloton owns bilingual mass classes; no one fuses accurate bilingual nutrition with a trusted creator relationship",
+      "source": "jpost.com/business-and-innovation/article-898750"
+    },
+    {
+      "title": "Photo portion + cooked/raw accuracy on Latin home cooking",
+      "impact": "high",
+      "effort": "high",
+      "note": "Every photo app trains on Western stock food; Sydney 2024 found beef pho +49%, milk tea -76%; even Fitia's photo layer is soft",
+      "source": "sydney.edu.au/news-opinion/news/2024/08/29"
+    },
+    {
+      "title": "Retention/churn intelligence in the creator's voice",
+      "impact": "high",
+      "effort": "med",
+      "note": "Auto at-risk detection at the 90-day cliff and <3-workouts-in-14-days signal; re-engage in her voice - absent across all platforms",
+      "source": "retentioncheck.com/churn-benchmarks/fitness-apps"
+    },
+    {
+      "title": "Health-mission framing (Hispanic disparities)",
+      "impact": "med",
+      "effort": "low",
+      "note": "Highest obesity prevalence + 32.1% inactivity among US Hispanics; culturally-tailored Spanish interventions proven effective - differentiation, press, and retention",
+      "source": "pmc.ncbi.nlm.nih.gov/articles/PMC5362335"
+    }
+  ],
+  "prioritize": [
+    {
+      "title": "Tune photo-to-macro for Latin home cooking",
+      "impact": "high",
+      "effort": "med",
+      "note": "Surface cooked/raw prominently; the 'understands your abuela's cooking' wedge no photo app has solved",
+      "source": "sydney.edu.au 2024"
+    },
+    {
+      "title": "Churn intelligence: 90-day cliff + 14-day workout signal",
+      "impact": "high",
+      "effort": "med",
+      "note": "Extend the existing /coach/intelligence surface to flag at-risk members and trigger re-engagement",
+      "source": "communipass.com"
+    },
+    {
+      "title": "Recurring cohort challenges + leaderboard + finisher recognition",
+      "impact": "high",
+      "effort": "med",
+      "note": "30-60% engagement lift, native to how she coaches",
+      "source": "socialengine.com"
+    },
+    {
+      "title": "Reposition nutrition as 'Steph's method, automated'",
+      "impact": "high",
+      "effort": "low",
+      "note": "Out-trust Fitia, do not out-tech it; her method + her voice is the authenticity wedge",
+      "source": "fitia.app"
+    },
+    {
+      "title": "MyFitnessPal import + barcode + fast logging",
+      "impact": "med",
+      "effort": "med",
+      "note": "Neutralize the #1 friction; MFP import is table stakes among coaching platforms",
+      "source": "macrofactor.com"
+    }
+  ],
+  "quickWins": [
+    {
+      "title": "Anti-chargeback trio: brand descriptor + trial-ending reminder + one-click cancel",
+      "impact": "high",
+      "effort": "low",
+      "note": "Brand billing descriptor (THICKANDFIT), a trial-ending email 3 days out with exact amount + date, and one-click in-app cancel - the 3 highest-impact chargeback fixes, directly countering Lenus and Cal AI billing complaints",
+      "source": "blog.funnelfox.com/how-to-prevent-chargebacks-subscription-apps"
+    },
+    {
+      "title": "Push the annual plan as the flagship option",
+      "impact": "high",
+      "effort": "low",
+      "note": "Annual retains 40-60% better, cuts churn ~51%, and already drives 60.6% of fitness category revenue",
+      "source": "baremetrics.com/blog/annual-vs-monthly-pricing-better-retention"
+    },
+    {
+      "title": "Day-1 activation: 'snap your first meal, macros in 10 seconds'",
+      "impact": "high",
+      "effort": "low",
+      "note": "Instrument first-log/first-workout within 48h (target 40%+); a 10-point activation lift yields 15-20% better 30-day retention; defer the long intake",
+      "source": "lifecyclearchitect.com/guides/activation-optimization-for-fitness-apps"
+    },
+    {
+      "title": "Exercise-library search that actually works",
+      "impact": "high",
+      "effort": "low",
+      "note": "Trainerize ('an absolute joke') and Everfit both fail at basic exercise search; cheap to beat with good tagging",
+      "source": "ideas.abcfitness.com/forums/167887"
+    }
+  ],
+  "categorySignals": [
+    "saas/dashboard"
+  ],
+  "quickWinFindings": [
+    {
+      "lens": "strategy",
+      "severity": "P3",
+      "kind": "strategy-quick-win",
+      "route": "strategy/saas/dashboard",
+      "label": "Streaks with grace days (Duolingo)",
+      "detail": "Competitive quick win (high impact, low effort): Streaks with grace days (Duolingo). Streak shields lifted long-term retention; pairs with a daily nutrition log or workout check-in (source: routyne.fit/blog/streak-based-fitness)"
+    },
+    {
+      "lens": "strategy",
+      "severity": "P3",
+      "kind": "strategy-quick-win",
+      "route": "strategy/saas/dashboard",
+      "label": "Founding-member launch cohort",
+      "detail": "Competitive quick win (high impact, low effort): Founding-member launch cohort. 500-spot locked-price cohort to the 256 existing clients + waitlist; seeds the community with believers (source: membership.io/blog/founding-member-pricing)"
+    },
+    {
+      "lens": "strategy",
+      "severity": "P3",
+      "kind": "strategy-quick-win",
+      "route": "strategy/saas/dashboard",
+      "label": "Reposition nutrition as 'Steph's method, automated'",
+      "detail": "Competitive quick win (high impact, low effort): Reposition nutrition as 'Steph's method, automated'. Out-trust Fitia, do not out-tech it; her method + her voice is the authenticity wedge (source: fitia.app)"
+    },
+    {
+      "lens": "strategy",
+      "severity": "P3",
+      "kind": "strategy-quick-win",
+      "route": "strategy/saas/dashboard",
+      "label": "Anti-chargeback trio: brand descriptor + trial-ending reminder + one-click cancel",
+      "detail": "Competitive quick win (high impact, low effort): Anti-chargeback trio: brand descriptor + trial-ending reminder + one-click cancel. Brand billing descriptor (THICKANDFIT), a trial-ending email 3 days out with exact amount + date, and one-click in-app cancel - the 3 highest-impact chargeback fixes, directly countering Lenus and Cal AI billing complaints (source: blog.funnelfox.com/how-to-prevent-chargebacks-subscription-apps)"
+    },
+    {
+      "lens": "strategy",
+      "severity": "P3",
+      "kind": "strategy-quick-win",
+      "route": "strategy/saas/dashboard",
+      "label": "Push the annual plan as the flagship option",
+      "detail": "Competitive quick win (high impact, low effort): Push the annual plan as the flagship option. Annual retains 40-60% better, cuts churn ~51%, and already drives 60.6% of fitness category revenue (source: baremetrics.com/blog/annual-vs-monthly-pricing-better-retention)"
+    },
+    {
+      "lens": "strategy",
+      "severity": "P3",
+      "kind": "strategy-quick-win",
+      "route": "strategy/saas/dashboard",
+      "label": "Day-1 activation: 'snap your first meal, macros in 10 seconds'",
+      "detail": "Competitive quick win (high impact, low effort): Day-1 activation: 'snap your first meal, macros in 10 seconds'. Instrument first-log/first-workout within 48h (target 40%+); a 10-point activation lift yields 15-20% better 30-day retention; defer the long intake (source: lifecyclearchitect.com/guides/activation-optimization-for-fitness-apps)"
+    },
+    {
+      "lens": "strategy",
+      "severity": "P3",
+      "kind": "strategy-quick-win",
+      "route": "strategy/saas/dashboard",
+      "label": "Exercise-library search that actually works",
+      "detail": "Competitive quick win (high impact, low effort): Exercise-library search that actually works. Trainerize ('an absolute joke') and Everfit both fail at basic exercise search; cheap to beat with good tagging (source: ideas.abcfitness.com/forums/167887)"
+    }
+  ],
+  "appendedToScorecard": {
+    "file": ".claude-browser/20260719-154827-23520-1-launchproof/scorecard.json",
+    "appended": 7,
+    "skippedDuplicates": 0
+  }
+}
