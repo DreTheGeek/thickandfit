@@ -137,6 +137,9 @@ typecheck, lint (PostToolUse). Exit 2 blocks the write. Never disable a hook to 
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
 Gemini free-tier limits. Document limits and deferral decisions here as they approach.
+- Supabase auth email rate limit: 30/hour (raised from the 2/hour default on 2026-07-18 after a
+  real user's password reset was silently 429'd). The true ceiling is the Resend plan's daily
+  quota; if launch volume approaches it, raise the Resend plan before raising this limit again.
 
 ## pg_cron Test Procedure
 Each cron in the CRON-REGISTRY: run manually, check cron_job_log for a success row. All crons use

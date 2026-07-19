@@ -176,9 +176,13 @@ export async function requestResetAction(_prev: AuthState, formData: FormData): 
   if (!parsed.success) return { error: INVALID_EMAIL };
   if (!(await checkRateLimit(await clientIp(), 'auth-reset', 3, 60))) return { error: TOO_MANY };
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${await origin()}/auth/callback?next=/auth/reset-password`,
   });
+  // The user response stays neutral either way (no account enumeration), but the failure MUST hit
+  // the server log: a silently swallowed 429 here is exactly how the 2/hour project email cap hid
+  // while users were told "a reset link is on its way" (2026-07-18).
+  if (error) console.error('requestResetAction:', error.message);
   return { sent: true };
 }
 
