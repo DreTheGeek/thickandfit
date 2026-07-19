@@ -1457,6 +1457,7 @@
       "nextCharge": "Próximo cargo {amount} el {date}",
       "endsOn": "El acceso termina el {date} (sin más cargos)",
       "noActivePlan": "No tienes una suscripción activa.",
+      "preLaunchNote": "La facturación aún no ha comenzado. No se te cobrará nada hasta el lanzamiento, y tu plan se activará automáticamente cuando la facturación esté disponible.",
       "cardOnFile": "{brand} terminada en {last4}",
       "card": "Tarjeta",
       "history": "Historial de pagos",
@@ -1572,6 +1573,10 @@
         "disable": "Desactivar"
       },
       "copy": {
+        "messageTitle": "Nuevo mensaje",
+        "messageBody": "{name} te envió un mensaje.",
+        "replyTitle": "Respuesta de cliente",
+        "replyBody": "{name} respondió en tu bandeja de entrada.",
         "broadcastTitle": "Nuevo anuncio",
         "broadcastBody": "{name} publico un anuncio en la comunidad.",
         "plateauTitle": "Vamos a avanzar",
@@ -1625,6 +1630,8 @@
     },
     "messages": {
       "noMessages": "Aún no hay mensajes. Saluda.",
+      "today": "Hoy",
+      "yesterday": "Ayer",
       "messagePlaceholder": "Mensaje...",
       "send": "Enviar"
     }

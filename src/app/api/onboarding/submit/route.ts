@@ -77,6 +77,20 @@ async function POST_h(req: Request) {
     } catch (e) {
       console.error('onboarding ensureCrmContact:', e instanceof Error ? e.message : e);
     }
+    // The chosen tier is the member's plan until Stripe billing exists; surface it in the CRM's
+    // Plan column instead of a dash. Only fills the blank, never overwrites a coach-set value.
+    const TIER_LABEL: Record<string, string> = {
+      self: 'Self-Guided',
+      team: 'Team Thick & Fit',
+      steph: '1-on-1 with Steph',
+    };
+    const tierLabel = TIER_LABEL[parsed.data.tier ?? 'self'];
+    await supabase
+      .from('contacts')
+      .update({ product_type: tierLabel })
+      .eq('company_id', ctx.companyId)
+      .eq('profile_id', ctx.userId)
+      .is('product_type', null);
     // Mirror the completed member into GoHighLevel (tags drive Stephanie's automations) and store
     // the GHL id on the CRM contact so pipeline syncs link by id, not just email. after(): the
     // frozen lambda cannot drop it, and a GHL outage never fails onboarding.

@@ -4,9 +4,15 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getSubscriptionForProfile, isActiveStatus } from '@/lib/billing/subscriptions';
+import { isStripeConfigured } from '@/lib/billing/stripe';
 
 /** True if this profile may use the paid app right now (active subscription or live comp). */
 export async function isEntitled(profileId: string): Promise<boolean> {
+  // Pre-launch: while Stripe is unconfigured nobody CAN subscribe, so gating on a subscription
+  // locked every member out of the entitled API surfaces (coach chat, photo scan) with no way to
+  // pay. Everyone is entitled until the live STRIPE_SECRET_KEY lands; then this line goes inert and
+  // pay-to-enter arms itself everywhere isEntitled is consulted (same contract as requireEntitled).
+  if (!isStripeConfigured()) return true;
   const sub = await getSubscriptionForProfile(profileId);
   if (sub && isActiveStatus(sub.status)) return true;
 

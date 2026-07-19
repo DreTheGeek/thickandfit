@@ -4,10 +4,12 @@ import type { ReactElement } from 'react';
 import Link from 'next/link';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
+import { createClient } from '@/lib/supabase/server';
 import { Icon } from '@/components/ui/icons';
 import { PageTitle } from '@/components/ui/section';
 import { Card } from '@/components/ui/card';
 import { BillingActions } from '@/components/billing/billing-actions';
+import { isStripeConfigured } from '@/lib/billing/stripe';
 import {
   getSubscriptionForProfile,
   getPaymentsForProfile,
@@ -36,6 +38,7 @@ export default async function BillingPage(): Promise<ReactElement> {
   const ctx = await requireAuth();
   const locale = await getLocale();
   const t = await getTranslations('app.billing');
+  const tApp = await getTranslations('app');
 
   const sub = await getSubscriptionForProfile(ctx.userId);
   const payments = await getPaymentsForProfile(ctx.userId);
@@ -48,6 +51,33 @@ export default async function BillingPage(): Promise<ReactElement> {
       ? 'cancelling'
       : 'active';
 
+  // Pre-launch: billing is not live yet, so "no subscription" + a Start button that dead-ends at an
+  // unconfigured checkout is both wrong and alarming. Mirror the Account membership card instead:
+  // show the tier chosen at onboarding with a no-charges-yet note, and hide the subscribe CTA.
+  // The moment STRIPE_SECRET_KEY lands this branch goes inert and real billing renders.
+  const preLaunch = !isStripeConfigured() && !sub;
+  let tierName: string | null = null;
+  let tierPrice: string | null = null;
+  if (preLaunch) {
+    const supabase = await createClient();
+    const { data: onb } = await supabase
+      .from('onboarding_responses')
+      .select('answers')
+      .eq('profile_id', ctx.userId)
+      .maybeSingle();
+    const tier = ((onb?.answers ?? null) as { tier?: string } | null)?.tier ?? null;
+    const tierKeys: Record<string, { name: string; price: string }> = {
+      self: { name: 'onboarding.tierSelfName', price: 'onboarding.tierSelfPrice' },
+      team: { name: 'onboarding.tierTeamName', price: 'onboarding.tierTeamPrice' },
+      steph: { name: 'onboarding.tierStephName', price: 'onboarding.tierStephPrice' },
+    };
+    const tk = tier ? tierKeys[tier] : null;
+    if (tk) {
+      tierName = tApp(tk.name as never);
+      tierPrice = tApp(tk.price as never);
+    }
+  }
+
   // Stripe can emit statuses outside our enumerated keys (e.g. incomplete_expired, paused); fall
   // back to the raw-but-readable status instead of rendering a bare i18n key path.
   const KNOWN_STATUS = ['trialing', 'active', 'past_due', 'canceled', 'incomplete', 'unpaid', 'paused', 'none'];
@@ -55,7 +85,9 @@ export default async function BillingPage(): Promise<ReactElement> {
     ? KNOWN_STATUS.includes(sub.status)
       ? t(`status.${sub.status}` as never)
       : sub.status.replace(/_/g, ' ')
-    : t('status.none');
+    : preLaunch && tierName
+      ? tierName
+      : t('status.none');
 
   return (
     <div className="px-[22px] pb-7 pt-3">
@@ -104,11 +136,21 @@ export default async function BillingPage(): Promise<ReactElement> {
               </p>
             ) : null}
           </div>
+        ) : preLaunch ? (
+          <div className="mt-4 space-y-2">
+            {tierName ? (
+              <p className="text-[15px] text-ink">
+                {tierName}
+                {tierPrice ? <span className="text-muted"> · {tierPrice}</span> : null}
+              </p>
+            ) : null}
+            <p className="text-[13px] leading-relaxed text-muted">{t('preLaunchNote')}</p>
+          </div>
         ) : (
           <p className="mt-4 text-[15px] text-soft">{t('noActivePlan')}</p>
         )}
 
-        <BillingActions mode={mode} />
+        {preLaunch ? null : <BillingActions mode={mode} />}
       </Card>
 
       {/* Payment history */}

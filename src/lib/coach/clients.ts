@@ -70,7 +70,9 @@ function mapRow(c: ContactRowRaw, noName: string): ClientRow {
   const sub = one(c.client_subscriptions);
   const tags: TagLite[] = (c.contact_tags ?? []).map((t) => one(t.tag)).filter((t): t is TagLite => t != null);
   const name = [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || noName;
-  const startedAt = sub?.started_at ?? null;
+  // App-signup members have no Lenus subscription row; their join date is the contact creation.
+  // Legacy contacts keep null (an unknown Lenus start must not masquerade as the import date).
+  const startedAt = sub?.started_at ?? (c.is_legacy ? null : c.created_at);
   return {
     id: c.id,
     name,
@@ -448,7 +450,8 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
 
   const t = await getTranslations('app.coach');
   const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || t('noName');
-  const startedAt = sub?.started_at ?? null;
+  // Same join-date fallback as the list: app members date from contact creation, legacy stays null.
+  const startedAt = sub?.started_at ?? (raw.is_legacy ? null : raw.created_at);
   const tenureDays = startedAt
     ? Math.max(0, Math.round((Date.parse(sub?.ended_at ?? new Date().toISOString()) - Date.parse(startedAt)) / 86400000))
     : null;

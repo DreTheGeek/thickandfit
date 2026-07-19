@@ -1457,6 +1457,7 @@
       "nextCharge": "Next charge {amount} on {date}",
       "endsOn": "Access ends {date} (no further charges)",
       "noActivePlan": "You do not have an active subscription.",
+      "preLaunchNote": "Billing hasn't started yet. You won't be charged anything until launch, and your plan activates automatically when billing goes live.",
       "cardOnFile": "{brand} ending in {last4}",
       "card": "Card",
       "history": "Payment history",
@@ -1572,6 +1573,10 @@
         "disable": "Turn off"
       },
       "copy": {
+        "messageTitle": "New message",
+        "messageBody": "{name} sent you a message.",
+        "replyTitle": "Client reply",
+        "replyBody": "{name} replied in your inbox.",
         "broadcastTitle": "New broadcast",
         "broadcastBody": "{name} posted a broadcast to the community.",
         "plateauTitle": "Let's break through",
@@ -1625,6 +1630,8 @@
     },
     "messages": {
       "noMessages": "No messages yet. Say hi.",
+      "today": "Today",
+      "yesterday": "Yesterday",
       "messagePlaceholder": "Message...",
       "send": "Send"
     }
