@@ -19,9 +19,11 @@
   --c-warm: #dddbd3;
   --c-line: #ddd9d0;
   --c-divider: #eae7e0;
-  --c-muted: #767676;
+  /* Secondary-text ramp: all three clear WCAG AA 4.5:1 on white while keeping soft<muted<faint
+     order. faint was #999999 (2.84:1, failed on the hero headings); now #757575 (4.55:1). */
+  --c-muted: #636363;
   --c-soft: #5c5c5c;
-  --c-faint: #999999;
+  --c-faint: #757575;
   --c-accent: #5ebe62;
   --c-accent-ink: #053b07;
   --c-pending: #fbe6a2;
