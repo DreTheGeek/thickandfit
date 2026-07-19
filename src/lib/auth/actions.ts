@@ -10,6 +10,7 @@ import { homePathForUser, type Role } from '@/lib/auth/session';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 import { recordSignupConsent } from '@/lib/legal/consent';
 import { upsertGhlContact } from '@/lib/ghl/client';
+import { ensureCrmContact } from '@/lib/crm/ensure-contact';
 
 export type AuthState = { error?: string; sent?: boolean };
 
@@ -160,13 +161,43 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     // Capture timestamped Terms + Privacy consent for the new user (anti-get-sued). Fire-and-forget.
     const h = await headers();
     void recordSignupConsent(data.user.id, await clientIp(), h.get('user-agent'));
-    // Mirror the new user into GoHighLevel so Stephanie's follow-up automations see them right
-    // away. after() so the frozen lambda cannot drop it; a GHL failure never blocks signup.
+    // Surface the new member in the Clients CRM and GoHighLevel at signup itself, so the coach
+    // portal and Stephanie's automations see them without waiting for onboarding (which refines the
+    // same contact later and is a no-op if this already linked it). after() so the frozen lambda
+    // cannot drop the work; any failure here never blocks signup.
     const store = await cookies();
     const lang = store.get('ui_locale')?.value === 'es' ? 'es' : 'en';
-    after(() =>
-      upsertGhlContact({ email, firstName, lastName, tags: ['app-signup', `lang:${lang}`] }),
-    );
+    const userId = data.user.id;
+    after(async () => {
+      try {
+        const svc = createServiceClient();
+        const { data: prof } = await svc
+          .from('profiles')
+          .select('company_id')
+          .eq('id', userId)
+          .maybeSingle();
+        const companyId = (prof as { company_id?: string | null } | null)?.company_id ?? null;
+        if (companyId) {
+          await ensureCrmContact({ profileId: userId, companyId, firstName, lastName, language: lang });
+        }
+        const { contactId } = await upsertGhlContact({
+          email,
+          firstName,
+          lastName,
+          tags: ['app-signup', `lang:${lang}`],
+        });
+        if (contactId && companyId) {
+          await svc
+            .from('contacts')
+            .update({ ghl_contact_id: contactId })
+            .eq('company_id', companyId)
+            .eq('profile_id', userId)
+            .is('ghl_contact_id', null);
+        }
+      } catch (e) {
+        console.error('signUpAction post-signup sync:', e instanceof Error ? e.message : e);
+      }
+    });
   }
   return { sent: true };
 }

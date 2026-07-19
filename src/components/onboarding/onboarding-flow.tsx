@@ -2,9 +2,11 @@
 // Onboarding wizard: Goal -> About -> Prediction (live chart) -> Plan, re-skinned to
 // the design-handoff prototype. Same engine the API stores; weight collected in lb,
 // converted to kg for the metric prediction engine.
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
+import { setUiLocaleAction, setContentLocaleAction } from '@/lib/i18n/actions';
 import { computePlan, type OnboardingInput } from '@/lib/onboarding/prediction';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/ring';
@@ -28,12 +30,27 @@ export function OnboardingFlow({
 }): ReactElement {
   const t = useTranslations('app.onboarding');
   const locale = useLocale();
+  const router = useRouter();
+  const [, startTransition] = useTransition();
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
   // Language the user speaks -> persisted to their profile + cookie so the app loads in it on login.
   const [language, setLanguage] = useState<'en' | 'es'>(locale === 'es' ? 'es' : 'en');
+
+  // Picking a language must flip the wizard itself, immediately: persist the cookie server-side and
+  // refresh the RSC payload so every t() re-renders in the chosen language. Client state (step,
+  // answers) survives the refresh, so the user stays exactly where they were.
+  function chooseLanguage(next: 'en' | 'es'): void {
+    setLanguage(next);
+    if (next === locale) return;
+    startTransition(async () => {
+      await setUiLocaleAction(next);
+      await setContentLocaleAction(next);
+      router.refresh();
+    });
+  }
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [goal, setGoal] = useState<Goal>('lose');
@@ -143,8 +160,8 @@ export function OnboardingFlow({
           <div className="mb-7">
             <p className="mb-2.5 text-[13px] font-semibold text-muted">{t('languageQuestion')}</p>
             <div className="flex gap-2.5">
-              <LangBtn label="English" active={language === 'en'} onClick={() => setLanguage('en')} />
-              <LangBtn label="Español" active={language === 'es'} onClick={() => setLanguage('es')} />
+              <LangBtn label="English" active={language === 'en'} onClick={() => chooseLanguage('en')} />
+              <LangBtn label="Español" active={language === 'es'} onClick={() => chooseLanguage('es')} />
             </div>
           </div>
           <h2 className="tf-display mb-6 text-[38px]">{t('goalTitle')}</h2>
