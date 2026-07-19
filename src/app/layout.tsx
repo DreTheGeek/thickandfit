@@ -9,6 +9,7 @@ import { IOSInstallBanner } from "@/components/pwa/ios-install-banner";
 import { AndroidInstallButton } from "@/components/pwa/android-install-button";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { headers } from "next/headers";
 import { Providers } from "@/components/providers";
 import { Suspense } from "react";
 import { PostHogPageview } from "@/lib/monitoring/posthog-pageview";
@@ -28,23 +29,33 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+// One source of truth for the public origin, shared with robots.ts + sitemap.ts. Override with
+// NEXT_PUBLIC_SITE_URL at the teamthickandfit.com cutover; the default is the domain that serves
+// this build today (so canonicals resolve and OG images load right now).
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://thicknfit.kaldrtech.com";
+
+// <=165 chars so search engines show it whole (was 237, truncated in results).
+const SITE_DESCRIPTION =
+  "Fitness coaching for women: custom workouts, macro-based meal plans, daily accountability, and a real community. Fall in love with the journey.";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://thickandfitcoaching.com"),
+  metadataBase: new URL(SITE_URL),
   title: "Helping Women Fall In Love With The Journey - Thick & Fit Fitness",
-  description:
-    "Fitness coaching for women who want lasting results. Get custom workout programming, personalized meal plans, daily accountability, and a supportive fitness community designed to help you fall in love with the journey, not just the goal.",
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
   openGraph: {
     title: "Helping Women Get Curves | Thick & Fit Fitness",
-    description:
-      "Ready for a real fitness transformation? Thick & Fit Fitness empowers women with tailored workouts, macro-based meal plans, habit tracking, and 1:1 support so you can build strength, confidence, and sustainable results that fit your lifestyle.",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Thick & Fit",
     images: ["/assets/images/open-graph.jpg"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Helping Women Get Curves | Thick & Fit Fitness",
-    description:
-      "Ready for a real fitness transformation? Thick & Fit Fitness empowers women with tailored workouts, macro-based meal plans, habit tracking, and 1:1 support so you can build strength, confidence, and sustainable results that fit your lifestyle.",
+    description: SITE_DESCRIPTION,
+    images: ["/assets/images/open-graph.jpg"],
   },
   icons: {
     icon: "/assets/images/favicon.jpg",
@@ -67,6 +78,35 @@ const scriptsManifest: ScriptsManifest = JSON.parse(
 
 const jsonLd = scriptsManifest.head.find((s) => s.type === "application/ld+json")?.inline;
 
+// Organization + WebSite schema with published/modified dates: answer engines (Google AI, Perplexity)
+// weight dated, authored sources. Bump SITE_MODIFIED on a substantive public-content change.
+const SITE_PUBLISHED = "2026-06-18";
+const SITE_MODIFIED = "2026-07-19";
+const orgSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "Thick & Fit",
+      url: SITE_URL,
+      logo: `${SITE_URL}/assets/images/open-graph.jpg`,
+      founder: { "@type": "Person", name: "Stephanie Pantoja" },
+      description: SITE_DESCRIPTION,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: "Thick & Fit",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      inLanguage: ["en", "es"],
+      datePublished: SITE_PUBLISHED,
+      dateModified: SITE_MODIFIED,
+    },
+  ],
+});
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -74,6 +114,9 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  // Per-request script nonce from the proxy CSP. Reading headers() also opts the tree into dynamic
+  // rendering, which is required for the nonce to be stamped at SSR time.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang={locale}
@@ -84,13 +127,19 @@ export default async function RootLayout({
         {jsonLd != null && (
           <script
             type="application/ld+json"
+            nonce={nonce}
             dangerouslySetInnerHTML={{ __html: jsonLd }}
           />
         )}
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: orgSchema }}
+        />
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers>
+          <Providers nonce={nonce}>
             <Suspense fallback={null}>
               <PostHogPageview />
             </Suspense>

@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { ForgotForm } from '@/components/auth/forgot-form';
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Reset password' };
 
 export default async function ForgotPasswordPage(): Promise<ReactElement> {
   const t = await getTranslations('auth');

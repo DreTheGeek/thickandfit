@@ -7,7 +7,12 @@ import { WaitlistForm } from '@/components/marketing/waitlist-form';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('waitlist');
-  return { title: `${t('cta')} | Thick & Fit`, description: t('subhead') };
+  return {
+    title: `${t('cta')} | Thick & Fit`,
+    description: t('subhead'),
+    alternates: { canonical: '/join' },
+    openGraph: { url: '/join', title: `${t('cta')} | Thick & Fit`, description: t('subhead') },
+  };
 }
 
 export default async function JoinPage() {

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 // Allow crawlers on the public marketing surface; keep the authed app, auth flow, API and internal
 // docs out of the index. Base URL matches metadataBase in layout.tsx.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thickandfitcoaching.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thicknfit.kaldrtech.com';
 
 export default function robots(): MetadataRoute.Robots {
   return {

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 // Public, indexable routes only. /about is intentionally omitted (it carries robots noindex as an
 // unlinked pre-launch page). Base URL matches metadataBase in layout.tsx.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thickandfitcoaching.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thicknfit.kaldrtech.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

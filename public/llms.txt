@@ -1,0 +1,25 @@
+# Thick & Fit
+
+> Creator-led, bilingual (English/Spanish) fitness coaching app for women, built by Stephanie Pantoja. Structured workouts with filmed demos, low-friction nutrition tracking (photo-to-macro, cooked/uncooked conversion), a living community, and coaching in Stephanie's own method and voice.
+
+## What it is
+- Fitness and nutrition coaching for women across the US and Latin America.
+- Structured workout programs with Stephanie's filmed exercise demonstrations.
+- Nutrition tracking built for real cooking: photo-to-macro, cooked-vs-raw gram conversion, and macro-based meal plans.
+- A community feed, challenges, and progress tracking (weight, measurements, photos).
+- Fully bilingual: every screen works in English and Spanish, chosen at onboarding.
+
+## Tiers
+- Self-Guided: app access with programming and nutrition tools.
+- Team Thick & Fit: coached by Stephanie's team.
+- 1-on-1 with Steph: direct personal coaching.
+
+## Key pages
+- Home: https://thicknfit.kaldrtech.com/
+- Join the waitlist: https://thicknfit.kaldrtech.com/join
+- Terms: https://thicknfit.kaldrtech.com/terms
+- Privacy: https://thicknfit.kaldrtech.com/privacy
+
+## Notes
+- The coaching app itself (dashboard, workouts, nutrition, community) is behind sign-in and is not part of the public index.
+- Operated by Thick & Fit Coaching LLC.

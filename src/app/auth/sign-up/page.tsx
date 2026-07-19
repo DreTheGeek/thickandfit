@@ -4,6 +4,8 @@ import { getTranslations } from 'next-intl/server';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { AuthForm } from '@/components/auth/auth-form';
 import { OAuthButtons } from '@/components/auth/oauth-buttons';
+import type { Metadata } from 'next';
+export const metadata: Metadata = { title: 'Create account' };
 
 export default async function SignUpPage({
   searchParams,
