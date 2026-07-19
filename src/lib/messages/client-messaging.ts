@@ -9,8 +9,10 @@
 //  - unclaimed client (no profile): send the message body by EMAIL (Resend) and record it in
 //    client_messages. When they claim, 0071's backfill moves the whole thread onto their profile.
 import 'server-only';
+import { after } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { sendCoachEmail } from '@/lib/email/coach-email';
+import { notifyClientMessage } from '@/lib/notifications/triggers';
 
 export type DeliveryChannel = 'in_app' | 'email' | 'recorded';
 export type SendResult = { ok: boolean; channel?: DeliveryChannel; error?: string };
@@ -70,10 +72,22 @@ export async function sendCoachMessageToClient(
       body,
     });
     if (msgErr) console.error('sendCoachMessageToClient in-app:', msgErr.message);
-    // Best-effort email nudge so they know to open the app (non-blocking).
-    if (c.email) {
-      void sendCoachEmail(c.email, `New message from ${senderName}`, body, `${APP_URL}/messages`, c.first_name);
-    }
+    // Bell + push notification and a best-effort email nudge, via after(): a bare void here dies
+    // with the frozen lambda, and neither may block or fail the send.
+    const clientProfileId = c.profile_id;
+    const clientEmail = c.email;
+    const clientFirst = c.first_name;
+    after(async () => {
+      try {
+        await notifyClientMessage({ companyId, clientProfileId, senderName });
+        if (clientEmail) {
+          // /inbox is the human-coach thread; /messages redirects to the AI chat, the wrong place.
+          await sendCoachEmail(clientEmail, `New message from ${senderName}`, body, `${APP_URL}/inbox`, clientFirst);
+        }
+      } catch (e) {
+        console.error('sendCoachMessageToClient notify:', e instanceof Error ? e.message : e);
+      }
+    });
     return { ok: true, channel: 'in_app' };
   }
 

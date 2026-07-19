@@ -122,11 +122,23 @@ export async function getContactThread(companyId: string, contactId: string): Pr
   ]);
 
   const out: InboxMessage[] = [];
-  for (const m of (arch ?? []) as { id: string; is_from_coach: boolean; sender_name: string | null; body: string | null; sent_at: string }[]) {
+  const archRows = (arch ?? []) as { id: string; is_from_coach: boolean; sender_name: string | null; body: string | null; sent_at: string }[];
+  for (const m of archRows) {
     if (m.body) out.push({ id: 'a_' + m.id, fromCoach: m.is_from_coach, senderName: m.sender_name, body: m.body, at: m.sent_at, channel: 'archive' });
   }
+  // Every send is now written to BOTH tables (client_messages as the record, messages as the live
+  // transport), so a live row with an archive twin (same direction + body within a few seconds) is
+  // the same message: keep the archive copy (it carries sender_name), drop the live duplicate.
+  const isDupOfArchive = (fromCoach: boolean, body: string, atMs: number): boolean =>
+    archRows.some(
+      (a) =>
+        a.body === body &&
+        a.is_from_coach === fromCoach &&
+        Math.abs(Date.parse(a.sent_at) - atMs) < 10_000,
+    );
   for (const m of (liveRes.data ?? []) as { id: string; sender_id: string; body: string; created_at: string }[]) {
     const fromCoach = m.sender_id !== contact?.profile_id;
+    if (isDupOfArchive(fromCoach, m.body, Date.parse(m.created_at))) continue;
     out.push({ id: 'l_' + m.id, fromCoach, senderName: null, body: m.body, at: m.created_at, channel: 'live' });
   }
   out.sort((a, b) => a.at.localeCompare(b.at));
