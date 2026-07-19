@@ -40,6 +40,8 @@
   "auth": {
     "signIn": "Sign in",
     "signUp": "Create account",
+    "firstName": "First name",
+    "lastName": "Last name",
     "email": "Email",
     "password": "Password",
     "forgotPassword": "Forgot password?",

@@ -2,11 +2,13 @@
 import { z } from 'zod';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { cookies } from 'next/headers';
+import { after } from 'next/server';
 import { resolveAuth } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { onboardingInputSchema, computePlan } from '@/lib/onboarding/prediction';
 import { createServiceClient } from '@/lib/supabase/service';
 import { ensureCrmContact } from '@/lib/crm/ensure-contact';
+import { upsertGhlContact } from '@/lib/ghl/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,6 +77,30 @@ async function POST_h(req: Request) {
     } catch (e) {
       console.error('onboarding ensureCrmContact:', e instanceof Error ? e.message : e);
     }
+    // Mirror the completed member into GoHighLevel (tags drive Stephanie's automations) and store
+    // the GHL id on the CRM contact so pipeline syncs link by id, not just email. after(): the
+    // frozen lambda cannot drop it, and a GHL outage never fails onboarding.
+    const { userId, companyId } = ctx;
+    const { firstName, lastName, language, tier } = parsed.data;
+    after(async () => {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .maybeSingle();
+      const email = (prof as { email?: string | null } | null)?.email;
+      if (!email) return;
+      const tags = ['app-member', `tier:${tier ?? 'self'}`, `lang:${language ?? 'en'}`];
+      const { contactId } = await upsertGhlContact({ email, firstName, lastName, tags });
+      if (contactId) {
+        await supabase
+          .from('contacts')
+          .update({ ghl_contact_id: contactId })
+          .eq('company_id', companyId)
+          .eq('profile_id', userId)
+          .is('ghl_contact_id', null);
+      }
+    });
   }
 
   // Apply the chosen language immediately via cookies so the dashboard loads in it.

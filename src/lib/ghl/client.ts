@@ -10,6 +10,48 @@ const dripWorkflowId = process.env.GHL_WAITLIST_WORKFLOW_ID;
 const BASE = 'https://services.leadconnectorhq.com';
 const VERSION = '2021-07-28';
 
+export type GhlUpsertInput = {
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  tags: string[];
+};
+
+// Idempotent create-or-update by email (POST /contacts/upsert). GHL tags are additive on upsert, so
+// an existing lead keeps its pipeline tags and gains the app ones. Never throws: GHL being down
+// must not block signup or onboarding.
+export async function upsertGhlContact(
+  input: GhlUpsertInput,
+): Promise<{ ok: boolean; contactId: string | null }> {
+  if (!apiKey || !locationId) return { ok: false, contactId: null };
+  try {
+    const res = await fetch(`${BASE}/contacts/upsert`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        Version: VERSION,
+      },
+      body: JSON.stringify({
+        locationId,
+        email: input.email,
+        ...(input.firstName ? { firstName: input.firstName } : {}),
+        ...(input.lastName ? { lastName: input.lastName } : {}),
+        tags: input.tags,
+      }),
+    });
+    if (!res.ok) {
+      console.error('upsertGhlContact:', res.status, (await res.text()).slice(0, 160));
+      return { ok: false, contactId: null };
+    }
+    const json = (await res.json().catch(() => null)) as { contact?: { id?: string } } | null;
+    return { ok: true, contactId: json?.contact?.id ?? null };
+  } catch (e) {
+    console.error('upsertGhlContact:', e instanceof Error ? e.message : e);
+    return { ok: false, contactId: null };
+  }
+}
+
 export async function enrollInDrip(
   email: string,
   locale: 'en' | 'es',

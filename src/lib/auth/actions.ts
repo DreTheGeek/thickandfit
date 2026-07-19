@@ -2,12 +2,14 @@
 // Auth server actions (useActionState-compatible). Backed by Supabase Auth via the SSR client.
 import { redirect } from 'next/navigation';
 import { headers, cookies } from 'next/headers';
+import { after } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { homePathForUser, type Role } from '@/lib/auth/session';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 import { recordSignupConsent } from '@/lib/legal/consent';
+import { upsertGhlContact } from '@/lib/ghl/client';
 
 export type AuthState = { error?: string; sent?: boolean };
 
@@ -18,10 +20,17 @@ const credentialsSchema = z.object({
   password: z.string().min(8),
 });
 
+const signUpSchema = credentialsSchema.extend({
+  firstName: z.string().trim().min(1).max(60),
+  lastName: z.string().trim().min(1).max(60),
+});
+
 const emailSchema = z.object({ email: z.string().email() });
 const passwordSchema = z.object({ password: z.string().min(8) });
 
 const INVALID_CREDENTIALS = 'Enter a valid email and a password of at least 8 characters.';
+const INVALID_SIGNUP =
+  'Enter your first and last name, a valid email, and a password of at least 8 characters.';
 const INVALID_EMAIL = 'Enter a valid email address.';
 const INVALID_PASSWORD = 'Password must be at least 8 characters.';
 // Sanitized, non-enumerating messages. The raw Supabase error is logged server-side, never returned
@@ -106,27 +115,48 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
 }
 
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
-  const parsed = credentialsSchema.safeParse({
+  const parsed = signUpSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
+    firstName: formData.get('firstName'),
+    lastName: formData.get('lastName'),
   });
-  if (!parsed.success) return { error: INVALID_CREDENTIALS };
+  if (!parsed.success) return { error: INVALID_SIGNUP };
   if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60))) return { error: TOO_MANY };
-  const { email, password } = parsed.data;
+  const { email, password, firstName, lastName } = parsed.data;
+  const fullName = `${firstName} ${lastName}`;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${await origin()}/auth/callback` },
+    options: {
+      emailRedirectTo: `${await origin()}/auth/callback`,
+      // Display metadata only, never authorization (that lives in app_metadata / profiles.role).
+      data: { first_name: firstName, last_name: lastName, full_name: fullName },
+    },
   });
   if (error) {
     console.error('signUpAction:', error.message);
     return { error: SIGNUP_FAILED };
   }
-  // Capture timestamped Terms + Privacy consent for the new user (anti-get-sued). Fire-and-forget.
   if (data.user) {
+    // The auth trigger already created the profile row (it fires on the auth.users insert), but it
+    // only copies id + email; persist the name so the coach portal shows it before onboarding.
+    const { error: nameErr } = await createServiceClient()
+      .from('profiles')
+      .update({ full_name: fullName })
+      .eq('id', data.user.id);
+    if (nameErr) console.error('signUpAction full_name:', nameErr.message);
+    // Capture timestamped Terms + Privacy consent for the new user (anti-get-sued). Fire-and-forget.
     const h = await headers();
     void recordSignupConsent(data.user.id, await clientIp(), h.get('user-agent'));
+    // Mirror the new user into GoHighLevel so Stephanie's follow-up automations see them right
+    // away. after() so the frozen lambda cannot drop it; a GHL failure never blocks signup.
+    const store = await cookies();
+    const lang = store.get('ui_locale')?.value === 'es' ? 'es' : 'en';
+    after(() =>
+      upsertGhlContact({ email, firstName, lastName, tags: ['app-signup', `lang:${lang}`] }),
+    );
   }
   return { sent: true };
 }

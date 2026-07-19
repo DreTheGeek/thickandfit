@@ -23,6 +23,28 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }): ReactElemen
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
+      {mode === 'sign-up' && (
+        <div className="flex gap-3">
+          <input
+            name="firstName"
+            type="text"
+            required
+            maxLength={60}
+            autoComplete="given-name"
+            placeholder={t('firstName')}
+            className={inputClass}
+          />
+          <input
+            name="lastName"
+            type="text"
+            required
+            maxLength={60}
+            autoComplete="family-name"
+            placeholder={t('lastName')}
+            className={inputClass}
+          />
+        </div>
+      )}
       <input
         name="email"
         type="email"

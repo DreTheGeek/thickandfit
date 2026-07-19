@@ -19,7 +19,13 @@ type Activity = OnboardingInput['activity'];
 // Stripe price once billing is live. 'team' = coached by Steph's team (Dani), not Steph one-on-one.
 type Tier = 'self' | 'team' | 'steph';
 
-export function OnboardingFlow(): ReactElement {
+export function OnboardingFlow({
+  initialFirstName = '',
+  initialLastName = '',
+}: {
+  initialFirstName?: string;
+  initialLastName?: string;
+}): ReactElement {
   const t = useTranslations('app.onboarding');
   const locale = useLocale();
   const [step, setStep] = useState(0);
@@ -28,8 +34,8 @@ export function OnboardingFlow(): ReactElement {
 
   // Language the user speaks -> persisted to their profile + cookie so the app loads in it on login.
   const [language, setLanguage] = useState<'en' | 'es'>(locale === 'es' ? 'es' : 'en');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
   const [goal, setGoal] = useState<Goal>('lose');
   const [sex, setSex] = useState<OnboardingInput['sex']>('female');
   const [age, setAge] = useState(30);
