@@ -97,7 +97,10 @@ export function ProgramBuilder({
   async function makeTemplate(): Promise<void> {
     const id = planId ?? (await save());
     if (!id) return;
-    await fetch(`/api/programs/${id}/template`, { method: 'POST' }).catch(() => {});
+    await fetch(`/api/programs/${id}/template`, { method: 'POST' }).catch((e: unknown) => {
+      // The template save is best-effort; log it so a silent failure is visible.
+      console.error('makeTemplate:', e instanceof Error ? e.message : e);
+    });
     setStatus(t('template'));
   }
 

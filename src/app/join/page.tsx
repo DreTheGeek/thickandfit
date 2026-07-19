@@ -11,7 +11,14 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${t('cta')} | Thick & Fit`,
     description: t('subhead'),
     alternates: { canonical: '/join' },
-    openGraph: { url: '/join', title: `${t('cta')} | Thick & Fit`, description: t('subhead') },
+    // Include the image explicitly: a page-level openGraph replaces the parent's, so without this
+    // /join would ship no og:image.
+    openGraph: {
+      url: '/join',
+      title: `${t('cta')} | Thick & Fit`,
+      description: t('subhead'),
+      images: ['/assets/images/open-graph.jpg'],
+    },
   };
 }
 

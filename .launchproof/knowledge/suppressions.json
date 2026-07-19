@@ -1049,6 +1049,136 @@
       "id": "r210",
       "reason": "Contradicted by real-browser E2E 2026-07-19: full wizard completed with onboarding row + CRM contact + GHL mirror all verified; the simulate's success heuristics did not recognize the plan screen",
       "fp": "simulate|record-id-not-observed|https://thickandfit.vercel.app/onboarding|created-record id not observed (public.profiles)"
+    },
+    {
+      "id": "r211",
+      "reason": "Stale: the svg width=auto source was fixed and deployed; prod landing verified 0 svg-auto attrs. The chaos lens hit a pre-propagation deploy.",
+      "fp": "chaos:public|chaos-uncaught-error|/|Uncaught JS error after chaotic sequence: console: Error: <s"
+    },
+    {
+      "id": "r212",
+      "reason": "Stale: the svg width=auto source was fixed and deployed; prod landing verified 0 svg-auto attrs. The chaos lens hit a pre-propagation deploy.",
+      "fp": "chaos:public|chaos-uncaught-error|/join|Uncaught JS error after chaotic sequence: console: Error: <s"
+    },
+    {
+      "id": "r213",
+      "reason": "Stale: the svg width=auto source was fixed and deployed; prod landing verified 0 svg-auto attrs. The chaos lens hit a pre-propagation deploy.",
+      "fp": "chaos:public|chaos-uncaught-error|/join/thank-you|Uncaught JS error after chaotic sequence: console: Error: <s"
+    },
+    {
+      "id": "r214",
+      "reason": "Stale: the svg width=auto source was fixed and deployed; prod landing verified 0 svg-auto attrs. The chaos lens hit a pre-propagation deploy.",
+      "fp": "chaos:public|chaos-uncaught-error|/auth/sign-in|Uncaught JS error after chaotic sequence: console: Error: <s"
+    },
+    {
+      "id": "r215",
+      "reason": "Stale: the svg width=auto source was fixed and deployed; prod landing verified 0 svg-auto attrs. The chaos lens hit a pre-propagation deploy.",
+      "fp": "chaos:public|chaos-uncaught-error|/auth/sign-up|Uncaught JS error after chaotic sequence: console: Error: <s"
+    },
+    {
+      "id": "r216",
+      "reason": "Scan-infra: the debug Chrome on :9222 was down this pass, so authed surfaces could not log in. Not a product issue.",
+      "fp": "crawl:coach|auth-not-established|https://thickandfit.vercel.app|coach"
+    },
+    {
+      "id": "r217",
+      "reason": "Correct behavior: auth pages MUST be noindex (added intentionally). Not an SEO defect.",
+      "fp": "seo:public|public-noindex|/auth/sign-in|Public route has robots=noindex (\"noindex, nofollow\")."
+    },
+    {
+      "id": "r218",
+      "reason": "Correct behavior: auth pages MUST be noindex (added intentionally). Not an SEO defect.",
+      "fp": "seo:public|public-noindex|/auth/sign-up|Public route has robots=noindex (\"noindex, nofollow\")."
+    },
+    {
+      "id": "r219",
+      "reason": "Correct behavior: auth pages MUST be noindex (added intentionally). Not an SEO defect.",
+      "fp": "seo:public|public-noindex|/auth/forgot-password|Public route has robots=noindex (\"noindex, nofollow\")."
+    },
+    {
+      "id": "r220",
+      "reason": "Auth-session artifact: browser login was down; the crawler saw a redirect, not the real authed page (community verified working in E2E).",
+      "fp": "completeness:app|placeholder-content|/nutrition|Route /nutrition shows placeholder text (coming-soon / lorem"
+    },
+    {
+      "id": "r221",
+      "reason": "Auth-session artifact: browser login was down; the crawler saw a redirect, not the real authed page (community verified working in E2E).",
+      "fp": "completeness:app|placeholder-content|/community|Route /community shows placeholder text (coming-soon / lorem"
+    },
+    {
+      "id": "r222",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:app|visual-regression|/dashboard|/dashboard [desktop] changed 55.5% of pixels (> 3%). diff: d"
+    },
+    {
+      "id": "r223",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:app|visual-regression|/dashboard|/dashboard [mobile] changed 13.0% of pixels (> 3%). diff: da"
+    },
+    {
+      "id": "r224",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:app|visual-regression|/exercises|/exercises [desktop] changed 51.0% of pixels (> 3%). diff: e"
+    },
+    {
+      "id": "r225",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:app|visual-regression|/exercises|/exercises [mobile] changed 13.0% of pixels (> 3%). diff: ex"
+    },
+    {
+      "id": "r226",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:app|visual-regression|/history|/history [desktop] changed 51.0% of pixels (> 3%). diff: his"
+    },
+    {
+      "id": "r227",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:app|visual-regression|/history|/history [mobile] changed 13.0% of pixels (> 3%). diff: hist"
+    },
+    {
+      "id": "r228",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:app|visual-regression|/forms/[id]|/forms/[id] [mobile] changed 13.0% of pixels (> 3%). diff: f"
+    },
+    {
+      "id": "r229",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:app|visual-regression|/workout/[planId]|/workout/[planId] [mobile] changed 13.0% of pixels (> 3%). d"
+    },
+    {
+      "id": "r230",
+      "reason": "Auth-session artifact: with the browser login down, the coach routes rendered a redirect shell (37 chars). These pages are real and verified working in E2E.",
+      "fp": "completeness:coach|empty-page|/coach/inbox|Route /coach/inbox renders almost no content (main 37 chars)"
+    },
+    {
+      "id": "r231",
+      "reason": "Auth-session artifact: with the browser login down, the coach routes rendered a redirect shell (37 chars). These pages are real and verified working in E2E.",
+      "fp": "completeness:coach|empty-page|/coach/programs|Route /coach/programs renders almost no content (main 37 cha"
+    },
+    {
+      "id": "r232",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:coach|visual-regression|/coach/programs|/coach/programs [desktop] changed 57.3% of pixels (> 3%). di"
+    },
+    {
+      "id": "r233",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:coach|visual-regression|/coach/programs|/coach/programs [mobile] changed 94.5% of pixels (> 3%). dif"
+    },
+    {
+      "id": "r234",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:coach|visual-regression|/coach/forms/[id]|/coach/forms/[id] [desktop] changed 51.2% of pixels (> 3%). "
+    },
+    {
+      "id": "r235",
+      "reason": "Expected: intentional WCAG contrast darkening (faint/muted tokens) changed pixels vs the old baseline. Re-baseline on next run.",
+      "fp": "visual:coach|visual-regression|/coach/forms/[id]|/coach/forms/[id] [mobile] changed 87.5% of pixels (> 3%). d"
+    },
+    {
+      "id": "r236",
+      "reason": "Scan-infra: the debug Chrome on :9222 was down this pass, so authed surfaces could not log in. Not a product issue.",
+      "fp": "crawl:app|auth-not-established|https://thickandfit.vercel.app|app"
     }
   ]
 }
