@@ -10,14 +10,29 @@
       "baseURL": "https://thickandfit.vercel.app",
       "auth": true,
       "routes": [
-        "/onboarding",
         "/dashboard",
         "/exercises",
         "/history",
         "/forms/[id]",
-        "/coach/forms/[id]",
+        "/workout/[planId]",
+        "/nutrition",
+        "/community",
+        "/you",
+        "/inbox",
+        "/account/billing"
+      ]
+    },
+    {
+      "name": "coach",
+      "baseURL": "https://thickandfit.vercel.app",
+      "auth": true,
+      "routes": [
+        "/coach",
+        "/coach/clients",
+        "/coach/inbox",
         "/coach/programs",
-        "/workout/[planId]"
+        "/coach/forms/[id]",
+        "/coach/subscribers"
       ]
     },
     {
@@ -26,10 +41,7 @@
       "auth": false,
       "routes": [
         "/",
-        "/about",
         "/join",
-        "/join/thank-you",
-        "/api-docs",
         "/auth/sign-in",
         "/auth/sign-up",
         "/auth/forgot-password"
@@ -49,7 +61,7 @@
     },
     {
       "name": "coach",
-      "surface": "app",
+      "surface": "coach",
       "loginUrl": "https://thickandfit.vercel.app/auth/sign-in",
       "credEnv": {
         "email": "LP_COACH_EMAIL",
