@@ -75,7 +75,10 @@ export async function enrollInDrip(
       await fetch(`${BASE}/contacts/${contactId}/workflow/${dripWorkflowId}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, Version: VERSION },
-      }).catch(() => {});
+      }).catch((e: unknown) => {
+        // The contact exists but missed the drip enrollment: log it, or the miss is invisible.
+        console.error('enrollInDrip workflow:', e instanceof Error ? e.message : e);
+      });
     }
     return { enrolled: Boolean(contactId), contactId };
   } catch {

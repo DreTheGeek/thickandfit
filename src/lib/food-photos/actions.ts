@@ -101,7 +101,11 @@ export async function deleteFoodPhotoAction(input: unknown): Promise<DeleteResul
     .maybeSingle();
   if (!row) return { ok: false, error: 'not_found' };
   await sb.from('food_photos').delete().eq('id', parsed.data.id).eq('profile_id', ctx.userId);
-  await sb.storage.from(BUCKET).remove([row.storage_path]).catch(() => {});
+  await sb.storage.from(BUCKET).remove([row.storage_path]).catch((e: unknown) => {
+    // The DB row is already gone; a failed object delete just orphans storage. Log it so
+    // accumulating orphans are visible instead of silent.
+    console.error('food photo storage remove:', e instanceof Error ? e.message : e);
+  });
   revalidatePath('/nutrition/photos');
   return { ok: true };
 }

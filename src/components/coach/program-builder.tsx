@@ -45,7 +45,10 @@ export function ProgramBuilder({
     fetch(`/api/exercises?${params.toString()}`, { signal: ctrl.signal })
       .then((r) => r.json())
       .then((j) => setResults((j?.data?.exercises ?? []).slice(0, 25).map((e: { id: string; name_en: string }) => ({ id: e.id, name: e.name_en }))))
-      .catch(() => {});
+      .catch((e: unknown) => {
+        // Aborts are expected on cleanup/re-key; real failures should not die silently.
+        if (!(e instanceof DOMException && e.name === 'AbortError')) console.error('exercise search:', e);
+      });
     return () => ctrl.abort();
   }, [q, picker]);
 
