@@ -37,6 +37,8 @@ const INVALID_PASSWORD = 'Password must be at least 8 characters.';
 // to the client (would leak "User already registered" / rate-limit internals -> account enumeration).
 const SIGNIN_FAILED = 'Invalid email or password. Please try again.';
 const SIGNUP_FAILED = 'Could not complete sign-up. Please try again.';
+const ALREADY_REGISTERED =
+  'An account with this email already exists. Sign in instead, or use "Forgot password?" to reset your password.';
 const UPDATE_PASSWORD_FAILED = 'Could not update your password. Please try again.';
 
 async function origin(): Promise<string> {
@@ -138,6 +140,14 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   if (error) {
     console.error('signUpAction:', error.message);
     return { error: SIGNUP_FAILED };
+  }
+  // Supabase enumeration protection: signing up with an already-registered email "succeeds" with a
+  // fake user carrying zero identities, and NO email is ever sent. Without this check the UI shows
+  // "check your email" and the person waits forever (observed 2026-07-18: a real user re-signed-up,
+  // got the dead-end, then failed sign-in). Telling them the account exists is a deliberate UX >
+  // enumeration tradeoff here; the 3/min rate limit above bounds abuse.
+  if (data.user && (data.user.identities?.length ?? 0) === 0) {
+    return { error: ALREADY_REGISTERED };
   }
   if (data.user) {
     // The auth trigger already created the profile row (it fires on the auth.users insert), but it
