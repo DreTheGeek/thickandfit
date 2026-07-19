@@ -1,0 +1,1054 @@
+{
+  "rules": [
+    {
+      "id": "r1",
+      "reason": "Owner-approved 2026-07-19: intentional design or accepted risk (see SECURITY triage)",
+      "fp": "db|pii-plaintext|client_intake.birth_date|Column public.client_intake.birth_date (date) matches a sens"
+    },
+    {
+      "id": "r2",
+      "reason": "Owner-approved 2026-07-19: intentional design or accepted risk (see SECURITY triage)",
+      "fp": "db|rls-owner-unscoped|challenge_participants.challenge_participants_read|Policy \"challenge_participants_read\" on public.challenge_par"
+    },
+    {
+      "id": "r3",
+      "reason": "Owner-approved 2026-07-19: intentional design or accepted risk (see SECURITY triage)",
+      "fp": "db|rls-owner-unscoped|post_comments.post_comments_read|Policy \"post_comments_read\" on public.post_comments (SELECT)"
+    },
+    {
+      "id": "r4",
+      "reason": "Owner-approved 2026-07-19: intentional design or accepted risk (see SECURITY triage)",
+      "fp": "db|rls-owner-unscoped|post_reactions.post_reactions_read|Policy \"post_reactions_read\" on public.post_reactions (SELEC"
+    },
+    {
+      "id": "r5",
+      "reason": "Owner-approved 2026-07-19: intentional design or accepted risk (see SECURITY triage)",
+      "fp": "db|rls-owner-unscoped|support_tickets.support_tickets_operator|Policy \"support_tickets_operator\" on public.support_tickets "
+    },
+    {
+      "id": "r6",
+      "reason": "Owner-approved 2026-07-19: global reference catalog (world-readable by design) or moot auth-admin policy; no per-user data",
+      "fp": "db|rls-permissive-policy|exercise_equipment_types.equipment_read|Policy \"equipment_read\" on public.exercise_equipment_types ("
+    },
+    {
+      "id": "r7",
+      "reason": "Owner-approved 2026-07-19: global reference catalog (world-readable by design) or moot auth-admin policy; no per-user data",
+      "fp": "db|rls-permissive-policy|muscle_groups.muscle_groups_read|Policy \"muscle_groups_read\" on public.muscle_groups (SELECT)"
+    },
+    {
+      "id": "r8",
+      "reason": "Owner-approved 2026-07-19: global reference catalog (world-readable by design) or moot auth-admin policy; no per-user data",
+      "fp": "db|rls-permissive-policy|roles.roles_readable|Policy \"roles_readable\" on public.roles (SELECT) is USING(tr"
+    },
+    {
+      "id": "r9",
+      "reason": "Owner-approved 2026-07-19: global reference catalog (world-readable by design) or moot auth-admin policy; no per-user data",
+      "fp": "db|rls-permissive-policy|substitution_reason_tags.reason_tags_read|Policy \"reason_tags_read\" on public.substitution_reason_tags"
+    },
+    {
+      "id": "r10",
+      "reason": "Owner-approved 2026-07-19: global reference catalog (world-readable by design) or moot auth-admin policy; no per-user data",
+      "fp": "db|rls-permissive-policy|cooked_uncooked_ratios.ratios_read|Policy \"ratios_read\" on public.cooked_uncooked_ratios (SELEC"
+    },
+    {
+      "id": "r11",
+      "reason": "Owner-approved 2026-07-19: global reference catalog (world-readable by design) or moot auth-admin policy; no per-user data",
+      "fp": "db|rls-permissive-policy|food_portions.food_portions_read|Policy \"food_portions_read\" on public.food_portions (SELECT)"
+    },
+    {
+      "id": "r12",
+      "reason": "Owner-approved 2026-07-19: global reference catalog (world-readable by design) or moot auth-admin policy; no per-user data",
+      "fp": "db|rls-permissive-policy|profiles.profiles_auth_admin_read|Policy \"profiles_auth_admin_read\" on public.profiles (SELECT"
+    },
+    {
+      "id": "r13",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|api_request_log.company_id|Column public.api_request_log.company_id is a tenant/owner k"
+    },
+    {
+      "id": "r14",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|api_request_log.user_id|Column public.api_request_log.user_id is a tenant/owner key "
+    },
+    {
+      "id": "r15",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|api_usage_log.company_id|Column public.api_usage_log.company_id is a tenant/owner key"
+    },
+    {
+      "id": "r16",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|audit_log.user_id|Column public.audit_log.user_id is a tenant/owner key but is"
+    },
+    {
+      "id": "r17",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|exercises.company_id|Column public.exercises.company_id is a tenant/owner key but"
+    },
+    {
+      "id": "r18",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|foods.company_id|Column public.foods.company_id is a tenant/owner key but is "
+    },
+    {
+      "id": "r19",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|security_events.company_id|Column public.security_events.company_id is a tenant/owner k"
+    },
+    {
+      "id": "r20",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|security_events.user_id|Column public.security_events.user_id is a tenant/owner key "
+    },
+    {
+      "id": "r21",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|session_logs.company_id|Column public.session_logs.company_id is a tenant/owner key "
+    },
+    {
+      "id": "r22",
+      "reason": "Owner-approved 2026-07-19: NULL is semantic here (global catalog rows, anonymous requests, system events, failed sign-ins); the four provable columns are hardened in migration 0082",
+      "fp": "db|nullable-tenant-column|session_logs.user_id|Column public.session_logs.user_id is a tenant/owner key but"
+    },
+    {
+      "id": "r23",
+      "reason": "Support-widget modal: the crawler reached the modal INNER fields, which proves the SUPPORT button opened it; fields are wired React state (src/components/support/support-widget.tsx). Headless pre-hydration clicks read as no-effect.",
+      "fp": "crawl:app|dead-control|/onboarding|SUPPORT"
+    },
+    {
+      "id": "r24",
+      "reason": "Support-widget modal: the crawler reached the modal INNER fields, which proves the SUPPORT button opened it; fields are wired React state (src/components/support/support-widget.tsx). Headless pre-hydration clicks read as no-effect.",
+      "fp": "crawl:app|dead-control|/onboarding|✕"
+    },
+    {
+      "id": "r25",
+      "reason": "Support-widget modal: the crawler reached the modal INNER fields, which proves the SUPPORT button opened it; fields are wired React state (src/components/support/support-widget.tsx). Headless pre-hydration clicks read as no-effect.",
+      "fp": "crawl:app|dead-control|/onboarding|Question Bug Feature request Billing Other"
+    },
+    {
+      "id": "r26",
+      "reason": "Support-widget modal: the crawler reached the modal INNER fields, which proves the SUPPORT button opened it; fields are wired React state (src/components/support/support-widget.tsx). Headless pre-hydration clicks read as no-effect.",
+      "fp": "crawl:app|dead-control|/onboarding|Low Medium High Urgent"
+    },
+    {
+      "id": "r27",
+      "reason": "Support-widget modal: the crawler reached the modal INNER fields, which proves the SUPPORT button opened it; fields are wired React state (src/components/support/support-widget.tsx). Headless pre-hydration clicks read as no-effect.",
+      "fp": "crawl:app|dead-control|/onboarding|Brief summary of your issue"
+    },
+    {
+      "id": "r28",
+      "reason": "Support-widget modal: the crawler reached the modal INNER fields, which proves the SUPPORT button opened it; fields are wired React state (src/components/support/support-widget.tsx). Headless pre-hydration clicks read as no-effect.",
+      "fp": "crawl:app|dead-control|/onboarding|Describe your issue in detail..."
+    },
+    {
+      "id": "r29",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/exercises|Correo"
+    },
+    {
+      "id": "r30",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/exercises|Contraseña"
+    },
+    {
+      "id": "r31",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/exercises|INICIAR SESIÓN"
+    },
+    {
+      "id": "r32",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/exercises|Install app"
+    },
+    {
+      "id": "r33",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/history|Correo"
+    },
+    {
+      "id": "r34",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/history|Contraseña"
+    },
+    {
+      "id": "r35",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/history|INICIAR SESIÓN"
+    },
+    {
+      "id": "r36",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/history|Install app"
+    },
+    {
+      "id": "r37",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/forms/[id]|Correo"
+    },
+    {
+      "id": "r38",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/forms/[id]|Contraseña"
+    },
+    {
+      "id": "r39",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/forms/[id]|INICIAR SESIÓN"
+    },
+    {
+      "id": "r40",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/forms/[id]|Install app"
+    },
+    {
+      "id": "r41",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/coach/forms/[id]|Correo"
+    },
+    {
+      "id": "r42",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/coach/forms/[id]|Contraseña"
+    },
+    {
+      "id": "r43",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/coach/forms/[id]|INICIAR SESIÓN"
+    },
+    {
+      "id": "r44",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/coach/forms/[id]|Install app"
+    },
+    {
+      "id": "r45",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/coach/programs|Correo"
+    },
+    {
+      "id": "r46",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/coach/programs|Contraseña"
+    },
+    {
+      "id": "r47",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/coach/programs|INICIAR SESIÓN"
+    },
+    {
+      "id": "r48",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/coach/programs|Install app"
+    },
+    {
+      "id": "r49",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/workout/[planId]|Correo"
+    },
+    {
+      "id": "r50",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/workout/[planId]|Contraseña"
+    },
+    {
+      "id": "r51",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/workout/[planId]|INICIAR SESIÓN"
+    },
+    {
+      "id": "r52",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:app|dead-control|/workout/[planId]|Install app"
+    },
+    {
+      "id": "r53",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/|Install app"
+    },
+    {
+      "id": "r54",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/about|Install app"
+    },
+    {
+      "id": "r55",
+      "reason": "Public form control proven working in real-browser E2E on 2026-07-19 (signup name fields, forgot-password send, waitlist form): headless pre-hydration click artifact.",
+      "fp": "crawl:public|dead-control|/join|Tu correo"
+    },
+    {
+      "id": "r56",
+      "reason": "Public form control proven working in real-browser E2E on 2026-07-19 (signup name fields, forgot-password send, waitlist form): headless pre-hydration click artifact.",
+      "fp": "crawl:public|dead-control|/join|Unirme a la lista"
+    },
+    {
+      "id": "r57",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/join|Install app"
+    },
+    {
+      "id": "r58",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/join/thank-you|Install app"
+    },
+    {
+      "id": "r59",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/api-docs|Correo"
+    },
+    {
+      "id": "r60",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/api-docs|Contraseña"
+    },
+    {
+      "id": "r61",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/api-docs|INICIAR SESIÓN"
+    },
+    {
+      "id": "r62",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/api-docs|Install app"
+    },
+    {
+      "id": "r63",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/sign-in|Correo"
+    },
+    {
+      "id": "r64",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/sign-in|Contraseña"
+    },
+    {
+      "id": "r65",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/sign-in|INICIAR SESIÓN"
+    },
+    {
+      "id": "r66",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/sign-in|Install app"
+    },
+    {
+      "id": "r67",
+      "reason": "Public form control proven working in real-browser E2E on 2026-07-19 (signup name fields, forgot-password send, waitlist form): headless pre-hydration click artifact.",
+      "fp": "crawl:public|dead-control|/auth/sign-up|Nombre"
+    },
+    {
+      "id": "r68",
+      "reason": "Public form control proven working in real-browser E2E on 2026-07-19 (signup name fields, forgot-password send, waitlist form): headless pre-hydration click artifact.",
+      "fp": "crawl:public|dead-control|/auth/sign-up|Apellido"
+    },
+    {
+      "id": "r69",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/sign-up|Correo"
+    },
+    {
+      "id": "r70",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/sign-up|Contraseña"
+    },
+    {
+      "id": "r71",
+      "reason": "Public form control proven working in real-browser E2E on 2026-07-19 (signup name fields, forgot-password send, waitlist form): headless pre-hydration click artifact.",
+      "fp": "crawl:public|dead-control|/auth/sign-up|CREAR CUENTA"
+    },
+    {
+      "id": "r72",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/sign-up|Install app"
+    },
+    {
+      "id": "r73",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/forgot-password|Correo"
+    },
+    {
+      "id": "r74",
+      "reason": "Public form control proven working in real-browser E2E on 2026-07-19 (signup name fields, forgot-password send, waitlist form): headless pre-hydration click artifact.",
+      "fp": "crawl:public|dead-control|/auth/forgot-password|ENVIAR ENLACE"
+    },
+    {
+      "id": "r75",
+      "reason": "Crawler session loss: these are the sign-in page / PWA banner controls rendered under an app route because the crawl account was logged out or stuck pre-onboarding. The controls themselves are proven working (session E2E signed in through them repeatedly on 2026-07-18/19). Fix the scan account (use an onboarded subscriber), not the app.",
+      "fp": "crawl:public|dead-control|/auth/forgot-password|Install app"
+    },
+    {
+      "id": "r76",
+      "reason": "Documented-intentional silent skip: timezone fallback / vision warmup ping / wake-lock release; failure has no user-visible consequence",
+      "fp": "wiring|empty-catch|src/components/app/timezone-sync.tsx|.catch(() => {})"
+    },
+    {
+      "id": "r77",
+      "reason": "Documented-intentional silent skip: timezone fallback / vision warmup ping / wake-lock release; failure has no user-visible consequence",
+      "fp": "wiring|empty-catch|src/components/nutrition/photo-scan.tsx|.catch(() => {})"
+    },
+    {
+      "id": "r78",
+      "reason": "Documented-intentional silent skip: timezone fallback / vision warmup ping / wake-lock release; failure has no user-visible consequence",
+      "fp": "wiring|empty-catch|src/components/workout/workout-player.tsx|.catch(() => {})"
+    },
+    {
+      "id": "r79",
+      "reason": "Entry by design from legacy-invite emails: the invite links to /auth/callback?next=/claim (src/lib/legacy/invite.ts); never linked in-app",
+      "fp": "orphans|orphan-route|/claim|/claim"
+    },
+    {
+      "id": "r80",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/|/ [mobile] changed 5.0% of pixels (> 3%). diff: root_mobile."
+    },
+    {
+      "id": "r81",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/about|/about [desktop] changed 5.9% of pixels (> 3%). diff: about_"
+    },
+    {
+      "id": "r82",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/about|/about [mobile] changed 11.0% of pixels (> 3%). diff: about_"
+    },
+    {
+      "id": "r83",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/join|/join [mobile] changed 9.0% of pixels (> 3%). diff: join_mob"
+    },
+    {
+      "id": "r84",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/api-docs|/api-docs [desktop] changed 8.6% of pixels (> 3%). diff: api"
+    },
+    {
+      "id": "r85",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/api-docs|/api-docs [mobile] changed 19.1% of pixels (> 3%). diff: api"
+    },
+    {
+      "id": "r86",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/auth/sign-in|/auth/sign-in [desktop] changed 50.7% of pixels (> 3%). diff"
+    },
+    {
+      "id": "r87",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/auth/sign-in|/auth/sign-in [mobile] changed 10.8% of pixels (> 3%). diff:"
+    },
+    {
+      "id": "r88",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/auth/sign-up|/auth/sign-up [desktop] changed 50.6% of pixels (> 3%). diff"
+    },
+    {
+      "id": "r89",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/auth/sign-up|/auth/sign-up [mobile] changed 10.3% of pixels (> 3%). diff:"
+    },
+    {
+      "id": "r90",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/auth/forgot-password|/auth/forgot-password [desktop] changed 50.9% of pixels (> 3"
+    },
+    {
+      "id": "r91",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/auth/forgot-password|/auth/forgot-password [mobile] changed 11.1% of pixels (> 3%"
+    },
+    {
+      "id": "r92",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/onboarding|/onboarding [desktop] changed 50.9% of pixels (> 3%). diff: "
+    },
+    {
+      "id": "r93",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/onboarding|/onboarding [mobile] changed 13.2% of pixels (> 3%). diff: o"
+    },
+    {
+      "id": "r94",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/dashboard|/dashboard [desktop] changed 53.3% of pixels (> 3%). diff: d"
+    },
+    {
+      "id": "r95",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/dashboard|/dashboard [mobile] changed 21.1% of pixels (> 3%). diff: da"
+    },
+    {
+      "id": "r96",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/exercises|/exercises [desktop] changed 56.6% of pixels (> 3%). diff: e"
+    },
+    {
+      "id": "r97",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/exercises|/exercises [mobile] changed 31.2% of pixels (> 3%). diff: ex"
+    },
+    {
+      "id": "r98",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/history|/history [desktop] changed 56.6% of pixels (> 3%). diff: his"
+    },
+    {
+      "id": "r99",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/history|/history [mobile] changed 31.2% of pixels (> 3%). diff: hist"
+    },
+    {
+      "id": "r100",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/forms/[id]|/forms/[id] [desktop] changed 51.0% of pixels (> 3%). diff: "
+    },
+    {
+      "id": "r101",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/forms/[id]|/forms/[id] [mobile] changed 7.0% of pixels (> 3%). diff: fo"
+    },
+    {
+      "id": "r102",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/coach/forms/[id]|/coach/forms/[id] [desktop] changed 53.3% of pixels (> 3%). "
+    },
+    {
+      "id": "r103",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/coach/forms/[id]|/coach/forms/[id] [mobile] changed 21.1% of pixels (> 3%). d"
+    },
+    {
+      "id": "r104",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/coach/programs|/coach/programs [desktop] changed 53.3% of pixels (> 3%). di"
+    },
+    {
+      "id": "r105",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/coach/programs|/coach/programs [mobile] changed 21.1% of pixels (> 3%). dif"
+    },
+    {
+      "id": "r106",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/workout/[planId]|/workout/[planId] [desktop] changed 51.0% of pixels (> 3%). "
+    },
+    {
+      "id": "r107",
+      "reason": "Baseline predates the light-monochrome redesign; re-baseline on next run",
+      "fp": "visual:app|visual-regression|/workout/[planId]|/workout/[planId] [mobile] changed 6.8% of pixels (> 3%). di"
+    },
+    {
+      "id": "r108",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.companies|table public.companies stayed empty"
+    },
+    {
+      "id": "r109",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.profiles|table public.profiles stayed empty"
+    },
+    {
+      "id": "r110",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.roles|table public.roles stayed empty"
+    },
+    {
+      "id": "r111",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.audit_log|table public.audit_log stayed empty"
+    },
+    {
+      "id": "r112",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.session_logs|table public.session_logs stayed empty"
+    },
+    {
+      "id": "r113",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.consent_captures|table public.consent_captures stayed empty"
+    },
+    {
+      "id": "r114",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.security_events|table public.security_events stayed empty"
+    },
+    {
+      "id": "r115",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.rate_limit_log|table public.rate_limit_log stayed empty"
+    },
+    {
+      "id": "r116",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.api_keys|table public.api_keys stayed empty"
+    },
+    {
+      "id": "r117",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.api_usage_log|table public.api_usage_log stayed empty"
+    },
+    {
+      "id": "r118",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.notification_preferences|table public.notification_preferences stayed empty"
+    },
+    {
+      "id": "r119",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.ai_evals|table public.ai_evals stayed empty"
+    },
+    {
+      "id": "r120",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.ai_eval_cases|table public.ai_eval_cases stayed empty"
+    },
+    {
+      "id": "r121",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.ai_eval_runs|table public.ai_eval_runs stayed empty"
+    },
+    {
+      "id": "r122",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.ai_usage_log|table public.ai_usage_log stayed empty"
+    },
+    {
+      "id": "r123",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.cron_job_log|table public.cron_job_log stayed empty"
+    },
+    {
+      "id": "r124",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.email_send_log|table public.email_send_log stayed empty"
+    },
+    {
+      "id": "r125",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.email_suppression_list|table public.email_suppression_list stayed empty"
+    },
+    {
+      "id": "r126",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.waitlist_leads|table public.waitlist_leads stayed empty"
+    },
+    {
+      "id": "r127",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.forms|table public.forms stayed empty"
+    },
+    {
+      "id": "r128",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.form_fields|table public.form_fields stayed empty"
+    },
+    {
+      "id": "r129",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.form_assignments|table public.form_assignments stayed empty"
+    },
+    {
+      "id": "r130",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.form_responses|table public.form_responses stayed empty"
+    },
+    {
+      "id": "r131",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.onboarding_responses|table public.onboarding_responses stayed empty"
+    },
+    {
+      "id": "r132",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.muscle_groups|table public.muscle_groups stayed empty"
+    },
+    {
+      "id": "r133",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.exercise_equipment_types|table public.exercise_equipment_types stayed empty"
+    },
+    {
+      "id": "r134",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.exercises|table public.exercises stayed empty"
+    },
+    {
+      "id": "r135",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.substitution_reason_tags|table public.substitution_reason_tags stayed empty"
+    },
+    {
+      "id": "r136",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.exercise_substitutions|table public.exercise_substitutions stayed empty"
+    },
+    {
+      "id": "r137",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.plans|table public.plans stayed empty"
+    },
+    {
+      "id": "r138",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.sessions|table public.sessions stayed empty"
+    },
+    {
+      "id": "r139",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.session_exercises|table public.session_exercises stayed empty"
+    },
+    {
+      "id": "r140",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.plan_assignments|table public.plan_assignments stayed empty"
+    },
+    {
+      "id": "r141",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.workout_logs|table public.workout_logs stayed empty"
+    },
+    {
+      "id": "r142",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.set_logs|table public.set_logs stayed empty"
+    },
+    {
+      "id": "r143",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.workout_completion_history|table public.workout_completion_history stayed empty"
+    },
+    {
+      "id": "r144",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.contacts|table public.contacts stayed empty"
+    },
+    {
+      "id": "r145",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.client_subscriptions|table public.client_subscriptions stayed empty"
+    },
+    {
+      "id": "r146",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.legacy_client_snapshot|table public.legacy_client_snapshot stayed empty"
+    },
+    {
+      "id": "r147",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.contact_transactions|table public.contact_transactions stayed empty"
+    },
+    {
+      "id": "r148",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.tags|table public.tags stayed empty"
+    },
+    {
+      "id": "r149",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.contact_tags|table public.contact_tags stayed empty"
+    },
+    {
+      "id": "r150",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.migration_log|table public.migration_log stayed empty"
+    },
+    {
+      "id": "r151",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.saved_segments|table public.saved_segments stayed empty"
+    },
+    {
+      "id": "r152",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.pipelines|table public.pipelines stayed empty"
+    },
+    {
+      "id": "r153",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.pipeline_stages|table public.pipeline_stages stayed empty"
+    },
+    {
+      "id": "r154",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.opportunities|table public.opportunities stayed empty"
+    },
+    {
+      "id": "r155",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.opportunity_audit|table public.opportunity_audit stayed empty"
+    },
+    {
+      "id": "r156",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.recipe_books|table public.recipe_books stayed empty"
+    },
+    {
+      "id": "r157",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.recipes|table public.recipes stayed empty"
+    },
+    {
+      "id": "r158",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.recipe_ingredients|table public.recipe_ingredients stayed empty"
+    },
+    {
+      "id": "r159",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.meal_plans|table public.meal_plans stayed empty"
+    },
+    {
+      "id": "r160",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.contact_files|table public.contact_files stayed empty"
+    },
+    {
+      "id": "r161",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.foods|table public.foods stayed empty"
+    },
+    {
+      "id": "r162",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.food_portions|table public.food_portions stayed empty"
+    },
+    {
+      "id": "r163",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.cooked_uncooked_ratios|table public.cooked_uncooked_ratios stayed empty"
+    },
+    {
+      "id": "r164",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.food_log|table public.food_log stayed empty"
+    },
+    {
+      "id": "r165",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.recipe_favorites|table public.recipe_favorites stayed empty"
+    },
+    {
+      "id": "r166",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.subscriptions|table public.subscriptions stayed empty"
+    },
+    {
+      "id": "r167",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.payments|table public.payments stayed empty"
+    },
+    {
+      "id": "r168",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.webhook_events|table public.webhook_events stayed empty"
+    },
+    {
+      "id": "r169",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.cancellation_reasons|table public.cancellation_reasons stayed empty"
+    },
+    {
+      "id": "r170",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.community_posts|table public.community_posts stayed empty"
+    },
+    {
+      "id": "r171",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.post_reactions|table public.post_reactions stayed empty"
+    },
+    {
+      "id": "r172",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.post_comments|table public.post_comments stayed empty"
+    },
+    {
+      "id": "r173",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.challenges|table public.challenges stayed empty"
+    },
+    {
+      "id": "r174",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.challenge_participants|table public.challenge_participants stayed empty"
+    },
+    {
+      "id": "r175",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.coach_messages|table public.coach_messages stayed empty"
+    },
+    {
+      "id": "r176",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.user_insights|table public.user_insights stayed empty"
+    },
+    {
+      "id": "r177",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.weight_entries|table public.weight_entries stayed empty"
+    },
+    {
+      "id": "r178",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.notifications|table public.notifications stayed empty"
+    },
+    {
+      "id": "r179",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.push_subscriptions|table public.push_subscriptions stayed empty"
+    },
+    {
+      "id": "r180",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.progress_photos|table public.progress_photos stayed empty"
+    },
+    {
+      "id": "r181",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.user_streaks|table public.user_streaks stayed empty"
+    },
+    {
+      "id": "r182",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.badges|table public.badges stayed empty"
+    },
+    {
+      "id": "r183",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.user_badges|table public.user_badges stayed empty"
+    },
+    {
+      "id": "r184",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.habits|table public.habits stayed empty"
+    },
+    {
+      "id": "r185",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.habit_logs|table public.habit_logs stayed empty"
+    },
+    {
+      "id": "r186",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.messages|table public.messages stayed empty"
+    },
+    {
+      "id": "r187",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.coach_knowledge|table public.coach_knowledge stayed empty"
+    },
+    {
+      "id": "r188",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.coaching_assignments|table public.coaching_assignments stayed empty"
+    },
+    {
+      "id": "r189",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.approval_queue|table public.approval_queue stayed empty"
+    },
+    {
+      "id": "r190",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.coach_notes|table public.coach_notes stayed empty"
+    },
+    {
+      "id": "r191",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.physique_analyses|table public.physique_analyses stayed empty"
+    },
+    {
+      "id": "r192",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.user_food_favorites|table public.user_food_favorites stayed empty"
+    },
+    {
+      "id": "r193",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.body_measurements|table public.body_measurements stayed empty"
+    },
+    {
+      "id": "r194",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.food_photos|table public.food_photos stayed empty"
+    },
+    {
+      "id": "r195",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.coach_interview_answers|table public.coach_interview_answers stayed empty"
+    },
+    {
+      "id": "r196",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.ai_inferences|table public.ai_inferences stayed empty"
+    },
+    {
+      "id": "r197",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.domain_events|table public.domain_events stayed empty"
+    },
+    {
+      "id": "r198",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.qa_checklist|table public.qa_checklist stayed empty"
+    },
+    {
+      "id": "r199",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.client_intake|table public.client_intake stayed empty"
+    },
+    {
+      "id": "r200",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.client_messages|table public.client_messages stayed empty"
+    },
+    {
+      "id": "r201",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.client_workout_history|table public.client_workout_history stayed empty"
+    },
+    {
+      "id": "r202",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.support_tickets|table public.support_tickets stayed empty"
+    },
+    {
+      "id": "r203",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.admin_settings|table public.admin_settings stayed empty"
+    },
+    {
+      "id": "r204",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.api_request_log|table public.api_request_log stayed empty"
+    },
+    {
+      "id": "r205",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.ai_trace|table public.ai_trace stayed empty"
+    },
+    {
+      "id": "r206",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.kg_node|table public.kg_node stayed empty"
+    },
+    {
+      "id": "r207",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.kg_edge|table public.kg_edge stayed empty"
+    },
+    {
+      "id": "r208",
+      "reason": "Pre-launch: feature unused yet; simulate derived zero create-flows (coverage noise, not a defect). Revisit post-launch.",
+      "fp": "simulate|empty-table|public.eval_run|table public.eval_run stayed empty"
+    },
+    {
+      "id": "r209",
+      "reason": "Contradicted by real-browser E2E 2026-07-19: full wizard completed with onboarding row + CRM contact + GHL mirror all verified; the simulate's success heuristics did not recognize the plan screen",
+      "fp": "simulate|flow-not-completed|https://thickandfit.vercel.app/onboarding|create flow did not confirm completion (public.profiles)"
+    },
+    {
+      "id": "r210",
+      "reason": "Contradicted by real-browser E2E 2026-07-19: full wizard completed with onboarding row + CRM contact + GHL mirror all verified; the simulate's success heuristics did not recognize the plan screen",
+      "fp": "simulate|record-id-not-observed|https://thickandfit.vercel.app/onboarding|created-record id not observed (public.profiles)"
+    }
+  ]
+}

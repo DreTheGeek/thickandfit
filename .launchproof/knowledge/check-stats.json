@@ -1,13 +1,15 @@
 {
   "db:rls-permissive-policy": {
-    "kept": 21,
+    "kept": 28,
     "dismissed": 0,
-    "runs": 0
+    "runs": 2,
+    "seen": 14
   },
   "db:fk-missing": {
-    "kept": 16,
+    "kept": 17,
     "dismissed": 0,
-    "runs": 0
+    "runs": 2,
+    "seen": 2
   },
   "db:excess-superuser-role": {
     "kept": 2,
@@ -15,39 +17,46 @@
     "runs": 0
   },
   "db:empty-table": {
-    "kept": 28,
+    "kept": 29,
     "dismissed": 0,
-    "runs": 0
+    "runs": 2,
+    "seen": 2
   },
   "orphans:orphan-route": {
     "kept": 20,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 3
   },
   "orphans:route-coverage": {
     "kept": 4,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 1
   },
   "expectations:orphaned-server-capability": {
     "kept": 2,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 1
   },
   "crawl:dead-control": {
     "kept": 71,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 53
   },
   "a11y:a11y-color-contrast": {
     "kept": 3,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 1
   },
   "completeness:dead-end-shell": {
     "kept": 2,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 1
   },
   "completeness:empty-page": {
     "kept": 3,
@@ -62,46 +71,156 @@
   "analytics:analytics-missing": {
     "kept": 1,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 2
   },
   "crawl:error-on-actuate": {
     "kept": 1,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 1
   },
   "seo:description-length": {
     "kept": 6,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 6
   },
   "seo:missing-canonical": {
     "kept": 8,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 8
   },
   "seo:missing-og": {
     "kept": 8,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 8
   },
   "seo:public-noindex": {
     "kept": 1,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 1
   },
   "seo:duplicate-title": {
     "kept": 4,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 4
   },
   "seo:og-image-missing": {
     "kept": 1,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 1
   },
   "expectations:unmet-spec-expectation": {
     "kept": 1,
     "dismissed": 0,
     "runs": 0
+  },
+  "db:pii-plaintext": {
+    "kept": 1,
+    "dismissed": 0,
+    "runs": 2,
+    "seen": 2
+  },
+  "db:rls-owner-unscoped": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 2,
+    "seen": 8
+  },
+  "db:nullable-tenant-column": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 2,
+    "seen": 26
+  },
+  "simulate:flow-not-completed": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "simulate:record-id-not-observed": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "simulate:empty-table": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 101
+  },
+  "chaos:chaos-uncaught-error": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 10
+  },
+  "aeo:weak-geo-signals": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "aeo:no-llms-txt": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "aeo:weak-eeat": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "aeo:no-freshness-signal": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "hygiene:weak-csp": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "secrets:google-api-key": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "schema-drift:migration-tracking-drift": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "deploy-drift:deploy-drift-undeployed": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "wiring:empty-catch": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 7
+  },
+  "payments:live-payment-key": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
   }
 }
