@@ -42,6 +42,19 @@ async function signIn(page: Page, email: string, password: string): Promise<void
   await page.waitForURL((u) => !u.pathname.startsWith('/auth'), { timeout: 30_000 });
 }
 
+// Interactive controls do nothing until React hydrates; typing early is a silent no-op. Wait for
+// React's props to attach to the selector before interacting.
+async function waitForHydration(page: Page, selector: string): Promise<void> {
+  await page.waitForFunction(
+    (sel) => {
+      const el = document.querySelector(sel);
+      return Boolean(el && Object.keys(el).some((k) => k.startsWith('__reactProps')));
+    },
+    selector,
+    { timeout: 20_000 },
+  );
+}
+
 test.describe('signup pipeline', () => {
   const email = `e2e.regression+${Date.now()}@thickandfit.test`;
 
@@ -106,12 +119,14 @@ test.describe('two-sided messaging', () => {
     test.skip(!dbReady || !MEMBER_PW, 'needs member creds + DB asserts');
     await signIn(page, MEMBER, MEMBER_PW);
     await page.goto(`${BASE}/inbox`);
+    await waitForHydration(page, 'input[placeholder]');
     const composer = page.locator('input[placeholder]').last();
     await composer.fill(`${mark} member`);
     await composer.press('Enter');
-    await expect(page.getByText(`${mark} member`)).toBeVisible({ timeout: 15_000 });
 
     // Archive row (what /coach/clients + /coach/inbox read) and at least one coach notification.
+    // DB first: the thread renders sends via the Realtime echo (no optimistic append), so the DB is
+    // the authoritative signal and the UI is asserted after a reload.
     await expect
       .poll(
         async () =>
@@ -130,19 +145,42 @@ test.describe('two-sided messaging', () => {
         { timeout: 20_000 },
       )
       .toBeGreaterThan(0);
+
+    // UI visibility after a reload (server-rendered thread includes the persisted message).
+    await page.reload();
+    await expect(page.getByText(`${mark} member`)).toBeVisible({ timeout: 15_000 });
   });
 
   test('coach send notifies the member', async ({ page }) => {
     test.skip(!dbReady || !COACH_PW, 'needs coach creds + DB asserts');
     await signIn(page, COACH, COACH_PW);
-    // Open the member thread through the picker-free deep link: first thread is fine, we assert by
-    // the unique body, not the thread identity.
-    await page.goto(`${BASE}/coach/inbox`);
-    const composer = page.locator('main input[placeholder]').last();
+    // Pin the thread to the member test account's CRM contact: first-thread roulette must never
+    // send test copy into a real client's conversation. Contact emails can differ from the login
+    // email (seeded personas), so resolve profile -> contact by profile_id.
+    const profs = (await restGet(
+      `profiles?email=eq.${encodeURIComponent(MEMBER)}&select=id&limit=1`,
+    )) as { id: string }[];
+    const contacts = profs[0]
+      ? ((await restGet(`contacts?profile_id=eq.${profs[0].id}&select=id&limit=1`)) as { id: string }[])
+      : [];
+    test.skip(!contacts[0], 'member test account has no CRM contact');
+    await page.goto(`${BASE}/coach/inbox?c=${contacts[0].id}`);
+    await waitForHydration(page, 'main input');
+    const composer = page.locator('main input[placeholder^="Message"]');
     await composer.fill(`${mark} coach`);
     await composer.press('Enter');
-    await expect(page.getByText(`${mark} coach`)).toBeVisible({ timeout: 15_000 });
 
+    // DB/notification first (authoritative; the thread UI depends on live-append timing), then a
+    // reload proves the persisted message renders.
+    await expect
+      .poll(
+        async () =>
+          ((await restGet(
+            `client_messages?body=eq.${encodeURIComponent(`${mark} coach`)}&select=id`,
+          )) as unknown[]).length,
+        { timeout: 20_000 },
+      )
+      .toBeGreaterThan(0);
     await expect
       .poll(
         async () =>
@@ -152,6 +190,8 @@ test.describe('two-sided messaging', () => {
         { timeout: 20_000 },
       )
       .toBeGreaterThan(0);
+    await page.reload();
+    await expect(page.getByText(`${mark} coach`).first()).toBeVisible({ timeout: 15_000 });
   });
 });
 
@@ -161,7 +201,7 @@ test.describe('billing pre-launch honesty', () => {
     test.skip(!MEMBER_PW, 'needs a member account');
     await signIn(page, MEMBER, MEMBER_PW);
     await page.goto(`${BASE}/account/billing`);
-    await expect(page.getByText(/billing hasn't started yet/i)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText(/start subscription/i)).toHaveCount(0);
+    await expect(page.getByText(/billing hasn't started yet|facturación aún no ha comenzado/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/start subscription|iniciar suscripción/i)).toHaveCount(0);
   });
 });
