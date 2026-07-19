@@ -35,7 +35,16 @@ const isVwoInline = (s: ExtractedScript): boolean =>
 const isWModDetector = (s: ExtractedScript): boolean =>
   s.inline != null && s.inline.includes("w-mod-") && s.inline.includes("documentElement");
 
-const bodyScripts = scriptsManifest.body.filter((s) => !isVwoInline(s) && !isWModDetector(s));
+// The external Webflow/jQuery bundles under /assets/scripts were removed (they shipped a foreign
+// live Stripe key); their src tags now 404. Drop every src that pointed there, plus the inline
+// scripts that depended on that runtime (jQuery skip-link, VWO), so the landing page loads clean.
+const isDeletedSrc = (s: ExtractedScript): boolean =>
+  s.src != null && s.src.includes("/assets/scripts/");
+const isJquerySkip = (s: ExtractedScript): boolean =>
+  s.inline != null && s.inline.includes("$(document).ready");
+const bodyScripts = scriptsManifest.body.filter(
+  (s) => !isVwoInline(s) && !isWModDetector(s) && !isDeletedSrc(s) && !isJquerySkip(s),
+);
 
 export default function Home() {
   return (
