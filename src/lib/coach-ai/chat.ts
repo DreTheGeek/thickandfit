@@ -226,6 +226,10 @@ export async function streamChat(
     companyId,
     profileId,
     retrievalCount: memories.length + knowledge.length,
+    // Hard cap on connect + stream. Without it the fetch carried NO signal, so a pre-stream hang
+    // held the lambda until the route's maxDuration killed it (observed as a 504 in prod). 45s
+    // leaves persist/trace headroom under the 60s route ceiling; replies stream in a few seconds.
+    timeoutMs: 45_000,
   });
   if (!upstream || !upstream.body) {
     return { status: 'notConfigured', message: notConfiguredMessage(locale) };
@@ -236,62 +240,91 @@ export async function streamChat(
   const encoder = new TextEncoder();
   let assistantText = '';
   let buffer = '';
+  let finished = false;
 
+  // Persist + trace + close exactly once, AWAITED before close so the write cannot die with the
+  // frozen lambda. Called from the [DONE] frame (the normal path), the reader-done branch, and the
+  // error branch, whichever comes first.
+  async function finish(controller: ReadableStreamDefaultController<Uint8Array>): Promise<void> {
+    if (finished) return;
+    finished = true;
+    // Single completion log per turn: proves the persist path ran (the P0 was this never firing).
+    console.log(`[coach-chat] finish: ${assistantText.length} chars at ${Date.now() - t0}ms`);
+    if (assistantText.trim()) {
+      await persistMessage(companyId, profileId, 'assistant', assistantText.trim());
+      // Provenance for the turn. rawOutput bounded; full history lives in coach_messages.
+      await logInference({
+        companyId,
+        profileId,
+        feature: 'coach-chat',
+        model: CHAT_MODEL,
+        promptVersion: PROMPT_VERSION,
+        latencyMs: Date.now() - t0,
+        status: 'ok',
+        rawOutput: { text: assistantText.trim().slice(0, 8000) },
+      });
+    }
+    try {
+      controller.close();
+    } catch {
+      // Already closed/errored; the persist above is what matters.
+    }
+    void reader.cancel().catch(() => undefined);
+  }
+
+  console.log('[coach-chat] stream open, upstream ok');
   const stream = new ReadableStream<Uint8Array>({
     async pull(controller) {
+      if (finished) return;
       try {
-        const { done, value } = await reader.read();
-        if (done) {
-          // AWAIT the persist BEFORE closing: the client already has every streamed delta, so a few
-          // ms here costs nothing, but a bare void would die with the frozen lambda after close and
-          // silently drop the coach's reply from coach_messages. Never blocks the user-visible stream.
-          if (assistantText.trim()) {
-            await persistMessage(companyId, profileId, 'assistant', assistantText.trim());
-            // Provenance for the turn. rawOutput bounded; full history lives in coach_messages.
-            await logInference({
-              companyId,
-              profileId,
-              feature: 'coach-chat',
-              model: CHAT_MODEL,
-              promptVersion: PROMPT_VERSION,
-              latencyMs: Date.now() - t0,
-              status: 'ok',
-              rawOutput: { text: assistantText.trim().slice(0, 8000) },
-            });
+        // LOOP until at least one chunk is enqueued or the stream finishes. THIS is the real P0
+        // mechanism: a pull() that fulfills without enqueueing anything is never re-called when the
+        // only pending consumer read predates it (the spec's pullAgain flag stays false), so any
+        // frame that produces no delta - OpenRouter's ": OPENROUTER PROCESSING" keep-alives, the
+        // final usage frame, a [DONE]-only chunk - deadlocked the stream. The lambda then sat until
+        // maxDuration killed it and the persist below never ran (zero assistant rows in prod).
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            await finish(controller);
+            return;
           }
-          controller.close();
-          return;
-        }
 
-        buffer += decoder.decode(value, { stream: true });
-        // OpenRouter streams Server-Sent Events: lines of "data: {json}\n\n".
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith('data:')) continue;
-          const payload = trimmed.slice(5).trim();
-          if (payload === '[DONE]') continue;
-          try {
-            const json = JSON.parse(payload) as {
-              choices?: { delta?: { content?: string } }[];
-            };
-            const delta = json.choices?.[0]?.delta?.content;
-            if (delta) {
-              assistantText += delta;
-              controller.enqueue(encoder.encode(delta));
+          buffer += decoder.decode(value, { stream: true });
+          // OpenRouter streams Server-Sent Events: lines of "data: {json}\n\n".
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          let enqueued = false;
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data:')) continue;
+            const payload = trimmed.slice(5).trim();
+            if (payload === '[DONE]') {
+              // Terminal frame: persist + close HERE. Waiting for the upstream socket close instead
+              // does not work inside the lambda (it never surfaces).
+              await finish(controller);
+              return;
             }
-          } catch {
-            // Ignore keep-alive comments / partial frames; the next pull continues the buffer.
+            try {
+              const json = JSON.parse(payload) as {
+                choices?: { delta?: { content?: string } }[];
+              };
+              const delta = json.choices?.[0]?.delta?.content;
+              if (delta) {
+                assistantText += delta;
+                controller.enqueue(encoder.encode(delta));
+                enqueued = true;
+              }
+            } catch {
+              // Ignore keep-alive comments / partial frames; the loop continues the buffer.
+            }
           }
+          // Progress made: hand control back; the runtime re-pulls as the consumer drains.
+          if (enqueued) return;
         }
       } catch {
-        // Upstream read failure: persist whatever we have (awaited, so it survives the lambda),
-        // then end the stream cleanly.
-        if (assistantText.trim()) {
-          await persistMessage(companyId, profileId, 'assistant', assistantText.trim());
-        }
-        controller.close();
+        // Upstream read failure / 45s cap: persist whatever we have, then end the stream cleanly.
+        await finish(controller);
       }
     },
     cancel() {
