@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
+import { getSupportEmail } from '@/lib/admin/settings';
 import { YouScreen, type GoalSummary } from '@/components/profile/you-screen';
 import { recomputeGamification } from '@/lib/gamification/engine';
 import { StreakBadges } from '@/components/gamification/streak-badges';
@@ -87,11 +88,14 @@ export default async function YouPage(): Promise<ReactElement> {
     progressLbs = currentLbs - startLbs;
   }
 
+  const supportEmail = await getSupportEmail(ctx.companyId);
+
   return (
     <YouScreen
       name={name}
       membership={membership}
       memberSince={memberSince}
+      supportEmail={supportEmail}
       workoutCount={count ?? 0}
       streakWeeks={gamification?.streak.currentStreak ?? 0}
       progressLbs={progressLbs}

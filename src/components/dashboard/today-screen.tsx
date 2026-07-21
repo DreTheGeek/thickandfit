@@ -45,6 +45,7 @@ export function TodayScreen({
   catchUp,
   weightGoal,
   coach,
+  supportEmail,
 }: {
   name: string;
   dateLabel: string;
@@ -55,6 +56,7 @@ export function TodayScreen({
   catchUp: CatchUp | null;
   weightGoal: WeightGoal | null;
   coach: TodayCoach | null;
+  supportEmail: string;
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
@@ -178,7 +180,7 @@ export function TodayScreen({
           title={t('today.setupPendingTitle')}
           message={t('today.setupPendingBody')}
           action={
-            <ButtonLink href="mailto:hello@teamthickandfit.com" size="md">
+            <ButtonLink href={`mailto:${supportEmail}`} size="md">
               {t('today.setupPendingCta')}
             </ButtonLink>
           }

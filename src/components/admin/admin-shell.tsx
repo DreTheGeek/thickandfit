@@ -24,6 +24,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin/graph', label: 'Knowledge graph', icon: 'grid' },
   { href: '/admin/knowledge', label: 'Knowledge base', icon: 'book' },
   { href: '/admin/qa', label: 'Launch QA board', icon: 'clipboard' },
+  { href: '/admin/settings', label: 'Settings', icon: 'bolt' },
 ];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }): ReactElement {

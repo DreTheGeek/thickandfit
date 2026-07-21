@@ -29,11 +29,13 @@ export async function YouScreen({
   goal,
   latestLb,
   latestWeightDate,
+  supportEmail,
   children,
 }: {
   name: string;
   membership: string;
   memberSince: string | null;
+  supportEmail: string;
   workoutCount: number;
   streakWeeks: number;
   progressLbs: number;
@@ -68,7 +70,7 @@ export async function YouScreen({
     { key: 'mealPlan', icon: 'nutrition', label: t('mealPlan'), href: '/nutrition/plan' },
     { key: 'foodPhotos', icon: 'camera', label: t('foodPhotos'), href: '/nutrition/photos' },
     { key: 'account', icon: 'gear', label: t('accountSettings'), href: '/account' },
-    { key: 'help', icon: 'help', label: t('help'), href: 'mailto:hello@teamthickandfit.com' },
+    { key: 'help', icon: 'help', label: t('help'), href: `mailto:${supportEmail}` },
   ];
 
   return (

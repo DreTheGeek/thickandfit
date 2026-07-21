@@ -10,6 +10,7 @@ import { getTodayHabits, localToday } from '@/lib/habits/habits';
 import { getDiary } from '@/lib/nutrition/diary';
 import { getCommunity } from '@/lib/community/feed';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
+import { getSupportEmail } from '@/lib/admin/settings';
 import { TodayScreen, type WeekDay, type TodayNutrition, type CatchUp } from '@/components/dashboard/today-screen';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +29,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
 
   const tz = await getProfileTimezone(ctx.userId);
   const today = localToday(tz);
+  const supportEmail = await getSupportEmail(ctx.companyId);
   let summary: DashboardSummary | null = null;
   if (ctx.companyId) summary = await getDashboardSummary(ctx.companyId, ctx.userId);
   const habits = ctx.companyId ? await getTodayHabits(ctx.userId, today) : [];
@@ -155,6 +157,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
       catchUp={catchUp}
       weightGoal={weightGoal}
       coach={coach}
+      supportEmail={supportEmail}
     />
   );
 }
