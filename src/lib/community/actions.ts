@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getComments } from '@/lib/community/feed';
 import { REACTION_EMOJIS, type FeedComment } from '@/lib/community/types';
-import { notifyBroadcast } from '@/lib/notifications/triggers';
+import { notifyBroadcast, notifyMember } from '@/lib/notifications/triggers';
 
 export type CommunityResult = { ok: boolean; error?: string };
 
@@ -185,6 +185,36 @@ export async function addCommentAction(input: unknown): Promise<CommunityResult>
   if (error) {
     console.error('addCommentAction:', error.message);
     return { ok: false, error: 'insert_failed' };
+  }
+  // Notify the post's author that someone commented (unless they commented on their own post).
+  // after() survives the frozen lambda; failures never block the comment.
+  const companyId = ctx.companyId;
+  const commenterId = ctx.userId;
+  const notifyAuthor = async (): Promise<void> => {
+    const svc = createServiceClient();
+    const { data: post } = await svc
+      .from('community_posts')
+      .select('author_profile_id')
+      .eq('id', parsed.data.postId)
+      .maybeSingle();
+    const authorId = (post as { author_profile_id: string | null } | null)?.author_profile_id ?? null;
+    if (!authorId || authorId === commenterId) return;
+    const { data: me } = await svc.from('profiles').select('full_name').eq('id', commenterId).maybeSingle();
+    const name = ((me as { full_name: string | null } | null)?.full_name || 'A member').trim();
+    await notifyMember({
+      companyId,
+      profileId: authorId,
+      type: 'community_reply',
+      titleKey: 'commentTitle',
+      bodyKey: 'commentBody',
+      bodyVars: { name },
+      link: '/community',
+    });
+  };
+  try {
+    after(notifyAuthor);
+  } catch {
+    void notifyAuthor();
   }
   revalidatePath('/community');
   return { ok: true };

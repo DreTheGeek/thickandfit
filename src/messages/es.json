@@ -1591,6 +1591,8 @@
         "messageBody": "{name} te envió un mensaje.",
         "replyTitle": "Respuesta de cliente",
         "replyBody": "{name} respondió en tu bandeja de entrada.",
+        "commentTitle": "Nuevo comentario",
+        "commentBody": "{name} comentó en tu publicación.",
         "broadcastTitle": "Nuevo anuncio",
         "broadcastBody": "{name} publico un anuncio en la comunidad.",
         "challengeStartedTitle": "Nuevo reto!",

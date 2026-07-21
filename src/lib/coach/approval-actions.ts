@@ -10,9 +10,11 @@
 // (publishApprovedItem) is server-only with decide() as its sole caller. Backed by approval_queue
 // having NO client UPDATE policy (the approved transition runs only under the service role here).
 import { z } from 'zod';
+import { after } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireCoach, requireApprover } from '@/lib/auth/guards';
 import { hasRole, APPROVER_ROLES } from '@/lib/auth/session';
+import { notifyClientMessage } from '@/lib/notifications/triggers';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isAssignedTo } from '@/lib/coach/assignments';
@@ -140,6 +142,26 @@ export async function decide(input: unknown): Promise<DraftResult> {
   revalidatePath('/coach/drafts');
   if (parsed.data.decision === 'approved' && item.item_type === 'message') {
     revalidatePath('/coach/inbox');
+    // Notify the member their coach messaged them - the approval flow published the message but,
+    // unlike every other coach->member send path, never told the member. senderName matches the
+    // message byline (the drafter), with a "your coach" fallback. after() survives the lambda.
+    const companyId = ctx.companyId;
+    const clientId = item.client_id;
+    const draftedBy = item.drafted_by;
+    const fire = async (): Promise<void> => {
+      const { data: sender } = await sb
+        .from('profiles')
+        .select('full_name')
+        .eq('id', draftedBy)
+        .maybeSingle();
+      const senderName = ((sender as { full_name: string | null } | null)?.full_name || 'Your coach').trim();
+      await notifyClientMessage({ companyId, clientProfileId: clientId, senderName });
+    };
+    try {
+      after(fire);
+    } catch {
+      void fire();
+    }
   }
   return { ok: true };
 }

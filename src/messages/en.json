@@ -1591,6 +1591,8 @@
         "messageBody": "{name} sent you a message.",
         "replyTitle": "Client reply",
         "replyBody": "{name} replied in your inbox.",
+        "commentTitle": "New comment",
+        "commentBody": "{name} commented on your post.",
         "broadcastTitle": "New broadcast",
         "broadcastBody": "{name} posted a broadcast to the community.",
         "challengeStartedTitle": "New challenge!",
