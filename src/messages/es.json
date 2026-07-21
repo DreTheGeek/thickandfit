@@ -1602,7 +1602,26 @@
       "featureWorkouts": "Rutinas estructuradas con los videos de Stephanie",
       "featureNutrition": "Registro de nutrición por foto y texto, preciso cocido o crudo",
       "featureCoach": "Tu coach, en su voz, cuando la necesites",
-      "featureCommunity": "La comunidad, los retos y el seguimiento de tu progreso"
+      "featureCommunity": "La comunidad, los retos y el seguimiento de tu progreso",
+      "planLabel": "Tu plan",
+      "tier": {
+        "self": {
+          "name": "Autoguiado",
+          "price": "$19.97/mes"
+        },
+        "team": {
+          "name": "Equipo Thick & Fit",
+          "price": "Con el equipo de Steph"
+        },
+        "steph": {
+          "name": "1 a 1 con Steph",
+          "price": "Premium, por solicitud"
+        }
+      },
+      "applyTitle": "Este plan es por solicitud",
+      "applyBody": "El coaching en equipo y 1 a 1 es personal, por eso lo configuramos contigo directamente. Escríbenos y el equipo de Stephanie te ayudará a empezar.",
+      "applyCta": "Contactar al equipo",
+      "orSelfGuided": "O empieza hoy por tu cuenta:"
     },
     "billing": {
       "title": "Facturación",
@@ -1663,7 +1682,8 @@
         "noEmail": "No hay correo registrado.",
         "noCompany": "La cuenta no está lista.",
         "generic": "Algo salió mal. Inténtalo de nuevo.",
-        "rateLimited": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo."
+        "rateLimited": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+        "salesAssisted": "Este plan se configura con nuestro equipo, no con pago instantáneo. Contáctanos para empezar."
       }
     },
     "coachChat": {

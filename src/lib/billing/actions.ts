@@ -17,19 +17,20 @@ import {
   reactivate,
 } from '@/lib/billing/stripe';
 import { getSubscriptionForProfile } from '@/lib/billing/subscriptions';
+import { normalizeTier, isSelfServe, type CheckoutTier } from '@/lib/billing/tiers';
 
 export type BillingState = { error?: string; ok?: boolean; checkoutUrl?: string };
 
 const CONSENT_VERSION = '2026-06';
 
-type Tier = 'low' | 'mid';
-
-// Tier -> Stripe price id. Low falls back to the legacy single STRIPE_PRICE_ID so existing config
-// keeps working. Mid-ticket ($200-300) is coach-assigned; high-ticket is Phase 3.
-function priceForTier(tier: Tier): string | undefined {
-  const low = process.env.STRIPE_PRICE_LOW ?? process.env.STRIPE_PRICE_ID ?? undefined;
-  const mid = process.env.STRIPE_PRICE_MID ?? undefined;
-  return tier === 'mid' ? mid : low;
+// Tier -> Stripe price id, with legacy fallbacks so existing single-price config keeps working.
+// self ($19.97) is the only self-serve tier; team/steph prices exist so a future direct sale can be
+// switched on, but the action still gates them behind isSelfServe (see startCheckoutAction).
+function priceForTier(tier: CheckoutTier): string | undefined {
+  const e = process.env;
+  if (tier === 'self') return e.STRIPE_PRICE_SELF ?? e.STRIPE_PRICE_LOW ?? e.STRIPE_PRICE_ID ?? undefined;
+  if (tier === 'team') return e.STRIPE_PRICE_TEAM ?? e.STRIPE_PRICE_MID ?? undefined;
+  return e.STRIPE_PRICE_STEPH ?? e.STRIPE_PRICE_HIGH ?? undefined;
 }
 
 // Optional free trial, configured per offer. 0/unset = charge immediately.
@@ -65,7 +66,11 @@ export async function startCheckoutAction(
   // cap attempts per user. 10/hour is far above any honest retry pattern (fails open on limiter error).
   if (!(await checkRateLimit(ctx.userId, 'checkout-start', 10, 3600, { failClosed: true }))) return { error: 'rateLimited' };
 
-  const tier: Tier = String(formData.get('tier') ?? 'low') === 'mid' ? 'mid' : 'low';
+  // The chosen tier flows in from the checkout page (member's onboarding pick). Only self-serve tiers
+  // may create a Stripe subscription here; high-ticket tiers are application-based (guard, even though
+  // the UI already routes them to the "team will reach out" flow rather than this button).
+  const tier = normalizeTier(formData.get('tier'));
+  if (!isSelfServe(tier)) return { error: 'salesAssisted' };
   const priceId = priceForTier(tier);
   if (!priceId) return { error: 'notConfigured' };
 

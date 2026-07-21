@@ -10,29 +10,32 @@ import {
   reactivateSubscriptionAction,
   type BillingState,
 } from '@/lib/billing/actions';
+import type { CheckoutTier } from '@/lib/billing/tiers';
 
 type Props = {
   /** 'none' = no active sub (offer subscribe), 'active' = offer cancel, 'cancelling' = offer reactivate. */
   mode: 'none' | 'active' | 'cancelling';
+  /** The member's chosen self-serve tier, passed through to checkout so the right price is used. */
+  tier?: CheckoutTier;
 };
 
 const REASON_CODES = ['too_expensive', 'not_using', 'missing_feature', 'other'] as const;
 
 function errorMessage(t: ReturnType<typeof useTranslations>, code?: string): string | null {
   if (!code) return null;
-  const known = ['notConfigured', 'stripeError', 'noSubscription', 'noEmail', 'noCompany', 'rateLimited'];
+  const known = ['notConfigured', 'stripeError', 'noSubscription', 'noEmail', 'noCompany', 'rateLimited', 'salesAssisted'];
   return t(known.includes(code) ? `error.${code}` : 'error.generic');
 }
 
-export function BillingActions({ mode }: Props): ReactElement {
+export function BillingActions({ mode, tier }: Props): ReactElement {
   const t = useTranslations('app.billing');
 
   if (mode === 'cancelling') return <ReactivateButton t={t} />;
   if (mode === 'active') return <CancelFlow t={t} />;
-  return <SubscribeButton t={t} />;
+  return <SubscribeButton t={t} tier={tier} />;
 }
 
-function SubscribeButton({ t }: { t: ReturnType<typeof useTranslations> }): ReactElement {
+function SubscribeButton({ t, tier }: { t: ReturnType<typeof useTranslations>; tier?: CheckoutTier }): ReactElement {
   const [state, formAction, pending] = useActionState<BillingState, FormData>(
     startCheckoutAction,
     {},
@@ -43,6 +46,7 @@ function SubscribeButton({ t }: { t: ReturnType<typeof useTranslations> }): Reac
 
   return (
     <form action={formAction} className="mt-2">
+      {tier ? <input type="hidden" name="tier" value={tier} /> : null}
       <button
         type="submit"
         disabled={pending}

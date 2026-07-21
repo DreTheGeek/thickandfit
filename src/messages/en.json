@@ -1602,7 +1602,26 @@
       "featureWorkouts": "Structured workouts with Stephanie's filmed demos",
       "featureNutrition": "Photo and text nutrition tracking, cooked-or-raw accurate",
       "featureCoach": "Your coach, in her voice, whenever you need her",
-      "featureCommunity": "The community, challenges, and progress tracking"
+      "featureCommunity": "The community, challenges, and progress tracking",
+      "planLabel": "Your plan",
+      "tier": {
+        "self": {
+          "name": "Self-Guided",
+          "price": "$19.97/mo"
+        },
+        "team": {
+          "name": "Team Thick & Fit",
+          "price": "Coached by Steph’s team"
+        },
+        "steph": {
+          "name": "1-on-1 with Steph",
+          "price": "Premium, by application"
+        }
+      },
+      "applyTitle": "This one’s by application",
+      "applyBody": "Team and 1-on-1 coaching are personal, so we set them up with you directly. Reach out and Stephanie’s team will get you started.",
+      "applyCta": "Contact the team",
+      "orSelfGuided": "Or start today on your own:"
     },
     "billing": {
       "title": "Billing",
@@ -1663,7 +1682,8 @@
         "noEmail": "No email on file.",
         "noCompany": "Account not ready.",
         "generic": "Something went wrong. Please try again.",
-        "rateLimited": "Too many attempts. Please wait a few minutes and try again."
+        "rateLimited": "Too many attempts. Please wait a few minutes and try again.",
+        "salesAssisted": "This plan is set up with our team, not instant checkout. Contact us to get started."
       }
     },
     "coachChat": {

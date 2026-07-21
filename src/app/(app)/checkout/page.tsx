@@ -12,6 +12,8 @@ import { PageTitle } from '@/components/ui/section';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { BillingActions } from '@/components/billing/billing-actions';
+import { normalizeTier, isSelfServe } from '@/lib/billing/tiers';
+import { getSupportEmail } from '@/lib/admin/settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,10 +29,15 @@ export default async function CheckoutPage(): Promise<ReactElement> {
   const svc = createServiceClient();
   const { data: onb } = await svc
     .from('onboarding_responses')
-    .select('computed_targets')
+    .select('computed_targets, answers')
     .eq('profile_id', ctx.userId)
     .maybeSingle();
-  const targets = ((onb as { computed_targets: Targets | null } | null)?.computed_targets ?? null) as Targets | null;
+  const row = (onb as { computed_targets: Targets | null; answers: { tier?: string } | null } | null) ?? null;
+  const targets = (row?.computed_targets ?? null) as Targets | null;
+  // The tier the member chose at onboarding decides the flow: self-serve subscribe vs application.
+  const tier = normalizeTier(row?.answers?.tier);
+  const selfServe = isSelfServe(tier);
+  const supportEmail = selfServe ? '' : await getSupportEmail(ctx.companyId);
 
   const features = [t('featureWorkouts'), t('featureNutrition'), t('featureCoach'), t('featureCommunity')];
 
@@ -65,8 +72,42 @@ export default async function CheckoutPage(): Promise<ReactElement> {
         </ul>
       </div>
 
+      {/* Chosen plan + the right action for its tier. */}
       <div className="mt-7">
-        <BillingActions mode="none" />
+        <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[1.5px] text-faint">
+          {t('planLabel')}
+        </div>
+        <Card className="p-5">
+          <div className="font-display text-[20px]">{t(`tier.${tier}.name`)}</div>
+          <div className="mt-0.5 text-[13px] text-muted">{t(`tier.${tier}.price`)}</div>
+
+          {selfServe ? (
+            <BillingActions mode="none" tier={tier} />
+          ) : (
+            <div className="mt-4 border-t border-line pt-4">
+              <div className="text-[14px] font-semibold">{t('applyTitle')}</div>
+              <p className="mt-1 text-[13px] leading-relaxed text-soft">{t('applyBody')}</p>
+              <a
+                href={supportEmail ? `mailto:${supportEmail}` : '/inbox'}
+                className="tf-press mt-3 block w-full bg-accent py-3.5 text-center text-[12px] font-semibold uppercase tracking-[2px] text-accent-ink"
+              >
+                {t('applyCta')}
+              </a>
+            </div>
+          )}
+        </Card>
+
+        {/* High-ticket members can still start on Self-Guided today instead of waiting on the team. */}
+        {!selfServe ? (
+          <div className="mt-4">
+            <div className="mb-1.5 text-[12px] text-muted">{t('orSelfGuided')}</div>
+            <Card className="p-5">
+              <div className="font-display text-[18px]">{t('tier.self.name')}</div>
+              <div className="mt-0.5 text-[13px] text-muted">{t('tier.self.price')}</div>
+              <BillingActions mode="none" tier="self" />
+            </Card>
+          </div>
+        ) : null}
       </div>
     </div>
   );
