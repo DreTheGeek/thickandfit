@@ -107,13 +107,14 @@ production environment**. "Degrades to" = what happens today when the key is abs
 
 ## C. Go-live deploy sequence (engineering, ~1–2 days once A + B exist)
 
-1. **Ship the hardening branch.** Merge `hardening/review-fixes` (the review-fix + launch-prep
-   commits) into `main` so launch runs on the fixed rate-limiter / billing / consent / cron code.
-   Migrations `0083` (atomic rate limit) and `0084` (auth-hook search_path) are **already applied** to
-   the live DB, so they are forward-compatible with current prod.
-2. **`phase-2` → `main` is a no-op** — `main` already contains all Phase 2 work. Skip it.
-3. **Deploy:** `git push` origin main (GitHub integration auto-deploys). Do NOT also run
-   `vercel deploy --prod` (double-builds; Hobby caps crons at 1/day and has frozen prod before).
+1. ~~**Ship the hardening branch.**~~ **DONE 2026-07-21** — 21 review-fix + launch-prep commits
+   merged into `main` (fast-forward) and pushed; Vercel auto-deployed. Migrations `0083`/`0084`/`0085`
+   applied to the live DB. The coach-chat P0 fix was verified LIVE in prod (stream closes ~3.5s, the
+   assistant reply persists). The current prod code is now the fixed code.
+2. ~~**`phase-2` → `main`**~~ — confirmed no-op; skipped.
+3. ~~**Deploy**~~ **DONE** — pushed to origin/main; deploy landed and verified via prod health +
+   the live chat probe. (Reminder for future deploys: `git push` only; never also run
+   `vercel deploy --prod` — double-builds, and Hobby caps crons at 1/day, which has frozen prod.)
 4. **Apply `supabase/deploy/cron-register.sql`** once the app is live at the prod URL:
    - Substitute `__APP_URL__` (e.g. `https://app.teamthickandfit.com`) and `__CRON_SECRET__` (the
      exact Vercel value). Never commit the substituted file.
