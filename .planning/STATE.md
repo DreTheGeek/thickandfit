@@ -1,5 +1,36 @@
 # STATE: Thick & Fit
 
+## CURRENT STATUS (2026-07-21) — read this first; the sections below are historical build notes
+
+**Launch branch is `main`.** All Phase 2 work already landed on `main`; `phase-2` is 95 commits
+BEHIND main with nothing ahead, so the old "merge phase-2 -> main" step is a no-op. The `branches`
+memory note is superseded by this.
+
+**Code is verified airtight** (full live-DB + observed-behavior sweep, 2026-07-21). A 5-agent review
++ launch-readiness pass found and FIXED, all re-verified same day:
+- P0 coach-chat stream deadlock (replies streamed then vanished; 0 assistant rows ever persisted) —
+  root cause was a ReadableStream pull() that enqueues nothing never being re-called. Fixed +
+  proven end to end.
+- HIGH billing: payments unrecordable (partial index vs ON CONFLICT, error swallowed) + resubscribe
+  crashed the webhook (UNIQUE customer index). Migration 0085 applied live; probes green.
+- Checkout webhook-race reconciliation, dashboard tz bug, silent cron_job_log death (since 7/8),
+  onboarding loop-on-failure, rate-limiter atomic+fail-closed (0083), auth-hook search_path (0084),
+  Stripe dispute/trial/dunning handlers, brand dead-code, and ~10 more. See git log on `main`.
+
+**The runbook is the source of truth for launch:** `.planning/LAUNCH-RUNBOOK.md` (env-var inventory,
+deploy sequence, cut list, decisions).
+
+**Gates to launch are NOT engineering** — they are: Stephanie's content (AI knowledge base = long
+pole, 369 demo videos, approved recipe/exercise lists, offer blueprint), external account keys
+(Stripe/OpenRouter-in-prod/Resend/Mux/Sentry/PostHog/VAPID/Twilio), the domain cutover
+(app.teamthickandfit.com not yet attached; re-register the 5 pg_cron URLs at cutover), and two
+decisions before arming Stripe: (1) the ~256 migrated Lenus clients (client_subscriptions) have no
+native subscription row and would be paywalled — comp-grant or union the tables FIRST; (2) pin the
+Stripe webhook to a pre-Basil API version.
+
+Migrations applied live beyond the on-disk history: 0083, 0084, 0085 (all forward-compatible).
+Next migration number: 0086.
+
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-06-18)

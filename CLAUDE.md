@@ -30,7 +30,7 @@ friction, billing distrust, dead communities, buggy players.
 |-------|-----------|
 | Framework | Next.js 16 (App Router, TypeScript strict, pnpm) |
 | Styling | Tailwind v4 + shadcn/ui + Framer Motion |
-| Database | Supabase Postgres + PostGIS + pgvector, RLS on every table |
+| Database | Supabase Postgres + pgvector, RLS on every table (PostGIS deferred: install only when the restaurant-locator scope in Gap Log #7 is confirmed) |
 | Auth | Supabase Auth (email/password + Google + Apple + Magic Link) |
 | Realtime | Supabase Realtime |
 | Payments | Stripe Connect Standard |

@@ -272,7 +272,6 @@ export async function streamChat(
     void reader.cancel().catch(() => undefined);
   }
 
-  console.log('[coach-chat] stream open, upstream ok');
   const stream = new ReadableStream<Uint8Array>({
     async pull(controller) {
       if (finished) return;
