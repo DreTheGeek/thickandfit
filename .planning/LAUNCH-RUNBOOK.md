@@ -4,6 +4,29 @@
 > review + a launch-readiness pass. Supersedes the older `LAUNCH-PLAN.md` (2026-06-27), whose build
 > stages are now essentially complete.
 
+## Airtightness sweep (2026-07-21) — verified at the live-DB / observed-behavior level
+Five parallel verifiers + a live browser/e2e pass swept the member journey, coach portal, admin
+portal, auth, billing, and the database. Everything found was FIXED and re-verified same day:
+
+- **P0 coach chat**: every reply streamed then vanished (stream deadlock on no-delta SSE frames;
+  zero assistant rows ever persisted; 60s lambda burn per turn). Fixed + proven end to end.
+- **HIGH billing**: payments were unrecordable (partial-index vs ON CONFLICT, error swallowed) and
+  cancel→resubscribe crashed the webhook forever (UNIQUE customer index). Migration 0085 applied;
+  probes re-run green.
+- Checkout return race (webhook vs redirect) closed with server-side session reconciliation + a
+  bilingual "activating" state; dashboard week strip now follows the member's timezone; onboarding
+  save failures no longer loop the member; cron audit-log failures now surface in function logs
+  (they had been silently dead since 7/8 — first prod run after deploy reveals the cause).
+- Verified airtight: RLS isolation 37/37 · i18n 1540/1540 key parity · e2e suite 5/5 on the fixed
+  build · all 34 coach routes render live with real data · approval flow driven end to end in prod
+  · zero schema drift (all tables/RPCs/triggers live) · PWA shell complete · no dead nav links.
+
+Remaining non-code items are in sections A–C below, plus: decide the **migrated-client entitlement
+policy BEFORE arming Stripe** (the ~256 Lenus/GHL-billed clients have no native subscription row and
+would hit the paywall; comp-grant them or union client_subscriptions), pin the **Stripe webhook API
+version** (pre-Basil) when creating the endpoint, and enter the admin passcode once to eyeball the
+13 admin pages (verified at schema level only).
+
 ## Status in one line
 **Engineering is not the blocker.** All Phase 2 work packages are built and verified, the production
 build is green, and `main` already contains everything (the `phase-2` branch is 95 commits *behind*
