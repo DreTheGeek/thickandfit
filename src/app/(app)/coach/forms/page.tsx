@@ -73,7 +73,15 @@ export default async function CoachFormsPage(): Promise<ReactElement> {
                 )}
                 <Icon name="chevronRight" size={16} className="shrink-0 text-line" />
               </Link>
-              <AssignFormControl formId={f.id} clients={clients} />
+              <div className="flex shrink-0 items-center gap-2">
+                <Link
+                  href={`/coach/forms/${f.id}/responses`}
+                  className="tf-press rounded-full border border-line px-3 py-1.5 text-[12px] font-semibold text-muted hover:border-ink hover:text-ink"
+                >
+                  {t('viewResponses')}
+                </Link>
+                <AssignFormControl formId={f.id} clients={clients} />
+              </div>
             </div>
           ))}
         </div>
