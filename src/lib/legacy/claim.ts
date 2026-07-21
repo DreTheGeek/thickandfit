@@ -6,10 +6,12 @@
 //      the unclaimed legacy contact by email within the tenant (no-op for a genuinely new signup).
 //   2. If a contact was claimed, kicks off that client's progress-photo import (their Lenus media).
 // Both steps are idempotent: re-running claims nothing new and imports no duplicates.
+import { after } from 'next/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { importLegacyPhotos } from '@/lib/legacy/photo-import';
+import { indexMemberSources } from '@/lib/coach-ai/memory-index';
 
 export type ClaimResult =
   | { status: 'claimed'; photosImported: number }
@@ -44,6 +46,28 @@ export async function claimLegacyAction(): Promise<ClaimResult> {
     const lenusId = (profile?.lenus_profile_id as string | null) ?? result.lenus_id ?? null;
     const imp = await importLegacyPhotos(ctx.userId, ctx.companyId, lenusId);
     photosImported = imp.imported;
+
+    // Backfill this newly-claimed client's history into the coach's memory + graph now that their
+    // Lenus data (contact-keyed) is queryable. Runs after the response so it never delays the claim;
+    // bounded + capped so it completes, and the 6h reconciler keeps them fresh afterward. Best-effort.
+    const companyId = ctx.companyId;
+    const userId = ctx.userId;
+    after(async () => {
+      try {
+        const svc = createServiceClient();
+        const { data: contact } = await svc
+          .from('contacts')
+          .select('id')
+          .eq('company_id', companyId)
+          .eq('profile_id', userId)
+          .limit(1)
+          .maybeSingle();
+        const contactId = (contact as { id: string } | null)?.id ?? null;
+        await indexMemberSources({ companyId, profileId: userId, contactId });
+      } catch (e) {
+        console.error('claim memory backfill:', e instanceof Error ? e.message : e);
+      }
+    });
   }
 
   return { status: 'claimed', photosImported };

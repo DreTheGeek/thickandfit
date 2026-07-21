@@ -119,22 +119,32 @@ async function checkins(svc: Svc, t: IndexTarget, since: string): Promise<Candid
   if (!t.profileId) return [];
   const { data } = await svc
     .from('form_responses')
-    .select('id, answers, submitted_at')
+    .select('id, form_id, answers, submitted_at')
     .eq('company_id', t.companyId)
     .eq('profile_id', t.profileId)
     .gte('submitted_at', `${since}T00:00:00Z`)
     .limit(PER_SOURCE_CAP);
-  return ((data ?? []) as { id: string; answers: Record<string, unknown> | null; submitted_at: string }[]).map((r) => {
+  const rows = (data ?? []) as { id: string; form_id: string; answers: Record<string, unknown> | null; submitted_at: string }[];
+  if (!rows.length) return [];
+  // Resolve field ids -> question labels so the memory reads by question ("How was your week?: ...")
+  // instead of by raw field UUID. The answer values are already rich free text + numbers.
+  const formIds = [...new Set(rows.map((r) => r.form_id).filter(Boolean))];
+  const labels = new Map<string, string>();
+  if (formIds.length) {
+    const { data: fields } = await svc.from('form_fields').select('id, label_en').in('form_id', formIds);
+    for (const f of (fields ?? []) as { id: string; label_en: string | null }[]) if (f.label_en) labels.set(f.id, f.label_en);
+  }
+  return rows.map((r) => {
     const pairs = Object.entries(r.answers ?? {})
       .filter(([, v]) => v != null && v !== '')
       .slice(0, 12)
-      .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join('/') : String(v)}`)
+      .map(([k, v]) => `${labels.get(k) ?? 'note'}: ${Array.isArray(v) ? v.join('/') : String(v)}`)
       .join('; ');
     return {
       source: 'checkin' as const,
       sourceId: r.id,
       occurredAt: r.submitted_at,
-      content: `Check-in on ${(r.submitted_at ?? '').slice(0, 10)} - ${pairs || 'submitted'}.`,
+      content: `Check-in on ${(r.submitted_at ?? '').slice(0, 10)}: ${pairs || 'submitted'}.`,
     };
   });
 }
