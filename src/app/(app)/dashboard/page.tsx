@@ -113,28 +113,34 @@ export default async function DashboardPage(): Promise<ReactElement> {
     if (nm) coach = { name: nm };
   }
 
-  const now = new Date();
+  // All date math anchors on the MEMBER's calendar day (`today` = localDay(tz), computed above),
+  // never the lambda's UTC clock. The old `new Date()` version showed a US member tomorrow's date
+  // from ~5pm Pacific and rolled the week strip into an empty next week on Saturday evenings.
   const dateLabel = new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
-  }).format(now);
+    timeZone: tz,
+  }).format(new Date());
 
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
-  const narrow = new Intl.DateTimeFormat(locale, { weekday: 'narrow' });
+  // Anchor the member's local day as a UTC-midnight Date so day arithmetic is pure calendar math
+  // (immune to the server's own zone and to DST edges).
+  const [ty, tm, td] = today.split('-').map(Number);
+  const anchor = new Date(Date.UTC(ty, tm - 1, td));
+  const startOfWeek = new Date(anchor);
+  startOfWeek.setUTCDate(anchor.getUTCDate() - anchor.getUTCDay());
+  const narrow = new Intl.DateTimeFormat(locale, { weekday: 'narrow', timeZone: 'UTC' });
   const activeSet = new Set(summary?.activeDays ?? []);
-  const isoOf = (d: Date): string =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const weekDays: WeekDay[] = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + i);
+    d.setUTCDate(startOfWeek.getUTCDate() + i);
+    const iso = d.toISOString().slice(0, 10);
     return {
       key: String(i),
       label: narrow.format(d),
-      day: d.getDate(),
-      isToday: d.toDateString() === now.toDateString(),
-      completed: activeSet.has(isoOf(d)),
+      day: d.getUTCDate(),
+      isToday: iso === today,
+      completed: activeSet.has(iso),
     };
   });
 
