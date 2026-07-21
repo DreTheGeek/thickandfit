@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -7,6 +8,7 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 export function AndroidInstallButton() {
+  const t = useTranslations('pwa');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function AndroidInstallButton() {
       }}
       className="fixed bottom-4 right-4 z-50 bg-[#5EBE62] px-5 py-2 text-sm font-medium text-black"
     >
-      Install app
+      {t('installApp')}
     </button>
   );
 }

@@ -92,7 +92,10 @@ export function BroadcastComposer(): ReactElement {
           />
           <div className="mt-1 text-right text-[11px] text-faint">{msg.length} / {MAX}</div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <Button variant="outline" size="sm" onClick={() => setStatus(t('saved'))}>
+            {/* This page is a coming-soon placeholder (real broadcasts ship via /coach/community).
+                "Save draft" persists nothing, so it must NOT report a false "Saved" - show the same
+                coming-soon notice as Send until the sender backend lands. */}
+            <Button variant="outline" size="sm" onClick={() => setStatus(t('broadcastsSoon'))}>
               {t('saveDraft')}
             </Button>
             <Button size="sm" onClick={() => setStatus(t('broadcastsSoon'))}>

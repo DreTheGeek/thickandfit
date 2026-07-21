@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 const DISMISS_KEY = 'tf-ios-install-dismissed';
 
 export function IOSInstallBanner() {
+  const t = useTranslations('pwa');
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -22,8 +24,7 @@ export function IOSInstallBanner() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-3 bg-black px-4 py-3 text-white">
       <p className="text-sm">
-        Install Thick &amp; Fit: tap <span className="font-semibold">Share</span>, then{' '}
-        <span className="font-semibold">Add to Home Screen</span>.
+        {t.rich('iosInstall', { b: (chunks) => <span className="font-semibold">{chunks}</span> })}
       </p>
       <button
         type="button"
@@ -33,7 +34,7 @@ export function IOSInstallBanner() {
         }}
         className="shrink-0 text-sm underline"
       >
-        Dismiss
+        {t('dismiss')}
       </button>
     </div>
   );

@@ -62,6 +62,11 @@
     "authError": "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo.",
     "agreeNotice": "Al crear una cuenta, aceptas nuestros <terms>Términos de Servicio</terms> y <privacy>Política de Privacidad</privacy>."
   },
+  "pwa": {
+    "iosInstall": "Instala Thick & Fit: toca <b>Compartir</b>, luego <b>Añadir a pantalla de inicio</b>.",
+    "dismiss": "Descartar",
+    "installApp": "Instalar app"
+  },
   "app": {
     "nav": {
       "today": "Hoy",
@@ -144,7 +149,7 @@
       "heroFromClosing": "Te faltan {cals} calorías y {protein}g de proteína para cerrar el día.",
       "heroNudge": "Registra tu próxima comida y vas en ritmo.",
       "heroClosed": "Cerraste tus calorías de hoy. Excelente trabajo.",
-      "bookCall": "Agendar llamada",
+      "bookCall": "Escríbele a tu coach",
       "streakUnit": "Racha de días",
       "habitsTitle": "Tus hábitos",
       "goalTitle": "Tu meta",
