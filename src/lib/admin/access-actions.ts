@@ -16,7 +16,7 @@ export async function enterAdminPasscodeAction(input: unknown): Promise<AccessRe
   const parsed = z.string().min(1).max(200).safeParse(input);
   if (!parsed.success) return { ok: false, error: 'empty' };
   const ctx = await requireOperator();
-  const allowed = await checkRateLimit(ctx.userId, 'admin-passcode', 10, 300);
+  const allowed = await checkRateLimit(ctx.userId, 'admin-passcode', 10, 300, { failClosed: true });
   if (!allowed) return { ok: false, error: 'rate_limited' };
   const ok = await verifyAndSetAdminGate(parsed.data);
   if (!ok) return { ok: false, error: 'wrong' };

@@ -77,7 +77,7 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
     password: formData.get('password'),
   });
   if (!parsed.success) return { error: INVALID_CREDENTIALS };
-  if (!(await checkRateLimit(await clientIp(), 'auth-signin', 5, 60))) return { error: TOO_MANY };
+  if (!(await checkRateLimit(await clientIp(), 'auth-signin', 5, 60, { failClosed: true }))) return { error: TOO_MANY };
   const { email, password } = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -123,7 +123,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     lastName: formData.get('lastName'),
   });
   if (!parsed.success) return { error: INVALID_SIGNUP };
-  if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60))) return { error: TOO_MANY };
+  if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60, { failClosed: true }))) return { error: TOO_MANY };
   const { email, password, firstName, lastName } = parsed.data;
   const fullName = `${firstName} ${lastName}`;
   const supabase = await createClient();
@@ -211,7 +211,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
 export async function requestResetAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const parsed = emailSchema.safeParse({ email: formData.get('email') });
   if (!parsed.success) return { error: INVALID_EMAIL };
-  if (!(await checkRateLimit(await clientIp(), 'auth-reset', 3, 60))) return { error: TOO_MANY };
+  if (!(await checkRateLimit(await clientIp(), 'auth-reset', 3, 60, { failClosed: true }))) return { error: TOO_MANY };
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${await origin()}/auth/callback?next=/auth/reset-password`,

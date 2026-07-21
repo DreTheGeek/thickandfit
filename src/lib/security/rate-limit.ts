@@ -22,27 +22,48 @@ export async function clientIp(): Promise<string> {
   return 'unknown';
 }
 
-/** Returns true if the action is allowed, false if rate-limited. Records the hit when allowed. */
+/**
+ * Returns true if the action is allowed, false if rate-limited. Records the hit when allowed.
+ *
+ * failClosed: by default the limiter fails OPEN (a broken limiter never blocks a legitimate user).
+ * For credential and payment buckets pass `{ failClosed: true }` so a limiter outage cannot silently
+ * remove the only brake on password brute-forcing or card testing: there, being unavailable should
+ * deny, not wave everyone through.
+ */
 export async function checkRateLimit(
   identifier: string,
   bucket: string,
   limit: number,
   windowSec: number,
+  opts: { failClosed?: boolean } = {},
 ): Promise<boolean> {
+  const onFailure = !opts.failClosed; // fail open (allow) by default; deny for sensitive buckets
   try {
     const sb = createServiceClient();
+    // Atomic path: the check_rate_limit RPC (migration 0083) serializes callers per key with an
+    // advisory lock, so the count-and-record is race-free.
+    const { data, error } = await sb.rpc('check_rate_limit', {
+      p_identifier: identifier,
+      p_bucket: bucket,
+      p_limit: limit,
+      p_window_sec: windowSec,
+    });
+    if (!error) return data === true;
+
+    // Fallback (e.g. the RPC is not yet deployed): best-effort count-then-insert. Non-atomic, but
+    // still enforces the cap and honors the fail mode on error.
     const since = new Date(Date.now() - windowSec * 1000).toISOString();
-    const { count, error } = await sb
+    const { count, error: countErr } = await sb
       .from('rate_limit_log')
       .select('id', { count: 'exact', head: true })
       .eq('identifier', identifier)
       .eq('bucket', bucket)
       .gte('hit_at', since);
-    if (error) return true; // fail open
+    if (countErr) return onFailure;
     if ((count ?? 0) >= limit) return false;
     await sb.from('rate_limit_log').insert({ identifier, bucket });
     return true;
   } catch {
-    return true; // fail open
+    return onFailure;
   }
 }

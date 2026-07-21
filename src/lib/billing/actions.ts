@@ -63,7 +63,7 @@ export async function startCheckoutAction(
   if (!isStripeConfigured()) return { error: 'notConfigured' };
   // Card-testing / spam control: creating checkout sessions writes consent rows and hits Stripe, so
   // cap attempts per user. 10/hour is far above any honest retry pattern (fails open on limiter error).
-  if (!(await checkRateLimit(ctx.userId, 'checkout-start', 10, 3600))) return { error: 'rateLimited' };
+  if (!(await checkRateLimit(ctx.userId, 'checkout-start', 10, 3600, { failClosed: true }))) return { error: 'rateLimited' };
 
   const tier: Tier = String(formData.get('tier') ?? 'low') === 'mid' ? 'mid' : 'low';
   const priceId = priceForTier(tier);

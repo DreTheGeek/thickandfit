@@ -104,7 +104,7 @@ export async function exportMyDataAction(): Promise<ExportState> {
   const ctx = await requireAuth();
 
   // Bound the export so it cannot be hammered (each run reads ~25 tables via service client).
-  if (!(await checkRateLimit(await clientIp(), 'account-export', 5, 60))) {
+  if (!(await checkRateLimit(await clientIp(), 'account-export', 5, 60, { failClosed: true }))) {
     return { error: 'rateLimited' };
   }
 
@@ -184,7 +184,7 @@ export async function updateMyPasswordAction(
   const confirm = String(formData.get('confirmPassword') ?? '');
   if (confirm !== parsed.data.newPassword) return { error: 'passwordMismatch' };
 
-  if (!(await checkRateLimit(await clientIp(), 'account-password', 5, 60))) {
+  if (!(await checkRateLimit(await clientIp(), 'account-password', 5, 60, { failClosed: true }))) {
     return { error: 'rateLimited' };
   }
 
@@ -232,7 +232,7 @@ export async function updateMyEmailAction(
   const parsed = emailChangeSchema.safeParse({ email: formData.get('email') });
   if (!parsed.success) return { error: 'invalidEmail' };
 
-  if (!(await checkRateLimit(await clientIp(), 'account-email', 5, 60))) {
+  if (!(await checkRateLimit(await clientIp(), 'account-email', 5, 60, { failClosed: true }))) {
     return { error: 'rateLimited' };
   }
 
