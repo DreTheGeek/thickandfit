@@ -4,6 +4,7 @@
 // then persist it. Entitlement-gated (paid + health-ack). The image is passed as a URL or data URL
 // (same delivery the food-photo flow uses); progressPhotoId links the read to the stored photo.
 import { z } from 'zod';
+import { after } from 'next/server';
 import { getLocale } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -75,8 +76,17 @@ export async function analyzePhysiqueAction(input: unknown): Promise<PhysiqueRes
     }
 
     // Safety loop: a flagged read pings the company's coaches so a human follows up (the member is
-    // promised exactly that). Fire-and-forget; never blocks the member's result.
-    if (a.flagged) void notifyCoachesOfFlaggedPhysique(ctx.companyId, ctx.userId);
+    // promised exactly that). after() so this wellbeing escalation is NOT dropped by the frozen
+    // lambda (a bare void here could silently lose a flag that a human must see).
+    if (a.flagged) {
+      const companyId = ctx.companyId;
+      const userId = ctx.userId;
+      try {
+        after(() => notifyCoachesOfFlaggedPhysique(companyId, userId));
+      } catch {
+        void notifyCoachesOfFlaggedPhysique(companyId, userId);
+      }
+    }
   }
   return result;
 }
