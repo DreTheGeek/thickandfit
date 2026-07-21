@@ -44,6 +44,9 @@ export type WeightSummary = {
 } | null;
 
 export type CoachContext = {
+  // The member's CRM contact id (Lenus-migrated identity), when resolvable. Lets memory recall reach
+  // their migrated history, which is keyed by contact_id rather than profile_id.
+  contactId: string | null;
   profile: {
     name: string;
     goal: string | null; // lose | gain | maintain | recomp | ...
@@ -372,6 +375,7 @@ export async function buildCoachContext(
   }
 
   return {
+    contactId: ik?.contact_id ?? null,
     profile: { name: fullName, goal, locale, targets },
     health,
     graph,

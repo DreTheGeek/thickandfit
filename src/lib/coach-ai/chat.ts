@@ -10,7 +10,8 @@ import 'server-only';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { buildCoachContext, renderContextBlock, type CoachLocale } from '@/lib/coach-ai/context';
-import { embedText, retrieveMemories, renderMemoryBlock } from '@/lib/coach-ai/embeddings';
+import { embedText } from '@/lib/coach-ai/embeddings';
+import { retrieveMemberMemories, renderMemberMemoryBlock } from '@/lib/coach-ai/memory-store';
 import { retrieveKnowledge, renderKnowledgeBlock } from '@/lib/coach-ai/knowledge';
 import { SAFETY_CLAUSE_EN } from '@/lib/coach-ai/safety';
 import { AI_MODELS } from '@/lib/ai/models';
@@ -216,9 +217,14 @@ export async function streamChat(
   // RAG (Layer 3): embed the question and recall this member's most relevant past records
   // (their own coach_messages + embedded food_log day summaries), then inject the top 5 into the
   // context. Fully key-gated inside embeddings.ts: returns [] when unkeyed, so chat works without it.
+  // Unified memory recall (v2): the member's most relevant records across EVERY source (meals/photos,
+  // chat, check-ins, meal plans, weights, intake, coach notes, progress), by profile_id and their
+  // migrated contact_id. Replaces the old two-source union.
   const queryVec = await embedText(request.message);
-  const memories = queryVec ? await retrieveMemories(profileId, queryVec, 5) : [];
-  const memoryBlock = renderMemoryBlock(memories, locale);
+  const memories = queryVec
+    ? await retrieveMemberMemories(profileId, ctx.contactId, queryVec, 6)
+    : [];
+  const memoryBlock = renderMemberMemoryBlock(memories, locale);
 
   // RAG (Layer 4): recall the company's documented coaching knowledge (Stephanie's voice / method)
   // most relevant to this question, distinct from the member's own memories. Company-scoped via
