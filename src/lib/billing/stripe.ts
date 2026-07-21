@@ -93,11 +93,18 @@ export async function createCustomer(args: {
   profileId: string;
   companyId: string;
 }): Promise<StripeResult<StripeCustomer>> {
-  return stripeRequest<StripeCustomer>('POST', '/customers', {
-    email: args.email,
-    name: args.name,
-    metadata: { profile_id: args.profileId, company_id: args.companyId },
-  });
+  return stripeRequest<StripeCustomer>(
+    'POST',
+    '/customers',
+    {
+      email: args.email,
+      name: args.name,
+      metadata: { profile_id: args.profileId, company_id: args.companyId },
+    },
+    // Idempotent per profile: a retry or double-submit reuses the same customer instead of creating
+    // duplicates (which would fragment billing history across two Stripe customers).
+    `customer:${args.profileId}`,
+  );
 }
 
 // --- Checkout Session -------------------------------------------------------
@@ -114,21 +121,31 @@ export async function createCheckoutSession(args: {
   trialDays?: number;
 }): Promise<StripeResult<StripeCheckoutSession>> {
   const trial = args.trialDays && args.trialDays > 0 ? Math.floor(args.trialDays) : undefined;
-  return stripeRequest<StripeCheckoutSession>('POST', '/checkout/sessions', {
-    mode: 'subscription',
-    customer: args.customerId,
-    success_url: args.successUrl,
-    cancel_url: args.cancelUrl,
-    line_items: [{ price: args.priceId, quantity: 1 }],
-    // 3D Secure: let Stripe Radar request it when the card supports it.
-    payment_method_options: { card: { request_three_d_secure: 'automatic' } },
-    subscription_data: {
-      // encodeForm drops undefined, so no trial key is sent when trial is unset.
-      trial_period_days: trial,
+  // Idempotent per (profile, price) within an hour bucket: a double-submit reuses the same Checkout
+  // session instead of spawning duplicates; a genuine later retry (new hour / switched tier) mints a
+  // fresh one. Date.now() is fine here (ordinary request path, not a resumable workflow).
+  const hourBucket = Math.floor(Date.now() / 3_600_000);
+  return stripeRequest<StripeCheckoutSession>(
+    'POST',
+    '/checkout/sessions',
+    {
+      mode: 'subscription',
+      customer: args.customerId,
+      success_url: args.successUrl,
+      cancel_url: args.cancelUrl,
+      line_items: [{ price: args.priceId, quantity: 1 }],
+      // 3D Secure forced wherever the card supports it (anti-chargeback pillar: "3DS on all payments").
+      // Shifts fraud liability to the issuer on authenticated payments, at a small conversion cost.
+      payment_method_options: { card: { request_three_d_secure: 'any' } },
+      subscription_data: {
+        // encodeForm drops undefined, so no trial key is sent when trial is unset.
+        trial_period_days: trial,
+        metadata: { profile_id: args.profileId, company_id: args.companyId },
+      },
       metadata: { profile_id: args.profileId, company_id: args.companyId },
     },
-    metadata: { profile_id: args.profileId, company_id: args.companyId },
-  });
+    `checkout:${args.profileId}:${args.priceId}:${hourBucket}`,
+  );
 }
 
 // --- Subscription mutations -------------------------------------------------
