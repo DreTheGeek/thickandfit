@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
+import { logCronRun } from '@/lib/monitoring/cron-log';
 import { syncGhlPipelines } from '@/lib/coach/ghl-sync';
 
 export const dynamic = 'force-dynamic';
@@ -20,11 +21,7 @@ async function GET_h(req: NextRequest): Promise<NextResponse> {
   if (error || !co) return NextResponse.json({ error: 'company_not_found' }, { status: 404 });
 
   const result = await syncGhlPipelines(co.id);
-  after(() => sb.from('cron_job_log').insert({
-    job_name: 'ghl-sync-cron',
-    status: result.ok ? 'success' : 'error',
-    detail: result,
-  })); // survive the frozen lambda so the run is actually logged
+  after(() => logCronRun('ghl-sync-cron', result.ok ? 'success' : 'error', result)); // survives the frozen lambda; insert failures now hit the function logs
 
   // Maintenance, folded into this daily cron to stay under the Hobby 2-cron cap: prune rate_limit_log
   // rows older than an hour (limiter windows are <= 60s, so anything older is dead weight). after() so

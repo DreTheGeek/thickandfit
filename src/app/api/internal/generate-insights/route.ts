@@ -6,8 +6,8 @@
 // 405'd forever. Both methods now run; auth uses the timing-safe compare like every sibling route.
 import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
-import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
+import { logCronRun } from '@/lib/monitoring/cron-log';
 import { generateAllInsights } from '@/lib/coach-ai/insights';
 import { recomputeAllGamification } from '@/lib/gamification/batch';
 
@@ -32,12 +32,7 @@ async function run(req: NextRequest): Promise<NextResponse> {
     gamification = { ok: false, error: e instanceof Error ? e.message : 'unknown' };
   }
 
-  const sb = createServiceClient();
-  after(() => sb.from('cron_job_log').insert({
-    job_name: 'generate-insights-cron',
-    status: result.ok ? 'success' : 'error',
-    detail: { insights: result, gamification },
-  })); // survive the frozen lambda so the run is actually logged
+  after(() => logCronRun('generate-insights-cron', result.ok ? 'success' : 'error', { insights: result, gamification })); // survives the frozen lambda; insert failures now hit the function logs
 
   return NextResponse.json({ insights: result, gamification }, { status: result.ok ? 200 : 500 });
 }

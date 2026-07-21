@@ -4,8 +4,8 @@
 import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { z } from 'zod';
-import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
+import { logCronRun } from '@/lib/monitoring/cron-log';
 import { runChatEval } from '@/lib/ai/eval/run-chat-eval';
 
 export const dynamic = 'force-dynamic';
@@ -26,14 +26,13 @@ async function POST_h(req: NextRequest): Promise<NextResponse> {
   const result = await runChatEval(parsed.data.evalName);
 
   // after(): the audit insert must survive the frozen lambda, so it is not dropped on Vercel.
-  after(async () => {
-    const sb = createServiceClient();
-    await sb.from('cron_job_log').insert({
-      job_name: 'run-chat-eval',
-      status: result.status === 'ok' ? 'success' : 'error',
-      detail: result.status === 'ok' ? { cases: result.cases, passed: result.passed, score: result.score } : result,
-    });
-  });
+  after(() =>
+    logCronRun(
+      'run-chat-eval',
+      result.status === 'ok' ? 'success' : 'error',
+      result.status === 'ok' ? { cases: result.cases, passed: result.passed, score: result.score } : result,
+    ),
+  );
 
   return NextResponse.json(result, { status: result.status === 'ok' ? 200 : 500 });
 }

@@ -10,6 +10,7 @@ import { withApiLog } from '@/lib/telemetry/request-log';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
+import { logCronRun } from '@/lib/monitoring/cron-log';
 import { inviteLegacyClients } from '@/lib/legacy/invite';
 
 export const dynamic = 'force-dynamic';
@@ -52,10 +53,11 @@ async function POST_h(req: NextRequest): Promise<NextResponse> {
     limit: parsed.data.limit ?? 50,
   });
 
-  void svc.from('cron_job_log').insert({
-    job_name: 'invite-legacy-manual',
-    status: 'success',
-    detail: { dryRun: result.dryRun, total: result.total, linked: result.linked, sent: result.sent },
+  void logCronRun('invite-legacy-manual', 'success', {
+    dryRun: result.dryRun,
+    total: result.total,
+    linked: result.linked,
+    sent: result.sent,
   });
 
   // Return the summary + outcomes (operator reads this from the curl response).

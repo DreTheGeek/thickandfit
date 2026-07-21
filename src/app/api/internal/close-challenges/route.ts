@@ -5,8 +5,8 @@
 // Never requires CRON_SECRET at import time (build-safe).
 import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
-import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
+import { logCronRun } from '@/lib/monitoring/cron-log';
 import { finalizeEndedChallenges } from '@/lib/notifications/generators';
 
 export const dynamic = 'force-dynamic';
@@ -21,12 +21,7 @@ async function run(req: NextRequest): Promise<NextResponse> {
 
   const result = await finalizeEndedChallenges();
 
-  const sb = createServiceClient();
-  after(() => sb.from('cron_job_log').insert({
-    job_name: 'close-challenges-cron',
-    status: result.ok ? 'success' : 'error',
-    detail: result,
-  })); // survive the frozen lambda so the run is actually logged
+  after(() => logCronRun('close-challenges-cron', result.ok ? 'success' : 'error', result)); // survives the frozen lambda; insert failures now hit the function logs
 
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });
 }

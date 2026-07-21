@@ -4,8 +4,8 @@
 import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { z } from 'zod';
-import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
+import { logCronRun } from '@/lib/monitoring/cron-log';
 import { runSmartScanEval } from '@/lib/ai/eval/run-scan-eval';
 
 export const dynamic = 'force-dynamic';
@@ -29,17 +29,15 @@ async function POST_h(req: NextRequest): Promise<NextResponse> {
   const result = await runSmartScanEval(parsed.data.evalName);
 
   // after(): survive the frozen lambda so the audit row is not dropped on Vercel.
-  after(async () => {
-    const sb = createServiceClient();
-    await sb.from('cron_job_log').insert({
-      job_name: 'run-scan-eval',
-      status: result.status === 'ok' ? 'success' : 'error',
-      detail:
-        result.status === 'ok'
-          ? { current: result.current, previous: result.previous, cases: result.perCase.length }
-          : result,
-    });
-  });
+  after(() =>
+    logCronRun(
+      'run-scan-eval',
+      result.status === 'ok' ? 'success' : 'error',
+      result.status === 'ok'
+        ? { current: result.current, previous: result.previous, cases: result.perCase.length }
+        : result,
+    ),
+  );
 
   return NextResponse.json(result, { status: result.status === 'ok' ? 200 : 500 });
 }

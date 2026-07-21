@@ -5,8 +5,8 @@
 // Never requires CRON_SECRET at import time (build-safe).
 import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
-import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
+import { logCronRun } from '@/lib/monitoring/cron-log';
 import {
   generateRenewalReminders,
   generateCompExpiryReminders,
@@ -27,12 +27,7 @@ async function run(req: NextRequest): Promise<NextResponse> {
   const ok = renewals.ok && comp.ok;
   const result = { ok, renewals, comp };
 
-  const sb = createServiceClient();
-  after(() => sb.from('cron_job_log').insert({
-    job_name: 'notify-renewals-cron',
-    status: ok ? 'success' : 'error',
-    detail: result,
-  })); // survive the frozen lambda so the run is actually logged
+  after(() => logCronRun('notify-renewals-cron', ok ? 'success' : 'error', result)); // survives the frozen lambda; insert failures now hit the function logs
 
   const body = ok
     ? result

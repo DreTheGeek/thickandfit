@@ -4,8 +4,8 @@
 // Logs each run to cron_job_log. Never requires CRON_SECRET at import time (build-safe).
 import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
-import { createServiceClient } from '@/lib/supabase/service';
 import { safeEqual } from '@/lib/api/auth';
+import { logCronRun } from '@/lib/monitoring/cron-log';
 import { generateCheckinReminders } from '@/lib/notifications/generators';
 
 export const dynamic = 'force-dynamic';
@@ -20,12 +20,7 @@ async function run(req: NextRequest): Promise<NextResponse> {
 
   const result = await generateCheckinReminders();
 
-  const sb = createServiceClient();
-  after(() => sb.from('cron_job_log').insert({
-    job_name: 'notify-checkins-cron',
-    status: result.ok ? 'success' : 'error',
-    detail: result,
-  })); // survive the frozen lambda so the run is actually logged
+  after(() => logCronRun('notify-checkins-cron', result.ok ? 'success' : 'error', result)); // survives the frozen lambda; insert failures now hit the function logs
 
   const body = result.ok ? result : { ok: false as const, job: result.job };
   return NextResponse.json(body, { status: result.ok ? 200 : 500 });
