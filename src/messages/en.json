@@ -1615,6 +1615,8 @@
         "replyBody": "{name} replied in your inbox.",
         "commentTitle": "New comment",
         "commentBody": "{name} commented on your post.",
+        "onboardingNudgeTitle": "Finish setting up",
+        "onboardingNudgeBody": "You're one step away from your personalized plan. Tap to finish your quick setup.",
         "broadcastTitle": "New broadcast",
         "broadcastBody": "{name} posted a broadcast to the community.",
         "challengeStartedTitle": "New challenge!",

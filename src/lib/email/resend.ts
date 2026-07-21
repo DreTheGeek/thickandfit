@@ -7,6 +7,9 @@ const magnetUrl = process.env.LEAD_MAGNET_URL ?? '';
 
 export async function sendLeadMagnet(to: string, locale: 'en' | 'es'): Promise<boolean> {
   if (!apiKey) return false; // not configured yet; lead is still captured
+  // Never email a broken "download your guide: <empty>" link. Until LEAD_MAGNET_URL is set the lead
+  // is still captured + tagged in GHL; only the magnet email is skipped.
+  if (!magnetUrl.trim()) return false;
   const subject = locale === 'es' ? 'Tu guía gratuita de Thick & Fit' : 'Your free Thick & Fit guide';
   const text =
     locale === 'es'

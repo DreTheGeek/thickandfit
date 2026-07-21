@@ -6,7 +6,10 @@ import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { safeEqual } from '@/lib/api/auth';
 import { logCronRun } from '@/lib/monitoring/cron-log';
-import { generateCheckinReminders } from '@/lib/notifications/generators';
+import {
+  generateCheckinReminders,
+  generateOnboardingNudges,
+} from '@/lib/notifications/generators';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -18,12 +21,16 @@ async function run(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  // Two daily member nudges: due check-ins, and a one-time "finish onboarding" for abandoned signups.
   const result = await generateCheckinReminders();
+  const onboarding = await generateOnboardingNudges();
+  const combined = { ...result, onboarding };
+  const ok = result.ok && onboarding.ok;
 
-  after(() => logCronRun('notify-checkins-cron', result.ok ? 'success' : 'error', result)); // survives the frozen lambda; insert failures now hit the function logs
+  after(() => logCronRun('notify-checkins-cron', ok ? 'success' : 'error', combined)); // survives the frozen lambda; insert failures now hit the function logs
 
-  const body = result.ok ? result : { ok: false as const, job: result.job };
-  return NextResponse.json(body, { status: result.ok ? 200 : 500 });
+  const body = ok ? combined : { ok: false as const, job: result.ok ? onboarding.job : result.job };
+  return NextResponse.json(body, { status: ok ? 200 : 500 });
 }
 
 async function GET_h(req: NextRequest): Promise<NextResponse> {

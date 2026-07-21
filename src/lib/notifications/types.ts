@@ -18,7 +18,8 @@ export type NotificationType =
   | 'program_assigned'
   | 'habit_assigned'
   | 'meal_plan_assigned'
-  | 'form_assigned';
+  | 'form_assigned'
+  | 'onboarding_nudge';
 
 export type AppNotification = {
   id: string;

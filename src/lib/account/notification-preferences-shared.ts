@@ -37,6 +37,7 @@ export function categoryForNotificationType(type: string): NotificationCategory 
     case 'checkin':
     case 'plateau':
     case 'reminder':
+    case 'onboarding_nudge':
       return 'reminders';
     case 'renewal':
     case 'comp_expiring':

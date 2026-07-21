@@ -153,6 +153,68 @@ type AssignmentRow = {
   profiles: { ui_locale: string | null } | null;
 };
 
+// Abandoned-onboarding nudge: a member signed up but never finished onboarding (no
+// onboarding_responses row), so they never got their plan. Nudge them ONCE, in-app + push. The
+// window (12h..14d old) skips brand-new signups still mid-flow and ancient dead accounts; the
+// "no existing onboarding_nudge notification" guard makes it fire exactly once per member.
+export async function generateOnboardingNudges(): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+  const now = Date.now();
+  const olderThan = new Date(now - 12 * 3_600_000).toISOString(); // signed up > 12h ago
+  const notBefore = new Date(now - 14 * 86_400_000).toISOString(); // and < 14 days ago
+
+  const { data, error } = await svc
+    .from('profiles')
+    .select('id, company_id, ui_locale, created_at, onboarding_responses(profile_id), notifications(type)')
+    .in('role', ['subscriber', 'free'])
+    .lte('created_at', olderThan)
+    .gte('created_at', notBefore);
+  if (error) {
+    return { ok: false, job: 'onboarding-nudge', selected: 0, notified: 0, error: error.message };
+  }
+
+  type Row = {
+    id: string;
+    company_id: string | null;
+    ui_locale: string | null;
+    onboarding_responses: { profile_id: string }[] | null;
+    notifications: { type: string }[] | null;
+  };
+  const rows = (data ?? []) as unknown as Row[];
+  const targets = rows.filter(
+    (r) =>
+      r.company_id &&
+      (r.onboarding_responses?.length ?? 0) === 0 && // never onboarded
+      !(r.notifications ?? []).some((n) => n.type === 'onboarding_nudge'), // not already nudged
+  );
+  if (targets.length === 0) return { ok: true, job: 'onboarding-nudge', selected: 0, notified: 0 };
+
+  const recipients = targets.map((r) => {
+    const locale: NotifLocale = asNotifLocale(r.ui_locale);
+    const payload: NotificationPayload = {
+      type: 'onboarding_nudge',
+      title: notifText(locale, 'onboardingNudgeTitle'),
+      body: notifText(locale, 'onboardingNudgeBody'),
+      link: '/onboarding',
+    };
+    return { profileId: r.id, payload };
+  });
+  // Grouped by company (single-tenant today, but keep it correct): bulk-insert per company.
+  const byCompany = new Map<string, typeof recipients>();
+  for (const t of targets) {
+    const list = byCompany.get(t.company_id as string) ?? [];
+    const rec = recipients.find((x) => x.profileId === t.id);
+    if (rec) list.push(rec);
+    byCompany.set(t.company_id as string, list);
+  }
+  let notified = 0;
+  for (const [companyId, recs] of byCompany) {
+    await createNotificationsBulk(companyId, recs);
+    notified += recs.length;
+  }
+  return { ok: true, job: 'onboarding-nudge', selected: targets.length, notified };
+}
+
 export async function generateCheckinReminders(): Promise<GeneratorResult> {
   const svc = createServiceClient();
 

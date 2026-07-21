@@ -1615,6 +1615,8 @@
         "replyBody": "{name} respondió en tu bandeja de entrada.",
         "commentTitle": "Nuevo comentario",
         "commentBody": "{name} comentó en tu publicación.",
+        "onboardingNudgeTitle": "Termina de configurar",
+        "onboardingNudgeBody": "Estás a un paso de tu plan personalizado. Toca para terminar tu configuración rápida.",
         "broadcastTitle": "Nuevo anuncio",
         "broadcastBody": "{name} publico un anuncio en la comunidad.",
         "challengeStartedTitle": "Nuevo reto!",

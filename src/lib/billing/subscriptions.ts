@@ -156,6 +156,29 @@ export async function upsertSubscriptionFromStripe(sub: StripeSubscriptionObject
   // THROW on failure: the webhook's catch marks the ledger row failed (reclaimable), so Stripe's
   // retry re-runs this idempotent upsert. Swallowing left a charged user without their entitlement.
   if (error) throw new Error(`upsertSubscriptionFromStripe: ${error.message}`);
+
+  // Reflect the app subscription back onto the CRM contact so nurture targets correctly: without this
+  // the ghl-sync mirror (GHL->Supabase, one-way) would keep a paying member marked as a lead/lost and
+  // drip "join" offers at them. Best-effort: a CRM miss never fails the money webhook. No-op if the
+  // member has no contact row yet.
+  const crmStage = crmStageForSubStatus(sub.status);
+  if (crmStage) {
+    const { error: crmErr } = await svc
+      .from('contacts')
+      .update({ lifecycle_stage: crmStage })
+      .eq('company_id', resolvedCompany)
+      .eq('profile_id', resolvedProfile);
+    if (crmErr) console.error('upsertSubscriptionFromStripe CRM sync:', crmErr.message);
+  }
+}
+
+// Map a Stripe subscription status onto the CRM lifecycle_stage. Returns null for statuses we do not
+// want to overwrite the CRM with (e.g. 'incomplete' - a checkout not yet finished).
+function crmStageForSubStatus(status: string): string | null {
+  if (status === 'active' || status === 'trialing') return 'active';
+  if (status === 'past_due') return 'past_due';
+  if (status === 'canceled' || status === 'unpaid' || status === 'incomplete_expired') return 'canceled';
+  return null;
 }
 
 type StripeInvoiceObject = {
