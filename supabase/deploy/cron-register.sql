@@ -163,6 +163,40 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-index-memory-6h (unified member-memory reconciler: sweeps every per-member data source
+-- (food days incl. photo scans, meal plans, check-ins, weights, intake, coach notes, physique,
+-- measurements) into member_memory so the coach can semantically recall everything. Idempotent +
+-- capped, so re-runs only embed genuinely new rows. Default body = active subscribers; a backfill
+-- is a manual POST with {"scope":"all","sinceDays":4000}.)
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-index-memory-6h' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-index-memory-6h',
+    '30 */6 * * *',  -- every 6 hours, offset :30 so it never collides with the nightly insights job
+    $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/index-memory',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer __CRON_SECRET__',
+          'Content-Type', 'application/json'
+        ),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 280000
+      );
+    $cron$
+  );
+  raise notice 'scheduled tf-index-memory-6h at 30 */6 * * *';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-index-memory-6h.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- tf-close-challenges-daily (finalize challenges past their ends_on: award the leader the Challenge
 -- Champion badge + notify every participant, exactly once via challenges.finalized_at). Without it an
 -- ended challenge silently stops being active with no winner, no badge, no notification.
