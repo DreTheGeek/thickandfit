@@ -11,6 +11,7 @@ import { signOutAction } from '@/lib/auth/actions';
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin', label: 'Overview', icon: 'grid' },
+  { href: '/admin/team', label: 'Team', icon: 'user' },
   { href: '/admin/health', label: 'System health', icon: 'pulse' },
   { href: '/admin/connections', label: 'Connections', icon: 'bolt' },
   { href: '/admin/api', label: 'API analytics', icon: 'pulse' },

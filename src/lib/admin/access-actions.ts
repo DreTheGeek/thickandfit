@@ -1,8 +1,11 @@
 'use server';
-// Admin-portal access actions: the passcode gate + operator grants (so Dre can add his QA teammates
-// himself instead of needing a DB console). Internal ops tool, English-only by design.
+// Admin-portal access actions: the passcode gate + operator grants + teammate provisioning (so Dre
+// can create coach / assistant / operator accounts himself instead of needing a DB console).
+// Internal ops tool, English-only by design.
 import { z } from 'zod';
+import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { createClient as createSbClient } from '@supabase/supabase-js';
 import { requireOperator } from '@/lib/auth/guards';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -10,6 +13,104 @@ import { verifyAndSetAdminGate } from '@/lib/admin/passcode';
 import { logCoachAction } from '@/lib/coach/audit';
 
 export type AccessResult = { ok: boolean; error?: string };
+
+// Teammate roles an operator can provision. Members (subscriber/free) self-sign-up, so they are not
+// offered here. coach = full console; assistant_coach = drafts + approval gate; operator = /admin.
+export const TEAMMATE_ROLES = ['coach', 'assistant_coach', 'operator'] as const;
+export type TeammateRole = (typeof TEAMMATE_ROLES)[number];
+
+export type InviteResult = { ok: boolean; error?: string; status?: 'created' | 'updated' };
+
+const inviteSchema = z.object({
+  email: z.string().trim().email(),
+  role: z.enum(TEAMMATE_ROLES),
+  fullName: z.string().trim().min(1).max(80),
+});
+
+// Create (or re-assert) a teammate account and email them a branded set-password link. Idempotent:
+// an existing account in this company gets its role re-asserted and a fresh link re-sent rather than
+// a duplicate. The person sets their OWN password from the email; the operator never sees it.
+export async function inviteTeammateAction(input: unknown): Promise<InviteResult> {
+  const parsed = inviteSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireOperator();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+  if (!(await checkRateLimit(ctx.userId, 'admin-invite', 20, 3600, { failClosed: true }))) {
+    return { ok: false, error: 'rate_limited' };
+  }
+
+  const { email, role, fullName } = parsed.data;
+  const [firstName, ...rest] = fullName.split(/\s+/);
+  const lastName = rest.join(' ') || firstName;
+  const svc = createServiceClient();
+
+  // Existing account in THIS company? (idempotent re-invite)
+  const { data: existing } = await svc
+    .from('profiles')
+    .select('id')
+    .ilike('email', email)
+    .eq('company_id', ctx.companyId)
+    .maybeSingle();
+
+  let userId = (existing as { id: string } | null)?.id ?? null;
+  const status: 'created' | 'updated' = userId ? 'updated' : 'created';
+
+  if (!userId) {
+    // Pre-confirm the email so there is no separate confirmation step: the set-password link below
+    // is the only action the teammate needs to take.
+    const { data: created, error: cErr } = await svc.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, first_name: firstName, last_name: lastName },
+    });
+    if (cErr || !created?.user) {
+      // Most common cause: the email already exists (possibly in another tenant / as a member).
+      console.error('inviteTeammateAction createUser:', cErr?.message);
+      return { ok: false, error: 'exists_or_failed' };
+    }
+    userId = created.user.id;
+    // The on_auth_user_created trigger writes the profile row; give it a beat before we update it.
+    await new Promise((r) => setTimeout(r, 1200));
+  }
+
+  const { error: upErr } = await svc
+    .from('profiles')
+    .update({ role, full_name: fullName, company_id: ctx.companyId })
+    .eq('id', userId);
+  if (upErr) {
+    console.error('inviteTeammateAction profile:', upErr.message);
+    return { ok: false, error: 'failed' };
+  }
+
+  // Branded set-password (recovery) email via SMTP. Anon client; the redirect lands the teammate on
+  // /auth/reset-password to choose a password, then routes them by role (coach -> /coach etc.).
+  // Origin from the request host so the link auto-adapts to the live domain at cutover.
+  const h = await headers();
+  const origin = h.get('origin') ?? `https://${h.get('host') ?? 'app.teamthickandfit.com'}`;
+  const anon = createSbClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } },
+  );
+  const { error: mailErr } = await anon.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/auth/reset-password`,
+  });
+  if (mailErr) {
+    console.error('inviteTeammateAction email:', mailErr.message);
+    return { ok: false, error: 'email_failed' };
+  }
+
+  logCoachAction(svc, {
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    entityType: 'profile',
+    entityId: userId,
+    action: 'admin.invite_teammate',
+    newState: { email, role, status },
+  });
+  revalidatePath('/admin/team');
+  return { ok: true, status };
+}
 
 // Passcode entry. Rate-limited hard (it is a shared secret) and only reachable by operators anyway.
 export async function enterAdminPasscodeAction(input: unknown): Promise<AccessResult> {
