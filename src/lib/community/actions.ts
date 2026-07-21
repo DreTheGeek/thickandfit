@@ -56,13 +56,23 @@ export async function createPostAction(input: unknown): Promise<CommunityResult>
       .eq('id', ctx.userId)
       .maybeSingle();
     const authorName = (author as { full_name: string | null } | null)?.full_name ?? 'Your coach';
-    void notifyBroadcast({
-      companyId: ctx.companyId,
-      authorProfileId: ctx.userId,
-      authorName,
-    }).then(undefined, (e: unknown) =>
-      console.error('createPostAction notifyBroadcast:', e instanceof Error ? e.message : e),
-    );
+    // Broadcast fan-out (in-app + push to every member) must survive the frozen lambda: after().
+    // Capture the narrowed companyId: control-flow narrowing does not propagate into the closure.
+    const companyId = ctx.companyId;
+    const authorProfileId = ctx.userId;
+    const broadcast = (): Promise<void> =>
+      notifyBroadcast({
+        companyId,
+        authorProfileId,
+        authorName,
+      }).then(undefined, (e: unknown) =>
+        console.error('createPostAction notifyBroadcast:', e instanceof Error ? e.message : e),
+      );
+    try {
+      after(broadcast);
+    } catch {
+      void broadcast();
+    }
   }
 
   revalidatePath('/community');

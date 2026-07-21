@@ -314,15 +314,23 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
   // unchanged log (fields=[]) is a confirmed-correct prediction, equally valuable signal.
   // Fire-and-forget - never blocks the log. Per-item detail also persists on the food_log row above.
   if (parsed.data.aiInferenceId) {
-    void recordItemOutcome(parsed.data.aiInferenceId, {
-      foodId: parsed.data.foodId,
-      predictedFoodId: parsed.data.predictedFoodId ?? null,
-      predictedName: parsed.data.predictedName,
-      correctedName: identityChanged ? parsed.data.name : null,
-      predictedGrams: predicted,
-      correctedGrams: gramsChanged ? parsed.data.grams : null,
-      fields,
-    });
+    const inferenceId = parsed.data.aiInferenceId;
+    const outcome = (): Promise<unknown> =>
+      recordItemOutcome(inferenceId, {
+        foodId: parsed.data.foodId,
+        predictedFoodId: parsed.data.predictedFoodId ?? null,
+        predictedName: parsed.data.predictedName,
+        correctedName: identityChanged ? parsed.data.name : null,
+        predictedGrams: predicted,
+        correctedGrams: gramsChanged ? parsed.data.grams : null,
+        fields,
+      });
+    // Learning-loop supervision must survive the frozen lambda: after() (bare-void fallback).
+    try {
+      after(outcome);
+    } catch {
+      void outcome();
+    }
   }
   revalidatePath('/nutrition');
   return { ok: true };

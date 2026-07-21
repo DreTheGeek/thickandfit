@@ -1,8 +1,20 @@
 // Internal REST API auth + helpers (Node runtime). Build Profile D: internal API only.
 // SHA-256 key validation (never bcrypt), consistent response shape, usage logging.
 import 'server-only';
+import { after } from 'next/server';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { createServiceClient } from '@/lib/supabase/service';
+
+// Run a post-response side effect that must not die with the frozen lambda, falling back to a bare
+// promise if we are somehow outside a request context (after() throws there).
+// Supabase query builders are thenables (PromiseLike), not real Promises, so accept PromiseLike.
+function afterOrVoid(work: () => PromiseLike<unknown>): void {
+  try {
+    after(() => Promise.resolve(work()));
+  } catch {
+    void work();
+  }
+}
 
 const KEY_PREFIX_LEN = 12;
 
@@ -44,7 +56,9 @@ export async function validateApiKey(rawKey: string | null): Promise<ApiKeyConte
   const b = Buffer.from(data.key_hash);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
 
-  void supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', data.id);
+  afterOrVoid(() =>
+    supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', data.id),
+  );
   return { companyId: data.company_id, apiKeyId: data.id };
 }
 
@@ -67,12 +81,14 @@ export function logApiUsage(args: {
   latencyMs: number;
 }): void {
   const supabase = createServiceClient();
-  void supabase.from('api_usage_log').insert({
-    company_id: args.companyId,
-    api_key_id: args.apiKeyId,
-    route: args.route,
-    method: args.method,
-    status_code: args.statusCode,
-    latency_ms: args.latencyMs,
-  });
+  afterOrVoid(() =>
+    supabase.from('api_usage_log').insert({
+      company_id: args.companyId,
+      api_key_id: args.apiKeyId,
+      route: args.route,
+      method: args.method,
+      status_code: args.statusCode,
+      latency_ms: args.latencyMs,
+    }),
+  );
 }

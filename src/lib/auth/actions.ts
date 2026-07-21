@@ -83,7 +83,7 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     console.error('signInAction:', error.message);
-    void logSignIn(false, { reason: 'bad_credentials' });
+    after(() => logSignIn(false, { reason: 'bad_credentials' }));
     return { error: SIGNIN_FAILED };
   }
   // Route by role + onboarding state, reusing the just-authenticated client.
@@ -97,10 +97,8 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
       .select('role, ui_locale, content_locale, company_id')
       .eq('id', user.id)
       .maybeSingle();
-    void logSignIn(true, {
-      userId: user.id,
-      companyId: (profile as { company_id?: string | null } | null)?.company_id ?? null,
-    });
+    const signInCompanyId = (profile as { company_id?: string | null } | null)?.company_id ?? null;
+    after(() => logSignIn(true, { userId: user.id, companyId: signInCompanyId }));
     // Apply the user's saved language so the app loads in their preference on any device.
     if (profile?.ui_locale === 'en' || profile?.ui_locale === 'es') {
       const store = await cookies();
@@ -158,9 +156,12 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
       .update({ full_name: fullName })
       .eq('id', data.user.id);
     if (nameErr) console.error('signUpAction full_name:', nameErr.message);
-    // Capture timestamped Terms + Privacy consent for the new user (anti-get-sued). Fire-and-forget.
+    // Capture timestamped Terms + Privacy consent for the new user (anti-get-sued). This is legal
+    // evidence, so it must NOT ride a bare `void` (the frozen lambda can drop it): run it inside the
+    // same after() unit as the CRM sync, where the response is kept alive until the work completes.
     const h = await headers();
-    void recordSignupConsent(data.user.id, await clientIp(), h.get('user-agent'));
+    const consentIp = await clientIp();
+    const consentUa = h.get('user-agent');
     // Surface the new member in the Clients CRM and GoHighLevel at signup itself, so the coach
     // portal and Stephanie's automations see them without waiting for onboarding (which refines the
     // same contact later and is a no-op if this already linked it). after() so the frozen lambda
@@ -169,6 +170,11 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     const lang = store.get('ui_locale')?.value === 'es' ? 'es' : 'en';
     const userId = data.user.id;
     after(async () => {
+      try {
+        await recordSignupConsent(userId, consentIp, consentUa);
+      } catch (e) {
+        console.error('signUpAction consent capture:', e instanceof Error ? e.message : e);
+      }
       try {
         const svc = createServiceClient();
         const { data: prof } = await svc

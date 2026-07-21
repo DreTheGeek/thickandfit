@@ -4,6 +4,7 @@
 // (profiles.id references auth.users on delete cascade), which in turn cascades to every profile-owned
 // table (food_log, habits, habit_logs, progress_photos, coach_messages, ...). One call erases the user.
 import { headers } from 'next/headers';
+import { after } from 'next/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/guards';
@@ -199,7 +200,12 @@ export async function updateMyPasswordAction(
     console.error('updateMyPasswordAction:', error.message);
     return { error: 'passwordUpdateFailed' };
   }
-  void logSecurityEvent(ctx.userId, 'password_changed');
+  // Security audit trail (anti-get-sued): must survive the frozen lambda, so run it in after().
+  try {
+    after(() => logSecurityEvent(ctx.userId, 'password_changed'));
+  } catch {
+    void logSecurityEvent(ctx.userId, 'password_changed');
+  }
   return { ok: true };
 }
 
