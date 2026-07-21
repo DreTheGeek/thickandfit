@@ -46,5 +46,11 @@ next-env.d.ts
 # local browser comparison snapshots
 /.claude-browser/
 
+# transient QA/test run artifacts (the curated .qa-visual baselines + launchproof knowledge
+# files are tracked deliberately; these are per-run outputs that only pollute git status)
+/test-results/
+.launchproof/*.log
+.launchproof/fix-state.json
+
 # Claude Code local (machine-specific perms)
 .claude/settings.local.json
