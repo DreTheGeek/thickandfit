@@ -1,7 +1,7 @@
 // Assign a form to a client (coach). POST { profile_id }.
 import { z } from 'zod';
 import { withApiLog } from '@/lib/telemetry/request-log';
-import { resolveAuth, hasRole, COACH_ROLES } from '@/lib/auth/session';
+import { resolveAuth, hasRole, APPROVER_ROLES } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { assignForm } from '@/lib/forms/engine';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -14,7 +14,9 @@ const schema = z.object({ profile_id: z.string().uuid() });
 async function POST_h(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
-  if (!hasRole(ctx.role, COACH_ROLES)) return apiError('Forbidden', 403);
+  // Assigning a form to a MEMBER is delivery: approver authority (coach + operator), not COACH_ROLES
+  // which admits assistant_coach. Matches APPROVER_ROLES + the roster-assign path.
+  if (!hasRole(ctx.role, APPROVER_ROLES)) return apiError('Forbidden', 403);
   if (!ctx.companyId) return apiError('No company scope', 400);
 
   let body: unknown;

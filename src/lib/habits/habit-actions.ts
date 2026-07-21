@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { requireAuth, requireCoach } from '@/lib/auth/guards';
+import { requireAuth, requireApprover } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { localToday } from '@/lib/habits/habits';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
@@ -53,11 +53,12 @@ const AssignInput = z.object({
   icon: z.string().trim().max(40).optional(),
 });
 
-// Coach assigns a habit to a client.
+// Coach assigns a habit to a client. Assignment = delivery to a member, so it needs approver
+// authority (coach + operator), not requireCoach which admits assistant_coach.
 export async function assignHabitAction(input: unknown): Promise<HabitResult> {
   const parsed = AssignInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'invalid' };
-  const ctx = await requireCoach();
+  const ctx = await requireApprover();
   if (!ctx.companyId) return { ok: false, error: 'no_company' };
   const sb = await createClient();
   const { error } = await sb.from('habits').insert({
