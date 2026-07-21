@@ -48,6 +48,13 @@ export type CoachContext = {
     injuries: string[] | null;
     dietaryExclusions: string[] | null;
     medicalConditions: string | null;
+    allergies: string | null;
+    trainingExperience: string | null;
+    // Derived from the SCOFF-style eating_disorder_screening jsonb: positive when >=2 flags are
+    // true (the clinical SCOFF cutoff). Drives a gentler, behavior-first coaching posture.
+    edScreenPositive: boolean;
+    // Human-readable summary of a populated sleep_assessment jsonb, or null when unassessed.
+    sleep: string | null;
   } | null;
   // Knowledge-graph neighborhood (kg_client_facts): the relational facts the flat intake misses -
   // the foods this client actually eats most and the plan they're on. Grounds the coach in what
@@ -75,6 +82,29 @@ function isoDaysAgo(days: number): string {
 function num(v: unknown): number {
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : 0;
+}
+
+// SCOFF-style eating-disorder screen: the jsonb holds up to five boolean flags. The clinical SCOFF
+// cutoff is >=2 positives, at which point the coach adopts a gentler, behavior-first posture. Read
+// defensively: only strictly-true booleans count, and a missing/empty payload is a negative screen.
+function scoffPositive(payload: Record<string, unknown> | null | undefined): boolean {
+  if (!payload || typeof payload !== 'object') return false;
+  let flags = 0;
+  for (const v of Object.values(payload)) if (v === true) flags += 1;
+  return flags >= 2;
+}
+
+// Turn a populated sleep_assessment jsonb into one short human line, or null when unassessed ({} or
+// missing). Kept generic so it survives whatever key shape the in-app intake ends up writing.
+function summarizeSleep(payload: Record<string, unknown> | null | undefined): string | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(payload)) {
+    if (v === null || v === undefined || v === '' || (typeof v === 'object' && !Array.isArray(v))) continue;
+    const label = k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase();
+    parts.push(`${label}: ${Array.isArray(v) ? v.join('/') : String(v)}`);
+  }
+  return parts.length ? parts.join(', ') : null;
 }
 
 // Roll up raw food_log rows (one per item) into per-day macro totals, newest first.
@@ -232,7 +262,8 @@ export async function buildCoachContext(
   // is only populated after a legacy client formally claims. Fall back to their contact - via the
   // claimed link (contacts.profile_id) or a Lenus-email match - so grounding fires the moment a
   // migrated client signs in, not only after the claim action. Best-effort; null when truly absent.
-  const intakeCols = 'contact_id, goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions';
+  const intakeCols =
+    'contact_id, goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions, allergies, training_experience, eating_disorder_screening, sleep_assessment';
   let { data: intakeRow } = await sb
     .from('client_intake')
     .select(intakeCols)
@@ -257,6 +288,9 @@ export async function buildCoachContext(
   const ik = intakeRow as {
     contact_id: string | null; goal_type: string | null; target_weight_kg: number | string | null;
     injuries: string[] | null; dietary_exclusions: string[] | null; medical_conditions: string | null;
+    allergies: string | null; training_experience: string | null;
+    eating_disorder_screening: Record<string, unknown> | null;
+    sleep_assessment: Record<string, unknown> | null;
   } | null;
   const health = ik
     ? {
@@ -265,6 +299,10 @@ export async function buildCoachContext(
         injuries: ik.injuries,
         dietaryExclusions: ik.dietary_exclusions,
         medicalConditions: ik.medical_conditions,
+        allergies: ik.allergies,
+        trainingExperience: ik.training_experience,
+        edScreenPositive: scoffPositive(ik.eating_disorder_screening),
+        sleep: summarizeSleep(ik.sleep_assessment),
       }
     : null;
 
@@ -335,12 +373,29 @@ export function renderContextBlock(ctx: CoachContext): string {
   // Migrated health context: HARD safety constraints the coach must respect in every reply.
   if (ctx.health) {
     const h = ctx.health;
+    // Allergies are stricter than preferences (they can be dangerous): surface as their own hard line.
+    if (h.allergies && h.allergies.trim()) {
+      lines.push((es ? 'ALERGIA (nunca sugerir, puede ser peligroso): ' : 'ALLERGY (never suggest, can be dangerous): ') + h.allergies.trim());
+    }
     if (h.dietaryExclusions && h.dietaryExclusions.length) {
       lines.push((es ? 'NO RECOMENDAR estos alimentos (restriccion): ' : 'NEVER recommend these foods (restriction): ') + h.dietaryExclusions.join(', '));
     }
     if (h.medicalConditions) lines.push((es ? 'Condiciones medicas: ' : 'Medical conditions: ') + h.medicalConditions);
     if (h.injuries && h.injuries.length) lines.push((es ? 'Lesiones/limitaciones: ' : 'Injuries/limitations: ') + h.injuries.join(', '));
     if (h.targetWeightKg != null) lines.push((es ? 'Peso meta: ' : 'Target weight: ') + `${h.targetWeightKg}kg`);
+    if (h.trainingExperience && h.trainingExperience.trim()) {
+      lines.push((es ? 'Experiencia de entrenamiento: ' : 'Training experience: ') + h.trainingExperience.trim());
+    }
+    if (h.sleep) lines.push((es ? 'Sueno/recuperacion: ' : 'Sleep/recovery: ') + h.sleep);
+    // Positive eating-disorder screen: the single most important posture change. Instruction-bearing
+    // so the coach leads with feelings and behavior, keeps numbers gentle, and never pushes restriction.
+    if (h.edScreenPositive) {
+      lines.push(
+        es
+          ? 'RELACION CON LA COMIDA (delicado): la evaluacion de esta miembro senala una relacion dificil con la comida. Guia por como se siente y sus habitos, no por numeros. Habla de calorias/macros con suavidad y solo si ayuda, nunca empujes deficits agresivos, ayunos ni "compensar". Celebra logros que no sean la balanza y anima con calidez a buscar apoyo profesional. No diagnostiques.'
+          : 'RELATIONSHIP WITH FOOD (sensitive): this member\'s screen flags a difficult relationship with food. Lead with how she feels and her habits, not numbers. Keep calorie/macro talk gentle and only when it helps, never push aggressive deficits, fasting, or "making up for" food. Celebrate non-scale wins and warmly encourage professional support. Do not diagnose.',
+      );
+    }
   }
 
   // Knowledge-graph facts: what this client actually eats + the plan they're on. Grounds replies in
