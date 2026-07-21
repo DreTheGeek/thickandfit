@@ -1,31 +1,14 @@
-// AI safety guardrails for the subscriber AI coach. ONE place for the bilingual "not a medical
-// professional" copy so the in-chat disclaimer banner, the chat persona, and the plan-gen system
-// prompt all stay consistent. Pure strings + helpers, no key, no DB, no "server-only" (the banner
-// copy is consumed by a client component).
+// Safety guardrails for the subscriber coach. ONE place for the shared "not medical advice" boundary
+// so the chat persona and the plan-gen system prompt stay consistent. Pure strings + helpers, no key,
+// no DB, no "server-only".
 //
 // Note on acks: members already accept an assumption-of-risk / health disclaimer before any training
 // content (profiles.health_ack_at, migration 0038, enforced by requireEntitled -> /disclaimer). The
-// in-chat AI banner is INFORMATIONAL and reuses that gate; it does NOT add a second ack column.
+// visible in-chat banner is INFORMATIONAL and comes from the i18n bundle (app.coachChat), which is
+// the single source of user-facing disclaimer copy; it deliberately never uses the word "AI" per the
+// brand rule. Do not reintroduce a hardcoded banner string here.
 
 export type AiLocale = 'en' | 'es';
-
-// The visible in-chat disclaimer shown above the coach conversation. Short, plain, bilingual.
-export type AiDisclaimerCopy = { title: string; body: string };
-
-const DISCLAIMER: Record<AiLocale, AiDisclaimerCopy> = {
-  en: {
-    title: 'AI coach, not a medical professional',
-    body: 'This coach gives general fitness and nutrition guidance based on your data. It is not medical advice. For injuries, pregnancy, medical conditions, or eating-disorder concerns, talk to a licensed professional.',
-  },
-  es: {
-    title: 'Entrenadora con IA, no es una profesional médica',
-    body: 'Esta entrenadora ofrece orientación general de fitness y nutrición basada en tus datos. No es consejo médico. Para lesiones, embarazo, condiciones médicas o trastornos alimenticios, consulta a un profesional licenciado.',
-  },
-};
-
-export function aiDisclaimer(locale: AiLocale): AiDisclaimerCopy {
-  return DISCLAIMER[locale === 'es' ? 'es' : 'en'];
-}
 
 // A numbered, explicit safety clause appended to AI system prompts (chat persona + plan-gen). Keeps
 // the medical-claim boundary identical everywhere the model speaks. English is fine for the system
