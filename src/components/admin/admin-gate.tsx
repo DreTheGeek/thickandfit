@@ -15,12 +15,18 @@ export function AdminPasscodeGate(): ReactElement {
     if (!code.trim() || busy) return;
     setBusy(true);
     setErr(null);
-    const res = await enterAdminPasscodeAction(code);
-    setBusy(false);
-    if (res.ok) {
-      router.refresh();
-    } else {
+    try {
+      const res = await enterAdminPasscodeAction(code);
+      if (res.ok) {
+        router.refresh();
+        return;
+      }
       setErr(res.error === 'rate_limited' ? 'Too many tries. Wait 5 minutes.' : 'Wrong passcode.');
+    } catch {
+      // A thrown action (e.g. a server error) must not leave the button stuck on "Checking..." forever.
+      setErr('Something went wrong. Please try again.');
+    } finally {
+      setBusy(false);
     }
   };
 

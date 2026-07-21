@@ -11,15 +11,8 @@ import { checkRateLimit } from '@/lib/security/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
 import { verifyAndSetAdminGate } from '@/lib/admin/passcode';
 import { logCoachAction } from '@/lib/coach/audit';
-
-export type AccessResult = { ok: boolean; error?: string };
-
-// Teammate roles an operator can provision. Members (subscriber/free) self-sign-up, so they are not
-// offered here. coach = full console; assistant_coach = drafts + approval gate; operator = /admin.
-export const TEAMMATE_ROLES = ['coach', 'assistant_coach', 'operator'] as const;
-export type TeammateRole = (typeof TEAMMATE_ROLES)[number];
-
-export type InviteResult = { ok: boolean; error?: string; status?: 'created' | 'updated' };
+import { TEAMMATE_ROLES } from '@/lib/admin/access-types';
+import type { AccessResult, InviteResult } from '@/lib/admin/access-types';
 
 const inviteSchema = z.object({
   email: z.string().trim().email(),

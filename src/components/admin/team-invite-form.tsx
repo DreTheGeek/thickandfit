@@ -3,7 +3,8 @@
 // link. The teammate sets their own password from the email. Internal ops tool: English-only.
 import { useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import { inviteTeammateAction, type TeammateRole } from '@/lib/admin/access-actions';
+import { inviteTeammateAction } from '@/lib/admin/access-actions';
+import type { TeammateRole } from '@/lib/admin/access-types';
 
 const ROLES: { value: TeammateRole; label: string; hint: string }[] = [
   { value: 'coach', label: 'Coach', hint: 'Full coaching console (clients, programs, nutrition, forms, community).' },
