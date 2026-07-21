@@ -18,6 +18,7 @@ const OWNER = [
   ['notifications', 'profile_id'], ['progress_photos', 'profile_id'], ['form_responses', 'profile_id'],
   ['user_insights', 'profile_id'], ['push_subscriptions', 'profile_id'],
   ['body_measurements', 'profile_id'], ['food_photos', 'profile_id'],
+  ['member_memory', 'profile_id'],
 ];
 const FORBIDDEN = [
   'contacts', 'client_subscriptions', 'contact_transactions', 'opportunities', 'pipelines',
