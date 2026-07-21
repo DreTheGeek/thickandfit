@@ -145,10 +145,11 @@ export default async function RootLayout({
             </Suspense>
             {children}
           </Providers>
+          {/* Inside the intl provider: these use useTranslations, so they must have its context. */}
+          <IOSInstallBanner />
+          <AndroidInstallButton />
         </NextIntlClientProvider>
         <SwRegister />
-        <IOSInstallBanner />
-        <AndroidInstallButton />
       </body>
     </html>
   );
