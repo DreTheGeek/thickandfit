@@ -396,7 +396,7 @@ export function DiaryScreen({
               </div>
             )}
 
-            {/* Cooked / uncooked conversion — the differentiator no competitor ships */}
+            {/* Cooked / uncooked conversion: the differentiator no competitor ships */}
             {showConvert && (
               <div className="mb-3 rounded-lg bg-warm/60 p-2.5">
                 <div className="flex items-center gap-2">

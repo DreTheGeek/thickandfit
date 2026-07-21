@@ -489,7 +489,7 @@ export function WorkoutPlayer({
           </div>
         )}
 
-        {/* Per-set difficulty (RPE) — the signal that drives progressive overload */}
+        {/* Per-set difficulty (RPE): the signal that drives progressive overload */}
         <div className="mt-5">
           <div className="mb-2 text-center text-[10px] font-medium uppercase tracking-[2px] text-faint">
             {t('feltTitle')}

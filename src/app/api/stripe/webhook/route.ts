@@ -1,4 +1,4 @@
-// POST /api/stripe/webhook — Stripe event sink.
+// POST /api/stripe/webhook: Stripe event sink.
 // Signature-verified (HMAC over the raw body), idempotent (UNIQUE event ledger), Zod-shaped.
 // Handles: customer.subscription.updated/deleted, invoice.payment_succeeded/failed, charge.refunded.
 // Without STRIPE_WEBHOOK_SECRET it returns 503 (never crashes the build, never processes unsigned).

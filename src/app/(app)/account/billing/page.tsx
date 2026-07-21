@@ -1,4 +1,4 @@
-// /account/billing — honest billing. Always shows status, the NEXT charge (amount + date),
+// /account/billing: honest billing. Always shows status, the NEXT charge (amount + date),
 // the card last4, and a one-tap cancel (with optional reason) or reactivate. No dark patterns.
 import type { ReactElement } from 'react';
 import Link from 'next/link';

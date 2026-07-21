@@ -1,7 +1,7 @@
-// POST /api/nutrition/photo — the photo-to-macro wedge endpoint.
+// POST /api/nutrition/photo: the photo-to-macro wedge endpoint.
 // Auth-guarded (user session), Zod-validated. Accepts a base64 data URL or an http(s) image URL,
 // runs the analyze pipeline, and returns confidence-scored candidates with scaled macros.
-// With no OPENROUTER_API_KEY set it returns { status: 'notConfigured' } and 200 — never crashes.
+// With no OPENROUTER_API_KEY set it returns { status: 'notConfigured' } and 200, never crashes.
 import { z } from 'zod';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { after } from 'next/server';

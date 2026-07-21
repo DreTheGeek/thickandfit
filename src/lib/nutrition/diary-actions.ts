@@ -107,7 +107,7 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
   const ctx = await requireAuth();
   const sb = await createClient();
 
-  // Macros are recomputed server-side from the food row — never trusted from the client.
+  // Macros are recomputed server-side from the food row, never trusted from the client.
   const { data: food } = await sb
     .from('foods')
     .select('kcal, protein_g, carb_g, fat_g')

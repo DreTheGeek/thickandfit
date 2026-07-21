@@ -103,7 +103,7 @@ export default async function ApiAnalyticsPage(): Promise<ReactElement> {
                       <td className="py-2 pr-3 text-soft">{ago(e.ts)}</td>
                       <td className="px-3 py-2"><span className="rounded bg-[#F6E2DC] px-1.5 py-0.5 font-semibold text-[#8C3325]">{e.status}</span></td>
                       <td className="px-3 py-2 font-mono text-soft">{e.method} {e.path}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-faint">{e.duration_ms ? `${e.duration_ms}ms` : '—'}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-faint">{e.duration_ms ? `${e.duration_ms}ms` : '-'}</td>
                       <td className="px-3 py-2 text-faint">{e.email}</td>
                     </tr>
                   ))}</tbody>
