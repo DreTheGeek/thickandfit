@@ -1,6 +1,7 @@
 // POST /api/nutrition/photo: the photo-to-macro wedge endpoint.
-// Auth-guarded (user session), Zod-validated. Accepts a base64 data URL or an http(s) image URL,
-// runs the analyze pipeline, and returns confidence-scored candidates with scaled macros.
+// Auth-guarded (user session), Zod-validated. Accepts an inline base64 data: URL only (the client
+// always sends the captured/resized image as a data URL), runs the analyze pipeline, and returns
+// confidence-scored candidates with scaled macros.
 // With no OPENROUTER_API_KEY set it returns { status: 'notConfigured' } and 200, never crashes.
 import { z } from 'zod';
 import { withApiLog } from '@/lib/telemetry/request-log';
@@ -20,15 +21,17 @@ export const dynamic = 'force-dynamic';
 // calls also carry their own AbortSignal timeouts so nothing hangs to the ceiling.
 export const maxDuration = 300;
 
-// Either a data: URL (base64 inline) or a remote http(s) image URL. Bounded to keep payloads sane.
+// Inline base64 data:image/ URL only. Remote http(s) URLs are intentionally NOT accepted: the app
+// never sends one, and passing a caller-supplied URL through to the vision provider would let a user
+// make the provider fetch an arbitrary (possibly internal) URL. Bounded to keep payloads sane.
 const Body = z
   .object({
     image: z
       .string()
       .min(8)
       .max(12_000_000)
-      .refine((v) => v.startsWith('data:image/') || /^https?:\/\//i.test(v), {
-        message: 'image must be a data:image/ URL or an http(s) URL',
+      .refine((v) => v.startsWith('data:image/'), {
+        message: 'image must be a data:image/ URL',
       }),
   })
   .strict();

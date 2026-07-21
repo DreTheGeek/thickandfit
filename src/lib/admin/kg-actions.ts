@@ -13,8 +13,10 @@ export async function rebuildGraphAction(): Promise<RebuildResult> {
   const svc = createServiceClient();
   const { data, error } = await svc.rpc('kg_rebuild', { p_company: ctx.companyId });
   if (error) {
+    // Log the raw Postgres detail server-side; return a sanitized message to the admin UI so internal
+    // error text (function names, column details) never reaches the client.
     console.error('rebuildGraphAction:', error.message);
-    return { ok: false, error: error.message };
+    return { ok: false, error: 'Graph rebuild failed. Check the server logs for details.' };
   }
   const res = (data ?? {}) as { nodes?: number; edges?: number };
   revalidatePath('/admin/graph');

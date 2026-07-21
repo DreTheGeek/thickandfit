@@ -1,11 +1,26 @@
 // Internal MCP server (JSON-RPC 2.0 over HTTP). Build Profile D: for Stephanie's own automation.
 // Every tools/call requires a valid SHA-256 API key; all reads are scoped to that key's company,
 // so a key can never cross-tenant read (RLS enforced at the calling-key scope).
+import { z } from 'zod';
 import { validateApiKey, bearerFrom } from '@/lib/api/auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
+
+// JSON-RPC 2.0 envelope. Shapes only what we route on; a malformed body is rejected before any
+// unchecked `as` cast reaches tool dispatch.
+const RpcEnvelope = z.object({
+  id: z.union([z.string(), z.number(), z.null()]).optional(),
+  method: z.string().optional(),
+  params: z
+    .object({
+      name: z.string().optional(),
+      arguments: z.record(z.string(), z.unknown()).optional(),
+    })
+    .partial()
+    .optional(),
+});
 
 const SERVER_INFO = { name: 'thickandfit-mcp', version: '1.0.0' };
 const PROTOCOL_VERSION = '2025-06-18';
@@ -45,15 +60,17 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
-  let body: { id?: RpcId; method?: string; params?: Record<string, unknown> } | null = null;
+  let raw: unknown;
   try {
-    body = await req.json();
+    raw = await req.json();
   } catch {
     return rpcError(null, -32700, 'Parse error');
   }
-  const id = body?.id ?? null;
-  const method = body?.method;
-  const params = body?.params ?? {};
+  const envelope = RpcEnvelope.safeParse(raw);
+  if (!envelope.success) return rpcError(null, -32600, 'Invalid Request');
+  const id = envelope.data.id ?? null;
+  const method = envelope.data.method;
+  const params = envelope.data.params ?? {};
 
   if (method === 'initialize') {
     return rpcResult(id, {
@@ -73,8 +90,8 @@ export async function POST(req: Request): Promise<Response> {
     if (!ctx) return rpcError(id, -32001, 'Unauthorized');
 
     const supabase = createServiceClient();
-    const name = params.name as string | undefined;
-    const args = (params.arguments as Record<string, unknown>) ?? {};
+    const name = params.name;
+    const args = params.arguments ?? {};
 
     if (name === 'get_company') {
       const { data } = await supabase

@@ -38,8 +38,10 @@ export async function getAssignedCheckins(
 
   return rows.map((r) => ({
     formId: r.form_id,
-    titleEn: r.forms!.title_en,
-    titleEs: r.forms!.title_es,
+    // Optional-chain the joined form: if RLS ever filters the relation to null, fall back to an empty
+    // label instead of throwing on `.title_en` of null.
+    titleEn: r.forms?.title_en ?? '',
+    titleEs: r.forms?.title_es ?? '',
     doneRecently: doneSet.has(r.form_id),
   }));
 }
