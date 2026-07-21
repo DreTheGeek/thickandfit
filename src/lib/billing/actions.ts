@@ -81,7 +81,7 @@ export async function startCheckoutAction(
   // consent_captures.consent_type has no CHECK, so the new type needs no migration.
   const { ip, ua } = await clientMeta();
   const svc = createServiceClient();
-  await svc.from('consent_captures').insert([
+  const { error: consentErr } = await svc.from('consent_captures').insert([
     {
       company_id: ctx.companyId,
       user_id: ctx.userId,
@@ -101,6 +101,9 @@ export async function startCheckoutAction(
       user_agent: ua,
     },
   ]);
+  // ARL/ROSCA evidence rows. Never block checkout on a logging failure, but never lose it silently
+  // either (the whole point of the rows is proving the disclosure happened).
+  if (consentErr) console.error('startCheckoutAction consent capture:', consentErr.message);
 
   // Reuse an existing customer id if we have one.
   const existing = await getSubscriptionForProfile(ctx.userId);
@@ -119,7 +122,9 @@ export async function startCheckoutAction(
   const session = await createCheckoutSession({
     customerId,
     priceId,
-    successUrl: `${base}/account/billing?checkout=success`,
+    // {CHECKOUT_SESSION_ID} is Stripe's template var: it lets the return page reconcile the
+    // subscription server-side when the member lands BEFORE the webhook (the launch-day race).
+    successUrl: `${base}/account/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancelUrl: `${base}/account/billing?checkout=cancelled`,
     profileId: ctx.userId,
     companyId: ctx.companyId,
@@ -167,13 +172,15 @@ export async function cancelSubscriptionAction(
   if (parsed.success && (parsed.data.reasonCode || parsed.data.reasonText)) {
     // RLS insert via the user session client (policy: profile_id = auth.uid()).
     const supabase = await createClient();
-    await supabase.from('cancellation_reasons').insert({
+    const { error: reasonErr } = await supabase.from('cancellation_reasons').insert({
       company_id: ctx.companyId,
       profile_id: ctx.userId,
       subscription_id: sub.id,
       reason_code: parsed.data.reasonCode || null,
       reason_text: parsed.data.reasonText ?? null,
     });
+    // Churn-evidence row: never block the cancel on it, never lose it silently.
+    if (reasonErr) console.error('cancelSubscriptionAction reason:', reasonErr.message);
   }
 
   revalidatePath('/account/billing');

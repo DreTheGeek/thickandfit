@@ -1457,6 +1457,8 @@
       "nextCharge": "Próximo cargo {amount} el {date}",
       "endsOn": "El acceso termina el {date} (sin más cargos)",
       "noActivePlan": "No tienes una suscripción activa.",
+      "processingNote": "Pago recibido. Tu membresía se está activando y aparecerá aquí en un momento. Actualiza la página si no aparece.",
+      "checkoutSuccess": "Pago confirmado. Tu membresía está activa.",
       "preLaunchNote": "La facturación aún no ha comenzado. No se te cobrará nada hasta el lanzamiento, y tu plan se activará automáticamente cuando la facturación esté disponible.",
       "cardOnFile": "{brand} terminada en {last4}",
       "card": "Tarjeta",
@@ -1491,7 +1493,8 @@
         "failed": "Fallido",
         "refunded": "Reembolsado",
         "partially_refunded": "Reembolso parcial",
-        "pending": "Pendiente"
+        "pending": "Pendiente",
+        "disputed": "En disputa"
       },
       "error": {
         "notConfigured": "La facturación aún no está disponible.",

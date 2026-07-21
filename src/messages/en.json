@@ -1457,6 +1457,8 @@
       "nextCharge": "Next charge {amount} on {date}",
       "endsOn": "Access ends {date} (no further charges)",
       "noActivePlan": "You do not have an active subscription.",
+      "processingNote": "Payment received. Your membership is activating and will appear here in a moment. Refresh if it does not.",
+      "checkoutSuccess": "Payment confirmed. Your membership is active.",
       "preLaunchNote": "Billing hasn't started yet. You won't be charged anything until launch, and your plan activates automatically when billing goes live.",
       "cardOnFile": "{brand} ending in {last4}",
       "card": "Card",
@@ -1491,7 +1493,8 @@
         "failed": "Failed",
         "refunded": "Refunded",
         "partially_refunded": "Partial refund",
-        "pending": "Pending"
+        "pending": "Pending",
+        "disputed": "Disputed"
       },
       "error": {
         "notConfigured": "Billing is not available yet.",

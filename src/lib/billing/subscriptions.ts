@@ -60,7 +60,9 @@ export function isActiveStatus(status: string | null | undefined): boolean {
   return Boolean(status && ACTIVE_STATUSES.includes(status));
 }
 
-/** The subscriber's most recent subscription row (active preferred), or null if none. */
+/** The subscriber's subscription row: an ACTIVE one if any exists, else the most recent. A customer
+ *  can hold a history of rows (cancel -> resubscribe keeps the old row per 0085), so "newest" alone
+ *  could surface an abandoned 'incomplete' row over a live one. */
 export async function getSubscriptionForProfile(
   profileId: string,
 ): Promise<SubscriptionRow | null> {
@@ -69,10 +71,9 @@ export async function getSubscriptionForProfile(
     .from('subscriptions')
     .select('*')
     .eq('profile_id', profileId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return (data as SubscriptionRow | null) ?? null;
+    .order('created_at', { ascending: false });
+  const rows = (data ?? []) as SubscriptionRow[];
+  return rows.find((r) => isActiveStatus(r.status)) ?? rows[0] ?? null;
 }
 
 export async function getPaymentsForProfile(
@@ -214,7 +215,7 @@ export async function recordInvoicePayment(
     );
   }
 
-  await svc.from('payments').upsert(
+  const { error: payErr } = await svc.from('payments').upsert(
     {
       company_id: companyId,
       profile_id: profileId,
@@ -230,6 +231,10 @@ export async function recordInvoicePayment(
     },
     { onConflict: 'stripe_invoice_id' },
   );
+  // THROW on failure (never-drop-a-money-event rule): the webhook marks the ledger row failed
+  // (reclaimable) and Stripe's retry re-runs this idempotent upsert. Silently discarding the error
+  // is exactly how the partial-index bug lost every payment row without a trace.
+  if (payErr) throw new Error(`recordInvoicePayment: ${payErr.message}`);
 
   // Dunning: a failed charge means the member's card was declined. `past_due` still grants access
   // during Stripe's retry window, so without this notice the member churns silently. Billing-category
@@ -257,6 +262,29 @@ export async function recordInvoicePayment(
     } catch (e) {
       console.error('recordInvoicePayment dunning notice:', e instanceof Error ? e.message : e);
     }
+  }
+}
+
+/** Webhook-race reconciliation: the member lands on /account/billing?checkout=success BEFORE the
+ *  webhook has delivered customer.subscription.created. Pull the Checkout Session by id, then the
+ *  subscription object, and run the same idempotent upsert the webhook runs. Safe with a foreign or
+ *  junk session id: the upsert keys tenant off the subscription's OWN metadata (set at creation), so
+ *  the worst case is a no-op or upserting a row the webhook would have written anyway. */
+export async function reconcileCheckoutSession(sessionId: string): Promise<boolean> {
+  const { getCheckoutSession, getSubscriptionObject } = await import('@/lib/billing/stripe');
+  const session = await getCheckoutSession(sessionId);
+  if (!session.ok || !session.data.subscription) return false;
+  const sub = await getSubscriptionObject(session.data.subscription);
+  if (!sub.ok) return false;
+  const obj = sub.data as unknown as StripeSubscriptionObject;
+  if (typeof obj.id !== 'string' || typeof obj.customer !== 'string') return false;
+  try {
+    await upsertSubscriptionFromStripe(obj);
+    return true;
+  } catch (e) {
+    // The webhook remains the source of truth; reconciliation is best-effort.
+    console.error('reconcileCheckoutSession:', e instanceof Error ? e.message : e);
+    return false;
   }
 }
 

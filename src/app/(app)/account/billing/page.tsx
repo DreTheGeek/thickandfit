@@ -14,6 +14,7 @@ import {
   getSubscriptionForProfile,
   getPaymentsForProfile,
   isActiveStatus,
+  reconcileCheckoutSession,
 } from '@/lib/billing/subscriptions';
 
 export const dynamic = 'force-dynamic';
@@ -34,11 +35,24 @@ function formatDate(iso: string | null, locale: string): string {
   }).format(new Date(iso));
 }
 
-export default async function BillingPage(): Promise<ReactElement> {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string; session_id?: string }>;
+}): Promise<ReactElement> {
   const ctx = await requireAuth();
   const locale = await getLocale();
   const t = await getTranslations('app.billing');
   const tApp = await getTranslations('app');
+  const { checkout, session_id: sessionId } = await searchParams;
+
+  // Launch-day race: the member can land here from Stripe BEFORE the webhook delivers the
+  // subscription. Reconcile server-side from the session id so they see "active", not a subscribe
+  // button that would mint a second subscription. Format-guarded; the webhook stays source of truth.
+  const returnedFromCheckout = checkout === 'success';
+  if (returnedFromCheckout && isStripeConfigured() && sessionId && /^cs_[A-Za-z0-9_]+$/.test(sessionId)) {
+    await reconcileCheckoutSession(sessionId);
+  }
 
   const sub = await getSubscriptionForProfile(ctx.userId);
   const payments = await getPaymentsForProfile(ctx.userId);
@@ -146,11 +160,19 @@ export default async function BillingPage(): Promise<ReactElement> {
             ) : null}
             <p className="text-[13px] leading-relaxed text-muted">{t('preLaunchNote')}</p>
           </div>
+        ) : returnedFromCheckout ? (
+          // Paid but the subscription row has not landed yet (reconcile + webhook both pending).
+          // Show a processing note, NEVER a subscribe button (which would mint a second checkout).
+          <p className="mt-4 text-[14px] leading-relaxed text-soft">{t('processingNote')}</p>
         ) : (
           <p className="mt-4 text-[15px] text-soft">{t('noActivePlan')}</p>
         )}
 
-        {preLaunch ? null : <BillingActions mode={mode} />}
+        {returnedFromCheckout && active ? (
+          <p className="mt-3 text-[13px] font-semibold text-accent">{t('checkoutSuccess')}</p>
+        ) : null}
+
+        {preLaunch || (returnedFromCheckout && !active) ? null : <BillingActions mode={mode} />}
       </Card>
 
       {/* Payment history */}

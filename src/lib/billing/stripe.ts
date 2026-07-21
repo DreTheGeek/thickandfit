@@ -148,6 +148,27 @@ export async function createCheckoutSession(args: {
   );
 }
 
+// --- Checkout/session reads (webhook-race reconciliation) --------------------
+export type StripeCheckoutSessionDetail = {
+  id: string;
+  status: string | null;
+  subscription: string | null;
+};
+
+/** Read a Checkout Session (used when the member returns before the webhook lands). */
+export async function getCheckoutSession(
+  sessionId: string,
+): Promise<StripeResult<StripeCheckoutSessionDetail>> {
+  return stripeRequest<StripeCheckoutSessionDetail>('GET', `/checkout/sessions/${sessionId}`);
+}
+
+/** Read a full subscription object (same shape the webhook receives). */
+export async function getSubscriptionObject(
+  subscriptionId: string,
+): Promise<StripeResult<Record<string, unknown>>> {
+  return stripeRequest<Record<string, unknown>>('GET', `/subscriptions/${subscriptionId}`);
+}
+
 // --- Subscription mutations -------------------------------------------------
 export type StripeSubscription = {
   id: string;
