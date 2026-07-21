@@ -195,6 +195,37 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-ghl-sync (GoHighLevel -> Supabase opportunity/pipeline sync). The route is GET-only, so this
+-- uses net.http_get (not http_post like the others). Every 6h keeps the leads pipeline fresh without
+-- hammering the GHL API; adjust the cadence freely. Without this block the sync route never fires.
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-ghl-sync-6h' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-ghl-sync-6h',
+    '0 */6 * * *',  -- 00:00 / 06:00 / 12:00 / 18:00 UTC
+    $cron$
+      select net.http_get(
+        url := '__APP_URL__/api/internal/ghl-sync',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer __CRON_SECRET__',
+          'Content-Type', 'application/json'
+        ),
+        timeout_milliseconds := 60000
+      );
+    $cron$
+  );
+  raise notice 'scheduled tf-ghl-sync-6h at 0 */6 * * *';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-ghl-sync-6h.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- Verify after apply:
 --   select jobname, schedule, active from cron.job where jobname like 'tf-%' order by jobname;
 -- Then confirm a run lands a cron_job_log row (the endpoint writes it):
