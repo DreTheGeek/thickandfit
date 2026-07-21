@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import type { ReactElement, ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { resolveAuth, COACH_ROLES } from '@/lib/auth/session';
@@ -6,6 +7,12 @@ import { CoachShell } from '@/components/app/coach-shell';
 import { TimezoneSync } from '@/components/app/timezone-sync';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { getUnreadCount } from '@/lib/notifications/queries';
+
+// Logged-in pages get the app title, not the marketing headline the root layout sets. Without this
+// every in-app tab read "Helping Women Fall In Love With The Journey - ..." in the browser bar.
+export const metadata: Metadata = {
+  title: { default: 'Thick & Fit', template: '%s | Thick & Fit' },
+};
 
 // NOTE (paywall map): entitlement is enforced PER-PAGE via requireEntitled() on every training
 // surface, not here - this layout only authenticates and picks the shell. A new (app) page MUST
