@@ -6,6 +6,8 @@ import { apiSuccess, apiError } from '@/lib/api/auth';
 import { assignProgram } from '@/lib/programs/engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { logCoachAction } from '@/lib/coach/audit';
+import { notifyMember } from '@/lib/notifications/triggers';
+import { after } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +40,19 @@ async function POST_h(req: Request, { params }: { params: Promise<{ id: string }
     action: 'assign',
     newState: { profile_id: parsed.data.profile_id },
   });
+  // Tell the member their coach assigned them a program (bell + push). after() survives the lambda.
+  const companyId = ctx.companyId;
+  const memberId = parsed.data.profile_id;
+  after(() =>
+    notifyMember({
+      companyId,
+      profileId: memberId,
+      type: 'program_assigned',
+      titleKey: 'programAssignedTitle',
+      bodyKey: 'programAssignedBody',
+      link: '/workouts',
+    }),
+  );
   return apiSuccess(result);
 }
 

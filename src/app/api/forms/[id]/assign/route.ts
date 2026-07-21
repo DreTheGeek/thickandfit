@@ -6,6 +6,8 @@ import { apiSuccess, apiError } from '@/lib/api/auth';
 import { assignForm } from '@/lib/forms/engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { logCoachAction } from '@/lib/coach/audit';
+import { notifyMember } from '@/lib/notifications/triggers';
+import { after } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +40,20 @@ async function POST_h(req: Request, { params }: { params: Promise<{ id: string }
     action: 'assign',
     newState: { profile_id: parsed.data.profile_id },
   });
+  // Tell the member their coach sent them a form. Links to the form itself (works for any form type,
+  // including custom forms that don't surface on /checkin). after() survives the lambda.
+  const companyId = ctx.companyId;
+  const memberId = parsed.data.profile_id;
+  after(() =>
+    notifyMember({
+      companyId,
+      profileId: memberId,
+      type: 'form_assigned',
+      titleKey: 'formAssignedTitle',
+      bodyKey: 'formAssignedBody',
+      link: `/forms/${id}`,
+    }),
+  );
   return apiSuccess(result);
 }
 

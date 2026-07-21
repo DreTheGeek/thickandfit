@@ -14,7 +14,11 @@ export type NotificationType =
   | 'reminder'
   | 'challenge_won'
   | 'challenge_ended'
-  | 'challenge_started';
+  | 'challenge_started'
+  | 'program_assigned'
+  | 'habit_assigned'
+  | 'meal_plan_assigned'
+  | 'form_assigned';
 
 export type AppNotification = {
   id: string;

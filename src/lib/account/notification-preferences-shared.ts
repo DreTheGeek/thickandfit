@@ -40,6 +40,10 @@ export function categoryForNotificationType(type: string): NotificationCategory 
     case 'comp_expiring':
       return 'billing';
     case 'coach_message':
+    case 'program_assigned':
+    case 'habit_assigned':
+    case 'meal_plan_assigned':
+    case 'form_assigned':
     case 'system':
     default:
       return 'coach';

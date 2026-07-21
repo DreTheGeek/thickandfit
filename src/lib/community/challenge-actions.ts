@@ -39,6 +39,10 @@ export async function createChallengeAction(input: unknown): Promise<ChallengeRe
   const ctx = await requireCoach();
   if (!ctx.companyId) return { ok: false, error: 'no_company' };
   const sb = await createClient();
+  // "Live today" uses the SAME UTC date the leaderboard visibility uses (feed.ts getActiveChallenge),
+  // so a challenge is notified exactly when it becomes visible to members - never before.
+  const today = new Date().toISOString().slice(0, 10);
+  const startsToday = parsed.data.startsOn <= today;
   const { error } = await sb.from('challenges').insert({
     company_id: ctx.companyId,
     created_by: ctx.userId,
@@ -47,22 +51,25 @@ export async function createChallengeAction(input: unknown): Promise<ChallengeRe
     goal: parsed.data.goal ?? null,
     starts_on: parsed.data.startsOn,
     ends_on: parsed.data.endsOn,
+    // Stamp now if we notify now; else leave null so the daily job notifies on the real start day.
+    start_notified_at: startsToday ? new Date().toISOString() : null,
   });
   if (error) {
     console.error('createChallengeAction:', error.message);
     return { ok: false, error: 'failed' };
   }
-  // Make it "pop up" in the client portal: fan a notification out to every member (in-app bell +
-  // best-effort push). after() so the frozen lambda cannot drop the fan-out. Only notify if the
-  // challenge is live now or starts today - a future-dated challenge notifies when it opens is out
-  // of scope; coaches create challenges to start, and the leaderboard shows it from starts_on.
-  const companyId = ctx.companyId;
-  const userId = ctx.userId;
-  const title = parsed.data.title;
-  try {
-    after(() => notifyNewChallenge({ companyId, createdByProfileId: userId, challengeTitle: title }));
-  } catch {
-    void notifyNewChallenge({ companyId, createdByProfileId: userId, challengeTitle: title });
+  // Make it "pop up" in the client portal ONLY when it is actually live (starts today). A future-
+  // dated challenge is not on the leaderboard yet, so notifying "it started" would dead-end members
+  // at /community; those notify on their start day via generateChallengeOpenNotices (daily cron).
+  if (startsToday) {
+    const companyId = ctx.companyId;
+    const userId = ctx.userId;
+    const title = parsed.data.title;
+    try {
+      after(() => notifyNewChallenge({ companyId, createdByProfileId: userId, challengeTitle: title }));
+    } catch {
+      void notifyNewChallenge({ companyId, createdByProfileId: userId, challengeTitle: title });
+    }
   }
   revalidatePath('/coach/challenges');
   revalidatePath('/community');

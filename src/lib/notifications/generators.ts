@@ -11,6 +11,7 @@ import { createNotificationsBulk } from '@/lib/notifications/create';
 import { asNotifLocale, notifText, type NotifLocale } from '@/lib/notifications/i18n';
 import { localHour } from '@/lib/datetime/local-day';
 import { recomputeChallengeBoard } from '@/lib/community/challenge-progress';
+import { notifyNewChallenge } from '@/lib/notifications/triggers';
 import type { NotificationPayload } from '@/lib/notifications/types';
 
 export type GeneratorResult = {
@@ -284,6 +285,46 @@ type ChallengeParticipant = {
   progress: number | string;
   profiles: { ui_locale: string | null; full_name: string | null } | null;
 };
+
+// Notify members when a challenge OPENS. Covers future-dated challenges (created to start later):
+// on their real start day the leaderboard makes them visible, and this stamps start_notified_at so
+// the "New challenge!" bell fires exactly then, once. Challenges created to start today are already
+// notified + stamped at creation, so they are skipped here.
+export async function generateChallengeOpenNotices(): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await svc
+    .from('challenges')
+    .select('id, company_id, title, created_by')
+    .lte('starts_on', today)
+    .gte('ends_on', today)
+    .is('start_notified_at', null);
+  if (error) {
+    return { ok: false, job: 'challenge-open', selected: 0, notified: 0, error: error.message };
+  }
+  const challenges = (data ?? []) as {
+    id: string;
+    company_id: string;
+    title: string;
+    created_by: string | null;
+  }[];
+  if (challenges.length === 0) return { ok: true, job: 'challenge-open', selected: 0, notified: 0 };
+
+  let notified = 0;
+  for (const ch of challenges) {
+    await notifyNewChallenge({
+      companyId: ch.company_id,
+      createdByProfileId: ch.created_by ?? '',
+      challengeTitle: ch.title,
+    });
+    await svc
+      .from('challenges')
+      .update({ start_notified_at: new Date().toISOString() })
+      .eq('id', ch.id);
+    notified += 1;
+  }
+  return { ok: true, job: 'challenge-open', selected: challenges.length, notified };
+}
 
 export async function finalizeEndedChallenges(): Promise<GeneratorResult> {
   const svc = createServiceClient();

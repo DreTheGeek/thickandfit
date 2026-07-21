@@ -6,9 +6,37 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { createNotification, createNotificationsBulk } from '@/lib/notifications/create';
 import { asNotifLocale, notifText } from '@/lib/notifications/i18n';
 import { COACH_ROLES } from '@/lib/auth/session';
-import type { NotificationPayload } from '@/lib/notifications/types';
+import type { NotificationPayload, NotificationType } from '@/lib/notifications/types';
 
 type MemberRow = { id: string; ui_locale: string | null };
+
+/**
+ * Notify ONE member, rendered in their ui_locale. The generic building block behind the coach->member
+ * "your coach assigned you X" nudges (program / habit / meal plan / form). Best-effort: logged, not thrown.
+ */
+export async function notifyMember(params: {
+  companyId: string;
+  profileId: string;
+  type: NotificationType;
+  titleKey: string;
+  bodyKey: string;
+  bodyVars?: Record<string, string>;
+  link: string;
+}): Promise<void> {
+  const svc = createServiceClient();
+  const { data } = await svc
+    .from('profiles')
+    .select('ui_locale')
+    .eq('id', params.profileId)
+    .maybeSingle();
+  const locale = asNotifLocale((data as { ui_locale?: string | null } | null)?.ui_locale);
+  await createNotification(params.companyId, params.profileId, {
+    type: params.type,
+    title: notifText(locale, params.titleKey),
+    body: notifText(locale, params.bodyKey, params.bodyVars ?? {}),
+    link: params.link,
+  });
+}
 
 /**
  * Notify every member of a company (except the author) that a coach posted a broadcast.

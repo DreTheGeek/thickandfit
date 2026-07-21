@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { safeEqual } from '@/lib/api/auth';
 import { logCronRun } from '@/lib/monitoring/cron-log';
-import { finalizeEndedChallenges } from '@/lib/notifications/generators';
+import { finalizeEndedChallenges, generateChallengeOpenNotices } from '@/lib/notifications/generators';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -19,11 +19,15 @@ async function run(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  // Two daily challenge-lifecycle jobs: notify members when a challenge OPENS (future-dated ones on
+  // their start day) and finalize/award those that ENDED.
+  const opened = await generateChallengeOpenNotices();
   const result = await finalizeEndedChallenges();
+  const combined = { ...result, opened };
 
-  after(() => logCronRun('close-challenges-cron', result.ok ? 'success' : 'error', result)); // survives the frozen lambda; insert failures now hit the function logs
+  after(() => logCronRun('close-challenges-cron', result.ok && opened.ok ? 'success' : 'error', combined)); // survives the frozen lambda; insert failures now hit the function logs
 
-  return NextResponse.json(result, { status: result.ok ? 200 : 500 });
+  return NextResponse.json(combined, { status: result.ok && opened.ok ? 200 : 500 });
 }
 
 async function GET_h(req: NextRequest): Promise<NextResponse> {

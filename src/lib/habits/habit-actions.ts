@@ -1,9 +1,11 @@
 'use server';
 
 import { z } from 'zod';
+import { after } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAuth, requireApprover } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
+import { notifyMember } from '@/lib/notifications/triggers';
 import { localToday } from '@/lib/habits/habits';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 
@@ -70,6 +72,30 @@ export async function assignHabitAction(input: unknown): Promise<HabitResult> {
   if (error) {
     console.error('assignHabitAction:', error.message);
     return { ok: false, error: 'failed' };
+  }
+  // Tell the member their coach added a habit for them (bell + push). after() survives the lambda.
+  const companyId = ctx.companyId;
+  const memberId = parsed.data.profileId;
+  try {
+    after(() =>
+      notifyMember({
+        companyId,
+        profileId: memberId,
+        type: 'habit_assigned',
+        titleKey: 'habitAssignedTitle',
+        bodyKey: 'habitAssignedBody',
+        link: '/dashboard',
+      }),
+    );
+  } catch {
+    void notifyMember({
+      companyId,
+      profileId: memberId,
+      type: 'habit_assigned',
+      titleKey: 'habitAssignedTitle',
+      bodyKey: 'habitAssignedBody',
+      link: '/dashboard',
+    });
   }
   revalidatePath('/coach');
   return { ok: true };
