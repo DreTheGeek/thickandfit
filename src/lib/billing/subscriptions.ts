@@ -3,6 +3,27 @@
 // here so the route handler stays thin.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createNotification } from '@/lib/notifications/create';
+
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+// Minimal currency formatter (no shared util exists). Cents -> localized money string.
+function formatCents(cents: number | null | undefined, currency = 'usd'): string {
+  const v = (cents ?? 0) / 100;
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: (currency || 'usd').toUpperCase(),
+    }).format(v);
+  } catch {
+    return `$${v.toFixed(2)}`;
+  }
+}
+
+async function memberLocale(svc: ServiceClient, profileId: string): Promise<'en' | 'es'> {
+  const { data } = await svc.from('profiles').select('ui_locale').eq('id', profileId).maybeSingle();
+  return (data as { ui_locale?: string | null } | null)?.ui_locale === 'es' ? 'es' : 'en';
+}
 
 export type SubscriptionRow = {
   id: string;
@@ -209,6 +230,127 @@ export async function recordInvoicePayment(
     },
     { onConflict: 'stripe_invoice_id' },
   );
+
+  // Dunning: a failed charge means the member's card was declined. `past_due` still grants access
+  // during Stripe's retry window, so without this notice the member churns silently. Billing-category
+  // notices always deliver (cannot be muted). Best-effort: a notify failure never fails the webhook.
+  if (outcome === 'failed' && profileId) {
+    try {
+      const locale = await memberLocale(svc, profileId);
+      const amount = formatCents(invoice.amount_due, invoice.currency);
+      const copy =
+        locale === 'es'
+          ? {
+              title: 'Pago rechazado',
+              body: `No pudimos procesar tu pago de ${amount}. Actualiza tu tarjeta para mantener tu acceso.`,
+            }
+          : {
+              title: 'Payment failed',
+              body: `We couldn't process your ${amount} payment. Update your card to keep your access.`,
+            };
+      await createNotification(companyId, profileId, {
+        type: 'renewal',
+        title: copy.title,
+        body: copy.body,
+        link: '/account/billing',
+      });
+    } catch (e) {
+      console.error('recordInvoicePayment dunning notice:', e instanceof Error ? e.message : e);
+    }
+  }
+}
+
+/** A trial is about to end and the card will be charged. Sends the pre-renewal notice the /about page
+ *  promises. For a trial shorter than 3 days Stripe fires this at trial creation, which still gives the
+ *  member advance notice. Best-effort; a notify failure never fails the webhook. */
+export async function notifyTrialWillEnd(sub: StripeSubscriptionObject): Promise<void> {
+  const svc = createServiceClient();
+  let profileId = sub.metadata?.profile_id ?? null;
+  let companyId = sub.metadata?.company_id ?? null;
+  if (!profileId || !companyId) {
+    const { data: existing } = await svc
+      .from('subscriptions')
+      .select('profile_id, company_id')
+      .eq('stripe_subscription_id', sub.id)
+      .maybeSingle();
+    profileId = profileId ?? existing?.profile_id ?? null;
+    companyId = companyId ?? existing?.company_id ?? null;
+  }
+  if (!profileId || !companyId) {
+    console.error(`notifyTrialWillEnd: unresolved tenant for subscription ${sub.id}`);
+    return;
+  }
+  const price = sub.items?.data?.[0]?.price;
+  const amount = formatCents(price?.unit_amount, price?.currency);
+  const locale = await memberLocale(svc, profileId);
+  const copy =
+    locale === 'es'
+      ? {
+          title: 'Tu prueba gratis termina pronto',
+          body: `Cuando termine tu prueba, tu tarjeta se cobrará ${amount}. Puedes cancelar en cualquier momento antes de esa fecha.`,
+        }
+      : {
+          title: 'Your free trial ends soon',
+          body: `When your trial ends, your card will be charged ${amount}. You can cancel anytime before then.`,
+        };
+  await createNotification(companyId, profileId, {
+    type: 'renewal',
+    title: copy.title,
+    body: copy.body,
+    link: '/account/billing',
+  });
+}
+
+type StripeDisputeObject = {
+  id: string;
+  charge?: string | null;
+  amount?: number | null;
+  currency?: string;
+  reason?: string | null;
+  status?: string | null;
+};
+
+/** A chargeback was opened. Flag the payment row and alert every operator so they can submit evidence
+ *  before Stripe's response deadline (anti-chargeback pillar). Full evidence-packet assembly is a
+ *  separate follow-up; this closes the silent-auto-loss gap by making a dispute visible immediately. */
+export async function recordDispute(dispute: StripeDisputeObject): Promise<void> {
+  const svc = createServiceClient();
+
+  let companyId: string | null = null;
+  if (dispute.charge) {
+    const { data: payment } = await svc
+      .from('payments')
+      .select('id, company_id')
+      .eq('stripe_charge_id', dispute.charge)
+      .maybeSingle();
+    const row = payment as { id: string; company_id: string } | null;
+    if (row) {
+      companyId = row.company_id;
+      await svc
+        .from('payments')
+        .update({ status: 'disputed', failure_reason: dispute.reason ?? 'dispute' })
+        .eq('id', row.id);
+    }
+  }
+  if (!companyId) {
+    console.error(`recordDispute: no matching payment for charge ${dispute.charge ?? 'none'}`);
+    return;
+  }
+
+  const { data: operators } = await svc
+    .from('profiles')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('role', 'operator');
+  const amount = formatCents(dispute.amount, dispute.currency);
+  for (const op of (operators ?? []) as Array<{ id: string }>) {
+    await createNotification(companyId, op.id, {
+      type: 'system',
+      title: 'Chargeback opened',
+      body: `A ${amount} payment was disputed (reason: ${dispute.reason ?? 'unknown'}). Respond in Stripe before the evidence deadline.`,
+      link: '/coach/billing',
+    });
+  }
 }
 
 type StripeChargeObject = {

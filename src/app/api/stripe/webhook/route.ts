@@ -1,6 +1,7 @@
 // POST /api/stripe/webhook: Stripe event sink.
 // Signature-verified (HMAC over the raw body), idempotent (UNIQUE event ledger), Zod-shaped.
-// Handles: customer.subscription.updated/deleted, invoice.payment_succeeded/failed, charge.refunded.
+// Handles: customer.subscription.created/updated/deleted/trial_will_end,
+// invoice.payment_succeeded/failed, charge.refunded, charge.dispute.created.
 // Without STRIPE_WEBHOOK_SECRET it returns 503 (never crashes the build, never processes unsigned).
 import { z } from 'zod';
 import { verifyWebhookSignature, stripeWebhookSecret } from '@/lib/billing/stripe';
@@ -9,6 +10,8 @@ import {
   upsertSubscriptionFromStripe,
   recordInvoicePayment,
   recordRefund,
+  recordDispute,
+  notifyTrialWillEnd,
 } from '@/lib/billing/subscriptions';
 
 export const runtime = 'nodejs';
@@ -67,6 +70,15 @@ const ChargeObject = z.object({
   invoice: z.string().nullable().optional(),
 });
 
+const DisputeObject = z.object({
+  id: z.string(),
+  charge: z.string().nullable().optional(),
+  amount: z.number().nullable().optional(),
+  currency: z.string().optional(),
+  reason: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+});
+
 export async function POST(req: Request): Promise<Response> {
   const secret = stripeWebhookSecret();
   if (!secret) {
@@ -122,9 +134,23 @@ export async function POST(req: Request): Promise<Response> {
         await recordInvoicePayment(invoice, 'failed');
         break;
       }
+      // Pre-renewal notice the /about page promises. For the 3-day trial Stripe fires this at trial
+      // creation (trials < 3 days), which still gives the member advance warning before any charge.
+      case 'customer.subscription.trial_will_end': {
+        const sub = SubscriptionObject.parse(data.object);
+        await notifyTrialWillEnd(sub);
+        break;
+      }
       case 'charge.refunded': {
         const charge = ChargeObject.parse(data.object);
         await recordRefund(charge);
+        break;
+      }
+      // Chargeback opened: flag the payment and alert operators so evidence can be submitted before
+      // Stripe's deadline. Previously unhandled -> disputes were silently auto-lost.
+      case 'charge.dispute.created': {
+        const dispute = DisputeObject.parse(data.object);
+        await recordDispute(dispute);
         break;
       }
       default:
