@@ -41,7 +41,7 @@ async function POST_h(req: Request) {
 
   const plan = computePlan(parsed.data);
   const supabase = createServiceClient();
-  await supabase.from('onboarding_responses').upsert(
+  const { error: onbErr } = await supabase.from('onboarding_responses').upsert(
     {
       company_id: ctx.companyId,
       profile_id: ctx.userId,
@@ -52,6 +52,12 @@ async function POST_h(req: Request) {
     },
     { onConflict: 'profile_id' },
   );
+  // A silent failure here returned success while homePathForUser kept bouncing the member back to
+  // /onboarding forever (the row it checks for never existed). Fail loudly instead.
+  if (onbErr) {
+    console.error('onboarding submit upsert:', onbErr.message);
+    return apiError('Could not save your plan. Please try again.', 500);
+  }
 
   // Persist the captured full name (first + last) + preferred language to the profile.
   const profileUpdate: Record<string, string> = {
