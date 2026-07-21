@@ -110,6 +110,21 @@ cuando puedas, aquí estamos. Un día a la vez."
 
 ---
 
+## Brand look (on brand = this palette)
+
+**The product is monochrome. It is NOT green.** Green is a functional signal only (success, focus),
+never a decorative brand accent. Anything built for Thick & Fit, in-app or an artifact, uses:
+
+- **Ground:** warm cream `#e7e5df` (light) / near-black `#0c0c0e` (dark)
+- **Ink (text):** `#0f0f0f` (light) / `#f4f4f5` (dark)
+- **Surface (cards):** `#ffffff` (light) / `#18181b` (dark)
+- **Warm inset / lines:** `#dddbd3` / `#ddd9d0`
+- **Emphasis + buttons:** ink on cream, or cream on ink. Black is the "accent," not green.
+- **Green `#5ebe62`:** functional ONLY (a success check, a focus ring). Never a header, chip, or CTA fill.
+- **Macros keep their functional hues** (protein teal, carbs amber, fat) on charts only.
+
+Fonts: Anton / Bebas Neue / Oswald for display, Inter for body. Zero-border cards, warm and clean.
+
 ## Where this voice lives in the app
 
 - The coach (`src/lib/coach-ai/chat.ts` PERSONA_EN / PERSONA_ES), the primary voice surface.
