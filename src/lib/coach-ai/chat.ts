@@ -336,8 +336,13 @@ export async function streamChat(
               };
               const delta = json.choices?.[0]?.delta?.content;
               if (delta) {
-                assistantText += delta;
-                controller.enqueue(encoder.encode(delta));
+                // Brand rule: no em dashes in member-facing copy. The model occasionally emits one
+                // despite the persona instruction, so strip it at the stream (em dash -> comma, en
+                // dash -> hyphen) before it reaches the member or the persisted message. The dash char
+                // is a single codepoint, so this is safe across chunk boundaries.
+                const clean = delta.replace(/—/g, ', ').replace(/–/g, '-');
+                assistantText += clean;
+                controller.enqueue(encoder.encode(clean));
                 enqueued = true;
               }
             } catch {
