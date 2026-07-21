@@ -196,8 +196,10 @@ end $$;
 
 -- ------------------------------------------------------------------------------------
 -- tf-ghl-sync (GoHighLevel -> Supabase opportunity/pipeline sync). The route is GET-only, so this
--- uses net.http_get (not http_post like the others). Every 6h keeps the leads pipeline fresh without
--- hammering the GHL API; adjust the cadence freely. Without this block the sync route never fires.
+-- uses net.http_get (not http_post like the others). NOTE: vercel.json also schedules this route
+-- daily at 06:00 UTC (the single Vercel Hobby cron slot). When applying this block, REMOVE the
+-- crons entry from vercel.json in the same deploy: one scheduler per job, and moving it here frees
+-- the constrained Vercel slot. The sync is idempotent, so an overlap is harmless but wasteful.
 -- ------------------------------------------------------------------------------------
 do $$
 declare v_job_id bigint;
