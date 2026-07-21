@@ -322,6 +322,18 @@ export function OnboardingFlow({
             <PlanRow label={t('planMacros')} value={`${plan.calories} kcal · P${plan.macros.protein_g}`} />
             <PlanRow label={t('planCheck')} value={t('planCheckV')} />
           </div>
+          {/* Hand-off into the health profile: the highest-intent moment to capture foods/injuries/
+              conditions that light up the coach. Skippable (footer still goes straight to dashboard). */}
+          <div className="mt-6 rounded-[16px] border border-line p-[18px]">
+            <div className="flex items-center gap-2">
+              <span className="text-accent"><Icon name="heart" size={16} strokeWidth={2.2} /></span>
+              <h3 className="text-[15px] font-semibold">{t('healthCtaTitle')}</h3>
+            </div>
+            <p className="mb-4 mt-1.5 text-[13px] leading-[1.5] text-soft">{t('healthCtaBody')}</p>
+            <ButtonLink href="/you/health" size="block">
+              {t('healthCtaBtn')}
+            </ButtonLink>
+          </div>
         </>
       )}
 

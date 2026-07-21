@@ -68,6 +68,134 @@
     "installApp": "Instalar app"
   },
   "app": {
+    "health": {
+      "title": "Tu perfil de salud",
+      "intro": "Unas preguntas para que tu entrenadora adapte todo a ti: tu comida, tu entrenamiento, tu cuerpo. Entre más sepa, más personal se vuelve.",
+      "privacy": "Privado. Solo tu entrenadora lo ve, y puedes actualizarlo cuando quieras.",
+      "save": "Guardar",
+      "saved": "Guardado",
+      "error": "No se pudo guardar. Intenta de nuevo.",
+      "none": "Ninguno",
+      "safetyNone": "Ninguno de estos",
+      "sec": {
+        "foods": {
+          "q": "¿Hay alimentos que no comes?"
+        },
+        "allergies": {
+          "q": "Alergias (opcional)",
+          "ph": "ej. cacahuates, mariscos"
+        },
+        "injuries": {
+          "q": "¿Alguna lesión o zona que debamos cuidar?"
+        },
+        "injuriesMore": {
+          "q": "Cuéntale más a tu entrenadora (opcional)",
+          "ph": "ej. rodilla izquierda, sin sentadillas profundas"
+        },
+        "conditions": {
+          "q": "¿Aplica alguno de estos?",
+          "why": "Cosas como el SOP (PCOS), la resistencia a la insulina y la tiroides cambian cómo tu cuerpo maneja la comida y el entrenamiento. Tu entrenadora se adapta a ellas."
+        },
+        "pregnancy": {
+          "q": "¿Hay algo que debamos saber ahora mismo?"
+        },
+        "safety": {
+          "q": "Antes de empezar a moverte, ¿aplica alguno de estos?",
+          "why": "La verificación de seguridad estándar antes de entrenar.",
+          "note": "Gracias por contarnos. Consulta con tu médico antes de empezar ejercicio intenso, y tu entrenadora irá con calma."
+        },
+        "meds": {
+          "q": "¿Algo que afecte tu apetito, peso o energía? (opcional)"
+        },
+        "experience": {
+          "q": "¿Cómo describes tu experiencia entrenando?"
+        },
+        "sleep": {
+          "q": "¿Cómo está tu sueño últimamente?"
+        },
+        "stress": {
+          "q": "¿Y tu estrés?"
+        },
+        "food": {
+          "q": "Para apoyarte de la mejor forma, ¿hay algo que debamos tener presente?",
+          "why": "Esto define cómo tu entrenadora habla de la comida contigo. No hay respuesta incorrecta."
+        }
+      },
+      "opt": {
+        "dietary": {
+          "dairy": "Lácteos",
+          "gluten": "Gluten",
+          "eggs": "Huevos",
+          "nuts": "Nueces",
+          "shellfish": "Mariscos",
+          "soy": "Soya",
+          "pork": "Cerdo",
+          "vegetarian": "Vegetariana",
+          "vegan": "Vegana"
+        },
+        "injuries": {
+          "knees": "Rodillas",
+          "lower_back": "Espalda baja",
+          "shoulders": "Hombros",
+          "wrists": "Muñecas",
+          "hips": "Caderas",
+          "neck": "Cuello"
+        },
+        "conditions": {
+          "pcos": "SOP (PCOS)",
+          "insulin_resistance": "Resistencia a la insulina / prediabetes",
+          "type2_diabetes": "Diabetes tipo 2",
+          "hypothyroid": "Hipotiroidismo / Hashimoto",
+          "menopause": "Perimenopausia / menopausia",
+          "endometriosis": "Endometriosis",
+          "high_bp": "Presión alta",
+          "ibs": "Colon irritable / problemas digestivos"
+        },
+        "pregnancy": {
+          "none": "No",
+          "pregnant": "Embarazada",
+          "postpartum": "Postparto (0-12 meses)",
+          "ttc": "Buscando embarazo",
+          "prefer_not": "Prefiero no decir"
+        },
+        "safety": {
+          "heart_condition": "Problema del corazón",
+          "chest_pain": "Dolor en el pecho al hacer actividad",
+          "dizziness": "Mareos o desmayos",
+          "joint_problem": "Problema de huesos o articulaciones",
+          "bp_meds": "Tomo medicamento del corazón / presión"
+        },
+        "meds": {
+          "glp1": "GLP-1 (Ozempic / Wegovy)",
+          "thyroid": "Medicamento de tiroides",
+          "birth_control": "Anticonceptivos / hormonas",
+          "antidepressant": "Antidepresivo / ansiedad",
+          "steroids": "Esteroides"
+        },
+        "experience": {
+          "new": "Nueva en esto",
+          "some": "Algo de experiencia",
+          "experienced": "Muy experimentada"
+        },
+        "sleep": {
+          "lt5": "Menos de 5h",
+          "5to6": "5-6h",
+          "7to8": "7-8h",
+          "gt8": "8h+"
+        },
+        "stress": {
+          "low": "Estrés bajo",
+          "moderate": "Moderado",
+          "high": "Alto"
+        },
+        "food": {
+          "ok": "Estoy bien con el registro",
+          "struggled": "He tenido problemas con la alimentación",
+          "light_tracking": "Prefiero no contar calorías de cerca",
+          "prefer_not": "Prefiero no decir"
+        }
+      }
+    },
     "nav": {
       "today": "Hoy",
       "community": "Comunidad",
@@ -277,10 +405,13 @@
       "saveError": "No pudimos guardar tu plan. Revisa tu conexión e inténtalo de nuevo.",
       "toCheckout": "Ir al pago",
       "toDashboard": "Ir a mi panel",
-      "projected": "Proyección {from} → {to} lb en 12 semanas"
+      "projected": "Proyección {from} → {to} lb en 12 semanas",
+      "healthCtaTitle": "Hazlo tuyo",
+      "healthCtaBody": "Tómate dos minutos en tu perfil de salud, alimentos, lesiones, SOP y más, para que tu entrenadora adapte todo a ti.",
+      "healthCtaBtn": "Configurar mi perfil"
     },
     "exercise": {
-      "back": "Atrás",
+      "back": "Espalda",
       "decrease": "Disminuir",
       "increase": "Aumentar",
       "instructions": "Instrucciones",
@@ -328,7 +459,6 @@
       "lastTime": "La última vez",
       "target": "Objetivo",
       "front": "Frente",
-      "back": "Espalda",
       "firstSet": "Primera vez: marca tu base",
       "plusReps": "+{n, plural, one {# rep} other {# reps}}",
       "enjoymentLabel": "¿Cómo te sentiste?",
@@ -559,7 +689,7 @@
       "progressStartWeight": "Peso inicial",
       "progressLatestWeight": "Último peso",
       "progressChange": "Cambio neto",
-      "progressMeasurements": "Registros de medidas",
+      "progressMeasurements": "Medidas",
       "progressFoodLogs": "Entradas del diario de comidas",
       "progressPhotos": "Fotos de progreso",
       "progressTraining": "Historial de entrenamiento",
@@ -571,7 +701,6 @@
       "tabWorkouts": "Entrenos",
       "tabCommunity": "Comunidad",
       "tabProgress": "Progreso",
-      "tabMessages": "Mensajes",
       "tabBilling": "Facturación",
       "tabNotes": "Notas",
       "program": "Programa",
@@ -885,8 +1014,6 @@
       "workoutPlanSent": "Plan de entrenamiento enviado",
       "membership": "Membresía",
       "tabFiles": "Archivos",
-      "progressPhotos": "Fotos de progreso",
-      "progressTraining": "Historial de entrenamiento",
       "documents": "Documentos",
       "noFiles": "Aún no hay archivos.",
       "exercisesSubtitle": "Explora la biblioteca de ejercicios y crea cadenas de sustitución por equipo que tus clientas pueden usar en cualquier lugar.",
@@ -1024,7 +1151,6 @@
       "progressGoal": "Meta",
       "sinceStart": "desde el inicio",
       "progressNoWeight": "Aun no hay peso registrado.",
-      "progressMeasurements": "Medidas",
       "progressTotalCirc": "Cambio total:",
       "progressNoMeasures": "Aun no hay medidas registradas.",
       "mWaist": "Cintura",
@@ -1166,7 +1292,8 @@
       "weightSaved": "Peso registrado, sigue así",
       "weightError": "No se pudo guardar. Intenta de nuevo.",
       "aiCoach": "Chat con tu coach",
-      "progressLbs": "lbs Progreso"
+      "progressLbs": "lbs Progreso",
+      "healthProfile": "Perfil de salud"
     },
     "gamification": {
       "dayStreak": "días seguidos",

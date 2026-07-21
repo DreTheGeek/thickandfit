@@ -6,6 +6,16 @@
 // Pure data assembly: no AI key required, never throws (each source degrades to a neutral default).
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import {
+  CONDITION_LABEL_EN,
+  MEDICATION_LABEL_EN,
+  SAFETY_LABEL_EN,
+  PREGNANCY_LABEL_EN,
+  type ConditionSlug,
+  type MedicationSlug,
+  type SafetySlug,
+  type PregnancySlug,
+} from '@/lib/health-profile/labels';
 
 const KG_TO_LB = 2.20462;
 
@@ -51,10 +61,17 @@ export type CoachContext = {
     allergies: string | null;
     trainingExperience: string | null;
     // Derived from the SCOFF-style eating_disorder_screening jsonb: positive when >=2 flags are
-    // true (the clinical SCOFF cutoff). Drives a gentler, behavior-first coaching posture.
+    // true (the clinical SCOFF cutoff) or the in-app self-report signals it. Drives a gentler,
+    // behavior-first coaching posture.
     edScreenPositive: boolean;
     // Human-readable summary of a populated sleep_assessment jsonb, or null when unassessed.
     sleep: string | null;
+    // In-app health-profile answers (custom_fields.healthProfile): hormonal/medical conditions, meds,
+    // pre-exercise safety flags, and pregnancy status. Slugs; rendered to English labels for the prompt.
+    conditions: string[] | null;
+    medications: string[] | null;
+    safetyFlags: string[] | null;
+    pregnancy: string | null;
   } | null;
   // Knowledge-graph neighborhood (kg_client_facts): the relational facts the flat intake misses -
   // the foods this client actually eats most and the plan they're on. Grounds the coach in what
@@ -84,22 +101,43 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-// SCOFF-style eating-disorder screen: the jsonb holds up to five boolean flags. The clinical SCOFF
-// cutoff is >=2 positives, at which point the coach adopts a gentler, behavior-first posture. Read
-// defensively: only strictly-true booleans count, and a missing/empty payload is a negative screen.
+// Eating-disorder screen. Migrated Lenus rows hold up to five SCOFF booleans (clinical cutoff: >=2
+// positives). The in-app intake instead stores an explicit self-report, so one strong signal
+// (disorderedEatingHistory, or a stated preference for light tracking) also flips the coach into a
+// gentler, behavior-first posture. Read defensively; a missing/empty payload is a negative screen.
+const SCOFF_KEYS = [
+  'foodDomination',
+  'recentWeightLost',
+  'feelSickWhenNotFull',
+  'selfDoubtOverWeight',
+  'worryLostEatingControl',
+] as const;
 function scoffPositive(payload: Record<string, unknown> | null | undefined): boolean {
   if (!payload || typeof payload !== 'object') return false;
+  if (payload.disorderedEatingHistory === true || payload.prefersLightTracking === true) return true;
   let flags = 0;
-  for (const v of Object.values(payload)) if (v === true) flags += 1;
+  for (const k of SCOFF_KEYS) if (payload[k] === true) flags += 1;
   return flags >= 2;
 }
 
 // Turn a populated sleep_assessment jsonb into one short human line, or null when unassessed ({} or
-// missing). Kept generic so it survives whatever key shape the in-app intake ends up writing.
+// missing). The in-app intake writes { sleep, stress } slugs, mapped to readable text here; any other
+// key shape degrades to a generic label so the summary survives future changes.
+const SLEEP_HOURS_LABEL: Record<string, string> = {
+  lt5: 'under 5h/night',
+  '5to6': '5-6h/night',
+  '7to8': '7-8h/night',
+  gt8: '8h+/night',
+};
 function summarizeSleep(payload: Record<string, unknown> | null | undefined): string | null {
   if (!payload || typeof payload !== 'object') return null;
   const parts: string[] = [];
+  const sleep = payload.sleep;
+  const stress = payload.stress;
+  if (typeof sleep === 'string' && sleep) parts.push(`sleep ${SLEEP_HOURS_LABEL[sleep] ?? sleep}`);
+  if (typeof stress === 'string' && stress) parts.push(`${stress} stress`);
   for (const [k, v] of Object.entries(payload)) {
+    if (k === 'sleep' || k === 'stress') continue;
     if (v === null || v === undefined || v === '' || (typeof v === 'object' && !Array.isArray(v))) continue;
     const label = k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase();
     parts.push(`${label}: ${Array.isArray(v) ? v.join('/') : String(v)}`);
@@ -263,7 +301,7 @@ export async function buildCoachContext(
   // claimed link (contacts.profile_id) or a Lenus-email match - so grounding fires the moment a
   // migrated client signs in, not only after the claim action. Best-effort; null when truly absent.
   const intakeCols =
-    'contact_id, goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions, allergies, training_experience, eating_disorder_screening, sleep_assessment';
+    'contact_id, goal_type, target_weight_kg, injuries, dietary_exclusions, medical_conditions, allergies, training_experience, eating_disorder_screening, sleep_assessment, custom_fields';
   let { data: intakeRow } = await sb
     .from('client_intake')
     .select(intakeCols)
@@ -291,7 +329,13 @@ export async function buildCoachContext(
     allergies: string | null; training_experience: string | null;
     eating_disorder_screening: Record<string, unknown> | null;
     sleep_assessment: Record<string, unknown> | null;
+    custom_fields: Record<string, unknown> | null;
   } | null;
+  const hp = (ik?.custom_fields?.healthProfile ?? null) as {
+    conditions?: unknown; medications?: unknown; safety?: unknown; pregnancy?: unknown;
+  } | null;
+  const asStrings = (v: unknown): string[] | null =>
+    Array.isArray(v) && v.length ? v.filter((x): x is string => typeof x === 'string') : null;
   const health = ik
     ? {
         goalType: ik.goal_type,
@@ -303,6 +347,12 @@ export async function buildCoachContext(
         trainingExperience: ik.training_experience,
         edScreenPositive: scoffPositive(ik.eating_disorder_screening),
         sleep: summarizeSleep(ik.sleep_assessment),
+        conditions: asStrings(hp?.conditions),
+        medications: asStrings(hp?.medications),
+        safetyFlags: asStrings(hp?.safety),
+        pregnancy: typeof hp?.pregnancy === 'string' && hp.pregnancy !== 'none' && hp.pregnancy !== 'prefer_not'
+          ? (hp.pregnancy as string)
+          : null,
       }
     : null;
 
@@ -381,6 +431,37 @@ export function renderContextBlock(ctx: CoachContext): string {
       lines.push((es ? 'NO RECOMENDAR estos alimentos (restriccion): ' : 'NEVER recommend these foods (restriction): ') + h.dietaryExclusions.join(', '));
     }
     if (h.medicalConditions) lines.push((es ? 'Condiciones medicas: ' : 'Medical conditions: ') + h.medicalConditions);
+    // In-app health profile: hormonal/metabolic conditions the coach must build nutrition + training
+    // around (PCOS, insulin resistance, thyroid, etc.). English labels; the model still replies in ES.
+    if (h.conditions && h.conditions.length) {
+      const labels = h.conditions.map((c) => CONDITION_LABEL_EN[c as ConditionSlug] ?? c);
+      lines.push(
+        (es
+          ? 'Condiciones de salud/hormonales (adapta nutricion y entreno a esto): '
+          : 'Health/hormonal conditions (adapt nutrition and training to these): ') + labels.join(', '),
+      );
+    }
+    if (h.medications && h.medications.length) {
+      const labels = h.medications.map((m) => MEDICATION_LABEL_EN[m as MedicationSlug] ?? m);
+      lines.push((es ? 'Medicamentos relevantes: ' : 'Relevant medications: ') + labels.join(', '));
+    }
+    // Pregnancy/postpartum + PAR-Q safety flags: hard safety. Steer to a professional, keep it gentle.
+    if (h.pregnancy) {
+      const label = PREGNANCY_LABEL_EN[h.pregnancy as PregnancySlug] || h.pregnancy;
+      lines.push(
+        (es
+          ? `EMBARAZO/POSTPARTO (${label}): prioriza la seguridad, evita consejos medicos y anima a consultar a su profesional de salud.`
+          : `PREGNANCY/POSTPARTUM (${label}): prioritize safety, avoid medical advice, and encourage her to check with her healthcare professional.`),
+      );
+    }
+    if (h.safetyFlags && h.safetyFlags.length) {
+      const labels = h.safetyFlags.map((s) => SAFETY_LABEL_EN[s as SafetySlug] ?? s);
+      lines.push(
+        (es
+          ? `SEGURIDAD (la miembro reporto: ${labels.join(', ')}): recomienda con calidez que obtenga el visto bueno de su medico antes de entrenar fuerte, y manten la intensidad conservadora.`
+          : `SAFETY (member reported: ${labels.join(', ')}): warmly recommend she get her doctor's OK before intense training, and keep intensity conservative.`),
+      );
+    }
     if (h.injuries && h.injuries.length) lines.push((es ? 'Lesiones/limitaciones: ' : 'Injuries/limitations: ') + h.injuries.join(', '));
     if (h.targetWeightKg != null) lines.push((es ? 'Peso meta: ' : 'Target weight: ') + `${h.targetWeightKg}kg`);
     if (h.trainingExperience && h.trainingExperience.trim()) {

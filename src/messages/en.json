@@ -68,6 +68,134 @@
     "installApp": "Install app"
   },
   "app": {
+    "health": {
+      "title": "Your health profile",
+      "intro": "A few questions so your coach can tailor everything to you: your food, your training, your body. The more she knows, the more personal it gets.",
+      "privacy": "Private. Only your coach sees this, and you can update it anytime.",
+      "save": "Save",
+      "saved": "Saved",
+      "error": "Could not save. Please try again.",
+      "none": "None",
+      "safetyNone": "None of these",
+      "sec": {
+        "foods": {
+          "q": "Any foods you don’t eat?"
+        },
+        "allergies": {
+          "q": "Allergies (optional)",
+          "ph": "e.g. peanuts, shellfish"
+        },
+        "injuries": {
+          "q": "Any injuries or areas to work around?"
+        },
+        "injuriesMore": {
+          "q": "Tell your coach more (optional)",
+          "ph": "e.g. left knee, no deep squats"
+        },
+        "conditions": {
+          "q": "Do any of these apply to you?",
+          "why": "Things like PCOS, insulin resistance, and thyroid change how your body handles food and training. Your coach builds around them."
+        },
+        "pregnancy": {
+          "q": "Anything we should know right now?"
+        },
+        "safety": {
+          "q": "Before you start moving, do any of these apply?",
+          "why": "The standard pre-exercise safety check.",
+          "note": "Thanks for sharing. Please get your doctor’s OK before starting intense exercise, and your coach will keep things gentle."
+        },
+        "meds": {
+          "q": "Anything that affects your appetite, weight, or energy? (optional)"
+        },
+        "experience": {
+          "q": "How would you describe your training experience?"
+        },
+        "sleep": {
+          "q": "How’s your sleep lately?"
+        },
+        "stress": {
+          "q": "And your stress?"
+        },
+        "food": {
+          "q": "So we support you the right way, anything to be mindful of?",
+          "why": "This shapes how your coach talks about food with you. There is no wrong answer."
+        }
+      },
+      "opt": {
+        "dietary": {
+          "dairy": "Dairy",
+          "gluten": "Gluten",
+          "eggs": "Eggs",
+          "nuts": "Nuts",
+          "shellfish": "Shellfish",
+          "soy": "Soy",
+          "pork": "Pork",
+          "vegetarian": "Vegetarian",
+          "vegan": "Vegan"
+        },
+        "injuries": {
+          "knees": "Knees",
+          "lower_back": "Lower back",
+          "shoulders": "Shoulders",
+          "wrists": "Wrists",
+          "hips": "Hips",
+          "neck": "Neck"
+        },
+        "conditions": {
+          "pcos": "PCOS",
+          "insulin_resistance": "Insulin resistance / prediabetes",
+          "type2_diabetes": "Type 2 diabetes",
+          "hypothyroid": "Hypothyroid / Hashimoto’s",
+          "menopause": "Perimenopause / menopause",
+          "endometriosis": "Endometriosis",
+          "high_bp": "High blood pressure",
+          "ibs": "IBS / gut issues"
+        },
+        "pregnancy": {
+          "none": "No",
+          "pregnant": "Currently pregnant",
+          "postpartum": "Postpartum (0-12 mo)",
+          "ttc": "Trying to conceive",
+          "prefer_not": "Prefer not to say"
+        },
+        "safety": {
+          "heart_condition": "Heart condition",
+          "chest_pain": "Chest pain during activity",
+          "dizziness": "Dizziness or fainting",
+          "joint_problem": "Bone or joint problem",
+          "bp_meds": "On heart / BP medication"
+        },
+        "meds": {
+          "glp1": "GLP-1 (Ozempic / Wegovy)",
+          "thyroid": "Thyroid medication",
+          "birth_control": "Birth control / hormones",
+          "antidepressant": "Antidepressant / anxiety",
+          "steroids": "Steroids"
+        },
+        "experience": {
+          "new": "New to this",
+          "some": "Some experience",
+          "experienced": "Very experienced"
+        },
+        "sleep": {
+          "lt5": "Under 5h",
+          "5to6": "5-6h",
+          "7to8": "7-8h",
+          "gt8": "8h+"
+        },
+        "stress": {
+          "low": "Low stress",
+          "moderate": "Moderate",
+          "high": "High"
+        },
+        "food": {
+          "ok": "I’m good with tracking",
+          "struggled": "I’ve struggled with disordered eating",
+          "light_tracking": "I’d rather not track calories closely",
+          "prefer_not": "Prefer not to say"
+        }
+      }
+    },
     "nav": {
       "today": "Today",
       "community": "Community",
@@ -277,7 +405,10 @@
       "saveError": "We could not save your plan. Please check your connection and try again.",
       "toCheckout": "Continue to checkout",
       "toDashboard": "Go to my dashboard",
-      "projected": "Projected {from} → {to} lb over 12 weeks"
+      "projected": "Projected {from} → {to} lb over 12 weeks",
+      "healthCtaTitle": "Make it yours",
+      "healthCtaBody": "Take two minutes on your health profile, foods, injuries, PCOS and more, so your coach tailors everything to you.",
+      "healthCtaBtn": "Set up my profile"
     },
     "exercise": {
       "back": "Back",
@@ -328,7 +459,6 @@
       "lastTime": "Last time",
       "target": "Target",
       "front": "Front",
-      "back": "Back",
       "firstSet": "First set: set your baseline",
       "plusReps": "+{n, plural, one {# rep} other {# reps}}",
       "enjoymentLabel": "How did it feel?",
@@ -559,7 +689,7 @@
       "progressStartWeight": "Starting weight",
       "progressLatestWeight": "Latest weight",
       "progressChange": "Net change",
-      "progressMeasurements": "Measurement logs",
+      "progressMeasurements": "Measurements",
       "progressFoodLogs": "Food-diary entries",
       "progressPhotos": "Progress photos",
       "progressTraining": "Training history",
@@ -571,7 +701,6 @@
       "tabWorkouts": "Workouts",
       "tabCommunity": "Community",
       "tabProgress": "Progress",
-      "tabMessages": "Messages",
       "tabBilling": "Billing",
       "tabNotes": "Notes",
       "program": "Program",
@@ -885,8 +1014,6 @@
       "workoutPlanSent": "Workout plan sent",
       "membership": "Membership",
       "tabFiles": "Files",
-      "progressPhotos": "Progress photos",
-      "progressTraining": "Training history",
       "documents": "Documents",
       "noFiles": "No files yet.",
       "exercisesSubtitle": "Browse the exercise library and curate equipment substitution chains your clients can swap to in any setting.",
@@ -1024,7 +1151,6 @@
       "progressGoal": "Goal",
       "sinceStart": "since start",
       "progressNoWeight": "No weight logged yet.",
-      "progressMeasurements": "Measurements",
       "progressTotalCirc": "Total change:",
       "progressNoMeasures": "No measurements logged yet.",
       "mWaist": "Waist",
@@ -1166,7 +1292,8 @@
       "weightSaved": "Weight logged - keep it up",
       "weightError": "Could not save. Try again.",
       "aiCoach": "Coach chat",
-      "progressLbs": "lbs Progress"
+      "progressLbs": "lbs Progress",
+      "healthProfile": "Health profile"
     },
     "gamification": {
       "dayStreak": "day streak",
