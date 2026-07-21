@@ -10,6 +10,7 @@
 // is set), and we skip contacts that already have a profile_id.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { emailShell, emailButton } from '@/lib/email/shell';
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.RESEND_FROM ?? 'Thick & Fit <hello@teamthickandfit.com>';
@@ -47,38 +48,40 @@ function inviteEmail(
   // Voice: Coach Steph (see .planning/STEPHANIE-VOICE-BIBLE.md). Warm, real, leads with what she
   // keeps (her progress), one clear action, no hype, no em dashes. Draft pending Stephanie's sign-off.
   if (locale === 'es') {
+    const body = [
+      `<p>Hola${name ? ' ' + name : ''}:</p>`,
+      '<p>Por años te entrené en la plataforma de alguien más. Eso se acabó. Nos construí nuestra ',
+      'propia casa, la app de Thick &amp; Fit, y todo lo que hizo que esto funcionara está aquí: tus ',
+      'entrenamientos con mis videos, un registro de comida que por fin entiende cómo comemos ',
+      'nosotras, nuestra comunidad, y yo contigo cada día.</p>',
+      '<p>Y lo mejor: tus fotos de progreso y todo lo que has logrado se vienen contigo. Un toque y ',
+      'ahí está, esperándote.</p>',
+      '<p>Esto no es una carrera, es un maratón, y apenas llegamos a lo bueno. Estoy tan agradecida ',
+      'de que hayas confiado en mí hasta aquí. Ven a ver lo que construí para nosotras.</p>',
+      emailButton(actionLink, 'Activar mi cuenta'),
+      '<p>Vamos con todo. Nos vemos adentro. 🤍<br/>Steph</p>',
+    ].join('');
     return {
       subject: 'Nos mudamos, y te guardé tu lugar',
-      html: [
-        `<p>Hola${name ? ' ' + name : ''}:</p>`,
-        '<p>Por años te entrené en la plataforma de alguien más. Eso se acabó. Nos construí nuestra ',
-        'propia casa, la app de Thick &amp; Fit, y todo lo que hizo que esto funcionara está aquí: tus ',
-        'entrenamientos con mis videos, un registro de comida que por fin entiende cómo comemos ',
-        'nosotras, nuestra comunidad, y yo contigo cada día.</p>',
-        '<p>Y lo mejor: tus fotos de progreso y todo lo que has logrado se vienen contigo. Un toque y ',
-        'ahí está, esperándote.</p>',
-        '<p>Esto no es una carrera, es un maratón, y apenas llegamos a lo bueno. Estoy tan agradecida ',
-        'de que hayas confiado en mí hasta aquí. Ven a ver lo que construí para nosotras.</p>',
-        `<p><a href="${actionLink}">Activar mi cuenta</a></p>`,
-        '<p>Vamos con todo. Nos vemos adentro.<br/>Steph</p>',
-      ].join(''),
+      html: emailShell({ bodyHtml: body, preheader: 'Tu nueva casa en la app te espera' }),
     };
   }
+  const body = [
+    `<p>Hey${name ? ' ' + name : ''},</p>`,
+    "<p>For years I coached you on someone else's platform. Not anymore. I built us our own home, ",
+    'the Thick &amp; Fit app, and everything that made this work is right here: your workouts with ',
+    'my demos, food tracking that finally gets the way we eat, our community, and me in your corner ',
+    'every day.</p>',
+    "<p>And here's the best part. Your progress photos and everything you've earned come with you. ",
+    'One tap and it is all there waiting.</p>',
+    "<p>This isn't a race, it's a marathon, and we're just getting to the good part. I'm so grateful ",
+    'you have trusted me this far. Come see what I built for us.</p>',
+    emailButton(actionLink, 'Activate my account'),
+    "<p>Let's go. I'll see you inside. 🤍<br/>Steph</p>",
+  ].join('');
   return {
     subject: "I built us something. Your spot's ready.",
-    html: [
-      `<p>Hey${name ? ' ' + name : ''},</p>`,
-      "<p>For years I coached you on someone else's platform. Not anymore. I built us our own home, ",
-      'the Thick &amp; Fit app, and everything that made this work is right here: your workouts with ',
-      'my demos, food tracking that finally gets the way we eat, our community, and me in your corner ',
-      'every day.</p>',
-      "<p>And here's the best part. Your progress photos and everything you've earned come with you. ",
-      'One tap and it is all there waiting.</p>',
-      "<p>This isn't a race, it's a marathon, and we're just getting to the good part. I'm so grateful ",
-      'you have trusted me this far. Come see what I built for us.</p>',
-      `<p><a href="${actionLink}">Activate my account</a></p>`,
-      "<p>Let's go. I'll see you inside.<br/>Steph</p>",
-    ].join(''),
+    html: emailShell({ bodyHtml: body, preheader: 'Your new home in the app is waiting' }),
   };
 }
 
