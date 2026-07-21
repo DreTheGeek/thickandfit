@@ -197,6 +197,30 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-kg-rebuild-6h (LIVE knowledge graph: deterministically rebuilds kg_node/kg_edge from current
+-- data every 6h so the graph grows with behavior - EATS edges from new food logs incl. PHOTO SCANS,
+-- FOLLOWS from new meal plans, HAS_GOAL/HAS_INJURY/EXCLUDES from intake. kg_rebuild is a DB function,
+-- so pg_cron calls it directly (no HTTP route). Before this the graph only refreshed on the admin
+-- button and went stale.)
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-kg-rebuild-6h' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-kg-rebuild-6h',
+    '45 */6 * * *',  -- every 6 hours, offset :45 (after the memory reconciler at :30)
+    'select public.kg_rebuild(id) from public.companies'
+  );
+  raise notice 'scheduled tf-kg-rebuild-6h at 45 */6 * * *';
+exception
+  when undefined_function then
+    raise notice 'pg_cron not installed. Skipping tf-kg-rebuild-6h.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- tf-close-challenges-daily (finalize challenges past their ends_on: award the leader the Challenge
 -- Champion badge + notify every participant, exactly once via challenges.finalized_at). Without it an
 -- ended challenge silently stops being active with no winner, no badge, no notification.
