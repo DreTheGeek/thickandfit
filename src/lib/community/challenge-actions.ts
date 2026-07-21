@@ -3,9 +3,11 @@
 // Coach create-challenge: authors a community challenge. A challenge whose date window includes today
 // is "active" and renders on the subscriber /community leaderboard (getActiveChallenge in feed.ts).
 import { z } from 'zod';
+import { after } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireCoach } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
+import { notifyNewChallenge } from '@/lib/notifications/triggers';
 
 export type ChallengeResult = { ok: boolean; error?: string };
 
@@ -49,6 +51,18 @@ export async function createChallengeAction(input: unknown): Promise<ChallengeRe
   if (error) {
     console.error('createChallengeAction:', error.message);
     return { ok: false, error: 'failed' };
+  }
+  // Make it "pop up" in the client portal: fan a notification out to every member (in-app bell +
+  // best-effort push). after() so the frozen lambda cannot drop the fan-out. Only notify if the
+  // challenge is live now or starts today - a future-dated challenge notifies when it opens is out
+  // of scope; coaches create challenges to start, and the leaderboard shows it from starts_on.
+  const companyId = ctx.companyId;
+  const userId = ctx.userId;
+  const title = parsed.data.title;
+  try {
+    after(() => notifyNewChallenge({ companyId, createdByProfileId: userId, challengeTitle: title }));
+  } catch {
+    void notifyNewChallenge({ companyId, createdByProfileId: userId, challengeTitle: title });
   }
   revalidatePath('/coach/challenges');
   revalidatePath('/community');

@@ -1593,6 +1593,8 @@
         "replyBody": "{name} respondió en tu bandeja de entrada.",
         "broadcastTitle": "Nuevo anuncio",
         "broadcastBody": "{name} publico un anuncio en la comunidad.",
+        "challengeStartedTitle": "Nuevo reto!",
+        "challengeStartedBody": "{title} acaba de empezar. Toca para unirte y subir en la tabla.",
         "plateauTitle": "Vamos a avanzar",
         "plateauBody": "Tu peso se ha mantenido igual por {days} días. Es normal y lo podemos ajustar. Toca para hablarlo con tu coach.",
         "renewalTitle": "Tu membresia se renueva pronto",

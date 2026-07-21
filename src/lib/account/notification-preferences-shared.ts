@@ -29,6 +29,7 @@ export function categoryForNotificationType(type: string): NotificationCategory 
   switch (type) {
     case 'community_broadcast':
     case 'community_reply':
+    case 'challenge_started':
       return 'community';
     case 'streak':
     case 'checkin':

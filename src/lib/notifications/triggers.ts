@@ -47,6 +47,46 @@ export async function notifyBroadcast(params: {
 }
 
 /**
+ * A coach launched a challenge: notify every member so it "pops up" in the client portal (in-app
+ * bell always; push unless the member muted the community channel). Mirrors notifyBroadcast.
+ * Best-effort: failures are logged, never thrown.
+ */
+export async function notifyNewChallenge(params: {
+  companyId: string;
+  createdByProfileId: string;
+  challengeTitle: string;
+}): Promise<void> {
+  const svc = createServiceClient();
+  const { data, error } = await svc
+    .from('profiles')
+    .select('id, ui_locale, role')
+    .eq('company_id', params.companyId)
+    .neq('id', params.createdByProfileId);
+  if (error) {
+    console.error('notifyNewChallenge load members:', error.message);
+    return;
+  }
+  // Members only (subscribers + free). Coaches/assistants/operators don't need the "join" nudge.
+  const members = ((data as (MemberRow & { role?: string })[]) ?? []).filter(
+    (m) => m.role === 'subscriber' || m.role === 'free',
+  );
+  if (members.length === 0) return;
+
+  const recipients = members.map((m) => {
+    const locale = asNotifLocale(m.ui_locale);
+    const payload: NotificationPayload = {
+      type: 'challenge_started',
+      title: notifText(locale, 'challengeStartedTitle'),
+      body: notifText(locale, 'challengeStartedBody', { title: params.challengeTitle }),
+      link: '/community',
+    };
+    return { profileId: m.id, payload };
+  });
+
+  await createNotificationsBulk(params.companyId, recipients);
+}
+
+/**
  * Notify a member that their coach sent them a direct message (in-app bell + best-effort push).
  * Best-effort: failures are logged, never thrown.
  */

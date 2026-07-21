@@ -13,7 +13,8 @@ export type NotificationType =
   | 'comp_expiring'
   | 'reminder'
   | 'challenge_won'
-  | 'challenge_ended';
+  | 'challenge_ended'
+  | 'challenge_started';
 
 export type AppNotification = {
   id: string;

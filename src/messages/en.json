@@ -1593,6 +1593,8 @@
         "replyBody": "{name} replied in your inbox.",
         "broadcastTitle": "New broadcast",
         "broadcastBody": "{name} posted a broadcast to the community.",
+        "challengeStartedTitle": "New challenge!",
+        "challengeStartedBody": "{title} just started. Tap to join and climb the leaderboard.",
         "plateauTitle": "Let's break through",
         "plateauBody": "Your weight has held steady for {days} days. That is normal, and we can adjust. Tap to talk it through with your coach.",
         "renewalTitle": "Your membership renews soon",
