@@ -61,7 +61,7 @@ export function GeneratePlanButton({
         <Icon name="sparkles" size={15} />
         {pending ? t('genGenerating') : t('genWithAI')}
       </button>
-      {err && <p className="mt-2 text-center text-[12px] text-red-600">{err}</p>}
+      {err && <p className="mt-2 text-center text-[12px] text-alert-ink">{err}</p>}
     </div>
   );
 }

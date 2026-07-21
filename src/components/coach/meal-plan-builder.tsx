@@ -400,7 +400,7 @@ export function MealPlanBuilder({ initial }: { initial: BuilderInitial }): React
 
       {/* Save bar */}
       <div className="sticky bottom-0 z-10 -mx-5 flex items-center justify-end gap-3 border-t border-line bg-bg/90 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8">
-        {status === 'error' && <span className="text-[12px] text-red-600">{t('mbError')}</span>}
+        {status === 'error' && <span className="text-[12px] text-alert-ink">{t('mbError')}</span>}
         <button
           type="button"
           onClick={save}

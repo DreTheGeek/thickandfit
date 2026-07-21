@@ -131,7 +131,7 @@ export function AssignmentTable({
             </div>
           </div>
         )}
-        {error ? <p className="mt-3 text-[13px] text-red-600">{error}</p> : null}
+        {error ? <p className="mt-3 text-[13px] text-alert-ink">{error}</p> : null}
       </section>
 
       {/* Existing assignments */}

@@ -61,7 +61,7 @@ export function CoachNotesPanel({
           {t('addNote')}
         </button>
       </div>
-      {error && <p className="mt-1.5 text-[12px] text-red-600">{t('noteFailed')}</p>}
+      {error && <p className="mt-1.5 text-[12px] text-alert-ink">{t('noteFailed')}</p>}
 
       {notes.length === 0 ? (
         <p className="mt-3 text-[14px] text-faint">{t('noNotes')}</p>

@@ -97,7 +97,7 @@ export function WeightLogCard({
         <p className="mt-2 text-[12px] text-accent">{t('weightSaved')}</p>
       )}
       {status === 'error' && (
-        <p className="mt-2 text-[12px] text-red-600">{t('weightError')}</p>
+        <p className="mt-2 text-[12px] text-alert-ink">{t('weightError')}</p>
       )}
     </Card>
   );

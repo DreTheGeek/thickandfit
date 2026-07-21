@@ -31,7 +31,7 @@ export function MealPlanNotesEditor({
       <div className="mb-1 flex items-center justify-between">
         <h2 className="font-display text-[18px]">{t('planNotesTitle')}</h2>
         {status === 'ok' && <span className="text-[12px] text-accent">{t('planNotesSaved')}</span>}
-        {status === 'error' && <span className="text-[12px] text-red-600">{t('planNotesError')}</span>}
+        {status === 'error' && <span className="text-[12px] text-alert-ink">{t('planNotesError')}</span>}
       </div>
       <p className="mb-3 text-[13px] text-faint">{t('planNotesHint')}</p>
       <textarea

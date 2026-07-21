@@ -61,7 +61,7 @@ function QueueCard({ row }: { row: QueueRow }): ReactElement {
         className="mb-3 w-full rounded-lg border border-line bg-bg px-3 py-2 text-[13px] outline-none focus:border-ink"
       />
 
-      {error ? <p className="mb-3 text-[13px] text-red-600">{error}</p> : null}
+      {error ? <p className="mb-3 text-[13px] text-alert-ink">{error}</p> : null}
 
       <div className="flex gap-2">
         <button

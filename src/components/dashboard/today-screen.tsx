@@ -365,7 +365,9 @@ export function TodayScreen({
                 <button
                   type="button"
                   onClick={() => void toggleHabit(h.id, !h.done)}
-                  className="tf-press"
+                  // -m-2 p-2 expands the tap area to ~40px around the 24px check without shifting the
+                  // row layout (the negative margin cancels the padding). Was a 24px target.
+                  className="tf-press -m-2 p-2"
                   aria-label={h.title}
                 >
                   <CompletionCheck done={h.done} />

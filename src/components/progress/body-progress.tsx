@@ -185,7 +185,7 @@ function WeightQuickLog(): ReactElement {
       >
         {pending ? t('saving') : t('logWeight')}
       </button>
-      {status === 'error' && <span className="self-center text-[12px] text-red-600">{t('weightError')}</span>}
+      {status === 'error' && <span className="self-center text-[12px] text-alert-ink">{t('weightError')}</span>}
     </form>
   );
 }
@@ -363,7 +363,7 @@ function MeasureForm({ onDone, onCancel }: { onDone: () => void; onCancel: () =>
           className="mb-3 w-full border border-line bg-transparent px-3 py-2.5 text-[15px] outline-none focus:border-ink"
         />
 
-        {status === 'error' && <p className="mb-2 text-[12px] text-red-600">{t('measureError')}</p>}
+        {status === 'error' && <p className="mb-2 text-[12px] text-alert-ink">{t('measureError')}</p>}
 
         <div className="flex gap-2">
           <button

@@ -52,7 +52,7 @@ export function WaitlistForm({ locale }: { locale: string }) {
         {state === 'loading' ? t('submitting') : t('cta')}
       </button>
       {state === 'error' ? (
-        <p role="alert" className="text-sm text-red-600 sm:basis-full">
+        <p role="alert" className="text-sm text-alert-ink sm:basis-full">
           {t('error')}
         </p>
       ) : null}

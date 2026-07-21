@@ -71,7 +71,7 @@ export function PhysiqueAnalysisButton({
             </div>
 
             {pending && <p className="py-8 text-center text-[14px] text-faint">{t('analyzing')}</p>}
-            {error && <p className="py-8 text-center text-[14px] text-red-600">{error}</p>}
+            {error && <p className="py-8 text-center text-[14px] text-alert-ink">{error}</p>}
 
             {result && (
               <div className="flex flex-col gap-4">

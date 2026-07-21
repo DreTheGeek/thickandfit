@@ -139,7 +139,7 @@ function Composer({ canBroadcast, viewerId }: { canBroadcast: boolean; viewerId:
           </button>
         </div>
       ) : null}
-      {error ? <p className="mt-2 text-[12px] text-red-600">{error}</p> : null}
+      {error ? <p className="mt-2 text-[12px] text-alert-ink">{error}</p> : null}
 
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -292,6 +292,7 @@ function Comments({ postId, count }: { postId: string; count: number }): ReactEl
                 if (e.key === 'Enter') submit();
               }}
               placeholder={t('addComment')}
+              aria-label={t('addComment')}
               maxLength={1000}
               className="min-w-0 flex-1 rounded-full bg-warm px-4 py-2 text-[13px] text-ink placeholder:text-faint focus:outline-none"
             />

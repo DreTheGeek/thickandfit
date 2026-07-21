@@ -21,6 +21,8 @@ type Exercise = {
   is_own_demo: boolean;
 };
 
+// The VALUE stays the English slug (the /api/exercises filter keys on it); only the visible LABEL is
+// localized via app.library.muscles.* / equipmentTypes.* so a Spanish member sees Spanish options.
 const MUSCLES = [
   'chest', 'back', 'shoulders', 'biceps', 'triceps',
   'quadriceps', 'hamstrings', 'glutes', 'calves', 'abdominals', 'lats',
@@ -28,6 +30,12 @@ const MUSCLES = [
 const EQUIPMENT = [
   'body only', 'barbell', 'dumbbell', 'machine', 'cable', 'kettlebells', 'bands',
 ];
+// slug -> i18n key ('body only' -> 'bodyOnly').
+const labelKey = (slug: string): string =>
+  slug
+    .split(' ')
+    .map((w, i) => (i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join('');
 
 export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactElement {
   const t = useTranslations('app.library');
@@ -82,8 +90,8 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
         >
           <option value="">{t('allMuscles')}</option>
           {MUSCLES.map((m) => (
-            <option key={m} value={m} className="capitalize">
-              {m}
+            <option key={m} value={m}>
+              {t(`muscles.${labelKey(m)}` as never)}
             </option>
           ))}
         </select>
@@ -95,7 +103,7 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
           <option value="">{t('allEquipment')}</option>
           {EQUIPMENT.map((eq) => (
             <option key={eq} value={eq}>
-              {eq}
+              {t(`equipmentTypes.${labelKey(eq)}` as never)}
             </option>
           ))}
         </select>

@@ -190,6 +190,28 @@
       "searchPlaceholder": "Search exercises",
       "allMuscles": "All muscles",
       "allEquipment": "All equipment",
+      "muscles": {
+        "chest": "Chest",
+        "back": "Back",
+        "shoulders": "Shoulders",
+        "biceps": "Biceps",
+        "triceps": "Triceps",
+        "quadriceps": "Quadriceps",
+        "hamstrings": "Hamstrings",
+        "glutes": "Glutes",
+        "calves": "Calves",
+        "abdominals": "Abdominals",
+        "lats": "Lats"
+      },
+      "equipmentTypes": {
+        "bodyOnly": "Body only",
+        "barbell": "Barbell",
+        "dumbbell": "Dumbbell",
+        "machine": "Machine",
+        "cable": "Cable",
+        "kettlebells": "Kettlebells",
+        "bands": "Bands"
+      },
       "noResults": "No exercises",
       "noResultsBody": "Try a different search or filter.",
       "demo": "Demo"

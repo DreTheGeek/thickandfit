@@ -141,7 +141,7 @@ export function DraftComposer({
         </>
       )}
 
-      {error ? <p className="mb-3 text-[13px] text-red-600">{error}</p> : null}
+      {error ? <p className="mb-3 text-[13px] text-alert-ink">{error}</p> : null}
       {done ? <p className="mb-3 text-[13px] text-accent">{t('draftSubmitted')}</p> : null}
 
       <button

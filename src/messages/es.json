@@ -190,6 +190,28 @@
       "searchPlaceholder": "Buscar ejercicios",
       "allMuscles": "Todos los músculos",
       "allEquipment": "Todo el equipo",
+      "muscles": {
+        "chest": "Pecho",
+        "back": "Espalda",
+        "shoulders": "Hombros",
+        "biceps": "Bíceps",
+        "triceps": "Tríceps",
+        "quadriceps": "Cuádriceps",
+        "hamstrings": "Isquiotibiales",
+        "glutes": "Glúteos",
+        "calves": "Pantorrillas",
+        "abdominals": "Abdominales",
+        "lats": "Dorsales"
+      },
+      "equipmentTypes": {
+        "bodyOnly": "Peso corporal",
+        "barbell": "Barra",
+        "dumbbell": "Mancuerna",
+        "machine": "Máquina",
+        "cable": "Cable",
+        "kettlebells": "Pesa rusa",
+        "bands": "Bandas"
+      },
       "noResults": "Sin ejercicios",
       "noResultsBody": "Prueba otra búsqueda o filtro.",
       "demo": "Demo"

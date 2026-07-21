@@ -175,7 +175,7 @@ export function DiaryScreen({
           <Link
             href={`/nutrition?date=${prevDate}`}
             aria-label={t('prevDay')}
-            className="tf-press flex h-8 w-8 items-center justify-center text-muted hover:text-ink"
+            className="tf-press flex h-10 w-10 items-center justify-center text-muted hover:text-ink"
           >
             <Icon name="chevronRight" size={18} className="rotate-180" />
           </Link>
@@ -184,7 +184,7 @@ export function DiaryScreen({
             <Link
               href={`/nutrition?date=${nextDate}`}
               aria-label={t('nextDay')}
-              className="tf-press flex h-8 w-8 items-center justify-center text-muted hover:text-ink"
+              className="tf-press flex h-10 w-10 items-center justify-center text-muted hover:text-ink"
             >
               <Icon name="chevronRight" size={18} />
             </Link>
@@ -319,6 +319,7 @@ export function DiaryScreen({
               value={q}
               onChange={(e) => onSearch(e.target.value)}
               placeholder={t('searchPlaceholder')}
+              aria-label={t('searchPlaceholder')}
               className="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-[14px] outline-none placeholder:text-faint focus:border-ink"
             />
           </div>
@@ -340,6 +341,7 @@ export function DiaryScreen({
                   }}
                   inputMode="numeric"
                   placeholder={t('barcodePlaceholder')}
+                  aria-label={t('barcodePlaceholder')}
                   className="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-[14px] tabular-nums outline-none placeholder:text-faint focus:border-ink"
                 />
               </div>

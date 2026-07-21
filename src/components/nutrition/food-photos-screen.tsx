@@ -161,7 +161,7 @@ export function FoodPhotosScreen({
         </Card>
       )}
 
-      {error && <p className="mb-4 text-[12px] text-red-600">{error}</p>}
+      {error && <p className="mb-4 text-[12px] text-alert-ink">{error}</p>}
 
       {photos.length === 0 ? (
         <div className="flex flex-col items-center py-14 text-center">

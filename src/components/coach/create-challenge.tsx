@@ -72,7 +72,7 @@ export function CreateChallenge(): ReactElement {
             <input className={input} type="date" value={endsOn} onChange={(e) => setEndsOn(e.target.value)} />
           </label>
         </div>
-        {err ? <p className="text-[12px] text-red-600">{err}</p> : null}
+        {err ? <p className="text-[12px] text-alert-ink">{err}</p> : null}
         <button
           type="button"
           onClick={submit}

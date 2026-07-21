@@ -133,6 +133,7 @@ export function MessageThread({
             if (e.key === 'Enter') send();
           }}
           placeholder={t('messagePlaceholder')}
+          aria-label={t('messagePlaceholder')}
           className="flex-1 rounded-full border border-line bg-bg px-4 py-2.5 text-[14px] outline-none focus:border-ink"
         />
         <button

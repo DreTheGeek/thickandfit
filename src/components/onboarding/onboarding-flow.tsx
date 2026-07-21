@@ -326,7 +326,7 @@ export function OnboardingFlow({
       )}
 
       {step === 3 && saveError && (
-        <p role="alert" className="mt-5 text-[13px] leading-[1.5] text-red-500">
+        <p role="alert" className="mt-5 text-[13px] leading-[1.5] text-alert-ink">
           {t('saveError')}
         </p>
       )}

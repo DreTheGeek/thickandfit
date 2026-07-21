@@ -80,7 +80,7 @@ export function KnowledgeBuilder({ sources }: { sources: KnowledgeSourceView[] }
             onChange={(e) => setText(e.target.value)}
             maxLength={100_000}
           />
-          {err ? <p className="text-[12px] text-red-600">{err}</p> : null}
+          {err ? <p className="text-[12px] text-alert-ink">{err}</p> : null}
           {note ? <p className="text-[12px] text-accent-ink">{note}</p> : null}
           <button
             type="button"

@@ -48,7 +48,7 @@ export default async function CoachBillingPage(): Promise<ReactElement> {
         </div>
         <div className="rounded-2xl border border-line p-4">
           <div className="text-[11px] uppercase tracking-[2px] text-faint">{t('billingFailedOverdue')}</div>
-          <div className="tf-display mt-1 text-[24px] text-red-600">{data.failedOverdue}</div>
+          <div className="tf-display mt-1 text-[24px] text-alert-ink">{data.failedOverdue}</div>
         </div>
       </div>
 
@@ -74,7 +74,7 @@ export default async function CoachBillingPage(): Promise<ReactElement> {
                 className={[
                   'text-right',
                   r.flag === 'failed'
-                    ? 'font-semibold text-red-600'
+                    ? 'font-semibold text-alert-ink'
                     : r.flag === 'soon'
                       ? 'text-ink'
                       : 'text-faint',

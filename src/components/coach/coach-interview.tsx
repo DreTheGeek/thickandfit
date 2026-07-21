@@ -125,7 +125,7 @@ function SectionCard({
           ))}
           <div className="flex items-center justify-end gap-3 border-t border-divider pt-4">
             {status === 'ok' && <span className="text-[12px] text-accent">{t('interviewSaved')}</span>}
-            {status === 'error' && <span className="text-[12px] text-red-600">{t('interviewError')}</span>}
+            {status === 'error' && <span className="text-[12px] text-alert-ink">{t('interviewError')}</span>}
             <button
               type="button"
               onClick={save}

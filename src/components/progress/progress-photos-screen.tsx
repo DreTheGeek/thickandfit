@@ -265,7 +265,7 @@ function Gallery({
         </Card>
       )}
 
-      {error != null && <p className="mb-4 text-[12px] text-red-600">{error}</p>}
+      {error != null && <p className="mb-4 text-[12px] text-alert-ink">{error}</p>}
       {ok && <p className="mb-4 text-[12px] text-accent">{t('saved')}</p>}
 
       {photos.length === 0 ? (
@@ -331,7 +331,7 @@ function PhotoTile({
           {photo.pose ? `${photo.pose} - ` : ''}
           {photo.weightKg != null ? `${lb(photo.weightKg)} lb` : t('noWeight')}
         </div>
-        {error && <div className="text-[11px] text-red-600">{t('deleteFailed')}</div>}
+        {error && <div className="text-[11px] text-alert-ink">{t('deleteFailed')}</div>}
         <PhysiqueAnalysisButton imageUrl={photo.url} photoId={photo.id} weightKg={photo.weightKg} />
       </div>
     </div>
