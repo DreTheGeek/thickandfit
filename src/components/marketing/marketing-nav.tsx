@@ -25,13 +25,13 @@ export async function MarketingNav(): Promise<ReactElement> {
         <div className="flex items-center gap-2 sm:gap-5">
           <Link
             href={lp('/pricing')}
-            className="hidden text-[13px] font-semibold uppercase tracking-[1.5px] text-soft hover:text-ink sm:block"
+            className="hidden text-[15px] font-medium text-muted hover:text-ink sm:block"
           >
             {t('pricing')}
           </Link>
           <Link
             href={lp('/faq')}
-            className="hidden text-[13px] font-semibold uppercase tracking-[1.5px] text-soft hover:text-ink sm:block"
+            className="hidden text-[15px] font-medium text-muted hover:text-ink sm:block"
           >
             {t('faq')}
           </Link>
@@ -41,20 +41,20 @@ export async function MarketingNav(): Promise<ReactElement> {
               hrefLang={twin.to}
               lang={twin.to}
               aria-label={twin.to === 'es' ? 'Ver en espanol' : 'View in English'}
-              className="text-[12px] font-semibold uppercase tracking-[1.5px] text-soft hover:text-ink sm:text-[13px]"
+              className="text-[15px] font-medium text-muted hover:text-ink"
             >
               {twin.to === 'es' ? 'ES' : 'EN'}
             </Link>
           ) : null}
           <Link
             href="/auth/sign-in"
-            className="text-[12px] font-semibold uppercase tracking-[1.5px] text-soft hover:text-ink sm:text-[13px]"
+            className="text-[15px] font-medium text-muted hover:text-ink"
           >
             {t('login')}
           </Link>
           <Link
             href="/join"
-            className="tf-press whitespace-nowrap bg-ink px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[1.5px] text-white sm:px-6 sm:py-3 sm:text-[12px] sm:tracking-[2px]"
+            className="tf-press tf-cta whitespace-nowrap !px-6 !py-3 !text-[14px]"
           >
             {t('cta')}
           </Link>

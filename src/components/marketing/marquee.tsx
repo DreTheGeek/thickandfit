@@ -11,15 +11,15 @@ export function Marquee({ items }: { items: string[] }): ReactElement {
     <div className="flex shrink-0 items-center" aria-hidden={hidden || undefined}>
       {items.map((s, i) => (
         <span key={`${s}${i}`} className="flex items-center">
-          <span className="tf-display px-6 text-[clamp(22px,3.4vw,40px)] leading-none">{s}</span>
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/40" />
+          <span className="px-6 text-[clamp(15px,1.6vw,19px)] font-medium leading-none">{s}</span>
+          <span className="h-1 w-1 shrink-0 rounded-full bg-[var(--c-accent)]" />
         </span>
       ))}
     </div>
   );
 
   return (
-    <div className="overflow-hidden bg-ink py-5 text-white select-none">
+    <div className="overflow-hidden bg-ink py-4 text-white/85 select-none">
       <div className="tf-marquee flex w-max">
         {run(false)}
         {run(true)}

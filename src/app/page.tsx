@@ -24,6 +24,7 @@ import Link from 'next/link';
 import type { ReactElement } from 'react';
 import { headers } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
+import { Icon } from '@/components/ui/icons';
 import { MarketingNav } from '@/components/marketing/marketing-nav';
 import { MarketingFooter } from '@/components/marketing/marketing-footer';
 import { Marquee } from '@/components/marketing/marquee';
@@ -50,7 +51,7 @@ type FaqItem = { q: string; a: string };
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('marketing');
-  const title = `${t('hero.line1')} ${t('hero.accent')} ${t('hero.line2')}`.trim();
+  const title = t('hero.h1');
   return {
     title: 'Thick & Fit',
     description: t('hero.sub'),
@@ -101,15 +102,6 @@ export default async function Home(): Promise<ReactElement> {
     breadcrumbNode([{ name: 'Home', path: '/' }]),
   ].filter((n): n is JsonLdNode => n !== null);
 
-  const cta = (
-    <Link
-      href="/join"
-      className="tf-press inline-block bg-ink px-9 py-4 text-[12px] font-semibold uppercase tracking-[0.2em] text-white"
-    >
-      {t('hero.cta')}
-    </Link>
-  );
-
   return (
     <div className={variant}>
       <JsonLd data={graph(nodes)} />
@@ -117,41 +109,46 @@ export default async function Home(): Promise<ReactElement> {
 
       <main>
         {/* 1. HERO. Device: rule break. Right side: the portrait, bleeding off the edge. */}
-        <Section ground="cream" beat="bleed" className="pt-[var(--beat-tight)] pb-[var(--beat-normal)]">
-          <div className="grid items-end gap-10 lg:grid-cols-[minmax(0,56vw)_minmax(0,1fr)] lg:gap-12">
+        <Section ground="cream" beat="bleed" className="pb-[var(--beat-normal)] lg:pb-0">
+          <div className="grid items-center gap-10 pt-10 lg:min-h-[86svh] lg:grid-cols-[minmax(0,52vw)_minmax(0,1fr)] lg:gap-12 lg:pt-0">
             <div className="flex flex-col">
-              <h1 className="tf-mega max-w-[16ch]">
-                {t('hero.line1')}
-                <br />
-                {t('hero.accent')}
-                <br />
-                {t('hero.line2')}
-              </h1>
-              <hr className="my-7 border-0 border-t border-line" />
-              <p className="max-w-[34ch] text-[17px] leading-[1.68] sm:max-w-[44ch]">
+              {/* Proof ABOVE the headline. Fitbod's Apple laurel sits at y246 above its H1 at y351,
+                  Cal AI's rating pill is the first element in its hero, Flo's stars sit at y198
+                  above its H1 at y232. Front-loading proof is the current app pattern, and it is
+                  the opposite of the 2019 order. Real numbers only: no invented store rating. */}
+              <p className="tf-eyebrow-accent mb-5 flex items-center gap-2">
+                <Icon name="check" size={14} strokeWidth={3} />
+                {t('hero.proofLine')}
+              </p>
+              <h1 className="tf-mega max-w-[19ch]">{t('hero.h1')}</h1>
+              <p className="mt-5 max-w-[46ch] text-[17px] leading-[1.6] text-muted sm:text-[19px]">
                 {t('hero.sub')}
               </p>
-              {/* Stays high in the DOM, because the first 200 words are what an answer engine
-                  reads, but drops below the CTA on phones so the button stays inside the fold. */}
-              <p className="order-1 mt-6 max-w-[34ch] text-[15px] leading-[1.6] text-soft sm:order-none sm:mt-4 sm:max-w-[44ch]">
+              <div className="mt-8">
+                <Link href="/join" className="tf-press tf-cta">
+                  {t('hero.cta')}
+                </Link>
+                {/* One reassurance line, directly under the button. Verbatim precedent at Ladder:
+                    "No Credit Card To Start / Cancel anytime", set right below the pill. Billing
+                    distrust is the category failure this product exists to fix. */}
+                <p className="mt-4 text-[14px] leading-snug text-muted">{t('hero.reassure')}</p>
+                <p className="mt-1 text-[14px] leading-snug text-muted">{t('hero.priceLine')}</p>
+              </div>
+              {/* Kept for the answer engines: the first 200 words still need one plain factual
+                  sentence naming the product. Demoted below the fold action, not deleted. */}
+              <p className="order-1 mt-8 max-w-[46ch] text-[14px] leading-[1.6] text-faint sm:order-none">
                 {t('hero.definition')}
               </p>
-              <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
-                {cta}
-                <p className="text-[13px] leading-snug text-soft">
-                  <span className="font-semibold text-ink">{stats[0]?.n}</span> {stats[0]?.l}
-                </p>
-              </div>
             </div>
             {/* Bleeds past the right gutter and is clipped by the viewport: a shape the layout cuts
                 cannot look accidental. */}
-            <div className="mr-[calc(var(--gutter)*-1)] hidden lg:block">
+            <div className="mr-[calc(var(--gutter)*-1)] hidden self-stretch lg:block">
               {/* eslint-disable-next-line @next/next/no-img-element -- static marketing photo */}
               <img
                 src="/brand/img/steph-about.avif"
                 alt={t('hero.alt')}
                 fetchPriority="high"
-                className="h-[74svh] w-full max-w-none object-cover object-[30%_center]"
+                className="h-full min-h-[78svh] w-full max-w-none object-cover object-[30%_center]"
               />
             </div>
           </div>

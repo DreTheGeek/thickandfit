@@ -187,15 +187,20 @@
    proximity (both set the same custom properties, the nearer element's declaration is inherited),
    so the marketing shell stays light no matter what the member picked in the app. */
 .tf-light {
-  --c-ink: #0f0f0f;
-  --c-bg: #e7e5df;
+  /* Warm off-white, not the darker cream. Seven of seven consumer wellness and nutrition pages in
+     the teardown are light grounds, and warm off-white specifically is current: Noom #F6F4EE,
+     Arc #FFFCEC, Skool #F8F7F5. Keeping the warmth was the one clearly correct decision already on
+     the page; it is the only thing separating it from a generic dark fitness template. */
+  --c-ink: #12100f;
+  --c-bg: #f7f5f0;
   --c-surface: #ffffff;
-  --c-warm: #dddbd3;
-  --c-line: #ddd9d0;
-  --c-divider: #eae7e0;
-  --c-muted: #636363;
-  --c-soft: #5c5c5c;
-  --c-faint: #757575;
+  --c-warm: #efece5;
+  --c-line: #e2ded5;
+  --c-divider: #eeebe4;
+  --c-muted: #635d58;
+  --c-soft: #5c5651;
+  --c-faint: #6b655f;
+  --c-accent: #b81f38;
   color-scheme: light;
 
   /* Hairline on ink grounds. One element cannot change colour across sections, so the thread is
@@ -215,10 +220,10 @@
 
   /* Display scale. Separate classes, never a mutation of .tf-display, which 41 files in the
      logged-in product depend on. */
-  --t-mega: clamp(40px, 13vw, 132px);
-  --t-loud: clamp(34px, 9vw, 96px);
-  --t-mid: clamp(24px, 5vw, 52px);
-  --t-stat: clamp(72px, 22vw, 260px);
+  --t-mega: clamp(32px, 5.2vw, 54px);
+  --t-loud: clamp(28px, 4vw, 42px);
+  --t-mid: clamp(22px, 2.6vw, 30px);
+  --t-stat: clamp(40px, 6vw, 68px);
 }
 @media (min-width: 640px) {
   .tf-light {
@@ -233,8 +238,8 @@
     /* The headline column caps at 56vw and a display line is capped at 16 characters. At an average
        uppercase advance of 0.352em that allows 56 / (16 * 0.352) = 9.94vw, so 9.5vw can never
        collide with the portrait no matter how wide the viewport gets. */
-    --t-mega: clamp(72px, 9.5vw, 132px);
-    --t-loud: clamp(56px, 7vw, 96px);
+    --t-mega: clamp(40px, 4.2vw, 54px);
+    --t-loud: clamp(32px, 3.2vw, 42px);
   }
 }
 @media (min-width: 1440px) {
@@ -243,35 +248,70 @@
   }
 }
 
-/* Display lockups. Uppercase Gulams, one weight. Leading floor is 0.86: Spanish accented caps rise
-   about 226 units above cap height in this face, so tighter than that collides an accent on the
-   line below with the line above. */
+/* Display lockups.
+   Rebuilt against .planning/LANDING-TEARDOWN-2026.md, which rendered 24 current landing pages and
+   read their computed styles. Three findings drove this, and all three reversed what was here:
+
+   1. NOT ONE of the 24 pages uses a condensed face, and the two loudest voices in the category
+      (Ladder, Tonal) both reached for EXTENDED. Condensed reads as the previous cycle. The Gulams
+      display face is gone from marketing. It stays defined for the logged-in product, where 41
+      files reference .tf-display.
+   2. Sentence case wins 20 of 24. The only ALL-CAPS pages sell equipment or hard-training identity
+      (Fitbod, Ladder, Centr, Tonal). Consumer wellness is 0 for 7 on caps. So no text-transform,
+      which also removes the Spanish accented-capital collision for free.
+   3. The big consumer brands set headlines SMALL: Strava 32px, Duolingo 32px, Flo 48px, Calm 49.5px.
+      The 110 to 120px monsters are WHOOP and Oura selling hardware to a desktop researcher. This
+      product is opened on a phone from an Instagram link. */
 .tf-mega,
 .tf-loud,
 .tf-mid,
 .tf-stat {
-  font-family: var(--font-gulams), 'Gulams Fallback', Impact, sans-serif;
-  text-transform: uppercase;
-  font-weight: 600;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 .tf-mega {
   font-size: var(--t-mega);
-  line-height: 0.86;
-  letter-spacing: -0.01em;
+  line-height: 1.02;
 }
 .tf-loud {
   font-size: var(--t-loud);
-  line-height: 0.86;
-  letter-spacing: -0.005em;
+  line-height: 1.04;
 }
 .tf-mid {
   font-size: var(--t-mid);
-  line-height: 0.94;
+  font-weight: 700;
+  line-height: 1.12;
 }
 .tf-stat {
   font-size: var(--t-stat);
-  line-height: 0.78;
-  letter-spacing: -0.02em;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+/* The one accent. Every consumer fitness, nutrition and wellness page in the teardown has exactly
+   one saturated colour, used on almost nothing: the CTA fill, the proof glyphs, and small eyebrow
+   labels. Accent-free monochrome is real but it belongs to premium software, whose visitors already
+   want the product. A page with no accent gives the eye nothing to land on and, on a phone, no cue
+   for where to tap. Sampled from the red of her leggings in her own photography, then darkened
+   until white-on-accent clears AA at 6.38 to 1. */
+.tf-cta {
+  display: inline-block;
+  background: var(--c-accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 17px 34px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+.tf-eyebrow-accent {
+  color: var(--c-accent);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 /* Metric-matched fallback. .tf-display previously fell back to Impact, which does not exist on
@@ -327,10 +367,10 @@
   --beat-tight: clamp(48px, 7vw, 80px);
   --beat-normal: clamp(88px, 12vw, 148px);
   --beat-open: clamp(128px, 19vw, 220px);
-  --t-mega: clamp(40px, 13vw, 132px);
-  --t-loud: clamp(34px, 9vw, 96px);
-  --t-mid: clamp(24px, 5vw, 52px);
-  --t-stat: clamp(72px, 22vw, 260px);
+  --t-mega: clamp(32px, 5.2vw, 54px);
+  --t-loud: clamp(28px, 4vw, 42px);
+  --t-mid: clamp(22px, 2.6vw, 30px);
+  --t-stat: clamp(40px, 6vw, 68px);
 }
 @media (min-width: 640px) {
   .tf-dark {
@@ -342,8 +382,8 @@
   .tf-dark {
     --thread-x: 88px;
     --thread-gap: 56px;
-    --t-mega: clamp(72px, 9.5vw, 132px);
-    --t-loud: clamp(56px, 7vw, 96px);
+    --t-mega: clamp(40px, 4.2vw, 54px);
+    --t-loud: clamp(32px, 3.2vw, 42px);
   }
 }
 @media (min-width: 1440px) {

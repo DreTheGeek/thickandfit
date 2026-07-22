@@ -1,13 +1,11 @@
 // Marketing layout primitives.
 //
-// The organising idea is a single 1px vertical rule ("the thread") at a fixed viewport x, with
-// every section hanging off it. It replaces the centred max-width container that every section used
-// to sit in, which is what produced the dead space: content floated in the middle of a 1180px box
-// while the viewport got wider around it.
+// Sections are full-bleed with a gutter, no centred max-width container and no decorative rules.
 //
-// The thread is drawn PER SECTION rather than once for the page, because one element cannot change
-// colour as it crosses a light ground into an ink one. Sections abut with no gap, so it still reads
-// as one continuous line from the nav to the footer.
+// An earlier version hung everything off a 1px vertical "thread" running the page. That is gone:
+// none of the 24 current landing pages measured in .planning/LANDING-TEARDOWN-2026.md uses a
+// persistent vertical rule, its associations are editorial-brutalist agency portfolio, and it costs
+// horizontal room at 390px where every pixel is contested.
 import type { ReactElement, ReactNode } from 'react';
 
 export type Ground = 'cream' | 'white' | 'ink';
@@ -48,21 +46,9 @@ export function Section({
 }): ReactElement {
   return (
     <section id={id} className={`relative ${GROUND[ground]} ${BEAT[beat]} ${className}`}>
-      {/* This section's segment of the thread. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 w-px"
-        style={{
-          left: 'var(--thread-x)',
-          background: ground === 'ink' ? 'var(--c-line-d)' : 'var(--c-line)',
-        }}
-      />
       <div
         className="relative"
-        style={{
-          paddingLeft: 'calc(var(--thread-x) + var(--thread-gap))',
-          paddingRight: 'var(--gutter)',
-        }}
+        style={{ paddingLeft: 'var(--gutter)', paddingRight: 'var(--gutter)' }}
       >
         {children}
       </div>
@@ -71,24 +57,18 @@ export function Section({
 }
 
 /**
- * A section opener: an 11px label sitting behind a 24px tick that crosses the thread. Replaces the
- * old rounded icon badge, which was the same shape on every section and carried no information.
+ * A section opener. Small uppercase label in the accent, which is one of the three places the
+ * teardown found the accent actually used on consumer pages (CTA fill, proof glyphs, eyebrows).
  */
 export function Eyebrow({ label, ground = 'cream' }: { label: string; ground?: Ground }): ReactElement {
   return (
-    <div className="relative mb-6 flex items-center">
+    <div className="mb-5 flex items-center">
       <span
-        aria-hidden="true"
-        className="absolute h-px w-6"
-        style={{
-          left: 'calc((var(--thread-x) + var(--thread-gap)) * -1 + var(--thread-x) - 11px)',
-          background: ground === 'ink' ? 'var(--c-line-d)' : 'var(--c-line)',
-        }}
-      />
-      <span
-        className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${
-          ground === 'ink' ? 'text-white/55' : 'text-soft'
-        }`}
+        className={
+          ground === 'ink'
+            ? 'text-[12px] font-bold uppercase tracking-[0.14em] text-white/60'
+            : 'tf-eyebrow-accent'
+        }
       >
         {label}
       </span>
@@ -177,19 +157,9 @@ export function Interruption({
 }): ReactElement {
   return (
     <Section ground={ground} beat="tight">
-      {/* Emphasis as a structural event: the thread itself thickens for the height of this quote,
-          rather than adding an ornament next to it. */}
-      {emphasis ? (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 w-[3px]"
-          style={{
-            left: 'calc(var(--thread-x) - 1px)',
-            background: ground === 'ink' ? 'var(--c-line-d)' : 'var(--c-ink)',
-          }}
-        />
-      ) : null}
-      <figure className="max-w-[52ch]">
+      <figure
+        className={`max-w-[52ch] ${emphasis ? 'border-l-2 border-[var(--c-accent)] pl-6' : ''}`}
+      >
         <blockquote
           className={`${emphasis ? 'text-[20px] sm:text-[22px]' : 'text-[18px] sm:text-[19px]'} leading-[1.7] ${
             ground === 'ink' ? 'text-white' : 'text-ink'
