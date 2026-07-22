@@ -14,6 +14,7 @@ import { getTranslations } from 'next-intl/server';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { MarketingNav } from '@/components/marketing/marketing-nav';
 import { MarketingFooter } from '@/components/marketing/marketing-footer';
+import { ScrollStory, type StoryStep } from '@/components/marketing/scroll-story';
 import { JsonLd } from '@/components/seo/json-ld';
 import {
   graph,
@@ -91,6 +92,7 @@ export default async function Home(): Promise<ReactElement> {
   const features = t.raw('features') as Feature[];
   const stats = t.raw('proof.items') as Stat[];
   const pills = t.raw('closing.pills') as string[];
+  const storySteps = t.raw('story.steps') as StoryStep[];
 
   const nodes = [
     organizationNode(),
@@ -161,6 +163,20 @@ export default async function Home(): Promise<ReactElement> {
             {t('commit.body')}
           </p>
         </section>
+
+        {/* Scroll-driven story: her scroll is the timeline, walking through a real week in the app. */}
+        <ScrollStory
+          eyebrow={t('story.eyebrow')}
+          line1={t('story.line1')}
+          line2={t('story.line2')}
+          steps={storySteps}
+          images={[
+            '/assets/images/bec132276dbc.avif',
+            '/assets/images/ee8356541645.avif',
+            '/assets/images/58b0bf9e4c9e.avif',
+            '/assets/images/12847e8f578b.avif',
+          ]}
+        />
 
         {/* Feature pillars: the kept alternating rows, now responsive. */}
         <section className="mx-auto max-w-[1180px] px-6 pb-8">

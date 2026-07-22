@@ -2069,6 +2069,33 @@
       "company": "Company",
       "legalLabel": "Legal",
       "rights": "All rights reserved."
+    },
+    "story": {
+      "eyebrow": "A week with me",
+      "line1": "Watch a week",
+      "line2": "actually work.",
+      "steps": [
+        {
+          "label": "Monday",
+          "title": "You open it and know what to do.",
+          "body": "No guessing, no scrolling YouTube. Today's session is already there, built for the equipment you have."
+        },
+        {
+          "label": "Tuesday",
+          "title": "Dinner gets logged in seconds.",
+          "body": "You photograph the plate. It reads what's on it, handles cooked versus raw, and your day updates. You go back to your family."
+        },
+        {
+          "label": "Thursday",
+          "title": "You're not doing this alone.",
+          "body": "A message from me, and a room full of women chasing the same thing. Somebody notices when you show up."
+        },
+        {
+          "label": "Sunday",
+          "title": "You can see it working.",
+          "body": "Weight, measurements, habits, photos. Proof that the boring consistent weeks are the ones that pay."
+        }
+      ]
     }
   }
 }

@@ -2069,6 +2069,33 @@
       "company": "Nosotras",
       "legalLabel": "Legal",
       "rights": "Todos los derechos reservados."
+    },
+    "story": {
+      "eyebrow": "Una semana conmigo",
+      "line1": "Mira una semana",
+      "line2": "funcionando de verdad.",
+      "steps": [
+        {
+          "label": "Lunes",
+          "title": "Abres la app y ya sabes qué hacer.",
+          "body": "Sin adivinar, sin buscar en YouTube. La sesión de hoy ya está lista, hecha con el equipo que tienes."
+        },
+        {
+          "label": "Martes",
+          "title": "La cena se registra en segundos.",
+          "body": "Le tomas foto al plato. Lee lo que hay, ajusta crudo o cocido, y tu día se actualiza. Vuelves con tu familia."
+        },
+        {
+          "label": "Jueves",
+          "title": "No estás haciendo esto sola.",
+          "body": "Un mensaje mío, y un grupo de mujeres buscando lo mismo. Alguien nota cuando apareces."
+        },
+        {
+          "label": "Domingo",
+          "title": "Puedes ver que sí funciona.",
+          "body": "Peso, medidas, hábitos, fotos. La prueba de que las semanas aburridas y constantes son las que pagan."
+        }
+      ]
     }
   }
 }
