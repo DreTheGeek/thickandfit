@@ -2042,17 +2042,20 @@
       "line1": "Start free.",
       "line2": "Cancel in one tap.",
       "body": "$19.97 a month, a free trial before you pay anything, and cancelling takes one tap. You have been burned by an app before. Not here.",
-      "cta": "See the plans"
+      "cta": "See the plans",
+      "cancelLine": "3 days free. Cancel anytime, no phone call and no guilt. Same price in every country."
     },
     "closing": {
-      "line1": "If you're ready to lock in,",
-      "line2": "let's work.",
+      "line1": "If you're ready",
+      "line2": "to lock in,",
       "pills": [
         "Move with purpose",
         "Fuel your body",
         "Sustainable results"
       ],
-      "cta": "Start your journey"
+      "cta": "Start your journey",
+      "motto": "It's not a race, it's a marathon.",
+      "line3": "let's work."
     },
     "footer": {
       "tagline": "Creator-led, bilingual fitness coaching for women.",
@@ -2169,7 +2172,18 @@
       "line2": "everybody asks first.",
       "cta": "Read all the answers"
     },
-    "stickyCta": "Start your journey"
+    "stickyCta": "Start your journey",
+    "captions": [
+      "PLATE 01 / TODAY'S SESSION",
+      "PLATE 02 / WHAT'S ON THE PLATE",
+      "PLATE 03 / THIS WEEK'S FOOD",
+      "PLATE 04 / IN YOUR CORNER"
+    ],
+    "problemEs": [
+      "Ya contaste macros antes. Ya hiciste meal prep antes.",
+      "Después la vida pasó y el plan no se dobló.",
+      "No fue falta de disciplina. El plan nunca fue para tu vida."
+    ]
   },
   "about": {
     "metaTitle": "About Thick & Fit",

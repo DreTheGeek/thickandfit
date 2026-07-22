@@ -16,7 +16,7 @@ export async function MarketingNav(): Promise<ReactElement> {
   const twin = twinPathFor(pathname);
   const lp = (target: string): string => withLocalePrefix(pathname, target);
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-line bg-bg">
       <nav className="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-6 py-4">
         <Link href={lp('/')} aria-label="Thick & Fit" className="tf-press shrink-0">
           <Wordmark height={18} />

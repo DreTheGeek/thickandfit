@@ -2042,17 +2042,20 @@
       "line1": "Empieza gratis.",
       "line2": "Cancela con un toque.",
       "body": "$19.97 al mes, con prueba gratis antes de pagar nada, y cancelar toma un toque. Ya te falló una app antes. Aquí no.",
-      "cta": "Ver los planes"
+      "cta": "Ver los planes",
+      "cancelLine": "3 días gratis. Cancela cuando quieras, sin llamadas y sin culpa. El mismo precio en cada país."
     },
     "closing": {
-      "line1": "Si estás lista para entrarle,",
-      "line2": "vamos con todo.",
+      "line1": "Si estás lista",
+      "line2": "para entrarle,",
       "pills": [
         "Muévete con propósito",
         "Alimenta tu cuerpo",
         "Resultados que duran"
       ],
-      "cta": "Empieza tu camino"
+      "cta": "Empieza tu camino",
+      "motto": "No es una carrera, es un maratón.",
+      "line3": "vamos con todo."
     },
     "footer": {
       "tagline": "Coaching fitness bilingüe, hecho por una creadora, para mujeres.",
@@ -2169,7 +2172,18 @@
       "line2": "que todas hacen primero.",
       "cta": "Ver todas las respuestas"
     },
-    "stickyCta": "Empieza tu camino"
+    "stickyCta": "Empieza tu camino",
+    "captions": [
+      "LÁMINA 01 / TU SESIÓN DE HOY",
+      "LÁMINA 02 / QUÉ HAY EN EL PLATO",
+      "LÁMINA 03 / LA COMIDA DE TU SEMANA",
+      "LÁMINA 04 / ESTOY CONTIGO"
+    ],
+    "problemEs": [
+      "You have counted before. You have meal prepped before.",
+      "Then life happened and the plan did not bend.",
+      "That was not discipline. The plan was never for your life."
+    ]
   },
   "about": {
     "metaTitle": "Sobre Thick & Fit",
