@@ -1832,5 +1832,55 @@
       "messagePlaceholder": "Message...",
       "send": "Send"
     }
+  },
+  "faq": {
+    "eyebrow": "Questions",
+    "title": "Everything you're wondering",
+    "subtitle": "Straight answers about how Thick & Fit works, what it costs, and who it's for.",
+    "ctaTitle": "Ready when you are",
+    "ctaBody": "Come see what Stephanie built. It's not a race, it's a marathon.",
+    "ctaButton": "Join the waitlist",
+    "items": [
+      {
+        "q": "What is Thick & Fit?",
+        "a": "Thick & Fit is a bilingual fitness coaching app built by coach Stephanie Pantoja for women. You get structured workout programs with her filmed demos, nutrition tracking that handles real home cooking, a community, and coaching in her method. Everything works in English or Spanish."
+      },
+      {
+        "q": "Is Thick & Fit available in Spanish?",
+        "a": "Yes. Every screen works fully in Spanish or English, and you pick your language when you sign up. Your coaching answers in the language you write in. This is not a half-translated app: the member side and the coaching side are both bilingual."
+      },
+      {
+        "q": "How much does Thick & Fit cost?",
+        "a": "Self-Guided is $19.97 per month and includes the full app: workouts, photo nutrition tracking, and progress tracking. Coached plans start at $200 per month with Stephanie's trained team. One-on-one coaching with Steph is premium and by application."
+      },
+      {
+        "q": "Is there a free trial?",
+        "a": "Yes. You can try it free before you are charged anything. Cancel before the trial ends and you are not charged. No tricks."
+      },
+      {
+        "q": "How does the food photo tracking work?",
+        "a": "You take a photo of your meal and the app estimates what is on the plate and how much. It matches those foods to a nutrition database, converts between raw and cooked weights, and logs your real macros. You can correct any portion, and it learns from your corrections."
+      },
+      {
+        "q": "Do I need a gym?",
+        "a": "No. You tell the app what you have access to, whether that is a full gym, dumbbells, bands, or just your body, and your program is built around that."
+      },
+      {
+        "q": "Is it good for beginners?",
+        "a": "Yes. You choose your experience level during setup and your program is matched to it. It's not a race, it's a marathon, and the app is built to meet you where you are."
+      },
+      {
+        "q": "Who is the coach?",
+        "a": "Stephanie Pantoja, a bilingual fitness coach for women across the US and Latin America. The workouts, the meal-plan method, and the coaching voice are all hers. She built the app so her coaching lives somewhere she owns."
+      },
+      {
+        "q": "Can I cancel anytime?",
+        "a": "Yes, in one tap from your account, with no retention maze and no hidden auto-renew traps. You keep access until the end of the period you already paid for."
+      },
+      {
+        "q": "What if I have PCOS, an injury, or foods I can't eat?",
+        "a": "You tell the app during setup. Things like PCOS, insulin resistance, thyroid conditions, injuries, allergies, and foods you avoid all shape your macros, your meal plans, and what your coach suggests. It will never recommend a food you said you can't eat."
+      }
+    ]
   }
 }
