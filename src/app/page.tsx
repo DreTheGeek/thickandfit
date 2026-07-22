@@ -93,7 +93,9 @@ export default async function Home(): Promise<ReactElement> {
   const otherLang = isEsPath(pathname) ? 'en' : 'es';
   // Same markup, two art directions, so they can be compared as real pages rather than as
   // adjectives. /preview/dark is noindexed and exists only for that decision.
-  const variant = pathname?.startsWith('/preview/dark') ? 'tf-dark' : 'tf-light';
+  // Dark is the default direction now, per the client's call after seeing Ladder. The
+  // evidence-based light build stays reachable at /preview/light for comparison.
+  const variant = pathname?.startsWith('/preview/light') ? 'tf-light' : 'tf-dark';
 
   const nodes = [
     organizationNode(),
@@ -108,59 +110,54 @@ export default async function Home(): Promise<ReactElement> {
       <MarketingNav />
 
       <main>
-        {/* 1. HERO. Device: rule break. Right side: the portrait, bleeding off the edge. */}
-        <Section ground="cream" beat="bleed" className="pb-[var(--beat-normal)] lg:pb-0">
-          <div className="grid items-center gap-10 pt-10 lg:min-h-[86svh] lg:grid-cols-[minmax(0,52vw)_minmax(0,1fr)] lg:gap-12 lg:pt-0">
-            <div className="flex flex-col">
-              {/* Proof ABOVE the headline. Fitbod's Apple laurel sits at y246 above its H1 at y351,
-                  Cal AI's rating pill is the first element in its hero, Flo's stars sit at y198
-                  above its H1 at y232. Front-loading proof is the current app pattern, and it is
-                  the opposite of the 2019 order. Real numbers only: no invented store rating. */}
-              <p className="tf-eyebrow-accent mb-5 flex items-center gap-2">
-                <Icon name="check" size={14} strokeWidth={3} />
-                {t('hero.proofLine')}
-              </p>
-              <h1 className="tf-mega max-w-[19ch]">{t('hero.h1')}</h1>
-              <p className="mt-5 max-w-[46ch] text-[17px] leading-[1.6] text-muted sm:text-[19px]">
+        {/* 1. HERO. Ladder grammar: badge row, heavy uppercase claim, one accent pill, the
+            reassurance line under it, and the app shown inside a glowing accent ring. */}
+        <Section ground="cream" beat="bleed" className="pb-[var(--beat-normal)]">
+          <div className="grid items-center gap-12 pt-12 lg:min-h-[88svh] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)] lg:gap-16 lg:pt-0">
+            <div>
+              {/* Seven filled accent checks: one per thing she actually gives you. Reads as a
+                  receipt before a single word of the claim. */}
+              <div className="mb-8 flex flex-wrap gap-2.5" aria-hidden="true">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <span key={i} className="tf-badge">
+                    <Icon name="check" size={18} strokeWidth={3.2} />
+                  </span>
+                ))}
+              </div>
+              <h1 className="tf-mega max-w-[16ch]">{t('hero.h1')}</h1>
+              <p className="mt-6 max-w-[44ch] text-[17px] leading-[1.6] text-muted sm:text-[19px]">
                 {t('hero.sub')}
               </p>
-              <div className="mt-8">
+              <div className="mt-9">
                 <Link href="/join" className="tf-press tf-cta">
                   {t('hero.cta')}
                 </Link>
-                {/* One reassurance line, directly under the button. Verbatim precedent at Ladder:
-                    "No Credit Card To Start / Cancel anytime", set right below the pill. Billing
-                    distrust is the category failure this product exists to fix. */}
-                <p className="mt-4 text-[14px] leading-snug text-muted">{t('hero.reassure')}</p>
-                <p className="mt-1 text-[14px] leading-snug text-muted">{t('hero.priceLine')}</p>
+                <p className="tf-eyebrow-accent mt-5 text-[13px]">{t('hero.reassure')}</p>
+                <p className="mt-2 text-[14px] text-muted">{t('hero.priceLine')}</p>
               </div>
-              {/* Kept for the answer engines: the first 200 words still need one plain factual
-                  sentence naming the product. Demoted below the fold action, not deleted. */}
-              <p className="order-1 mt-8 max-w-[46ch] text-[14px] leading-[1.6] text-faint sm:order-none">
-                {t('hero.definition')}
-              </p>
+              {/* Proof, as badges rather than a sentence. Real numbers only. */}
+              <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
+                <p className="text-[14px] text-muted">
+                  <span className="text-[22px] font-black text-ink">{stats[0]?.n}</span>{' '}
+                  {stats[0]?.l}
+                </p>
+                <p className="text-[14px] text-muted">
+                  <span className="text-[22px] font-black text-ink">{stats[1]?.n}</span>{' '}
+                  {stats[1]?.l}
+                </p>
+              </div>
             </div>
-            {/* Bleeds past the right gutter and is clipped by the viewport: a shape the layout cuts
-                cannot look accidental. */}
-            <div className="mr-[calc(var(--gutter)*-1)] hidden self-stretch lg:block">
-              {/* eslint-disable-next-line @next/next/no-img-element -- static marketing photo */}
+
+            <div className="relative flex min-h-[420px] items-center justify-center lg:min-h-[70svh]">
+              <span className="tf-glow" aria-hidden="true" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- static app screenshot */}
               <img
-                src="/brand/img/steph-about.avif"
+                src="/brand/img/app-1.avif"
                 alt={t('hero.alt')}
                 fetchPriority="high"
-                className="h-full min-h-[78svh] w-full max-w-none object-cover object-[30%_center]"
+                className="relative z-10 max-h-[58svh] w-auto max-w-[74%] object-contain drop-shadow-[0_30px_70px_rgba(0,0,0,0.7)]"
               />
             </div>
-          </div>
-          {/* Mobile portrait: full bleed under the fold, never competing with the headline. */}
-          <div className="mt-10 ml-[calc((var(--thread-x)_+_var(--thread-gap))*-1)] mr-[calc(var(--gutter)*-1)] lg:hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static marketing photo */}
-            <img
-              src="/brand/img/steph-about.avif"
-              alt={t('hero.alt')}
-              fetchPriority="high"
-              className="h-[52svh] w-full object-cover object-[30%_20%]"
-            />
           </div>
         </Section>
 

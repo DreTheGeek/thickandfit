@@ -349,29 +349,90 @@
    Everything the light variant enforces still holds here: monochrome only, green never decorative,
    grey confined to metadata, and the same thread, apertures and knockouts. */
 .tf-dark {
-  --c-ink: #f2f1ee;
-  --c-bg: #0b0b0d;
-  --c-surface: #141417;
-  --c-warm: #1c1c20;
-  --c-line: #2a2a30;
-  --c-divider: #1c1c20;
-  --c-muted: #9a9aa2;
-  --c-soft: #a8a8b0;
-  --c-faint: #8b8b93;
-  --c-line-d: rgba(11, 11, 13, 0.22);
+  --c-ink: #ffffff;
+  --c-bg: #0e0e0e;
+  --c-surface: #ffffff;
+  --c-warm: #161616;
+  --c-line: #262626;
+  --c-divider: #1c1c1c;
+  --c-muted: #a3a3a3;
+  --c-soft: #b5b5b5;
+  --c-faint: #8a8a8a;
+  /* One high-chroma accent, and it takes DARK text on it rather than white. That inversion is what
+     makes a neon pill read as a button and not as a warning. Same family as the red sampled from her
+     own photography, pushed to the chroma a near-black ground needs: 5.29 to 1 on the ground, and
+     5.29 to 1 for the ink label sitting on the fill. */
+  --c-accent: #ff2d55;
+  --c-accent-ink: #0e0e0e;
+  --c-line-d: rgba(14, 14, 14, 0.2);
   color-scheme: dark;
 
-  --thread-x: 20px;
-  --thread-gap: 16px;
-  --gutter: clamp(16px, 3.2vw, 56px);
-  --beat-tight: clamp(48px, 7vw, 80px);
-  --beat-normal: clamp(88px, 12vw, 148px);
-  --beat-open: clamp(128px, 19vw, 220px);
-  --t-mega: clamp(32px, 5.2vw, 54px);
-  --t-loud: clamp(28px, 4vw, 42px);
-  --t-mid: clamp(22px, 2.6vw, 30px);
-  --t-stat: clamp(40px, 6vw, 68px);
+  --gutter: clamp(20px, 5vw, 72px);
+  --beat-tight: clamp(56px, 8vw, 96px);
+  --beat-normal: clamp(88px, 12vw, 152px);
+  --beat-open: clamp(120px, 16vw, 200px);
+
+  /* Heavy, tight, uppercase. Ladder and Tonal both run caps here, and both reach for EXTENDED
+     rather than condensed. Inter at 900 with slightly positive tracking is the closest available
+     approximation of an extended grotesk without licensing a new face. */
+  --t-mega: clamp(38px, 6.4vw, 76px);
+  --t-loud: clamp(30px, 4.6vw, 54px);
+  --t-mid: clamp(22px, 2.8vw, 34px);
+  --t-stat: clamp(44px, 7vw, 84px);
 }
+.tf-dark .tf-mega,
+.tf-dark .tf-loud,
+.tf-dark .tf-mid,
+.tf-dark .tf-stat {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  line-height: 1.02;
+}
+.tf-dark .tf-cta {
+  background: var(--c-accent);
+  color: var(--c-accent-ink);
+  font-weight: 800;
+  font-size: 16px;
+  padding: 19px 40px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.tf-dark .tf-eyebrow-accent {
+  color: var(--c-accent);
+}
+
+/* The glow. A blurred accent ring sitting behind the phone, which is the single most recognisable
+   move in this register. Pure CSS, no asset, and it is decorative so it carries aria-hidden. */
+.tf-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  /* Must be WIDER than the device it sits behind, or it reads as a stray arc peeking out from the
+     edges instead of a ring the product is sitting inside. */
+  width: min(96%, 560px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 4px solid var(--c-accent);
+  box-shadow:
+    0 0 90px 10px color-mix(in srgb, var(--c-accent) 62%, transparent),
+    inset 0 0 70px 4px color-mix(in srgb, var(--c-accent) 26%, transparent);
+  pointer-events: none;
+}
+
+/* Accent check badges, the row that runs above a claim. */
+.tf-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  color: var(--c-accent-ink);
+}
+
 @media (min-width: 640px) {
   .tf-dark {
     --thread-x: 32px;
