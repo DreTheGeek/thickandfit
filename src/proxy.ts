@@ -51,6 +51,11 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   const reqHeaders = new Headers(req.headers);
   reqHeaders.set('x-nonce', nonce);
   reqHeaders.set('Content-Security-Policy', csp);
+  // The render needs the path to resolve the UI locale. Locale used to come only from the
+  // ui_locale cookie, which no crawler sends, so every Spanish page was unreachable to search and
+  // answer engines: Googlebot asking for es-MX got English. The public /es/* routes fix that by
+  // giving Spanish real URLs, and i18n/request.ts reads this header to pick the locale.
+  reqHeaders.set('x-pathname', req.nextUrl.pathname);
 
   let res = NextResponse.next({ request: { headers: reqHeaders } });
 
@@ -74,7 +79,17 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   // Touch the session so @supabase/ssr refreshes + re-writes the auth cookies via setAll.
   await supabase.auth.getUser();
 
-  if (!req.cookies.get('ui_locale')) {
+  const isEsRoute = req.nextUrl.pathname === '/es' || req.nextUrl.pathname.startsWith('/es/');
+  if (isEsRoute) {
+    // Someone who landed on a Spanish URL from search stays in Spanish when they click through to
+    // /join or sign-in, which are not locale-routed. Without this, a visitor arriving on /es from
+    // Google hits the CTA and drops into English mid-funnel.
+    res.cookies.set('ui_locale', 'es', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+  } else if (!req.cookies.get('ui_locale')) {
     const country = req.headers.get('x-vercel-ip-country');
     res.cookies.set('ui_locale', localeForCountry(country), {
       path: '/',

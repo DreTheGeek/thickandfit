@@ -15,6 +15,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
+import { headers } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { MarketingNav } from '@/components/marketing/marketing-nav';
@@ -31,6 +32,7 @@ import {
   softwareApplicationNode,
   type JsonLdNode,
 } from '@/lib/seo/schema';
+import { localeAlternates, withLocalePrefix } from '@/lib/seo/locale-alternates';
 
 type Feature = {
   eyebrow: string;
@@ -51,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Thick & Fit',
     description: t('hero.sub'),
-    alternates: { canonical: '/' },
+    alternates: await localeAlternates('/'),
     openGraph: {
       url: '/',
       title,
@@ -118,6 +120,7 @@ function Testimonial({ item, large = false }: { item: Quote; large?: boolean }):
 }
 
 export default async function Home(): Promise<ReactElement> {
+  const headers_pathname = (await headers()).get('x-pathname');
   const t = await getTranslations('marketing');
   const tf = await getTranslations('faq');
   const features = t.raw('features') as Feature[];
@@ -130,6 +133,9 @@ export default async function Home(): Promise<ReactElement> {
   const aboutParas = t.raw('about.paras') as string[];
   const steps = t.raw('process.steps') as Step[];
   const faqItems = (tf.raw('items') as FaqItem[]).slice(0, 4);
+  // Keep the in-page CTAs in the reader's language: on /es these must go to /es/faq and
+  // /es/pricing, not bounce back to the English canonical URLs.
+  const lp = (target: string): string => withLocalePrefix(headers_pathname, target);
 
   const nodes = [
     organizationNode(),
@@ -425,7 +431,7 @@ export default async function Home(): Promise<ReactElement> {
                 {t('pricingTeaser.body')}
               </p>
               <Link
-                href="/pricing"
+                href={lp('/pricing')}
                 className="tf-press mt-7 inline-block border border-ink px-8 py-4 text-[12px] font-semibold uppercase tracking-[2px] text-ink"
               >
                 {t('pricingTeaser.cta')}
@@ -449,7 +455,7 @@ export default async function Home(): Promise<ReactElement> {
                   <span className="text-faint">{t('faqTeaser.line2')}</span>
                 </h2>
                 <Link
-                  href="/faq"
+                  href={lp('/faq')}
                   className="tf-press mt-7 inline-block border border-ink px-7 py-3.5 text-[12px] font-semibold uppercase tracking-[2px] text-ink"
                 >
                   {t('faqTeaser.cta')}

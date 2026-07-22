@@ -15,6 +15,7 @@ import {
   personNode,
   type JsonLdNode,
 } from '@/lib/seo/schema';
+import { localeAlternates } from '@/lib/seo/locale-alternates';
 
 type FaqItem = { q: string; a: string };
 
@@ -24,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description: t('subtitle'),
-    alternates: { canonical: '/faq' },
+    alternates: await localeAlternates('/faq'),
     // A page-level openGraph replaces the parent's, so the image must be repeated here.
     openGraph: {
       url: '/faq',

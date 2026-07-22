@@ -2,11 +2,16 @@
 // Monochrome, bilingual, and it links the pages answer engines and humans both look for.
 import type { ReactElement } from 'react';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
+import { withLocalePrefix } from '@/lib/seo/locale-alternates';
 import { Wordmark } from '@/components/ui/wordmark';
 
 export async function MarketingFooter(): Promise<ReactElement> {
   const t = await getTranslations('marketing');
+  // Footer nav stays in the language the visitor is reading. See withLocalePrefix.
+  const pathname = (await headers()).get('x-pathname');
+  const lp = (target: string): string => withLocalePrefix(pathname, target);
   const year = new Date().getFullYear();
 
   return (
@@ -35,12 +40,12 @@ export async function MarketingFooter(): Promise<ReactElement> {
           </div>
           <ul className="mt-4 flex flex-col gap-2.5 text-[14px] text-soft">
             <li>
-              <Link href="/pricing" className="hover:text-ink">
+              <Link href={lp('/pricing')} className="hover:text-ink">
                 {t('nav.pricing')}
               </Link>
             </li>
             <li>
-              <Link href="/faq" className="hover:text-ink">
+              <Link href={lp('/faq')} className="hover:text-ink">
                 {t('nav.faq')}
               </Link>
             </li>

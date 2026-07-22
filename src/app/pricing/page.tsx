@@ -18,6 +18,7 @@ import {
   softwareApplicationNode,
   type JsonLdNode,
 } from '@/lib/seo/schema';
+import { localeAlternates } from '@/lib/seo/locale-alternates';
 
 type Tier = {
   id: string;
@@ -35,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description: t('subtitle'),
-    alternates: { canonical: '/pricing' },
+    alternates: await localeAlternates('/pricing'),
     openGraph: {
       url: '/pricing',
       title,
