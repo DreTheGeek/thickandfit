@@ -13,6 +13,7 @@ import { headers } from "next/headers";
 import { Providers } from "@/components/providers";
 import { Suspense } from "react";
 import { PostHogPageview } from "@/lib/monitoring/posthog-pageview";
+import { isPublicMarketingPath } from "@/lib/seo/locale-alternates";
 
 const gulamsCondensed = localFont({
   src: "../../public/assets/fonts/a0274ead7b73.woff2",
@@ -113,10 +114,21 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
-  const messages = await getMessages();
+  const allMessages = await getMessages();
   // Per-request script nonce from the proxy CSP. Reading headers() also opts the tree into dynamic
   // rendering, which is required for the nonce to be stamped at SSR time.
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const reqHeaders = await headers();
+  const nonce = reqHeaders.get("x-nonce") ?? undefined;
+
+  // Public pages do not ship the app string catalog. NextIntlClientProvider serialises whatever it
+  // is given into the HTML, so every anonymous visitor to a marketing page was downloading ~65KB of
+  // coach, admin and operator strings: roughly 40 percent of the document. That is wasted bytes on
+  // the pages most likely to be opened on a phone over mobile data, and it published the app's
+  // internal vocabulary (internal record labels, role names, tooling terms) to anyone who viewed
+  // source. None of these routes reference the `app` namespace, verified before removing it.
+  const messages = isPublicMarketingPath(reqHeaders.get("x-pathname"))
+    ? Object.fromEntries(Object.entries(allMessages).filter(([ns]) => ns !== "app"))
+    : allMessages;
   return (
     <html
       lang={locale}

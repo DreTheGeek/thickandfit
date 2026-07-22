@@ -18,6 +18,23 @@ export function esPathFor(enPath: string): string {
 /** Marketing routes that exist in both languages. */
 const BILINGUAL_PATHS = ['/', '/pricing', '/faq', '/about'] as const;
 
+/** Public, unauthenticated pages, including their /es twins. Anything else is the app. */
+const PUBLIC_PATHS = ['/', '/pricing', '/faq', '/about', '/join', '/terms', '/privacy'] as const;
+
+/** Auth screens are publicly reachable too, and only read the `auth` namespace. */
+const PUBLIC_PREFIXES = ['/auth/'] as const;
+
+/**
+ * True for a public marketing route. Used by the root layout to decide whether the client message
+ * bundle should include the app namespace, which these pages never read.
+ */
+export function isPublicMarketingPath(pathname: string | null | undefined): boolean {
+  const p = pathname ?? '';
+  const bare = isEsPath(p) ? (p === '/es' ? '/' : p.slice('/es'.length)) : p;
+  if ((PUBLIC_PATHS as readonly string[]).includes(bare)) return true;
+  return (PUBLIC_PREFIXES as readonly string[]).some((prefix) => bare.startsWith(prefix));
+}
+
 /**
  * Keeps in-page navigation inside the current language. On /es, a link to /pricing becomes
  * /es/pricing. Without this a Spanish visitor clicking "Precios" lands on the English canonical
