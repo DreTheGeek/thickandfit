@@ -90,6 +90,9 @@ export default async function Home(): Promise<ReactElement> {
   const faqItems = (tf.raw('items') as FaqItem[]).slice(0, 4);
   const lp = (target: string): string => withLocalePrefix(pathname, target);
   const otherLang = isEsPath(pathname) ? 'en' : 'es';
+  // Same markup, two art directions, so they can be compared as real pages rather than as
+  // adjectives. /preview/dark is noindexed and exists only for that decision.
+  const variant = pathname?.startsWith('/preview/dark') ? 'tf-dark' : 'tf-light';
 
   const nodes = [
     organizationNode(),
@@ -108,7 +111,7 @@ export default async function Home(): Promise<ReactElement> {
   );
 
   return (
-    <div className="tf-light">
+    <div className={variant}>
       <JsonLd data={graph(nodes)} />
       <MarketingNav />
 
@@ -440,7 +443,7 @@ export default async function Home(): Promise<ReactElement> {
 
         {/* 18. CLOSING. The only centred element on the entire page, which is why it lands. Her
             portrait returns bottom-anchored, in colour, never mirrored. */}
-        <section className="tf-on-ink relative overflow-hidden bg-ink text-white">
+        <section className="tf-ground-ink tf-on-ink relative overflow-hidden bg-ink text-white">
           <div className="relative z-10 px-[var(--gutter)] py-[var(--beat-open)] text-center">
             <span
               aria-hidden="true"

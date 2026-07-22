@@ -13,10 +13,13 @@ import type { ReactElement, ReactNode } from 'react';
 export type Ground = 'cream' | 'white' | 'ink';
 export type Beat = 'tight' | 'normal' | 'open' | 'bleed';
 
+// Two class hooks per ground. The Tailwind pair drives the light treatment; the tf-ground-* class
+// is what the dark variant overrides in globals.css, so a whole second art direction is a token
+// swap rather than a forked component tree.
 const GROUND: Record<Ground, string> = {
-  cream: 'bg-bg text-ink',
-  white: 'bg-surface text-ink',
-  ink: 'tf-on-ink bg-ink text-white',
+  cream: 'tf-ground-cream bg-bg text-ink',
+  white: 'tf-ground-white bg-surface text-ink',
+  ink: 'tf-ground-ink tf-on-ink bg-ink text-white',
 };
 
 const BEAT: Record<Beat, string> = {
