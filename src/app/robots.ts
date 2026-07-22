@@ -46,6 +46,7 @@ const AI_AGENTS = [
   'CCBot', // Common Crawl (feeds many models)
   'cohere-ai',
   'meta-externalagent',
+  'Bytespider', // ByteDance / Doubao. Big in LATAM reach, and half her audience is there.
 ];
 
 export default function robots(): MetadataRoute.Robots {

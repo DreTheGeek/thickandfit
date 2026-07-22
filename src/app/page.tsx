@@ -162,6 +162,13 @@ export default async function Home(): Promise<ReactElement> {
                 <p className="mt-6 max-w-[480px] text-[16px] leading-[1.7] text-soft sm:text-[17px]">
                   {t('hero.sub')}
                 </p>
+                {/* The plain "what this is" line. The headline and the sub above sell the vision,
+                    which is right, but a visitor landing cold from Instagram, and an answer engine
+                    reading the first 200 words, both need one factual sentence that names the
+                    product, the coach, and the bilingual promise. Kept visually quiet on purpose. */}
+                <p className="mt-4 max-w-[470px] text-[14px] leading-[1.6] text-soft">
+                  {t('hero.definition')}
+                </p>
                 <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
                   <Link
                     href="/join"

@@ -67,6 +67,10 @@ export function websiteNode(opts: { published?: string; modified?: string } = {}
     name: 'Thick & Fit',
     publisher: { '@id': ORG_ID },
     inLanguage: ['en', 'es'],
+    // No potentialAction/SearchAction here on purpose. An audit will score its absence as a missing
+    // completeness property, but this site has no PUBLIC search endpoint: /exercises 307s to
+    // /auth/sign-in, so a declared SearchAction would point answer engines at a login wall and
+    // claim a capability visitors do not have. Add it if a public search page ever ships.
     ...(opts.published ? { datePublished: opts.published } : {}),
     ...(opts.modified ? { dateModified: opts.modified } : {}),
   };
