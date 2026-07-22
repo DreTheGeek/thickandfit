@@ -2180,5 +2180,67 @@
       "cta": "Read all the answers"
     },
     "stickyCta": "Start your journey"
+  },
+  "about": {
+    "metaTitle": "About Thick & Fit",
+    "metaDesc": "Thick & Fit is a bilingual fitness coaching app built by coach Stephanie Pantoja for women in the US and Latin America. Workouts, nutrition, community, and coaching in English or Spanish.",
+    "eyebrow": "Thick & Fit by Steph's Blessed",
+    "h1a": "Built for women",
+    "h1b": "who are done settling.",
+    "intro": "Thick & Fit is the bilingual coaching app Stephanie Pantoja built for her clients, because nothing she could buy was made for them. Not for women who live between English and Spanish. Not for women who want real math behind their macros. Not for women who deserve better than an app that dims the screen mid set.",
+    "originEyebrow": "The origin",
+    "originHead": "She outgrew the tools before she outgrew the work.",
+    "originA": "Stephanie is a certified personal trainer coaching women across the US and Latin America. The same complaint came back from client after client: logging food was the hardest part of the day. Photographing a label into a chat window. Guessing whether the number on the package meant cooked or raw. Searching for the food her family actually cooks and finding nothing.",
+    "originB": "So she stopped working around the problem and built the thing that solves it. This app is her method, her programming, and her voice, on a platform she owns.",
+    "diffEyebrow": "What is different",
+    "diffHead": "The parts everyone gets wrong.",
+    "diffs": [
+      {
+        "t": "Food logging that survives real cooking",
+        "d": "Photograph the plate and get the items back with calories, protein, carbs and fat. It handles cooked versus raw weight, and the food database covers what your family actually cooks, not just what is sold in a US supermarket."
+      },
+      {
+        "t": "A workout that does not fight you",
+        "d": "The screen stays awake for the whole session, so you are not tapping your phone between sets. The timer is real audio rather than a video file, so it still works on bad gym wifi. No barbell today? You get a substitution she picked, not a generic swap."
+      },
+      {
+        "t": "It tells you what to do next",
+        "d": "You rate how the session felt. The app reads your recent sessions and recommends your next weight and rep target using double progression, which is standard sports science. The math is shown, not hidden."
+      },
+      {
+        "t": "Bilingual all the way down",
+        "d": "Interface language and content language are separate settings. Read the app in English and search food in Spanish, or follow a program in Spanish with labels in English. It is a bilingual database, not English with a translation layer on top."
+      },
+      {
+        "t": "A room that stays alive",
+        "d": "Challenges with live leaderboards, coach broadcasts in both languages, and groups that match the ones her clients already belong to. Built so there is a reason to come back today, not just when you remember."
+      },
+      {
+        "t": "Billing you can actually trust",
+        "d": "Your next charge date is always visible. You get a warning before you renew. Cancelling takes one tap with no maze of confirmation screens. Honest billing is treated as a feature here, not an afterthought."
+      }
+    ],
+    "whoEyebrow": "Who it is for",
+    "whoHeadA": "Built for a specific woman.",
+    "whoHeadB": "Not for everyone.",
+    "whoA": "The women who follow Stephanie: bilingual, in the US and across Latin America, motivated but not obsessive, and done managing one app for macros and another for workouts.",
+    "whoB": "Many of them move between Spanish and English depending on who they are talking to. Every other fitness app makes them pick one. This one does not.",
+    "stats": [
+      {
+        "n": "562,000",
+        "l": "women following along"
+      },
+      {
+        "n": "256",
+        "l": "clients coached"
+      },
+      {
+        "n": "EN / ES",
+        "l": "full depth in both languages"
+      }
+    ],
+    "ctaHead": "Come see what she made.",
+    "ctaBody": "It is not a race, it is a marathon. Start whenever you are ready.",
+    "ctaButton": "Start your journey"
   }
 }

@@ -16,7 +16,7 @@ export function esPathFor(enPath: string): string {
 }
 
 /** Marketing routes that exist in both languages. */
-const BILINGUAL_PATHS = ['/', '/pricing', '/faq'] as const;
+const BILINGUAL_PATHS = ['/', '/pricing', '/faq', '/about'] as const;
 
 /**
  * Keeps in-page navigation inside the current language. On /es, a link to /pricing becomes

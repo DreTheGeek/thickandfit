@@ -2180,5 +2180,67 @@
       "cta": "Ver todas las respuestas"
     },
     "stickyCta": "Empieza tu camino"
+  },
+  "about": {
+    "metaTitle": "Sobre Thick & Fit",
+    "metaDesc": "Thick & Fit es una app de coaching bilingüe creada por la coach Stephanie Pantoja para mujeres en Estados Unidos y América Latina. Entrenamientos, nutrición, comunidad y coaching en inglés o español.",
+    "eyebrow": "Thick & Fit by Steph's Blessed",
+    "h1a": "Para mujeres",
+    "h1b": "que ya no se conforman.",
+    "intro": "Thick & Fit es la app de coaching bilingüe que Stephanie Pantoja construyó para sus clientas, porque nada de lo que podía comprar estaba hecho para ellas. Ni para mujeres que viven entre el inglés y el español. Ni para mujeres que quieren números reales detrás de sus macros. Ni para mujeres que merecen algo mejor que una app que apaga la pantalla a medio set.",
+    "originEyebrow": "El origen",
+    "originHead": "Superó las herramientas antes de superar el trabajo.",
+    "originA": "Stephanie es entrenadora personal certificada y entrena a mujeres en Estados Unidos y América Latina. La misma queja volvía una y otra vez: registrar la comida era lo más difícil del día. Fotografiar una etiqueta y mandarla a un chat. Adivinar si el número del paquete era en crudo o cocido. Buscar la comida que de verdad cocina tu familia y no encontrar nada.",
+    "originB": "Así que dejó de trabajar alrededor del problema y construyó lo que lo resuelve. Esta app es su método, su programación y su voz, en una plataforma que sí es suya.",
+    "diffEyebrow": "Qué es diferente",
+    "diffHead": "Lo que todos hacen mal.",
+    "diffs": [
+      {
+        "t": "Registro que aguanta la cocina real",
+        "d": "Toma una foto del plato y recibe los alimentos con calorías, proteína, carbohidratos y grasa. Maneja el peso crudo contra cocido, y la base de datos incluye lo que de verdad cocina tu familia, no solo lo que se vende en un supermercado de Estados Unidos."
+      },
+      {
+        "t": "Un entrenamiento que no pelea contigo",
+        "d": "La pantalla se queda encendida toda la sesión, así no andas tocando el teléfono entre series. El temporizador es audio real y no un video, así que funciona aunque el wifi del gimnasio esté malo. Si hoy no hay barra, te da una sustitución que ella eligió, no un cambio genérico."
+      },
+      {
+        "t": "Te dice qué sigue",
+        "d": "Calificas cómo se sintió la sesión. La app lee tus sesiones recientes y te recomienda el siguiente peso y las repeticiones con doble progresión, que es ciencia del deporte estándar. Las cuentas se muestran, no se esconden."
+      },
+      {
+        "t": "Bilingüe de verdad",
+        "d": "El idioma de la interfaz y el del contenido son ajustes separados. Lee la app en inglés y busca comida en español, o sigue un programa en español con las etiquetas en inglés. Es una base de datos bilingüe, no inglés con una capa de traducción encima."
+      },
+      {
+        "t": "Un espacio que sigue vivo",
+        "d": "Retos con tablas en vivo, mensajes de la coach en los dos idiomas, y grupos iguales a los que sus clientas ya pertenecen. Hecho para que haya razón de volver hoy, no solo cuando te acuerdes."
+      },
+      {
+        "t": "Cobros en los que puedes confiar",
+        "d": "La fecha de tu próximo cargo siempre está a la vista. Te avisamos antes de que se renueve. Cancelar es un toque, sin laberinto de pantallas. Aquí el cobro honesto es una función, no algo que se deja para después."
+      }
+    ],
+    "whoEyebrow": "Para quién es",
+    "whoHeadA": "Hecho para una mujer específica.",
+    "whoHeadB": "No para todas.",
+    "whoA": "Las mujeres que siguen a Stephanie: bilingües, en Estados Unidos y por toda América Latina, motivadas pero sin obsesionarse, y cansadas de manejar una app para macros y otra para entrenar.",
+    "whoB": "Muchas se mueven entre el español y el inglés según con quién estén hablando. Las demás apps de fitness las obligan a elegir una. Esta no.",
+    "stats": [
+      {
+        "n": "562,000",
+        "l": "mujeres siguiéndola"
+      },
+      {
+        "n": "256",
+        "l": "clientas entrenadas"
+      },
+      {
+        "n": "EN / ES",
+        "l": "profundidad completa en los dos idiomas"
+      }
+    ],
+    "ctaHead": "Ven a ver lo que hizo.",
+    "ctaBody": "No es una carrera, es un maratón. Empieza cuando estés lista.",
+    "ctaButton": "Empieza tu camino"
   }
 }

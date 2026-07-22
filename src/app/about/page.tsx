@@ -1,351 +1,174 @@
+// About. Rebuilt from the pre-launch pitch page that used to live here.
+//
+// That version was correctly carrying robots noindex: it was written for partners, not customers.
+// It named and criticised the platform she is leaving, stated that her paying clients were being
+// migrated off it and how their rev-share was handled, asserted that competitors had been fined by
+// the FTC, listed named private individuals and their roles, disclosed the vendor roadmap and the
+// stack, and described the coach feature as shipped when its PRD is still blocked. None of that
+// belongs on an indexed page. All of it is gone, and the reasons are in the commit.
+//
+// What remains is true, shipped, and customer-facing: her story, the differences a member actually
+// experiences, who it is for, and the real numbers. Styled to match the rest of the marketing
+// surface (monochrome cream and ink, tf-display headings) rather than the decorative green the old
+// page used, which breaks the brand rule that green is functional only.
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import type { ReactElement } from 'react';
+import { getTranslations } from 'next-intl/server';
+import { MarketingNav } from '@/components/marketing/marketing-nav';
+import { MarketingFooter } from '@/components/marketing/marketing-footer';
+import { JsonLd } from '@/components/seo/json-ld';
+import { localeAlternates } from '@/lib/seo/locale-alternates';
+import {
+  graph,
+  breadcrumbNode,
+  organizationNode,
+  personNode,
+  websiteNode,
+  type JsonLdNode,
+} from '@/lib/seo/schema';
 
-export const metadata: Metadata = {
-  title: 'About | Thick & Fit',
-  description:
-    'Thick & Fit is the bilingual fitness coaching app built for women who are done settling for platforms that were never made for them.',
-  // Unlinked pre-launch page that references internal positioning; keep it out of the index for now.
-  robots: { index: false, follow: false },
-};
+type Diff = { t: string; d: string };
+type Stat = { n: string; l: string };
 
-export default function AboutPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('about');
+  return {
+    title: t('metaTitle'),
+    description: t('metaDesc'),
+    alternates: await localeAlternates('/about'),
+    openGraph: {
+      url: '/about',
+      title: t('metaTitle'),
+      description: t('metaDesc'),
+      images: ['/assets/images/open-graph.jpg'],
+    },
+  };
+}
+
+export default async function AboutPage(): Promise<ReactElement> {
+  const t = await getTranslations('about');
+  const diffs = t.raw('diffs') as Diff[];
+  const stats = t.raw('stats') as Stat[];
+
+  // About is the entity surface: it is the page an answer engine reads to decide who Stephanie and
+  // Thick & Fit are, so it carries the full identity graph rather than a product node.
+  const nodes = [organizationNode(), personNode(), websiteNode(), breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
+  ])].filter((n): n is JsonLdNode => n !== null);
+
   return (
-    <main className="bg-white text-black">
+    <div className="tf-light">
+      <JsonLd data={graph(nodes)} />
+      <MarketingNav />
 
-      {/* Hero */}
-      <section className="mx-auto max-w-4xl px-6 py-24 sm:py-32">
-        <p className="mb-4 text-xs font-bold uppercase tracking-widest text-neutral-400">
-          Thick & Fit by Steph&apos;s Blessed
-        </p>
-        <h1 className="text-6xl font-black uppercase leading-[0.9] tracking-tighter sm:text-8xl">
-          Built for
-          <br />
-          <span className="text-[#5EBE62]">women</span>
-          <br />
-          who are done
-          <br />
-          settling.
-        </h1>
-        <p className="mt-10 max-w-2xl text-xl leading-relaxed text-neutral-700">
-          Thick & Fit is the bilingual fitness coaching platform Stephanie Pantoja built for
-          her audience because nothing else was actually built for them. Not for women who move
-          between English and Spanish. Not for women who want real math behind their macros.
-          Not for women who deserve better than a workout app that dims their screen mid-set.
-        </p>
-      </section>
-
-      {/* The origin */}
-      <section className="border-t border-neutral-100 bg-black py-24">
-        <div className="mx-auto max-w-4xl px-6">
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#5EBE62]">
-            The origin
-          </p>
-          <h2 className="mb-8 text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">
-            She built six figures on a platform she didn&apos;t own.
-          </h2>
-          <div className="grid gap-8 sm:grid-cols-2">
-            <p className="text-lg leading-relaxed text-neutral-300">
-              Stephanie Pantoja is a certified personal trainer with 562,000 Instagram followers
-              and 256 paying clients. She ran her coaching business on Lenus, a white-label
-              platform that was never designed for her. The biggest complaint from every single
-              client: logging food required screenshotting a label into ChatGPT because the app
-              could not handle photo-to-macro, did not know cooked vs uncooked weight, and barely
-              knew what arroz con pollo was.
+      <main className="bg-white text-ink">
+        {/* Hero */}
+        <section className="bg-bg">
+          <div className="mx-auto max-w-[1180px] px-6 pb-16 pt-14 sm:pt-20">
+            <p className="text-[12px] font-semibold uppercase tracking-[2px] text-soft">
+              {t('eyebrow')}
             </p>
-            <p className="text-lg leading-relaxed text-neutral-300">
-              She also did not own her client list. Did not own the brand. Did not own the
-              roadmap. Lenus would never build what her audience needed, and the fee structure
-              meant she was growing someone else&apos;s asset. So she stopped renting and started
-              building. This is the result.
+            <h1 className="tf-display mt-5 max-w-[15ch] text-[clamp(44px,9vw,84px)] leading-[0.9]">
+              {t('h1a')}
+              <br />
+              <span className="text-faint">{t('h1b')}</span>
+            </h1>
+            <p className="mt-8 max-w-[62ch] text-[16px] leading-[1.75] text-soft sm:text-[17px]">
+              {t('intro')}
             </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* What makes it different */}
-      <section className="border-t border-neutral-100 py-24">
-        <div className="mx-auto max-w-4xl px-6">
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-neutral-400">
-            The product
+        {/* Origin, on ink for the same contrast rhythm the home page uses. */}
+        <section className="bg-ink text-white">
+          <div className="mx-auto max-w-[1180px] px-6 py-24 sm:py-28">
+            <p className="text-[12px] font-semibold uppercase tracking-[2px] text-white/50">
+              {t('originEyebrow')}
+            </p>
+            <h2 className="tf-display mt-5 max-w-[18ch] text-[clamp(32px,5.5vw,64px)] leading-[0.94]">
+              {t('originHead')}
+            </h2>
+            <div className="mt-12 grid gap-8 border-t border-white/15 pt-10 sm:grid-cols-2 sm:gap-14">
+              <p className="text-[16px] leading-[1.75] text-white/70">{t('originA')}</p>
+              <p className="text-[16px] leading-[1.75] text-white/70">{t('originB')}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Differences. A definition list, which is answer-shaped and liftable. */}
+        <section className="mx-auto max-w-[1180px] px-6 py-20 sm:py-28">
+          <p className="text-[12px] font-semibold uppercase tracking-[2px] text-soft">
+            {t('diffEyebrow')}
           </p>
-          <h2 className="mb-16 text-4xl font-black uppercase tracking-tight sm:text-5xl">
-            Every competitor gets seven things wrong.
-            <br />
-            <span className="text-[#5EBE62]">We fix all seven.</span>
+          <h2 className="tf-display mt-5 max-w-[16ch] text-[clamp(32px,5.5vw,60px)] leading-[0.94]">
+            {t('diffHead')}
           </h2>
-          <div className="grid gap-0 divide-y divide-neutral-100">
-            {[
-              {
-                problem: 'Nutrition is a nightmare.',
-                fix: 'Snap a photo of your plate. It returns every food item with calories, protein, carbs, and fat. Adjust if needed. Log. Done. Free barcode scanner. Cooked vs uncooked auto-conversion. US food database plus a full LATAM database with the ingredients your family actually cooks with.',
-              },
-              {
-                problem: 'Your screen dims mid-set.',
-                fix: 'Wake Lock keeps your screen on for the entire workout. No tapping. No interruption. The timer is Web Audio, not a video file, so it works even on bad gym Wi-Fi. Reliable HLS video via Mux. If you do not have a barbell, the app offers a coach-curated substitution, not a generic swap.',
-              },
-              {
-                problem: 'The app never tells you what to do next.',
-                fix: 'After every session you rate difficulty. The progressive overload engine reads your last four sessions and recommends your exact next weight and rep target. This is standard sports science (double-progression), not guesswork. The math is transparent and auditable.',
-              },
-              {
-                problem: 'Fake bilingual.',
-                fix: 'The interface language and the content language are independent settings. You can read the app in English and search food in Spanish. You can follow a program written in Spanish while your labels are in English. The toggle is not a translation layer over English content. It is a genuinely bilingual database.',
-              },
-              {
-                problem: 'Communities that die.',
-                fix: 'Challenges with live leaderboards. Coach broadcasts segmented by language, tier, and tag. Groups that mirror the ones clients already know (Team Thick & Fit, HER again, Body Recomp). Every surface is designed to bring people back daily, not just when they remember to open the app.',
-              },
-              {
-                problem: 'Billing you cannot trust.',
-                fix: 'Your next charge date is always visible. You get a 48-hour warning before renewal. Cancel in one tap with no confirmation maze. Prorated refunds are real, not policy theater. Honest billing is a product feature here, not an afterthought. The FTC has fined competitors $62 million for this. We read the case.',
-              },
-              {
-                problem: 'The creator is a renter.',
-                fix: "Stephanie owns the brand, the client data, the pricing, and the roadmap. She is not on a white-label platform that decides her feature set. When a client pays Thick & Fit, the relationship is with Stephanie, not an intermediary platform that can reprice, reterm, or disappear.",
-              },
-            ].map(({ problem, fix }) => (
-              <div key={problem} className="grid gap-4 py-10 sm:grid-cols-2">
-                <p className="text-lg font-bold uppercase tracking-tight">{problem}</p>
-                <p className="text-base leading-relaxed text-neutral-600">{fix}</p>
+          <dl className="mt-12 flex flex-col">
+            {diffs.map((d) => (
+              <div
+                key={d.t}
+                className="grid gap-3 border-t border-line py-8 first:border-t-0 first:pt-0 sm:grid-cols-[0.85fr_1.15fr] sm:gap-10"
+              >
+                <dt className="text-[19px] font-semibold leading-snug sm:text-[21px]">{d.t}</dt>
+                <dd className="max-w-[62ch] text-[15px] leading-[1.7] text-soft">{d.d}</dd>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
+          </dl>
+        </section>
 
-      {/* The platform */}
-      <section className="border-t border-neutral-100 bg-neutral-950 py-24">
-        <div className="mx-auto max-w-4xl px-6">
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#5EBE62]">
-            Platform
-          </p>
-          <h2 className="mb-4 text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">
-            Everything you need. Nothing you don&apos;t.
-          </h2>
-          <p className="mb-16 max-w-2xl text-lg text-neutral-400">
-            Six modules. One app. Built for the full coaching relationship from day one to month twelve.
-          </p>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                title: 'Nutrition',
-                description:
-                  'Photo-to-macro, free barcode scanner, cooked/uncooked conversion, USDA and LATAM food databases, daily diary, macro targets, meal plans, recipes. The most accurate low-friction tracking in the category.',
-              },
-              {
-                title: 'Workouts',
-                description:
-                  'Exercise library with Stephanie\'s filmed demos, structured multi-week programs, audible timer, Wake Lock, equipment substitutions, auto progressive overload, follow-along mode.',
-              },
-              {
-                title: 'Community',
-                description:
-                  'Feed, groups, challenges with live leaderboards, coach broadcasts in English and Spanish, direct messages. Built to create daily return, not passive scrolling.',
-              },
-              {
-                title: 'Progress',
-                description:
-                  'Side-by-side progress photos (front, back, side), body measurements, weight charts across four date ranges, weekly check-in forms, habits, water, streaks.',
-              },
-              {
-                title: 'Coach in Her Voice',
-                description:
-                  'Responds in Stephanie\'s voice and communication style. Text in Phase 1, ElevenLabs voice clone in Phase 2, Higgsfield video clone post-launch. Trained on a hand-authored knowledge base, not a generic fitness prompt.',
-              },
-              {
-                title: 'Coach Toolbox',
-                description:
-                  '7-tab client profiles, engagement and financial analytics, multi-form builder, branding settings, assistant inbox, PT workflow, in-app ratings inbox. The IA Lenus got right, the execution Lenus never delivered.',
-              },
-            ].map(({ title, description }) => (
-              <div key={title} className="border border-neutral-800 p-6">
-                <p className="mb-3 text-sm font-bold uppercase tracking-widest text-[#5EBE62]">
-                  {title}
-                </p>
-                <p className="text-sm leading-relaxed text-neutral-400">{description}</p>
+        {/* Audience + the real numbers. */}
+        <section className="border-y border-line bg-bg">
+          <div className="mx-auto max-w-[1180px] px-6 py-20 sm:py-24">
+            <p className="text-[12px] font-semibold uppercase tracking-[2px] text-soft">
+              {t('whoEyebrow')}
+            </p>
+            <h2 className="tf-display mt-5 max-w-[16ch] text-[clamp(30px,5vw,58px)] leading-[0.94]">
+              {t('whoHeadA')}
+              <br />
+              <span className="text-faint">{t('whoHeadB')}</span>
+            </h2>
+            <div className="mt-12 grid gap-10 lg:grid-cols-2 lg:gap-16">
+              <div className="flex flex-col gap-5">
+                <p className="max-w-[58ch] text-[16px] leading-[1.75] text-soft">{t('whoA')}</p>
+                <p className="max-w-[58ch] text-[16px] leading-[1.75] text-soft">{t('whoB')}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* The audience */}
-      <section className="border-t border-neutral-100 py-24">
-        <div className="mx-auto max-w-4xl px-6">
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-neutral-400">
-            Who it&apos;s for
-          </p>
-          <h2 className="mb-8 text-4xl font-black uppercase tracking-tight sm:text-5xl">
-            Built for a specific woman.
-            <br />
-            <span className="text-[#5EBE62]">Not for everyone.</span>
-          </h2>
-          <div className="grid gap-8 sm:grid-cols-2">
-            <div>
-              <p className="mb-4 text-lg leading-relaxed text-neutral-700">
-                The core audience is bilingual women in the US and Latin America who follow
-                Stephanie Pantoja. They are 18-40, fitness-motivated but not obsessive, and they
-                want results without a second app to manage their macros and a third app to
-                follow along with workouts.
-              </p>
-              <p className="text-lg leading-relaxed text-neutral-700">
-                Many of them switch between Spanish and English depending on context. Every
-                other fitness app makes them choose one. This one does not.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { stat: '562K', label: 'Instagram followers' },
-                { stat: '256', label: 'Paying clients migrating from Lenus' },
-                { stat: 'EN/ES', label: 'Bilingual. Full database depth in both.' },
-                { stat: '24/7', label: 'Coach in her voice (coming soon)' },
-              ].map(({ stat, label }) => (
-                <div key={label} className="border border-neutral-200 p-4">
-                  <p className="text-3xl font-black">{stat}</p>
-                  <p className="mt-1 text-xs uppercase tracking-wide text-neutral-500">{label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Tiers */}
-      <section className="border-t border-neutral-100 bg-black py-24">
-        <div className="mx-auto max-w-4xl px-6">
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#5EBE62]">
-            Pricing
-          </p>
-          <h2 className="mb-4 text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">
-            Three ways in.
-          </h2>
-          <p className="mb-16 max-w-xl text-lg text-neutral-400">
-            Free trial, low-ticket subscription, and high-ticket 1:1 coaching. Each tier is a
-            complete product, not a crippled version asking you to upgrade.
-          </p>
-          <div className="grid gap-6 sm:grid-cols-3">
-            {[
-              {
-                tier: 'Free trial',
-                price: '3 days',
-                features: [
-                  'Workout library browse',
-                  'Basic nutrition calculator',
-                  'Community read access',
-                  'Bilingual',
-                ],
-              },
-              {
-                tier: 'Self-Guided',
-                price: '$19.97/mo',
-                features: [
-                  'Full workout programs + player',
-                  'Progressive overload engine',
-                  'Full nutrition tracking + barcode',
-                  'Photo-to-macro (5/day)',
-                  'Community full access',
-                  'Progress tracking',
-                  'Coach chat (text)',
-                  'Bilingual',
-                ],
-              },
-              {
-                tier: 'Team Thick & Fit',
-                price: 'From $200/mo',
-                features: [
-                  'Everything in Self-Guided',
-                  '1-on-1 coaching from Stephanie’s team',
-                  'Custom meal plans',
-                  'Unlimited photo-to-macro',
-                  'Weekly check-in review',
-                  'Priority coach chat',
-                  'Bilingual',
-                ],
-              },
-            ].map(({ tier, price, features }) => (
-              <div key={tier} className="border border-neutral-800 p-6">
-                <p className="mb-1 text-xs font-bold uppercase tracking-widest text-[#5EBE62]">
-                  {tier}
-                </p>
-                <p className="mb-6 text-2xl font-black text-white">{price}</p>
-                <ul className="space-y-2">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-neutral-400">
-                      <span className="mt-0.5 text-[#5EBE62]">+</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
+              <div className="grid gap-8 sm:grid-cols-3 lg:gap-6">
+                {stats.map((s) => (
+                  <div key={s.l}>
+                    <div className="tf-display text-[clamp(34px,5vw,56px)] leading-[0.85]">{s.n}</div>
+                    {/* text-soft, not text-faint: faint fails 4.5:1 on the cream ground. */}
+                    <div className="mt-3 text-[12px] uppercase tracking-[1.5px] text-soft">
+                      {s.l}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <p className="mt-8 text-sm text-neutral-600">
-            Clients migrating from Lenus keep their original pricing and are never subject to
-            rev-share calculations. Grandfathered rates are permanent.
-          </p>
-        </div>
-      </section>
-
-      {/* The build */}
-      <section className="border-t border-neutral-100 py-24">
-        <div className="mx-auto max-w-4xl px-6">
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-neutral-400">
-            The build
-          </p>
-          <h2 className="mb-8 text-4xl font-black uppercase tracking-tight sm:text-5xl">
-            Three partners.
-            <br />
-            <span className="text-[#5EBE62]">One product.</span>
-          </h2>
-          <div className="grid gap-8 sm:grid-cols-3">
-            <div>
-              <p className="mb-2 font-bold uppercase tracking-tight">Thick & Fit by Steph&apos;s Blessed</p>
-              <p className="text-sm leading-relaxed text-neutral-600">
-                Stephanie Pantoja owns the brand, the content, the audience, and the product
-                vision. She is the coach, the creator, and the first user. Every decision routes
-                through what her clients actually need.
-              </p>
-            </div>
-            <div>
-              <p className="mb-2 font-bold uppercase tracking-tight">LevelUp Automations</p>
-              <p className="text-sm leading-relaxed text-neutral-600">
-                Rodney Williams and Shakira Canty own the client relationship and scope. Rodney
-                manages the business and migration. Shakira authors the Knowledge Base that
-                powers the coach chat in Stephanie&apos;s voice.
-              </p>
-            </div>
-            <div>
-              <p className="mb-2 font-bold uppercase tracking-tight">Kaldr Tech</p>
-              <p className="text-sm leading-relaxed text-neutral-600">
-                LaSean Pickens leads engineering. Next.js 16, Supabase, OpenRouter, Stripe
-                Connect, Mux, Vercel. Single-tenant today, architected to white-label later.
-                Security-first. Built to last, not just to ship.
-              </p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="border-t border-neutral-100 bg-[#5EBE62] py-24">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="mb-4 text-5xl font-black uppercase leading-[0.9] tracking-tighter text-black sm:text-7xl">
-            Launching
-            <br />
-            September 2026.
-          </h2>
-          <p className="mb-10 text-xl font-medium text-black/70">
-            Get early access and the lead magnet before the public launch.
-          </p>
-          <a
-            href="/join"
-            className="inline-block bg-black px-10 py-4 text-sm font-bold uppercase tracking-widest text-white"
-          >
-            Join the waitlist
-          </a>
-        </div>
-      </section>
+        {/* CTA */}
+        <section className="bg-ink text-white">
+          <div className="mx-auto max-w-[1180px] px-6 py-24 text-center sm:py-28">
+            <h2 className="tf-display text-[clamp(38px,8vw,92px)] leading-[0.88]">
+              {t('ctaHead')}
+            </h2>
+            <p className="mx-auto mt-7 max-w-xl text-[16px] leading-[1.7] text-white/70">
+              {t('ctaBody')}
+            </p>
+            <Link
+              href="/join"
+              className="tf-press mt-10 inline-block bg-white px-10 py-4 text-[12px] font-semibold uppercase tracking-[2px] text-ink"
+            >
+              {t('ctaButton')}
+            </Link>
+          </div>
+        </section>
+      </main>
 
-    </main>
+      <MarketingFooter />
+    </div>
   );
 }

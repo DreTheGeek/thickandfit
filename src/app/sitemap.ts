@@ -21,8 +21,8 @@ const ROUTES: Entry[] = [
   // Pricing carries the SoftwareApplication + Offer schema, so it is what answer engines resolve
   // for cost questions.
   { path: '/pricing', changeFrequency: 'monthly', priority: 0.9, bilingual: true },
-  // /about is deliberately absent until its noindex comes off in the rebuild. Listing a noindexed
-  // URL in the sitemap is a contradictory signal, so the two land in the same change or not at all.
+  // About is the entity/authority surface: it is what an engine reads to decide who Stephanie is.
+  { path: '/about', changeFrequency: 'monthly', priority: 0.6, bilingual: true },
   { path: '/terms', changeFrequency: 'yearly', priority: 0.3, bilingual: false },
   { path: '/privacy', changeFrequency: 'yearly', priority: 0.3, bilingual: false },
 ];
