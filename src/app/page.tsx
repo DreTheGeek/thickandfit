@@ -40,7 +40,8 @@ type Feature = {
   line1: string;
   line2: string;
   body: string;
-  imgs: [string, string];
+  img: string;
+  focus: string;
 };
 type Stat = { n: string; l: string };
 type Quote = { q: string; who: string };
@@ -75,25 +76,26 @@ function Eyebrow({ icon, label }: { icon: IconName; label: string }): ReactEleme
   );
 }
 
-/** Overlapping phone screenshots. Percentage widths so the cluster scales down instead of being
- *  desktop-only like the original Webflow section was. */
-function Phones({ imgs, alt }: { imgs: [string, string]; alt: string }): ReactElement {
+/** One app screenshot per row.
+ *
+ *  This used to overlap TWO source files at different scales. The mistake: each of those files is
+ *  ALREADY a composite of two or three phones with its own shadows and arrangement. Stacking two of
+ *  them produced five or six phones in a pile, cropped by the section edge, which read as a broken
+ *  layout rather than a designed cluster. One composite, shown whole, is the fix.
+ *
+ *  Two rows share a source file, so `focus` picks a different phone out of the same composite
+ *  instead of showing the identical image twice. */
+function Shot({ src, focus, alt }: { src: string; focus: string; alt: string }): ReactElement {
+  const position =
+    focus === 'left' ? 'object-left' : focus === 'right' ? 'object-right' : 'object-center';
   return (
-    <div className="relative mx-auto h-[320px] w-full max-w-[320px] sm:h-[400px] sm:max-w-[400px] lg:h-[460px] lg:max-w-[460px]">
+    <div className="mx-auto w-full max-w-[560px]">
       {/* eslint-disable-next-line @next/next/no-img-element -- static marketing screenshot */}
       <img
-        src={imgs[1]}
-        alt=""
-        aria-hidden="true"
-        loading="lazy"
-        className="absolute right-0 top-8 w-[52%] rounded-[22px] shadow-[0_24px_60px_rgba(0,0,0,0.22)]"
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element -- static marketing screenshot */}
-      <img
-        src={imgs[0]}
+        src={src}
         alt={alt}
         loading="lazy"
-        className="absolute left-1 top-0 w-[56%] rounded-[22px] shadow-[0_24px_60px_rgba(0,0,0,0.25)]"
+        className={`h-[300px] w-full object-contain sm:h-[380px] lg:h-[440px] ${position}`}
       />
     </div>
   );
@@ -193,7 +195,7 @@ export default async function Home(): Promise<ReactElement> {
               <div>
                 {/* eslint-disable-next-line @next/next/no-img-element -- static marketing photo */}
                 <img
-                  src="/assets/images/5497dd683b36.avif"
+                  src="/assets/images/1ce2ccb19105.avif"
                   alt={t('hero.alt')}
                   className="mx-auto w-full max-w-[440px] rounded-[26px] object-cover shadow-[0_24px_70px_rgba(0,0,0,0.20)]"
                 />
@@ -289,7 +291,7 @@ export default async function Home(): Promise<ReactElement> {
                     <p className="mt-6 max-w-[460px] text-[16px] leading-[1.7] text-soft">{f.body}</p>
                   </div>
                   <div className={reverse ? 'lg:order-1' : ''}>
-                    <Phones imgs={f.imgs} alt={f.eyebrow} />
+                    <Shot src={f.img} focus={f.focus} alt={f.eyebrow} />
                   </div>
                 </div>
               );

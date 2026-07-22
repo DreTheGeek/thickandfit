@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Inter } from "next/font/google";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import "./globals.css";
 import { SwRegister } from "@/components/pwa/sw-register";
 import { IOSInstallBanner } from "@/components/pwa/ios-install-banner";
@@ -70,14 +68,16 @@ export const metadata: Metadata = {
   },
 };
 
-type ExtractedScript = { src: string | null; type: string | null; inline: string | null };
-type ScriptsManifest = { head: ExtractedScript[]; body: ExtractedScript[] };
-
-const scriptsManifest: ScriptsManifest = JSON.parse(
-  readFileSync(resolve(process.cwd(), "src/app/_scripts.json"), "utf8"),
-);
-
-const jsonLd = scriptsManifest.head.find((s) => s.type === "application/ld+json")?.inline;
+// The legacy Webflow JSON-LD in _scripts.json is NOT injected any more. It was still being stamped
+// into the head of every page and it actively lied on our behalf:
+//   - a FAQPage saying the plan runs in "4, 8 and 12 month" terms and that cancelling "requires a
+//     30-day notice", while the visible pricing copy promises cancelling takes one tap. Answer
+//     engines read the structured data, so we were telling ChatGPT the opposite of the page.
+//   - AggregateRating 5/5 from 3 reviews stamped on every route, including pages with no visible
+//     reviews at all, which is a Google structured-data policy violation and a manual-action risk.
+//   - url pointing at thick-and-fit-fitness.com, a domain this build does not serve.
+// Per-page schema now comes from src/lib/seo/schema.ts, which is generated from the copy that is
+// actually on the page. Keep _scripts.json around only as the archive of the original site.
 
 // Organization + WebSite schema with published/modified dates: answer engines (Google AI, Perplexity)
 // weight dated, authored sources. Bump SITE_MODIFIED on a substantive public-content change.
@@ -136,13 +136,6 @@ export default async function RootLayout({
       className={`w-mod-js ${gulamsCondensed.variable} ${inter.variable}`}
     >
       <head>
-        {jsonLd != null && (
-          <script
-            type="application/ld+json"
-            nonce={nonce}
-            dangerouslySetInnerHTML={{ __html: jsonLd }}
-          />
-        )}
         <script
           type="application/ld+json"
           nonce={nonce}

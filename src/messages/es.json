@@ -1991,10 +1991,8 @@
         "line1": "Tu entrenamiento se ajusta",
         "line2": "a la vida que sí tienes.",
         "body": "No importa dónde entrenes; gimnasio o casa, diseño los entrenamientos con el equipo que tienes. Mi trabajo es hacer posibles tus metas con lo que está a tu alcance.",
-        "imgs": [
-          "/assets/images/bec132276dbc.avif",
-          "/assets/images/12847e8f578b.avif"
-        ]
+        "img": "/assets/images/bec132276dbc.avif",
+        "focus": "center"
       },
       {
         "eyebrow": "Nutrición por foto",
@@ -2002,10 +2000,8 @@
         "line1": "Registra la comida de tu abuela",
         "line2": "sin pesar nada.",
         "body": "Tomas una foto de tu plato y la app calcula qué hay y cuánto. Hasta maneja el peso crudo o cocido, para que la comida de tu abuela se registre tan bien como una comida empaquetada.",
-        "imgs": [
-          "/assets/images/12847e8f578b.avif",
-          "/assets/images/ee8356541645.avif"
-        ]
+        "img": "/assets/images/58b0bf9e4c9e.avif",
+        "focus": "right"
       },
       {
         "eyebrow": "Planes de comida",
@@ -2013,10 +2009,8 @@
         "line1": "Come lo que te gusta",
         "line2": "y aun así llega a tus macros.",
         "body": "Comidas ajustadas a tus macros sin perder el sabor. Nada de comida aburrida, solo platos ricos que apoyan tus resultados.",
-        "imgs": [
-          "/assets/images/ee8356541645.avif",
-          "/assets/images/58b0bf9e4c9e.avif"
-        ]
+        "img": "/assets/images/58b0bf9e4c9e.avif",
+        "focus": "left"
       },
       {
         "eyebrow": "Acompañamiento",
@@ -2024,10 +2018,8 @@
         "line1": "Dejas de hacer",
         "line2": "esto sola.",
         "body": "Tendrás comunicación constante conmigo y con mi equipo dentro de la app. En la comunidad privada vas a conectar con mujeres que buscan lo mismo que tú.",
-        "imgs": [
-          "/assets/images/bec132276dbc.avif",
-          "/assets/images/58b0bf9e4c9e.avif"
-        ]
+        "img": "/assets/images/12847e8f578b.avif",
+        "focus": "center"
       },
       {
         "eyebrow": "Progreso",
@@ -2035,10 +2027,8 @@
         "line1": "Ve cómo cambias,",
         "line2": "incluso en las semanas difíciles.",
         "body": "Dentro de la app puedes crear y seguir hábitos diarios alineados con tus metas. Agua, pasos, entrenamientos, comidas, todo lo que necesitas para ser constante en un solo lugar.",
-        "imgs": [
-          "/assets/images/58b0bf9e4c9e.avif",
-          "/assets/images/12847e8f578b.avif"
-        ]
+        "img": "/assets/images/ee8356541645.avif",
+        "focus": "center"
       }
     ],
     "bilingual": {

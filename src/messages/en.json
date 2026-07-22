@@ -1991,10 +1991,8 @@
         "line1": "Your workout fits",
         "line2": "the life you actually have.",
         "body": "No matter where you train; gym or at home, I design workouts around the equipment you have. My job is to make your goals possible with what's available to you.",
-        "imgs": [
-          "/assets/images/bec132276dbc.avif",
-          "/assets/images/12847e8f578b.avif"
-        ]
+        "img": "/assets/images/bec132276dbc.avif",
+        "focus": "center"
       },
       {
         "eyebrow": "Photo Nutrition",
@@ -2002,10 +2000,8 @@
         "line1": "Log your abuela's cooking",
         "line2": "without weighing a thing.",
         "body": "Take a photo of your meal and the app figures out what's on the plate and how much. It even handles cooked versus raw weight, so your abuela's cooking logs as accurately as a packaged meal.",
-        "imgs": [
-          "/assets/images/12847e8f578b.avif",
-          "/assets/images/ee8356541645.avif"
-        ]
+        "img": "/assets/images/58b0bf9e4c9e.avif",
+        "focus": "right"
       },
       {
         "eyebrow": "Meal Plans",
@@ -2013,10 +2009,8 @@
         "line1": "Eat food you love",
         "line2": "and still hit your macros.",
         "body": "Meals tailored to your macros without ever losing the flavor. No bland food, just meals that taste good and support your results.",
-        "imgs": [
-          "/assets/images/ee8356541645.avif",
-          "/assets/images/58b0bf9e4c9e.avif"
-        ]
+        "img": "/assets/images/58b0bf9e4c9e.avif",
+        "focus": "left"
       },
       {
         "eyebrow": "Support Channel",
@@ -2024,10 +2018,8 @@
         "line1": "You stop doing",
         "line2": "this alone.",
         "body": "You'll have consistent communication with me and my coaching team directly through the app. Inside the private community, you'll connect with women working toward the same goals you are.",
-        "imgs": [
-          "/assets/images/bec132276dbc.avif",
-          "/assets/images/58b0bf9e4c9e.avif"
-        ]
+        "img": "/assets/images/12847e8f578b.avif",
+        "focus": "center"
       },
       {
         "eyebrow": "Progress Tracker",
@@ -2035,10 +2027,8 @@
         "line1": "See yourself changing,",
         "line2": "even on the hard weeks.",
         "body": "Inside the app, you can set and track daily habits that align with your goals. Water, steps, workouts, meals, everything you need to stay consistent is in one place.",
-        "imgs": [
-          "/assets/images/58b0bf9e4c9e.avif",
-          "/assets/images/12847e8f578b.avif"
-        ]
+        "img": "/assets/images/ee8356541645.avif",
+        "focus": "center"
       }
     ],
     "bilingual": {
