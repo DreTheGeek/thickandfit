@@ -1882,5 +1882,69 @@
         "a": "Se lo dices a la app al configurar. Cosas como el SOP, la resistencia a la insulina, la tiroides, lesiones, alergias y alimentos que evitas moldean tus macros, tus planes de comida y lo que te sugiere tu coach. Nunca te recomendará un alimento que dijiste que no puedes comer."
       }
     ]
+  },
+  "pricing": {
+    "eyebrow": "Precios",
+    "title": "¿Cómo quieres que te acompañe?",
+    "subtitle": "Empieza gratis. Cancela con un toque. Sin trucos, nunca.",
+    "trialNote": "Todos los planes empiezan con una prueba gratis. Cancela antes de que termine y no te cobramos.",
+    "perMonth": "/mes",
+    "popular": "El más elegido",
+    "tiers": [
+      {
+        "id": "self",
+        "name": "Autoguiado",
+        "price": "$19.97",
+        "period": "/mes",
+        "blurb": "La app completa, con mi sistema. Tú llevas el ritmo.",
+        "features": [
+          "Programas de entrenamiento con mis videos",
+          "Registro de comida por foto que entiende la comida real",
+          "Planes de comida con mi método",
+          "Progreso, check-ins y la comunidad",
+          "Tu coach en la app, en tu idioma"
+        ],
+        "cta": "Unirme a la lista"
+      },
+      {
+        "id": "team",
+        "name": "Equipo Thick & Fit",
+        "price": "Desde $200",
+        "period": "/mes",
+        "blurb": "Todo lo anterior, más coaching real de mi equipo.",
+        "features": [
+          "Todo lo de Autoguiado",
+          "Una coach de verdad pendiente de ti",
+          "Tu plan ajustado a tu vida",
+          "Mensajes directos con tu coach"
+        ],
+        "cta": "Solicitar"
+      },
+      {
+        "id": "steph",
+        "name": "1 a 1 con Steph",
+        "price": "Premium",
+        "period": "por solicitud",
+        "blurb": "Tú y yo, directo. Lugares limitados.",
+        "features": [
+          "Todo lo de Equipo Thick & Fit",
+          "Entrenada por mí personalmente",
+          "Programación y nutrición totalmente a tu medida",
+          "Acceso prioritario a mí"
+        ],
+        "cta": "Solicitar"
+      }
+    ],
+    "billingTitle": "Cómo funciona el cobro aquí",
+    "billingBody": "Otras apps ya te han fallado. Aquí no.",
+    "billingPoints": [
+      "Cancela con un toque desde tu cuenta. Sin llamadas, sin laberintos.",
+      "Te avisamos antes de cobrarte. Sin renovaciones sorpresa.",
+      "Sin cargos escondidos, y nada de lo que ya pagaste se te bloquea.",
+      "Tus datos son tuyos. Si te vas, tu progreso se va contigo."
+    ],
+    "ctaTitle": "Ven a ver lo que construí para nosotras",
+    "ctaBody": "No es una carrera, es un maratón. Empieza cuando estés lista.",
+    "ctaButton": "Unirme a la lista"
   }
 }

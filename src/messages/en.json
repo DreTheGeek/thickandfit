@@ -1882,5 +1882,69 @@
         "a": "You tell the app during setup. Things like PCOS, insulin resistance, thyroid conditions, injuries, allergies, and foods you avoid all shape your macros, your meal plans, and what your coach suggests. It will never recommend a food you said you can't eat."
       }
     ]
+  },
+  "pricing": {
+    "eyebrow": "Pricing",
+    "title": "How do you want me in your corner?",
+    "subtitle": "Start free. Cancel in one tap. No games, ever.",
+    "trialNote": "Every plan starts with a free trial. Cancel before it ends and you are not charged.",
+    "perMonth": "/month",
+    "popular": "Most popular",
+    "tiers": [
+      {
+        "id": "self",
+        "name": "Self-Guided",
+        "price": "$19.97",
+        "period": "/month",
+        "blurb": "The full app, built on my system. You run the show.",
+        "features": [
+          "Workout programs with my filmed demos",
+          "Photo nutrition tracking that understands real food",
+          "Meal plans built on my method",
+          "Progress, check-ins, and the community",
+          "Your coach in the app, in your language"
+        ],
+        "cta": "Join the waitlist"
+      },
+      {
+        "id": "team",
+        "name": "Team Thick & Fit",
+        "price": "From $200",
+        "period": "/month",
+        "blurb": "Everything above, plus real coaching from my trained team.",
+        "features": [
+          "Everything in Self-Guided",
+          "A real coach checking in on you",
+          "Your plan adjusted to your life",
+          "Direct messaging with your coach"
+        ],
+        "cta": "Apply"
+      },
+      {
+        "id": "steph",
+        "name": "1-on-1 with Steph",
+        "price": "Premium",
+        "period": "by application",
+        "blurb": "You and me, directly. Limited spots.",
+        "features": [
+          "Everything in Team Thick & Fit",
+          "Coached by me personally",
+          "Fully custom programming and nutrition",
+          "Priority access to me"
+        ],
+        "cta": "Apply"
+      }
+    ],
+    "billingTitle": "How billing works here",
+    "billingBody": "You have been burned by apps before. Not here.",
+    "billingPoints": [
+      "Cancel in one tap from your account. No phone call, no retention maze.",
+      "We tell you before we charge you. No surprise renewals.",
+      "No hidden fees, and nothing you already paid for gets locked away.",
+      "Your data is yours. If you leave, your progress leaves with you."
+    ],
+    "ctaTitle": "Come see what I built for us",
+    "ctaBody": "It is not a race, it is a marathon. Start whenever you are ready.",
+    "ctaButton": "Join the waitlist"
   }
 }

@@ -11,6 +11,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // High priority: the FAQ is the answer-engine surface (AEO/GEO), the page most likely to be
     // lifted verbatim into an AI answer about pricing, Spanish support, or how the photo scan works.
     { url: `${SITE_URL}/faq`, changeFrequency: 'monthly', priority: 0.8 },
+    // Pricing carries the SoftwareApplication + Offer schema, so it is what answer engines resolve
+    // for cost questions.
+    { url: `${SITE_URL}/pricing`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
   ];
