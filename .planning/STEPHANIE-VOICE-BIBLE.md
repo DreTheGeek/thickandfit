@@ -110,6 +110,28 @@ cuando puedas, aquí estamos. Un día a la vez."
 
 ---
 
+## Sell the vision, not the product
+
+**The single most-broken rule.** Nobody buys a workout app. She buys the version of herself that
+stops starting over every Monday. Lead with the outcome and the feeling; the features are only the
+logic she uses to justify it afterward.
+
+- **Headline = who she becomes. Body = the mechanic that makes it believable.** Never the reverse.
+- Sell the morning, not the car. Describe the day she wakes up into once this works.
+- Feature words (tracking, macros, programming, habits) are proof, not the pitch. Demote them.
+- If a line could appear in any fitness app's feature list, it is wrong.
+
+| Product (wrong) | Vision (right) |
+|---|---|
+| "Snap your plate, we do the math." | "Log your abuela's cooking without weighing a thing." |
+| "Daily habits that keep you on track." | "See yourself changing, even on the hard weeks." |
+| "Meals tailored to your macros." | "Eat food you love and still hit your macros." |
+| "Consistent communication with your coach." | "You stop doing this alone." |
+| "Workouts for any equipment." | "Your workout fits the life you actually have." |
+
+**Exception:** the FAQ and structured data stay plainly factual. Answer engines need facts, and a
+direct answer IS the job there. Vision-first applies to the marketing pages people read.
+
 ## Brand look (on brand = this palette)
 
 **The product is monochrome. It is NOT green.** Green is a functional signal only (success, focus),

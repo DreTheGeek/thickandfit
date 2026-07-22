@@ -1958,7 +1958,7 @@
       "line1": "Ayudo a mujeres a",
       "accent": "enamorarse",
       "line2": "del proceso.",
-      "sub": "Entrenamientos hechos con lo que tienes. Nutrición que entiende la comida real. Una coach contigo, en tu idioma. No es una carrera, es un maratón.",
+      "sub": "Esta es la tú que deja de empezar de nuevo cada lunes. Tu comida sigue siendo tu comida. El plan se ajusta a tu vida real. Y no lo haces sola.",
       "cta": "Empieza tu camino",
       "alt": "Coach Stephanie Pantoja"
     },
@@ -1981,14 +1981,14 @@
     "commit": {
       "line1": "Porque cuando te comprometes,",
       "accent": "el cambio es inevitable.",
-      "body": "Construí esta app para que mi coaching viva en un lugar que me pertenece, y para que recibas lo mismo que reciben mis clientas: programación real, nutrición real, y yo presente."
+      "body": "Construí esto para que tengas lo que tienen mis clientas: alguien que sabe tu nombre, comida que todavía sabe a casa, y un plan que aguanta una semana de verdad."
     },
     "features": [
       {
         "eyebrow": "Entrenamientos",
         "icon": "bolt",
-        "line1": "Entrenamientos hechos",
-        "line2": "para tu objetivo",
+        "line1": "Tu entrenamiento se ajusta",
+        "line2": "a la vida que sí tienes.",
         "body": "No importa dónde entrenes; gimnasio o casa, diseño los entrenamientos con el equipo que tienes. Mi trabajo es hacer posibles tus metas con lo que está a tu alcance.",
         "imgs": [
           "/assets/images/bec132276dbc.avif",
@@ -1998,8 +1998,8 @@
       {
         "eyebrow": "Nutrición por foto",
         "icon": "camera",
-        "line1": "Toma la foto,",
-        "line2": "nosotras hacemos las cuentas.",
+        "line1": "Registra la comida de tu abuela",
+        "line2": "sin pesar nada.",
         "body": "Tomas una foto de tu plato y la app calcula qué hay y cuánto. Hasta maneja el peso crudo o cocido, para que la comida de tu abuela se registre tan bien como una comida empaquetada.",
         "imgs": [
           "/assets/images/12847e8f578b.avif",
@@ -2009,8 +2009,8 @@
       {
         "eyebrow": "Planes de comida",
         "icon": "nutrition",
-        "line1": "Comidas que sí",
-        "line2": "vas a disfrutar",
+        "line1": "Come lo que te gusta",
+        "line2": "y aun así llega a tus macros.",
         "body": "Comidas ajustadas a tus macros sin perder el sabor. Nada de comida aburrida, solo platos ricos que apoyan tus resultados.",
         "imgs": [
           "/assets/images/ee8356541645.avif",
@@ -2020,8 +2020,8 @@
       {
         "eyebrow": "Acompañamiento",
         "icon": "megaphone",
-        "line1": "Tu red de apoyo",
-        "line2": "en un solo lugar.",
+        "line1": "Dejas de hacer",
+        "line2": "esto sola.",
         "body": "Tendrás comunicación constante conmigo y con mi equipo dentro de la app. En la comunidad privada vas a conectar con mujeres que buscan lo mismo que tú.",
         "imgs": [
           "/assets/images/bec132276dbc.avif",
@@ -2031,8 +2031,8 @@
       {
         "eyebrow": "Progreso",
         "icon": "steps",
-        "line1": "Hábitos diarios que",
-        "line2": "te mantienen firme.",
+        "line1": "Ve cómo cambias,",
+        "line2": "incluso en las semanas difíciles.",
         "body": "Dentro de la app puedes crear y seguir hábitos diarios alineados con tus metas. Agua, pasos, entrenamientos, comidas, todo lo que necesitas para ser constante en un solo lugar.",
         "imgs": [
           "/assets/images/58b0bf9e4c9e.avif",
@@ -2044,13 +2044,13 @@
       "eyebrow": "En tu idioma",
       "line1": "Coaching que habla",
       "line2": "como hablas tú.",
-      "body": "Cada pantalla funciona en español o inglés, y tu coach te responde en el idioma en que le escribas. No es una app traducida a medias: los dos lados son bilingües desde el principio."
+      "body": "No deberías tener que traducirte para cuidarte. Escríbele a tu coach en español, en inglés, o como te salga, y te responde igual."
     },
     "pricingTeaser": {
       "eyebrow": "Precios",
       "line1": "Empieza gratis.",
       "line2": "Cancela con un toque.",
-      "body": "Autoguiado cuesta $19.97 al mes. Los planes con coach empiezan en $200. Todos empiezan con una prueba gratis, y cancelar toma un toque. Sin trucos, nunca.",
+      "body": "$19.97 al mes, con prueba gratis antes de pagar nada, y cancelar toma un toque. Ya te falló una app antes. Aquí no.",
       "cta": "Ver los planes"
     },
     "closing": {
