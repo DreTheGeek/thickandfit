@@ -110,33 +110,59 @@ export default async function Home(): Promise<ReactElement> {
       <MarketingNav />
 
       <main>
-        {/* 1. HERO. Ladder grammar: badge row, heavy uppercase claim, one accent pill, the
-            reassurance line under it, and the app shown inside a glowing accent ring. */}
-        <Section ground="cream" beat="bleed" className="pb-[var(--beat-normal)]">
-          <div className="grid items-center gap-12 pt-12 lg:min-h-[88svh] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)] lg:gap-16 lg:pt-0">
-            <div>
-              {/* Seven filled accent checks: one per thing she actually gives you. Reads as a
-                  receipt before a single word of the claim. */}
-              <div className="mb-8 flex flex-wrap gap-2.5" aria-hidden="true">
-                {Array.from({ length: 7 }).map((_, i) => (
-                  <span key={i} className="tf-badge">
-                    <Icon name="check" size={18} strokeWidth={3.2} />
-                  </span>
-                ))}
-              </div>
+        {/* 1. HERO. Ladder's actual grammar, which is one move: a full-bleed photograph of the
+            person you are buying, with the claim set over it. The previous build read Ladder as
+            "badge row + pill + app in a glow ring" and led with a phone; Ladder never shows the
+            product above the fold, it shows the human. The app screenshots now start at the feature
+            rows, where they are evidence rather than the opening argument.
+
+            The photograph is the gym frame (steph-about), not the cut-out (steph-hero): a cut-out
+            on a transparent ground cannot go full-bleed without reading as a sticker, and the gym
+            environment is what makes the Ladder hero feel like a place rather than a card.
+
+            Legibility is a scrim, not a darkened photo: a left-weighted gradient on desktop and a
+            bottom-weighted one on mobile, so the type sits on near-black while she stays lit. */}
+        {/* ground="cream" is the BASE ground, which the tf-dark variant renders as near-black (the
+            names come from the light art direction and invert under tf-dark). Colour comes from the
+            theme tokens below, never a hardcoded text-white, so this hero stays correct in both. */}
+        <Section ground="cream" beat="bleed" className="tf-hero relative isolate overflow-hidden p-0">
+          <div className="grid lg:min-h-[88svh] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.86fr)]">
+            {/* The photograph. Deliberately NOT a full-bleed type bed: this asset is a portrait with
+                her filling the frame, so a full-bleed overlay put the claim across her face on a
+                phone and pushed the 14px lines onto lit skin, where white-on-photo fell under AA.
+                Ladder can overlay because its frame carries an empty wall to set type on; ours does
+                not, so the photo gets its own panel at close to its native aspect (0.82) and every
+                word sits on solid ink. Same register, no collision, contrast guaranteed. */}
+            {/* 34svh on a phone, not 46: the claim, the sub and the CTA all have to clear the fold
+                (~650px on a 390x844 handset) and the photo is the only elastic element. */}
+            <div className="relative order-first h-[34svh] min-h-[240px] lg:order-last lg:h-auto lg:min-h-0">
+              {/* eslint-disable-next-line @next/next/no-img-element -- LCP hero, CSS-sized */}
+              <img
+                src="/brand/img/steph-about.avif"
+                alt={t('hero.alt')}
+                fetchPriority="high"
+                decoding="async"
+                className="h-full w-full object-cover object-[50%_28%] lg:object-[46%_32%]"
+              />
+              {/* Blend the panel edge into the ink so the split reads as one field, not two boxes:
+                  bottom-up on a phone (type is below), right-to-left from lg (type is beside). */}
+              <span className="tf-hero-blend absolute inset-0" aria-hidden="true" />
+            </div>
+
+            <div className="flex flex-col justify-center px-[var(--gutter)] pb-[var(--beat-normal)] pt-7 lg:py-16">
               <h1 className="tf-mega max-w-[16ch]">{t('hero.h1')}</h1>
-              <p className="mt-6 max-w-[44ch] text-[17px] leading-[1.6] text-muted sm:text-[19px]">
+              <p className="mt-5 max-w-[44ch] text-[17px] leading-[1.6] text-muted sm:text-[19px]">
                 {t('hero.sub')}
               </p>
-              <div className="mt-9">
-                <Link href="/join" className="tf-press tf-cta">
+              <div className="mt-8">
+                <Link href="/join" className="tf-press tf-cta block text-center sm:inline-block sm:w-auto">
                   {t('hero.cta')}
                 </Link>
                 <p className="tf-eyebrow-accent mt-5 text-[13px]">{t('hero.reassure')}</p>
                 <p className="mt-2 text-[14px] text-muted">{t('hero.priceLine')}</p>
               </div>
-              {/* Proof, as badges rather than a sentence. Real numbers only. */}
-              <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
+              {/* Proof above the fold. Real numbers only: her following and her coached clients. */}
+              <div className="mt-8 flex flex-wrap items-baseline gap-x-8 gap-y-3">
                 <p className="text-[14px] text-muted">
                   <span className="text-[22px] font-black text-ink">{stats[0]?.n}</span>{' '}
                   {stats[0]?.l}
@@ -146,17 +172,6 @@ export default async function Home(): Promise<ReactElement> {
                   {stats[1]?.l}
                 </p>
               </div>
-            </div>
-
-            <div className="relative flex min-h-[420px] items-center justify-center lg:min-h-[70svh]">
-              <span className="tf-glow" aria-hidden="true" />
-              {/* eslint-disable-next-line @next/next/no-img-element -- static app screenshot */}
-              <img
-                src="/brand/img/app-1.avif"
-                alt={t('hero.alt')}
-                fetchPriority="high"
-                className="relative z-10 max-h-[58svh] w-auto max-w-[74%] object-contain drop-shadow-[0_30px_70px_rgba(0,0,0,0.7)]"
-              />
             </div>
           </div>
         </Section>

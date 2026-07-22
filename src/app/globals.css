@@ -402,6 +402,20 @@
   color: var(--c-accent);
 }
 
+/* Hero edge blend. The photo sits in its own panel, so this is NOT a legibility scrim (no type is
+   over the image): it only dissolves the panel's edge into the ink so the split reads as one field
+   instead of two stacked boxes. Bottom-up on a phone, where the copy sits under the photo;
+   right-to-left from lg up, where the copy sits beside it. Kept shallow on purpose so she stays
+   lit: darkening the whole frame to make an edge disappear is what makes these heroes look muddy. */
+.tf-hero-blend {
+  background: linear-gradient(to top, var(--c-bg) 0%, rgba(0, 0, 0, 0) 26%);
+}
+@media (min-width: 1024px) {
+  .tf-hero-blend {
+    background: linear-gradient(to left, rgba(0, 0, 0, 0) 76%, var(--c-bg) 100%);
+  }
+}
+
 /* The glow. A blurred accent ring sitting behind the phone, which is the single most recognisable
    move in this register. Pure CSS, no asset, and it is decorative so it carries aria-hidden. */
 .tf-glow {
@@ -479,6 +493,13 @@
 .tf-dark .tf-ground-ink .text-white\/70 {
   color: rgba(11, 11, 13, 0.72);
 }
+/* /60 and /75 were missing from this remap, which is why every section Eyebrow ("THE MONDAY LOOP",
+   "PROGRESS TRACKER") rendered as white-on-bone at about 1.1:1: invisible on the live page. Any new
+   white-alpha utility used on an ink ground has to be added here or it disappears in this variant. */
+.tf-dark .tf-ground-ink .text-white\/75 {
+  color: rgba(11, 11, 13, 0.76);
+}
+.tf-dark .tf-ground-ink .text-white\/60,
 .tf-dark .tf-ground-ink .text-white\/55,
 .tf-dark .tf-ground-ink .text-white\/50 {
   color: rgba(11, 11, 13, 0.58);

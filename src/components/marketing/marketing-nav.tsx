@@ -41,14 +41,16 @@ export async function MarketingNav(): Promise<ReactElement> {
               hrefLang={twin.to}
               lang={twin.to}
               aria-label={twin.to === 'es' ? 'Ver en espanol' : 'View in English'}
-              className="text-[15px] font-medium text-muted hover:text-ink"
+              className="whitespace-nowrap text-[15px] font-medium text-muted hover:text-ink"
             >
               {twin.to === 'es' ? 'ES' : 'EN'}
             </Link>
           ) : null}
+          {/* whitespace-nowrap: at 390px "Log in" / "Iniciar sesion" broke mid-phrase onto two
+              lines and pushed the bar to double height. */}
           <Link
             href="/auth/sign-in"
-            className="text-[15px] font-medium text-muted hover:text-ink"
+            className="whitespace-nowrap text-[15px] font-medium text-muted hover:text-ink"
           >
             {t('login')}
           </Link>
