@@ -27,7 +27,9 @@ export function WaitlistForm({ locale }: { locale: string }) {
 
   if (state === 'success') {
     return (
-      <div className="border-l-2 border-[#5EBE62] pl-4">
+      {/* Success state: green here is the sanctioned FUNCTIONAL use, via the accent token rather
+          than a hardcoded hex (which was rebrand residue). */}
+      <div className="border-l-2 border-accent pl-4">
         <h2 className="text-xl font-semibold">{t('successTitle')}</h2>
         <p className="mt-1 text-sm text-neutral-600">{t('successBody')}</p>
       </div>

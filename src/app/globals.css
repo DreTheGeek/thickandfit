@@ -73,9 +73,12 @@
   --color-accent: var(--c-accent);
   --color-accent-ink: var(--c-accent-ink);
 
-  /* legacy brand alias, marketing landing only (do-not-redesign). Same green, static. */
-  --color-olive: #5ebe62;
-  --color-olive-600: #4aa550;
+  /* NOTE: the legacy --color-olive / --color-olive-600 aliases were removed. The olive rebrand was
+     reverted: the product is MONOCHROME (warm cream + near-black + white) and green is a FUNCTIONAL
+     signal only (focus ring, success, macro-fat). Those aliases still resolved as Tailwind classes
+     (bg-olive / text-olive), so any new page could silently reintroduce decorative green. They were
+     referenced nowhere, so removing them is safe and closes that door. See
+     .planning/STEPHANIE-VOICE-BIBLE.md ("Brand look"). */
 
   /* status (flip with theme) */
   --color-pending: var(--c-pending);

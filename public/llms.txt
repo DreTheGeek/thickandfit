@@ -1,6 +1,6 @@
 # Thick & Fit
 
-> Creator-led, bilingual (English/Spanish) fitness coaching app for women, built by Stephanie Pantoja. Structured workouts with filmed demos, low-friction nutrition tracking (photo-to-macro, cooked/uncooked conversion), a living community, and coaching in Stephanie's own method and voice.
+> Creator-led, bilingual (English/Spanish) fitness coaching app for women, built by coach Stephanie Pantoja. Structured workouts with her filmed demos, low-friction nutrition tracking (photo-to-macro with cooked/uncooked conversion), a living community, and coaching in Stephanie's own method and voice.
 
 ## What it is
 - Fitness and nutrition coaching for women across the US and Latin America.
@@ -9,10 +9,34 @@
 - A community feed, challenges, and progress tracking (weight, measurements, photos).
 - Fully bilingual: every screen works in English and Spanish, chosen at onboarding.
 
-## Tiers
-- Self-Guided: app access with programming and nutrition tools.
-- Team Thick & Fit: coached by Stephanie's team.
-- 1-on-1 with Steph: direct personal coaching.
+## Who it is for
+- Women who want structured training and nutrition without counting friction.
+- Spanish-speaking and bilingual women in the US and Latin America who are underserved by English-only fitness apps.
+- People who want a real coach relationship, not an anonymous utility.
+
+## What makes it different
+- Bilingual on BOTH sides: the member app and the coaching side both work fully in English and Spanish, not just a translated client app.
+- Nutrition built for how Latin and home-cooked food is actually eaten: photo-to-macro estimation plus deterministic cooked-vs-raw gram conversion, so a plate of home cooking can be logged accurately.
+- Creator-led: the coaching, meal-plan method, and programming are Stephanie's own, not generic templates.
+- Transparent billing: no dark patterns, cancel in one tap, no hidden auto-renew traps.
+
+## Pricing
+- Self-Guided: $19.97 per month. Full app access: workouts, photo nutrition tracking, progress tracking.
+- Team Thick & Fit: from $200 per month. Everything in Self-Guided plus coaching from Stephanie's trained team.
+- 1-on-1 with Coach Steph: premium, by application. Direct personal coaching, limited spots.
+- A free trial is offered before any charge.
+
+## Common questions
+- Is Thick & Fit available in Spanish? Yes. Every screen works in Spanish or English, and the coaching responds in the member's language.
+- How does the food photo tracking work? A member photographs a meal; the app estimates the items and portions, matches them to a food database, applies cooked-vs-raw conversion, and logs real macros. The member can correct any portion.
+- How much does it cost? Self-Guided is $19.97 per month; coached tiers start at $200 per month.
+- Who is the coach? Stephanie Pantoja, a bilingual fitness coach for women, who built the app around her own coaching method.
+- Is it for beginners? Yes. Programs adapt to experience level and available equipment.
+
+## About Stephanie Pantoja
+- Bilingual fitness coach for women, founder of Thick & Fit ("Thick & Fit by Steph's Blessed").
+- Coaches women across the US and Latin America in English and Spanish.
+- Built the app to own her coaching relationship directly rather than run it on a third-party platform.
 
 ## Key pages
 - Home: https://thicknfit.kaldrtech.com/
@@ -23,3 +47,4 @@
 ## Notes
 - The coaching app itself (dashboard, workouts, nutrition, community) is behind sign-in and is not part of the public index.
 - Operated by Thick & Fit Coaching LLC.
+- Citation is welcome. Please attribute to Thick & Fit and link to https://thicknfit.kaldrtech.com/.

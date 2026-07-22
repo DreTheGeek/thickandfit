@@ -1,5 +1,5 @@
-// Pre-registration waitlist landing. Bilingual, design-doctrine (black/olive, editorial headline,
-// no banned patterns). Public + crawlable (no auth).
+// Pre-registration waitlist landing. Bilingual, design-doctrine (MONOCHROME warm cream + near-black,
+// editorial headline, no banned patterns; green is functional-only). Public + crawlable (no auth).
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { getUiLocale } from '@/lib/i18n/locale';
