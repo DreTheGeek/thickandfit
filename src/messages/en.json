@@ -1946,5 +1946,129 @@
     "ctaTitle": "Come see what I built for us",
     "ctaBody": "It is not a race, it is a marathon. Start whenever you are ready.",
     "ctaButton": "Join the waitlist"
+  },
+  "marketing": {
+    "nav": {
+      "login": "Log in",
+      "cta": "Start your journey",
+      "faq": "FAQ",
+      "pricing": "Pricing"
+    },
+    "hero": {
+      "line1": "Helping women",
+      "accent": "fall in love",
+      "line2": "with the journey.",
+      "sub": "Workouts built around what you have. Nutrition that understands real food. A coach in your corner, in your language. It is not a race, it is a marathon.",
+      "cta": "Start your journey",
+      "alt": "Coach Stephanie Pantoja"
+    },
+    "proof": {
+      "items": [
+        {
+          "n": "562K",
+          "l": "women following along"
+        },
+        {
+          "n": "256",
+          "l": "clients coached"
+        },
+        {
+          "n": "EN / ES",
+          "l": "every screen, both languages"
+        }
+      ]
+    },
+    "commit": {
+      "line1": "Because when you commit,",
+      "accent": "change is inevitable.",
+      "body": "I built this app so my coaching lives somewhere I own, and so you get the same thing my clients get: real programming, real nutrition, and me showing up."
+    },
+    "features": [
+      {
+        "eyebrow": "Workout Plans",
+        "icon": "bolt",
+        "line1": "Get tailored workouts",
+        "line2": "designed for your goal",
+        "body": "No matter where you train; gym or at home, I design workouts around the equipment you have. My job is to make your goals possible with what's available to you.",
+        "imgs": [
+          "/assets/images/bec132276dbc.avif",
+          "/assets/images/12847e8f578b.avif"
+        ]
+      },
+      {
+        "eyebrow": "Photo Nutrition",
+        "icon": "camera",
+        "line1": "Snap your plate,",
+        "line2": "we do the math.",
+        "body": "Take a photo of your meal and the app figures out what's on the plate and how much. It even handles cooked versus raw weight, so your abuela's cooking logs as accurately as a packaged meal.",
+        "imgs": [
+          "/assets/images/12847e8f578b.avif",
+          "/assets/images/ee8356541645.avif"
+        ]
+      },
+      {
+        "eyebrow": "Meal Plans",
+        "icon": "nutrition",
+        "line1": "Meals you will",
+        "line2": "actually enjoy",
+        "body": "Meals tailored to your macros without ever losing the flavor. No bland food, just meals that taste good and support your results.",
+        "imgs": [
+          "/assets/images/ee8356541645.avif",
+          "/assets/images/58b0bf9e4c9e.avif"
+        ]
+      },
+      {
+        "eyebrow": "Support Channel",
+        "icon": "megaphone",
+        "line1": "Your support system",
+        "line2": "in one place.",
+        "body": "You'll have consistent communication with me and my coaching team directly through the app. Inside the private community, you'll connect with women working toward the same goals you are.",
+        "imgs": [
+          "/assets/images/bec132276dbc.avif",
+          "/assets/images/58b0bf9e4c9e.avif"
+        ]
+      },
+      {
+        "eyebrow": "Progress Tracker",
+        "icon": "steps",
+        "line1": "Daily habits that",
+        "line2": "keep you on track.",
+        "body": "Inside the app, you can set and track daily habits that align with your goals. Water, steps, workouts, meals, everything you need to stay consistent is in one place.",
+        "imgs": [
+          "/assets/images/58b0bf9e4c9e.avif",
+          "/assets/images/12847e8f578b.avif"
+        ]
+      }
+    ],
+    "bilingual": {
+      "eyebrow": "In your language",
+      "line1": "Coaching that speaks",
+      "line2": "the way you do.",
+      "body": "Every screen works in English or Spanish, and your coach answers in whichever one you write in. Not a half-translated app: both sides are built bilingual from the start."
+    },
+    "pricingTeaser": {
+      "eyebrow": "Pricing",
+      "line1": "Start free.",
+      "line2": "Cancel in one tap.",
+      "body": "Self-Guided is $19.97 a month. Coached plans start at $200. Every plan starts with a free trial, and cancelling takes one tap. No games, ever.",
+      "cta": "See the plans"
+    },
+    "closing": {
+      "line1": "If you're ready to lock in,",
+      "line2": "let's work.",
+      "pills": [
+        "Move with purpose",
+        "Fuel your body",
+        "Sustainable results"
+      ],
+      "cta": "Start your journey"
+    },
+    "footer": {
+      "tagline": "Creator-led, bilingual fitness coaching for women.",
+      "product": "Product",
+      "company": "Company",
+      "legalLabel": "Legal",
+      "rights": "All rights reserved."
+    }
   }
 }
