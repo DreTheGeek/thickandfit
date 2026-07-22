@@ -15,6 +15,18 @@ export async function MarketingFooter(): Promise<ReactElement> {
         <div className="lg:col-span-2">
           <Wordmark height={20} />
           <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-soft">{t('footer.tagline')}</p>
+          {/* Her real creator page. Outbound links to the places she actually publishes are both a
+              human trust signal and the citation signal generative engines weight, and this is the
+              only profile URL verified so far. Add the rest here as the handles are confirmed:
+              never guess a social URL, since a wrong one points her brand at someone else. */}
+          <a
+            href="https://www.solin.stream/stephsblessedd"
+            target="_blank"
+            rel="noopener noreferrer me"
+            className="mt-4 inline-block text-[14px] font-semibold text-ink underline underline-offset-4 hover:text-soft"
+          >
+            {t('footer.creatorLink')}
+          </a>
         </div>
 
         <div>

@@ -1965,7 +1965,7 @@
     "proof": {
       "items": [
         {
-          "n": "562K",
+          "n": "562,000",
           "l": "mujeres siguiéndonos"
         },
         {
@@ -2068,7 +2068,8 @@
       "product": "Producto",
       "company": "Nosotras",
       "legalLabel": "Legal",
-      "rights": "Todos los derechos reservados."
+      "rights": "Todos los derechos reservados.",
+      "creatorLink": "Más de Steph"
     },
     "story": {
       "eyebrow": "Una semana conmigo",

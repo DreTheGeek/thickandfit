@@ -51,6 +51,11 @@ export function personNode(): JsonLdNode {
       'Bilingual fitness coach for women across the US and Latin America, founder of Thick & Fit.',
     knowsLanguage: ['en', 'es'],
     worksFor: { '@id': ORG_ID },
+    // sameAs is how an answer engine resolves "Stephanie Pantoja" to one real person instead of
+    // guessing. Only verified URLs go in here: an invented profile link would attach her entity to
+    // an account she does not own. Add her Instagram/TikTok/YouTube here once the handles are
+    // confirmed, and mirror them as visible footer links (sameAs alone is not a citation signal).
+    sameAs: ['https://www.solin.stream/stephsblessedd'],
   };
 }
 

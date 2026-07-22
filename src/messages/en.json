@@ -1965,7 +1965,7 @@
     "proof": {
       "items": [
         {
-          "n": "562K",
+          "n": "562,000",
           "l": "women following along"
         },
         {
@@ -2068,7 +2068,8 @@
       "product": "Product",
       "company": "Company",
       "legalLabel": "Legal",
-      "rights": "All rights reserved."
+      "rights": "All rights reserved.",
+      "creatorLink": "More from Steph"
     },
     "story": {
       "eyebrow": "A week with me",
