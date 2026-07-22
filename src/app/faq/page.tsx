@@ -50,7 +50,7 @@ export default async function FaqPage(): Promise<ReactElement> {
   ].filter((n): n is JsonLdNode => n !== null);
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="tf-light min-h-screen bg-white text-black">
       <JsonLd data={graph(nodes)} />
 
       <section className="mx-auto max-w-3xl px-6 py-20 sm:py-28">

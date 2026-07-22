@@ -2096,6 +2096,87 @@
           "body": "Weight, measurements, habits, photos. Proof that the boring consistent weeks are the ones that pay."
         }
       ]
-    }
+    },
+    "ticker": [
+      "It's not a race, it's a marathon",
+      "No es una carrera, es un maratón",
+      "Strong is the goal",
+      "Fuerte es la meta",
+      "These women, together",
+      "Nosotras, juntas"
+    ],
+    "problem": {
+      "eyebrow": "The Monday loop",
+      "line1": "Starting was never",
+      "line2": "the problem.",
+      "points": [
+        "You have counted before. You have meal prepped before. You have had the week where everything clicked.",
+        "Then life happened, the plan did not bend, and Monday came back around.",
+        "That is not a discipline problem. That is a plan that was never built for your life."
+      ]
+    },
+    "testimonials": {
+      "eyebrow": "In their words",
+      "line1": "She has already done this",
+      "line2": "with women just like you.",
+      "items": [
+        {
+          "q": "This program really pushed me. I worked out on a regular basis before, but felt like I was just going through the motions. After starting this program, I'm excited about fitness again and I feel stronger than I have ever felt. I'll be doing the 8-week challenge next. Thanks Stephanie for helping me love my workouts and my curves.",
+          "who": "Minta T."
+        },
+        {
+          "q": "Everything is great about this program. I got out of my comfort zone, I've changed myself, and I've done exercises I thought I would struggle with. Everything is well explained, love it.",
+          "who": "Guadalupe U."
+        },
+        {
+          "q": "Love the workouts and energy vibes with community groups. Coach Steph is a trainer who engages with her clients daily. The support and commitment to healthy lifestyle especially from a meal perspective has been awesome. I'm down 5 lbs, and I'm keeping focus towards my goal.",
+          "who": "Rowena L."
+        },
+        {
+          "q": "Working with Steph has completely changed my perspective on fitness. Each week, I've grown stronger both mentally and physically. She's helped me set myself up for success, especially through consistent meal prep and accountability. Her communication and transparency are unmatched and she constantly motivates me to show up for myself and push beyond my limits. Since working with her, I've gained so much confidence and discipline by learning how to truly commit to myself.",
+          "who": "Genesis R."
+        },
+        {
+          "q": "One of the biggest shifts for me was getting comfortable taking progress photos again, something I had stopped doing because of my weight. With Steph's guidance, I've rebuilt that confidence. Nutrition has also become second nature; prioritizing protein is now a habit, not something I have to overthink. When Steph says “food is fuel,” she truly means it. I've learned so many healthier alternatives that make nutrition feel 100x easier.",
+          "who": "Zakeya D."
+        }
+      ]
+    },
+    "about": {
+      "eyebrow": "Why women choose Thick & Fit",
+      "line1": "Because your journey",
+      "line2": "deserves someone who understands it.",
+      "paras": [
+        "I have lived every part of this journey. The frustration, the doubt, the “how did I get here?” moments. I have been the athlete who pushed her body too far, the woman who tried every quick fix, and the girl who thought shrinking was the answer.",
+        "What I learned is this: true transformation does not come from chasing smaller. It comes from stepping into stronger. It comes from owning your strength, embracing your body, and realizing that confidence is the real power.",
+        "I am not coaching from perfection. I am coaching from experience. I have shown the setbacks, the mental battles, and the real life glow up. Women relate to me because I have walked the same road they are on."
+      ],
+      "pull": "This is not about getting fit for the moment. This is about becoming strong for life.",
+      "sign": "Steph"
+    },
+    "process": {
+      "eyebrow": "The process",
+      "line1": "Your time is important,",
+      "line2": "so I will be quick.",
+      "steps": [
+        {
+          "n": "01",
+          "title": "Tell me about you",
+          "body": "A few questions about your goals, your schedule, your body, and what has gotten in the way before. It takes about two minutes."
+        },
+        {
+          "n": "02",
+          "title": "We start, and I adjust with you",
+          "body": "Your workouts, your macros, and your meals get built around the life you actually have. Nothing is set in stone. When your week changes, the plan changes."
+        }
+      ]
+    },
+    "faqTeaser": {
+      "eyebrow": "Before you ask",
+      "line1": "The questions",
+      "line2": "everybody asks first.",
+      "cta": "Read all the answers"
+    },
+    "stickyCta": "Start your journey"
   }
 }

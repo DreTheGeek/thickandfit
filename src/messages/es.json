@@ -2096,6 +2096,87 @@
           "body": "Peso, medidas, hábitos, fotos. La prueba de que las semanas aburridas y constantes son las que pagan."
         }
       ]
-    }
+    },
+    "ticker": [
+      "It's not a race, it's a marathon",
+      "No es una carrera, es un maratón",
+      "Strong is the goal",
+      "Fuerte es la meta",
+      "These women, together",
+      "Nosotras, juntas"
+    ],
+    "problem": {
+      "eyebrow": "El bucle del lunes",
+      "line1": "Empezar nunca",
+      "line2": "fue el problema.",
+      "points": [
+        "Ya contaste macros antes. Ya hiciste meal prep antes. Ya tuviste la semana en la que todo encajó.",
+        "Después la vida pasó, el plan no se dobló, y el lunes volvió.",
+        "Eso no es falta de disciplina. Es un plan que nunca se hizo para tu vida."
+      ]
+    },
+    "testimonials": {
+      "eyebrow": "En sus palabras",
+      "line1": "Ya lo ha hecho",
+      "line2": "con mujeres como tú.",
+      "items": [
+        {
+          "q": "This program really pushed me. I worked out on a regular basis before, but felt like I was just going through the motions. After starting this program, I'm excited about fitness again and I feel stronger than I have ever felt. I'll be doing the 8-week challenge next. Thanks Stephanie for helping me love my workouts and my curves.",
+          "who": "Minta T."
+        },
+        {
+          "q": "Everything is great about this program. I got out of my comfort zone, I've changed myself, and I've done exercises I thought I would struggle with. Everything is well explained, love it.",
+          "who": "Guadalupe U."
+        },
+        {
+          "q": "Love the workouts and energy vibes with community groups. Coach Steph is a trainer who engages with her clients daily. The support and commitment to healthy lifestyle especially from a meal perspective has been awesome. I'm down 5 lbs, and I'm keeping focus towards my goal.",
+          "who": "Rowena L."
+        },
+        {
+          "q": "Working with Steph has completely changed my perspective on fitness. Each week, I've grown stronger both mentally and physically. She's helped me set myself up for success, especially through consistent meal prep and accountability. Her communication and transparency are unmatched and she constantly motivates me to show up for myself and push beyond my limits. Since working with her, I've gained so much confidence and discipline by learning how to truly commit to myself.",
+          "who": "Genesis R."
+        },
+        {
+          "q": "One of the biggest shifts for me was getting comfortable taking progress photos again, something I had stopped doing because of my weight. With Steph's guidance, I've rebuilt that confidence. Nutrition has also become second nature; prioritizing protein is now a habit, not something I have to overthink. When Steph says “food is fuel,” she truly means it. I've learned so many healthier alternatives that make nutrition feel 100x easier.",
+          "who": "Zakeya D."
+        }
+      ]
+    },
+    "about": {
+      "eyebrow": "Por qué las mujeres eligen Thick & Fit",
+      "line1": "Porque tu camino",
+      "line2": "merece a alguien que lo entienda.",
+      "paras": [
+        "He vivido cada parte de este camino. La frustración, la duda, los momentos de “¿cómo llegué aquí?”. Fui la atleta que exigió demasiado a su cuerpo, la mujer que probó cada solución rápida, y la niña que creyó que hacerse pequeña era la respuesta.",
+        "Lo que aprendí es esto: la transformación de verdad no viene de buscar ser más pequeña. Viene de volverte más fuerte. Viene de adueñarte de tu fuerza, abrazar tu cuerpo, y entender que la confianza es el poder real.",
+        "No te entreno desde la perfección. Te entreno desde la experiencia. He mostrado las caídas, las batallas mentales, y el cambio real. Las mujeres se identifican conmigo porque caminé el mismo camino que ellas."
+      ],
+      "pull": "Esto no se trata de estar en forma por un momento. Se trata de volverte fuerte para toda la vida.",
+      "sign": "Steph"
+    },
+    "process": {
+      "eyebrow": "El proceso",
+      "line1": "Tu tiempo importa,",
+      "line2": "así que seré breve.",
+      "steps": [
+        {
+          "n": "01",
+          "title": "Cuéntame de ti",
+          "body": "Unas preguntas sobre tus metas, tu horario, tu cuerpo, y qué se ha atravesado antes. Toma como dos minutos."
+        },
+        {
+          "n": "02",
+          "title": "Empezamos, y ajusto contigo",
+          "body": "Tus entrenamientos, tus macros y tus comidas se arman alrededor de la vida que de verdad tienes. Nada está grabado en piedra. Cuando tu semana cambia, el plan cambia."
+        }
+      ]
+    },
+    "faqTeaser": {
+      "eyebrow": "Antes de que preguntes",
+      "line1": "Las preguntas",
+      "line2": "que todas hacen primero.",
+      "cta": "Ver todas las respuestas"
+    },
+    "stickyCta": "Empieza tu camino"
   }
 }

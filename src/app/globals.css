@@ -180,6 +180,41 @@
   }
 }
 
+/* Light lock for the public marketing pages. Those pages hardcode white and cream grounds, but
+   next-themes puts data-theme="dark" on <html> for anyone who flipped the toggle inside the app,
+   which flipped --c-ink to near-white and made the marketing copy invisible on its own background.
+   Re-declaring the raw light tokens on a scoped wrapper wins over the [data-theme="dark"] block by
+   proximity (both set the same custom properties, the nearer element's declaration is inherited),
+   so the marketing shell stays light no matter what the member picked in the app. */
+.tf-light {
+  --c-ink: #0f0f0f;
+  --c-bg: #e7e5df;
+  --c-surface: #ffffff;
+  --c-warm: #dddbd3;
+  --c-line: #ddd9d0;
+  --c-divider: #eae7e0;
+  --c-muted: #636363;
+  --c-soft: #5c5c5c;
+  --c-faint: #757575;
+}
+
+/* Marketing ticker strip. The track holds two identical runs, so translating it exactly -50% lands
+   the second run where the first started and the loop is seamless. Paused for reduced motion:
+   the phrases stay readable, they just stop moving. */
+@keyframes tf-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.tf-marquee {
+  animation: tf-marquee 38s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tf-marquee {
+    animation: none;
+  }
+}
+
 /* Milestone confetti (workout complete / streak / goal hit). */
 @keyframes tf-confetti {
   0% {
