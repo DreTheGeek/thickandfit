@@ -7,6 +7,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { localeForCountry } from '@/lib/i18n/geo';
+import { urlLocaleFor, esPathFor } from '@/lib/seo/locale-alternates';
 
 // On the admin.<domain> host, only the admin portal + auth are reachable; everything else (all of
 // /coach and the member app) redirects to /admin, so the ops surface is fully isolated.
@@ -79,12 +80,14 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   // Touch the session so @supabase/ssr refreshes + re-writes the auth cookies via setAll.
   await supabase.auth.getUser();
 
-  const isEsRoute = req.nextUrl.pathname === '/es' || req.nextUrl.pathname.startsWith('/es/');
-  if (isEsRoute) {
-    // Someone who landed on a Spanish URL from search stays in Spanish when they click through to
-    // /join or sign-in, which are not locale-routed. Without this, a visitor arriving on /es from
-    // Google hits the CTA and drops into English mid-funnel.
-    res.cookies.set('ui_locale', 'es', {
+  // The URL is authoritative in BOTH directions, and that symmetry is the point. /es writes es so a
+  // visitor arriving from Spanish search stays in Spanish through /join and sign-in, which have no
+  // Spanish twin. The English twin writes en so the nav toggle actually works: without it, /es set a
+  // one-year cookie, nothing ever cleared it, and clicking EN landed on / which still rendered
+  // Spanish. One way in, no way out, and the English canonical URL served Spanish to crawlers.
+  const urlLocale = urlLocaleFor(req.nextUrl.pathname);
+  if (urlLocale) {
+    res.cookies.set('ui_locale', urlLocale, {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
@@ -96,6 +99,20 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
       maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
     });
+  }
+
+  // A LATAM visitor with no stated preference gets sent to the Spanish URL rather than being served
+  // Spanish at the English one. Serving a different language at a canonical URL is the thing that
+  // confuses crawlers and breaks the hreflang pair. Only fires when no preference exists, so it can
+  // never override someone who picked a language.
+  if (
+    urlLocale === 'en' &&
+    !req.cookies.get('ui_locale') &&
+    localeForCountry(req.headers.get('x-vercel-ip-country')) === 'es'
+  ) {
+    const url = req.nextUrl.clone();
+    url.pathname = esPathFor(req.nextUrl.pathname);
+    return NextResponse.redirect(url, 307);
   }
 
   // The response carries the same CSP the render was nonced against.

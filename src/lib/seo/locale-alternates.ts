@@ -18,6 +18,27 @@ export function esPathFor(enPath: string): string {
 /** Marketing routes that exist in both languages. */
 const BILINGUAL_PATHS = ['/', '/pricing', '/faq', '/about'] as const;
 
+/**
+ * Which language a marketing URL IS, as opposed to which language the visitor last picked.
+ *
+ * "es" for /es/*, "en" for the English twin of a bilingual route, null for everything else (the
+ * app, /join, /auth/*), which keeps using the cookie.
+ *
+ * This exists because the URL has to be authoritative in BOTH directions. Making only /es
+ * authoritative produced a one-way trap: /es wrote a one-year ui_locale=es cookie, nothing ever
+ * wrote it back to en, so clicking EN in the nav landed on / and / still rendered Spanish from the
+ * cookie. There was no route back to English from the UI, and the English canonical URL could serve
+ * Spanish to a crawler.
+ */
+export function urlLocaleFor(pathname: string | null | undefined): 'en' | 'es' | null {
+  const p = pathname ?? '';
+  if (isEsPath(p)) {
+    const bare = p === '/es' ? '/' : p.slice('/es'.length);
+    return (BILINGUAL_PATHS as readonly string[]).includes(bare) ? 'es' : null;
+  }
+  return (BILINGUAL_PATHS as readonly string[]).includes(p) ? 'en' : null;
+}
+
 /** Public, unauthenticated pages, including their /es twins. Anything else is the app. */
 const PUBLIC_PATHS = ['/', '/pricing', '/faq', '/about', '/join', '/terms', '/privacy'] as const;
 
