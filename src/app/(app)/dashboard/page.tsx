@@ -22,7 +22,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name')
+    .select('full_name, created_at')
     .eq('id', ctx.userId)
     .maybeSingle();
   const firstName = (profile?.full_name ?? '').trim().split(/\s+/)[0] ?? '';
@@ -73,10 +73,15 @@ export default async function DashboardPage(): Promise<ReactElement> {
 
   // Weight/goal progress for the Today card (start -> current -> goal), reusing the onboarding start
   // + the latest logged weight. Only once onboarded + a goal weight exists.
+  let onbStartedAt: string | null = null;
   let weightGoal: { startLb: number; currentLb: number; goalLb: number; pct: number } | null = null;
   if (ctx.companyId && summary?.hasOnboarded) {
     const [{ data: onb }, { data: lw }] = await Promise.all([
-      supabase.from('onboarding_responses').select('answers').eq('profile_id', ctx.userId).maybeSingle(),
+      supabase
+        .from('onboarding_responses')
+        .select('answers, completed_at')
+        .eq('profile_id', ctx.userId)
+        .maybeSingle(),
       supabase
         .from('weight_entries')
         .select('weight_kg')
@@ -85,6 +90,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
         .limit(1)
         .maybeSingle(),
     ]);
+    onbStartedAt = ((onb as { completed_at?: string | null } | null)?.completed_at) ?? null;
     const a = (onb?.answers ?? null) as { weightKg?: number; goalWeightKg?: number } | null;
     if (a?.weightKg && a?.goalWeightKg) {
       const startLb = Math.round(a.weightKg * KG_TO_LB);
@@ -146,6 +152,15 @@ export default async function DashboardPage(): Promise<ReactElement> {
     };
   });
 
+  // Weeks since she started, for the "Week N of your transformation" line. Anchored to her
+  // onboarding completion (the real start of the plan), falling back to the profile creation date.
+  // Null when neither is known, so the line is hidden rather than showing a fabricated week 1.
+  const startedAt =
+    onbStartedAt ?? ((profile as { created_at?: string } | null)?.created_at ?? null);
+  const weeksIn = startedAt
+    ? Math.max(1, Math.floor((Date.now() - Date.parse(startedAt)) / (7 * 86_400_000)) + 1)
+    : null;
+
   return (
     <TodayScreen
       name={firstName}
@@ -158,6 +173,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
       weightGoal={weightGoal}
       coach={coach}
       supportEmail={supportEmail}
+      weeksIn={weeksIn}
     />
   );
 }

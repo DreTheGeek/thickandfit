@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/states/skeleton';
 import { ErrorState } from '@/components/states/error-state';
 import { FirstRunState } from '@/components/states/first-run-state';
 import { Card } from '@/components/ui/card';
+import { Mission, type MissionItem } from '@/components/dashboard/mission';
 import { Avatar } from '@/components/ui/avatar';
 import { ButtonLink } from '@/components/ui/button';
 import { Wordmark } from '@/components/ui/wordmark';
@@ -46,6 +47,7 @@ export function TodayScreen({
   weightGoal,
   coach,
   supportEmail,
+  weeksIn,
 }: {
   name: string;
   dateLabel: string;
@@ -57,6 +59,7 @@ export function TodayScreen({
   weightGoal: WeightGoal | null;
   coach: TodayCoach | null;
   supportEmail: string;
+  weeksIn: number | null;
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
@@ -210,6 +213,39 @@ export function TodayScreen({
     );
   }
 
+  // Today's mission. Only surfaces things this app actually tracks: the assigned workout, the food
+  // diary, today's habits and the weekly check-in. See components/dashboard/mission.tsx on why Move
+  // and Recover are deliberately absent.
+  const habitsDone = habits.filter((h) => h.done).length;
+  const missionItems: MissionItem[] = [
+    {
+      key: 'train',
+      label: t('today.missionTrain'),
+      detail: summary.todaysWorkout?.name ?? t('today.missionRestDay'),
+      href: '/workouts',
+      done: Boolean(summary.todaysWorkout?.done),
+    },
+    {
+      key: 'fuel',
+      label: t('today.missionFuel'),
+      detail:
+        nutrition && nutrition.consumed.kcal > 0
+          ? t('today.missionMealsLogged')
+          : t('today.missionLogMeals'),
+      href: '/nutrition',
+      done: Boolean(nutrition && nutrition.consumed.kcal > 0),
+    },
+  ];
+  if (habits.length > 0) {
+    missionItems.push({
+      key: 'habits',
+      label: t('today.missionHabits'),
+      detail: t('today.missionHabitsOf', { done: habitsDone, total: habits.length }),
+      href: '/you',
+      done: habitsDone === habits.length,
+    });
+  }
+
   const workoutTitle = summary.todaysWorkout?.name ?? t('today.morningWorkout');
   const workoutSub = summary.todaysWorkout
     ? t('activities.todaysWorkout')
@@ -268,6 +304,13 @@ export function TodayScreen({
           ) : null}
         </div>
       </Card>
+
+      {/* Today's mission: what the day asks of her and how much of it she already owns. */}
+      <Mission
+        items={missionItems}
+        title={t('today.missionTitle')}
+        weekLine={weeksIn && weeksIn > 0 ? t('today.missionWeek', { n: weeksIn }) : null}
+      />
 
       {/* Nutrition first: the moat lives on the home screen. Cal-AI-style calories-left hero. */}
       {nutrition ? <NutritionCard n={nutrition} t={t} /> : null}
