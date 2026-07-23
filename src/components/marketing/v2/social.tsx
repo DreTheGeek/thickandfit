@@ -4,8 +4,11 @@
 // every colour token and every asset below is ours: real client quotes, real pricing, real tiers.
 // The only colour change from the reference is the accent, lime #e6ff00 becomes crimson #ff2d55.
 import type { ReactElement } from 'react';
+import { headers } from 'next/headers';
+import Link from 'next/link';
 
 import { LCta, LH2, LSection } from '@/components/marketing/v2/ui';
+import { withLocalePrefix } from '@/lib/seo/locale-alternates';
 
 type Review = { quote: string; who: string };
 
@@ -128,45 +131,71 @@ export function Faq(): ReactElement {
   );
 }
 
-const PAGE_LINKS: readonly string[] = ['Pricing', 'FAQ', 'About', 'Privacy', 'Terms'];
-const PROGRAM_LINKS: readonly string[] = ['Foundation', 'Evolution', 'Elite'];
+type FooterLink = { label: string; href: string };
+
+// Programs are the three pricing tiers, so they point at the pricing page (there is no per-tier
+// route). Pages and legal point at their real routes; About/Pricing/FAQ have Spanish twins.
+const PAGE_LINKS: readonly FooterLink[] = [
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'FAQ', href: '/faq' },
+  { label: 'About', href: '/about' },
+  { label: 'Privacy', href: '/privacy' },
+  { label: 'Terms', href: '/terms' },
+];
+const PROGRAM_LINKS: readonly FooterLink[] = [
+  { label: 'Foundation', href: '/pricing' },
+  { label: 'Evolution', href: '/pricing' },
+  { label: 'Elite', href: '/pricing' },
+];
 
 function FooterColumn({
   heading,
   links,
 }: {
   heading: string;
-  links: readonly string[];
+  links: readonly FooterLink[];
 }): ReactElement {
   return (
     <div>
       <h3 className="text-[14px] font-bold uppercase text-white">{heading}</h3>
       <div className="mt-4 flex flex-col gap-2">
         {links.map((link) => (
-          <a key={link} href="#" className="text-[14px] text-[#bcbcbc] hover:text-white">
-            {link}
-          </a>
+          <Link
+            key={link.label}
+            href={link.href}
+            className="text-[14px] text-[#bcbcbc] hover:text-white"
+          >
+            {link.label}
+          </Link>
         ))}
       </div>
     </div>
   );
 }
 
-/** Four column footer with the trial CTA and the legal strip. */
-export function SiteFooter(): ReactElement {
+/** Four column footer with the trial CTA and the legal strip. Links resolve to real routes, kept in
+ *  the visitor's language where a Spanish twin exists. */
+export async function SiteFooter(): Promise<ReactElement> {
+  const pathname = (await headers()).get('x-pathname');
+  const lp = (target: string): string => withLocalePrefix(pathname, target);
+  const withLocale = (links: readonly FooterLink[]): FooterLink[] =>
+    links.map((l) => ({ label: l.label, href: lp(l.href) }));
+
   return (
     <footer className="bg-[#0e0e0e] px-5 py-16 text-white sm:px-8">
       <div className="mx-auto w-full max-w-[1200px]">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/logo-white.svg" alt="Thick &amp; Fit" className="h-5 w-auto" />
+            <Link href={lp('/')} aria-label="Thick &amp; Fit" className="inline-block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/logo-white.svg" alt="Thick &amp; Fit" className="h-5 w-auto" />
+            </Link>
             <p className="mt-4 text-[14px] text-[#bcbcbc]">
               The system that turns starting over into staying.
             </p>
           </div>
-          <FooterColumn heading="Pages" links={PAGE_LINKS} />
-          <FooterColumn heading="Programs" links={PROGRAM_LINKS} />
+          <FooterColumn heading="Pages" links={withLocale(PAGE_LINKS)} />
+          <FooterColumn heading="Programs" links={withLocale(PROGRAM_LINKS)} />
           <div>
             <h3 className="text-[14px] font-bold uppercase text-white">Get started</h3>
             <LCta href="/join" className="mt-4 block w-fit">
@@ -178,12 +207,12 @@ export function SiteFooter(): ReactElement {
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-[13px] text-white/50">&copy; 2026 Thick Fit Coaching LLC</p>
           <div className="flex gap-5">
-            <a href="#" className="text-[13px] text-white/50 hover:text-white">
+            <Link href="/privacy" className="text-[13px] text-white/50 hover:text-white">
               Privacy
-            </a>
-            <a href="#" className="text-[13px] text-white/50 hover:text-white">
+            </Link>
+            <Link href="/terms" className="text-[13px] text-white/50 hover:text-white">
               Terms
-            </a>
+            </Link>
           </div>
         </div>
       </div>

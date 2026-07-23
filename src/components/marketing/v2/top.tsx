@@ -7,9 +7,13 @@
 // The fold sells identity, not features: no scoreboard of customers, no price. Price is a
 // transaction detail and lives further down the page.
 import type { ReactElement } from 'react';
+import { headers } from 'next/headers';
+import Link from 'next/link';
 
 import { LCta } from '@/components/marketing/v2/ui';
 import { TodayCard } from '@/components/marketing/v2/today-card';
+import { NavMenu, type NavLink } from '@/components/marketing/v2/nav-menu';
+import { withLocalePrefix, twinPathFor } from '@/lib/seo/locale-alternates';
 
 /** Thin promo strip that sits above the nav. */
 export function AnnounceBar(): ReactElement {
@@ -26,42 +30,40 @@ export function AnnounceBar(): ReactElement {
   );
 }
 
-const NAV_LINKS: readonly string[] = ['Pricing', 'FAQ', 'Espanol', 'Log in'];
+/** Sticky top nav: wordmark left, hamburger right. The bar stays logo-only to match the reference;
+ *  the burger opens the real menu (built in NavMenu). Links are locale-aware, so a visitor reading
+ *  /es keeps their language and there is a real path to /es (and back to English). */
+export async function SiteNav(): Promise<ReactElement> {
+  const pathname = (await headers()).get('x-pathname');
+  const lp = (target: string): string => withLocalePrefix(pathname, target);
+  const twin = twinPathFor(pathname);
 
-/** Sticky top nav: wordmark left, plain links right, hamburger below lg. */
-export function SiteNav(): ReactElement {
+  const links: NavLink[] = [
+    { label: 'Pricing', href: lp('/pricing') },
+    { label: 'FAQ', href: lp('/faq') },
+    ...(twin
+      ? [
+          {
+            label: twin.to === 'es' ? 'Espanol' : 'English',
+            href: twin.href,
+            hrefLang: twin.to,
+            lang: twin.to,
+            ariaLabel: twin.to === 'es' ? 'Ver en espanol' : 'View in English',
+          },
+        ]
+      : []),
+    { label: 'Log in', href: '/auth/sign-in' },
+  ];
+
   return (
     <header className="sticky top-0 z-50 bg-[#0e0e0e]/95 backdrop-blur">
       <nav className="mx-auto flex h-[64px] w-full max-w-[1200px] items-center justify-between px-5 sm:px-8">
-        <a href="#" className="shrink-0">
+        <Link href={lp('/')} aria-label="Thick &amp; Fit" className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/logo-white.svg" alt="Thick &amp; Fit" className="h-5 w-auto" />
-        </a>
+        </Link>
 
-        {/* The captured page shows a LOGO-ONLY bar at 1280 and 1440: the links live behind the
-            burger at every width, so they stay hidden here to match. The list is kept because the
-            menu panel will need it once this is edited into a real page. */}
-        <div className="hidden items-center gap-8" aria-hidden="true">
-          {NAV_LINKS.map((label) => (
-            <a
-              key={label}
-              href="#"
-              className="whitespace-nowrap text-[15px] text-white transition-opacity hover:opacity-70"
-            >
-              {label}
-            </a>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          aria-label="Menu"
-          className="flex h-10 w-10 flex-col items-center justify-center gap-[5px]"
-        >
-          <span className="block h-[2px] w-6 bg-white" />
-          <span className="block h-[2px] w-6 bg-white" />
-          <span className="block h-[2px] w-6 bg-white" />
-        </button>
+        <NavMenu links={links} cta={{ label: 'Start your 3 days free', href: '/join' }} />
       </nav>
     </header>
   );
