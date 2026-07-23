@@ -1320,7 +1320,16 @@
       "aiCoach": "Chat con tu coach",
       "progressLbs": "lbs Progreso",
       "healthProfile": "Perfil de salud",
-      "evolution": "Tu evolución"
+      "evolution": "Tu evolución",
+      "goalTypeLoseWeight": "Bajar de peso",
+      "goalTypeBuildStrength": "Ponerte más fuerte",
+      "goalTypeFeelBetter": "Sentirte mejor",
+      "goalWorkingToward": "Lo que estás buscando",
+      "goalChange": "Cambiar",
+      "strengthTitle": "Te estás poniendo más fuerte",
+      "strengthSub": "Cada sesión se apoya en la anterior. Sigue apareciendo.",
+      "feelBetterTitle": "Sigues apareciendo",
+      "feelBetterSub": "La constancia es todo. Un día a la vez."
     },
     "gamification": {
       "dayStreak": "días seguidos",

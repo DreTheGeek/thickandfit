@@ -2,14 +2,14 @@ import type { ReactElement, ReactNode } from 'react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { Avatar } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { Tag } from '@/components/ui/badge';
 import { ListRow } from '@/components/ui/list-row';
-import { ProgressBar } from '@/components/ui/ring';
 import { PageTitle } from '@/components/ui/section';
 import { signOutAction } from '@/lib/auth/actions';
 import { WeightLogCard } from '@/components/profile/weight-log-card';
+import { GoalCard } from '@/components/profile/goal-card';
+import type { GoalType } from '@/lib/goals/goal-type';
 
 export type GoalSummary = {
   startLbs: number;
@@ -28,6 +28,8 @@ export async function YouScreen({
   progressLbs,
   goal,
   gentle = false,
+  goalType,
+  chosenGoalType,
   latestLb,
   latestWeightDate,
   supportEmail,
@@ -44,6 +46,10 @@ export async function YouScreen({
   /** Difficult-relationship-with-food screen: drop the shrinking-number goal hero and the
    *  weight-loss-as-success colour. Weight tracking itself stays available below. */
   gentle?: boolean;
+  /** What the goal card renders (gentle override already applied). */
+  goalType: GoalType;
+  /** What the member actually chose, for the selector's current state. */
+  chosenGoalType: GoalType;
   latestLb: number | null;
   latestWeightDate: string | null;
   children?: ReactNode;
@@ -119,51 +125,17 @@ export async function YouScreen({
         />
       </div>
 
-      {/* Goal hero. Hidden under gentle framing: a shrinking start -> current -> goal is exactly the
-          "chasing smaller" hero the coach steers these members away from. Weight tracking stays
-          reachable below (the weight log + the You menu), just not led with. */}
-      {goal != null && !gentle && (
-        <Card dark className="mb-[22px] p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-[2px] text-white/70">
-              {t('yourGoal')}
-            </span>
-            <span className="text-[11px] font-semibold text-accent">
-              {goal.pct}% {t('there')}
-            </span>
-          </div>
-          <div className="mb-3 flex items-end justify-between">
-            <div>
-              <div className="text-[11px] text-white/55">{t('start')}</div>
-              <div className="font-display text-[26px]">{goal.startLbs}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[11px] text-accent">{t('current')}</div>
-              <div className="font-display text-[34px] text-accent">
-                {goal.currentLbs}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[11px] text-white/55">{t('goal')}</div>
-              <div className="font-display text-[26px]">{goal.goalLbs}</div>
-            </div>
-          </div>
-          <div className="relative">
-            <ProgressBar
-              pct={goal.pct}
-              color="var(--color-accent)"
-              track="#2a2a2a"
-            />
-            <span
-              className="absolute top-[-3px] h-3 w-3 -translate-x-1/2 rounded-full bg-white"
-              style={{ left: `${goal.pct}%` }}
-            />
-          </div>
-          <div className="mt-2.5 text-[11px] text-white/55">
-            {t('lbsToGo', { lbs: goal.toGo })}
-          </div>
-        </Card>
-      )}
+      {/* The goal section, rendered for whatever the member is working toward (weight, strength, or
+          feeling better). Gentle framing + the member's own choice both resolve upstream into
+          goalType; the card and its selector live in GoalCard. */}
+      <GoalCard
+        goalType={goalType}
+        chosenGoalType={chosenGoalType}
+        gentle={gentle}
+        goal={goal}
+        workoutCount={workoutCount}
+        streakWeeks={streakWeeks}
+      />
 
       {/* Gamification: streak ring + freeze indicator + badge grid */}
       {children}

@@ -7,6 +7,7 @@ import { getSupportEmail } from '@/lib/admin/settings';
 import { YouScreen, type GoalSummary } from '@/components/profile/you-screen';
 import { recomputeGamification } from '@/lib/gamification/engine';
 import { prefersGentleFraming } from '@/lib/health-profile/screening';
+import { deriveGoalType, effectiveGoalType, isGoalType } from '@/lib/goals/goal-type';
 import { StreakBadges } from '@/components/gamification/streak-badges';
 import type { GamificationSnapshot } from '@/lib/gamification/types';
 
@@ -28,7 +29,7 @@ export default async function YouPage(): Promise<ReactElement> {
       .maybeSingle(),
     supabase
       .from('onboarding_responses')
-      .select('answers')
+      .select('answers, goal_type')
       .eq('profile_id', ctx.userId)
       .maybeSingle(),
     supabase
@@ -57,7 +58,9 @@ export default async function YouPage(): Promise<ReactElement> {
   const answers = (onb?.answers ?? null) as {
     weightKg?: number;
     goalWeightKg?: number;
+    goal?: 'lose' | 'maintain' | 'gain';
   } | null;
+  const storedGoalType = (onb as { goal_type?: string | null } | null)?.goal_type ?? null;
 
   // Live weight (weight_entries) overrides the onboarding start as the current point on the goal.
   const lwRow = latestWeight as { weight_kg: number; recorded_on: string } | null;
@@ -95,6 +98,14 @@ export default async function YouPage(): Promise<ReactElement> {
   // celebrated in the success colour. One clinical definition, shared with coach-ai/context.ts.
   const gentle = ctx.companyId ? await prefersGentleFraming(ctx.userId, ctx.companyId) : false;
 
+  // What the member is working toward. Their stored choice if set, otherwise a sensible default from
+  // the calorie-math goal (never lose_weight for a gentle member). effectiveGoalType then applies the
+  // gentle override for rendering, while `chosen` drives which option the selector shows as current.
+  const chosenGoalType = isGoalType(storedGoalType)
+    ? storedGoalType
+    : deriveGoalType({ goal: answers?.goal ?? null, hasGoalWeight: Boolean(goal), gentle });
+  const goalType = effectiveGoalType(chosenGoalType, gentle);
+
   return (
     <YouScreen
       name={name}
@@ -106,6 +117,8 @@ export default async function YouPage(): Promise<ReactElement> {
       progressLbs={progressLbs}
       goal={goal}
       gentle={gentle}
+      goalType={goalType}
+      chosenGoalType={chosenGoalType}
       latestLb={latestLb}
       latestWeightDate={lwRow?.recorded_on ?? null}
     >

@@ -1320,7 +1320,16 @@
       "aiCoach": "Coach chat",
       "progressLbs": "lbs Progress",
       "healthProfile": "Health profile",
-      "evolution": "Your evolution"
+      "evolution": "Your evolution",
+      "goalTypeLoseWeight": "Lose weight",
+      "goalTypeBuildStrength": "Get stronger",
+      "goalTypeFeelBetter": "Feel better",
+      "goalWorkingToward": "What you are working toward",
+      "goalChange": "Change",
+      "strengthTitle": "You are getting stronger",
+      "strengthSub": "Every session builds on the last. Keep showing up.",
+      "feelBetterTitle": "You keep showing up",
+      "feelBetterSub": "Consistency is the whole game. One day at a time."
     },
     "gamification": {
       "dayStreak": "day streak",
