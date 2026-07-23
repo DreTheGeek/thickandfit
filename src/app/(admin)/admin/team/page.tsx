@@ -5,6 +5,7 @@ import { requireOperator } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { AdminPage, Card } from '@/components/admin/ui';
 import { TeamInviteForm } from '@/components/admin/team-invite-form';
+import { TeamRemoveButton } from '@/components/admin/team-remove-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,13 @@ const ROLE_LABEL: Record<string, string> = {
   operator: 'Operator',
 };
 
-type TeamRow = { full_name: string | null; email: string | null; role: string; created_at: string };
+type TeamRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: string;
+  created_at: string;
+};
 
 export default async function TeamPage(): Promise<ReactElement> {
   const ctx = await requireOperator();
@@ -22,7 +29,7 @@ export default async function TeamPage(): Promise<ReactElement> {
   const { data } = ctx.companyId
     ? await svc
         .from('profiles')
-        .select('full_name, email, role, created_at')
+        .select('id, full_name, email, role, created_at')
         .eq('company_id', ctx.companyId)
         .in('role', ['coach', 'assistant_coach', 'operator'])
         .order('created_at', { ascending: true })
@@ -46,18 +53,26 @@ export default async function TeamPage(): Promise<ReactElement> {
                 <tr className="text-left text-[11px] uppercase tracking-[1px] text-faint">
                   <th className="pb-2 pr-4 font-semibold">Name</th>
                   <th className="pb-2 pr-4 font-semibold">Email</th>
-                  <th className="pb-2 font-semibold">Role</th>
+                  <th className="pb-2 pr-4 font-semibold">Role</th>
+                  <th className="pb-2 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {team.map((m) => (
-                  <tr key={m.email ?? m.created_at} className="border-t border-line">
+                  <tr key={m.id} className="border-t border-line">
                     <td className="py-2.5 pr-4 text-ink">{m.full_name ?? '(no name)'}</td>
                     <td className="py-2.5 pr-4 text-muted">{m.email ?? '-'}</td>
-                    <td className="py-2.5">
+                    <td className="py-2.5 pr-4">
                       <span className="rounded-full bg-warm px-2.5 py-0.5 text-[11px] font-semibold text-soft">
                         {ROLE_LABEL[m.role] ?? m.role}
                       </span>
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <TeamRemoveButton
+                        id={m.id}
+                        name={m.full_name?.trim() || m.email || 'this teammate'}
+                        isSelf={m.id === ctx.userId}
+                      />
                     </td>
                   </tr>
                 ))}

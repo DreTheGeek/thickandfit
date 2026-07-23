@@ -105,6 +105,60 @@ export async function inviteTeammateAction(input: unknown): Promise<InviteResult
   return { ok: true, status };
 }
 
+const removeSchema = z.string().uuid();
+
+// Remove a teammate: delete their account so they lose console access and their email frees up for a
+// clean re-invite. Guarded hard, because this is destructive: operators only, same company, staff
+// roles only, never yourself (self-lockout), and never the last operator (would lock everyone out of
+// /admin). Deleting the auth user cascades the profile row; the explicit profile delete is a
+// belt-and-suspenders no-op if the cascade already fired.
+export async function removeTeammateAction(input: unknown): Promise<AccessResult> {
+  const parsed = removeSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireOperator();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+  const targetId = parsed.data;
+  if (targetId === ctx.userId) return { ok: false, error: 'self' };
+
+  const svc = createServiceClient();
+  const { data: prof } = await svc
+    .from('profiles')
+    .select('id, role, email, company_id')
+    .eq('id', targetId)
+    .maybeSingle();
+  const p = prof as { id: string; role: string; email: string | null; company_id: string | null } | null;
+  // Scope to this company AND staff roles only, so this can never touch a member or another tenant.
+  if (!p || p.company_id !== ctx.companyId) return { ok: false, error: 'not_found' };
+  if (!(TEAMMATE_ROLES as readonly string[]).includes(p.role)) return { ok: false, error: 'not_staff' };
+
+  if (p.role === 'operator') {
+    const { count } = await svc
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', ctx.companyId)
+      .eq('role', 'operator');
+    if ((count ?? 0) <= 1) return { ok: false, error: 'last_operator' };
+  }
+
+  const { error: delErr } = await svc.auth.admin.deleteUser(targetId);
+  if (delErr) {
+    console.error('removeTeammateAction deleteUser:', delErr.message);
+    return { ok: false, error: 'failed' };
+  }
+  await svc.from('profiles').delete().eq('id', targetId);
+
+  logCoachAction(svc, {
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    entityType: 'profile',
+    entityId: targetId,
+    action: 'admin.remove_teammate',
+    newState: { email: p.email, role: p.role },
+  });
+  revalidatePath('/admin/team');
+  return { ok: true };
+}
+
 // Passcode entry. Rate-limited hard (it is a shared secret) and only reachable by operators anyway.
 export async function enterAdminPasscodeAction(input: unknown): Promise<AccessResult> {
   const parsed = z.string().min(1).max(200).safeParse(input);
