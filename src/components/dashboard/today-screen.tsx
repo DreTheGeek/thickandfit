@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { Skeleton } from '@/components/states/skeleton';
 import { ErrorState } from '@/components/states/error-state';
+import { STEP_GOAL, SLEEP_GOAL_MIN, formatSleep } from '@/lib/dailymetrics/goals';
 import { FirstRunState } from '@/components/states/first-run-state';
 import { Card } from '@/components/ui/card';
 import { Mission, type MissionItem } from '@/components/dashboard/mission';
@@ -48,6 +49,7 @@ export function TodayScreen({
   coach,
   supportEmail,
   weeksIn,
+  daily,
 }: {
   name: string;
   dateLabel: string;
@@ -60,6 +62,7 @@ export function TodayScreen({
   coach: TodayCoach | null;
   supportEmail: string;
   weeksIn: number | null;
+  daily: { steps: number | null; sleepMinutes: number | null };
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
@@ -213,10 +216,13 @@ export function TodayScreen({
     );
   }
 
-  // Today's mission. Only surfaces things this app actually tracks: the assigned workout, the food
-  // diary, today's habits and the weekly check-in. See components/dashboard/mission.tsx on why Move
-  // and Recover are deliberately absent.
+  // Today's mission: the four pillars TRAIN / FUEL / MOVE / RECOVER, matching the marketing. Train
+  // and Fuel derive from the assigned workout and the food diary; Move and Recover are self-reported
+  // via daily_metrics (tap the row to log steps / sleep). Habits still appears when the member has
+  // habits set. Nothing invented: an unlogged Move/Recover row prompts to log, never shows a fake.
   const habitsDone = habits.filter((h) => h.done).length;
+  const moveDone = daily.steps != null && daily.steps >= STEP_GOAL;
+  const recoverDone = daily.sleepMinutes != null && daily.sleepMinutes >= SLEEP_GOAL_MIN;
   const missionItems: MissionItem[] = [
     {
       key: 'train',
@@ -234,6 +240,24 @@ export function TodayScreen({
           : t('today.missionLogMeals'),
       href: '/nutrition',
       done: Boolean(nutrition && nutrition.consumed.kcal > 0),
+    },
+    {
+      key: 'move',
+      label: t('today.missionMove'),
+      detail:
+        daily.steps != null
+          ? t('today.missionSteps', { steps: daily.steps.toLocaleString(locale) })
+          : t('today.missionLogSteps'),
+      capture: 'steps',
+      done: moveDone,
+    },
+    {
+      key: 'recover',
+      label: t('today.missionRecover'),
+      detail:
+        daily.sleepMinutes != null ? formatSleep(daily.sleepMinutes) : t('today.missionLogSleep'),
+      capture: 'sleep',
+      done: recoverDone,
     },
   ];
   if (habits.length > 0) {

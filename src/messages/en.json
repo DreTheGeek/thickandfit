@@ -308,7 +308,21 @@
       "drinkWater": "Drink Water",
       "setupPendingTitle": "Account setup pending",
       "setupPendingBody": "We're finishing setting up your account. This usually takes just a moment. Reach out if it doesn't clear up shortly.",
-      "setupPendingCta": "Contact support"
+      "setupPendingCta": "Contact support",
+      "missionMove": "Move",
+      "missionRecover": "Recover",
+      "missionSteps": "{steps} steps",
+      "missionLogSteps": "Log your steps",
+      "missionLogSleep": "Log your sleep",
+      "moveTitle": "Log your steps",
+      "moveLabel": "Steps today",
+      "recoverTitle": "Log your sleep",
+      "recoverHours": "Hours",
+      "recoverMinutes": "Minutes",
+      "captureSave": "Save",
+      "captureSaving": "Saving...",
+      "captureError": "Enter a number and try again.",
+      "cancel": "Cancel"
     },
     "activities": {
       "title": "Activities",

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
 import { getTodayHabits, localToday } from '@/lib/habits/habits';
+import { getDailyMetrics } from '@/lib/dailymetrics/daily';
 import { getDiary } from '@/lib/nutrition/diary';
 import { getCommunity } from '@/lib/community/feed';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
@@ -33,6 +34,8 @@ export default async function DashboardPage(): Promise<ReactElement> {
   let summary: DashboardSummary | null = null;
   if (ctx.companyId) summary = await getDashboardSummary(ctx.companyId, ctx.userId);
   const habits = ctx.companyId ? await getTodayHabits(ctx.userId, today) : [];
+  // Move (steps) + Recover (sleep) for the mission's daily pillars, self-reported into daily_metrics.
+  const daily = await getDailyMetrics(ctx.userId, today);
 
   // Today's nutrition for the home card (consumed vs. target). Only meaningful once onboarded, since
   // the pre-onboarding home shows the "build your plan" state.
@@ -174,6 +177,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
       coach={coach}
       supportEmail={supportEmail}
       weeksIn={weeksIn}
+      daily={daily}
     />
   );
 }
