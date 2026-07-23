@@ -54,3 +54,4 @@ next-env.d.ts
 
 # Claude Code local (machine-specific perms)
 .claude/settings.local.json
+.stripe-setup.json
