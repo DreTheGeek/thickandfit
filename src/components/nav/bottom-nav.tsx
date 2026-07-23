@@ -33,7 +33,10 @@ const TABS: Tab[] = [
     href: '/you',
     icon: 'user',
     match: (p) =>
-      p.startsWith('/you') || p.startsWith('/progress') || p.startsWith('/account'),
+      p.startsWith('/you') ||
+      p.startsWith('/progress') ||
+      p.startsWith('/account') ||
+      p.startsWith('/evolution'),
   },
 ];
 

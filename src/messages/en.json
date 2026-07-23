@@ -1305,7 +1305,8 @@
       "weightError": "Could not save. Try again.",
       "aiCoach": "Coach chat",
       "progressLbs": "lbs Progress",
-      "healthProfile": "Health profile"
+      "healthProfile": "Health profile",
+      "evolution": "Your evolution"
     },
     "gamification": {
       "dayStreak": "day streak",

@@ -310,6 +310,8 @@ export function TodayScreen({
         items={missionItems}
         title={t('today.missionTitle')}
         weekLine={weeksIn && weeksIn > 0 ? t('today.missionWeek', { n: weeksIn }) : null}
+        evolutionHref="/evolution"
+        evolutionLabel={t('evolution.eyebrow')}
       />
 
       {/* Nutrition first: the moat lives on the home screen. Cal-AI-style calories-left hero. */}

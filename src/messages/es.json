@@ -1305,7 +1305,8 @@
       "weightError": "No se pudo guardar. Intenta de nuevo.",
       "aiCoach": "Chat con tu coach",
       "progressLbs": "lbs Progreso",
-      "healthProfile": "Perfil de salud"
+      "healthProfile": "Perfil de salud",
+      "evolution": "Tu evolución"
     },
     "gamification": {
       "dayStreak": "días seguidos",

@@ -25,10 +25,15 @@ export function Mission({
   items,
   title,
   weekLine,
+  evolutionHref,
+  evolutionLabel,
 }: {
   items: MissionItem[];
   title: string;
   weekLine: string | null;
+  /** When set, the week line becomes the front door to the Evolution timeline. */
+  evolutionHref?: string;
+  evolutionLabel?: string;
 }): ReactElement | null {
   if (items.length === 0) return null;
 
@@ -94,11 +99,32 @@ export function Mission({
       </ul>
 
       {weekLine ? (
-        <div className="mt-5 border-t border-divider pt-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
-            {weekLine}
-          </p>
-        </div>
+        evolutionHref ? (
+          <Link
+            href={evolutionHref}
+            className="tf-press mt-5 flex items-center justify-between gap-3 border-t border-divider pt-4"
+          >
+            <span className="min-w-0">
+              <span className="block text-[11px] font-semibold uppercase tracking-[2px] text-faint">
+                {weekLine}
+              </span>
+              {evolutionLabel ? (
+                <span className="mt-0.5 block truncate text-[13px] font-semibold text-ink">
+                  {evolutionLabel}
+                </span>
+              ) : null}
+            </span>
+            <span className="shrink-0 text-faint">
+              <Icon name="chevronRight" size={18} />
+            </span>
+          </Link>
+        ) : (
+          <div className="mt-5 border-t border-divider pt-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
+              {weekLine}
+            </p>
+          </div>
+        )
       ) : null}
     </Card>
   );
