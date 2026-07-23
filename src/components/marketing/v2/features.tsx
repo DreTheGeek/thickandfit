@@ -9,19 +9,6 @@ import { LBody, LCta, LEyebrow, LH2, LSection } from '@/components/marketing/v2/
 
 const DAY_LABELS: readonly string[] = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-/** Small centred label used inside the media placeholders. */
-function MediaLabel({ children, tone }: { children: string; tone: 'dark' | 'bone' }): ReactElement {
-  return (
-    <span
-      className={`text-[13px] uppercase tracking-widest ${
-        tone === 'dark' ? 'text-white/40' : 'text-[#8a8a8a]'
-      }`}
-    >
-      {children}
-    </span>
-  );
-}
-
 /** Day strip plus copy on the left, the app phone on the right. */
 export function KnowExactly(): ReactElement {
   return (
@@ -71,9 +58,12 @@ export function SaveTime(): ReactElement {
   return (
     <LSection tone="bone">
       <div className="grid items-center gap-12 lg:grid-cols-2">
-        <div className="grid aspect-[4/5] w-full place-items-center rounded-xl bg-[#e4e4e4]">
-          <MediaLabel tone="bone">Fuel</MediaLabel>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/shoot/street-red.avif"
+          alt="Stephanie Pantoja"
+          className="aspect-[4/5] w-full rounded-xl object-cover object-[center_25%]"
+        />
 
         <div>
           <LEyebrow className="text-[#0e0e0e]">Fuel</LEyebrow>
@@ -93,9 +83,12 @@ export function LearnFromBest(): ReactElement {
   return (
     <LSection tone="dark">
       <div className="grid items-center gap-12 lg:grid-cols-2">
-        <div className="grid aspect-[4/5] w-full place-items-center rounded-xl bg-[#262626]">
-          <MediaLabel tone="dark">Coach chat</MediaLabel>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/shoot/seated-rest.avif"
+          alt="Stephanie Pantoja"
+          className="aspect-[4/5] w-full rounded-xl object-cover object-[center_30%]"
+        />
 
         <div>
           <LEyebrow className="text-white">Accountability</LEyebrow>
@@ -125,9 +118,12 @@ export function TrackBlocks(): ReactElement {
             The change you cannot see day to day, laid out so it is impossible to miss.
           </LBody>
         </div>
-        <div className="grid aspect-[4/3] w-full place-items-center rounded-xl bg-[#262626]">
-          <MediaLabel tone="dark">Evolution</MediaLabel>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/shoot/trust-process.avif"
+          alt="Stephanie Pantoja"
+          className="aspect-[4/3] w-full rounded-xl object-cover object-[center_20%]"
+        />
       </div>
 
       <div className="mt-24 grid items-center gap-12 lg:grid-cols-2">
@@ -138,9 +134,12 @@ export function TrackBlocks(): ReactElement {
             Consistency compounds. In twelve weeks you are the one being asked how you did it.
           </LBody>
         </div>
-        <div className="order-2 grid aspect-[4/3] w-full place-items-center rounded-xl bg-[#262626] lg:order-1">
-          <MediaLabel tone="dark">Today</MediaLabel>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/shoot/power-stance.avif"
+          alt="Stephanie Pantoja"
+          className="order-2 aspect-[4/3] w-full rounded-xl object-cover object-[center_25%] lg:order-1"
+        />
       </div>
     </LSection>
   );

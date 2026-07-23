@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 
 import { LBody, LCta, LH2, LSection } from '@/components/marketing/v2/ui';
 
-type Tier = { name: string; price: string; blurb: string };
+type Tier = { name: string; price: string; blurb: string; img: string };
 
 const TIERS: readonly Tier[] = [
   {
@@ -11,17 +11,20 @@ const TIERS: readonly Tier[] = [
     price: '$19.97 / mo',
     blurb:
       'Build consistency. The full system: your training, your fuel, and your evolution tracked in one place.',
+    img: '/brand/shoot/cable.avif',
   },
   {
     name: 'Evolution',
     price: 'From $200 / mo',
     blurb:
       'The full transformation system, with her trained team adjusting it around you every week.',
+    img: '/brand/shoot/deadlift.avif',
   },
   {
     name: 'Elite',
     price: '$3,000 / 3 mo',
     blurb: 'Maximum accountability, directly with Stephanie. Limited spots.',
+    img: '/brand/shoot/bronco-pink.avif',
   },
 ];
 
@@ -36,11 +39,12 @@ export function TierCards(): ReactElement {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {TIERS.map((tier) => (
           <article key={tier.name} className="overflow-hidden rounded-xl bg-[#262626]">
-            <div className="flex aspect-[16/10] w-full items-center justify-center bg-[#333]">
-              <span className="text-[10px] uppercase tracking-[0.08em] text-[#8a8a8a]">
-                {tier.name}
-              </span>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={tier.img}
+              alt={`Thick & Fit ${tier.name}`}
+              className="aspect-[16/10] w-full object-cover object-[center_25%]"
+            />
             <div className="p-6">
               <h3 className="text-[20px] font-extrabold uppercase leading-[1.1] text-white">
                 {tier.name}

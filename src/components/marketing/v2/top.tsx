@@ -77,15 +77,15 @@ export function Hero(): ReactElement {
     <section className="relative isolate overflow-hidden bg-[#0e0e0e]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/brand/img/steph-about.avif"
+        src="/brand/shoot/pink-front.avif"
         alt="Coach Stephanie Pantoja"
-        className="absolute inset-0 hidden h-full w-full object-cover object-[52%_12%] lg:block"
+        className="absolute inset-0 hidden h-full w-full object-cover object-[62%_18%] lg:block"
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/brand/img/steph-about.avif"
+        src="/brand/shoot/pink-front.avif"
         alt="Coach Stephanie Pantoja"
-        className="absolute inset-0 h-full w-full object-cover object-[52%_10%] lg:hidden"
+        className="absolute inset-0 h-full w-full object-cover object-[50%_16%] lg:hidden"
       />
       {/* Bottom scrim for the phone layout, plus a right-weighted scrim from lg up where the copy
           column sits. Ladder floats type straight on its photo because that frame is a dark wall;
