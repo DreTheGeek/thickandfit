@@ -39,13 +39,35 @@ export function NavMenu({
 
   return (
     <>
+      {/* Desktop: the links live in the bar. Below lg they collapse into the burger panel. */}
+      <div className="hidden items-center gap-7 lg:flex">
+        {links.map((l) => (
+          <Link
+            key={l.label}
+            href={l.href}
+            hrefLang={l.hrefLang}
+            lang={l.lang}
+            aria-label={l.ariaLabel}
+            className="whitespace-nowrap text-[15px] font-medium text-white transition-opacity hover:opacity-70"
+          >
+            {l.label}
+          </Link>
+        ))}
+        <Link
+          href={cta.href}
+          className="whitespace-nowrap rounded-full bg-[#ff2d55] px-6 py-2.5 text-[14px] font-bold uppercase tracking-[0.02em] text-[#0e0e0e] transition-opacity hover:opacity-90"
+        >
+          {cta.label}
+        </Link>
+      </div>
+
       <button
         type="button"
         aria-label={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
         aria-controls="site-menu"
         onClick={() => setOpen((v) => !v)}
-        className="relative z-50 flex h-10 w-10 flex-col items-center justify-center gap-[5px]"
+        className="relative z-50 flex h-10 w-10 flex-col items-center justify-center gap-[5px] lg:hidden"
       >
         <span
           className={`block h-[2px] w-6 bg-white transition-transform duration-200 ${open ? 'translate-y-[7px] rotate-45' : ''}`}
@@ -66,11 +88,11 @@ export function NavMenu({
             aria-hidden="true"
             tabIndex={-1}
             onClick={() => setOpen(false)}
-            className="fixed inset-x-0 bottom-0 top-[64px] z-40 cursor-default bg-black/60"
+            className="fixed inset-x-0 bottom-0 top-[64px] z-40 cursor-default bg-black/60 lg:hidden"
           />
           <div
             id="site-menu"
-            className="absolute inset-x-0 top-full z-40 border-b border-white/10 bg-[#0e0e0e] px-5 py-6 sm:px-8"
+            className="absolute inset-x-0 top-full z-40 border-b border-white/10 bg-[#0e0e0e] px-5 py-6 sm:px-8 lg:hidden"
           >
             <div className="mx-auto flex w-full max-w-[1200px] flex-col">
               {links.map((l) => (
