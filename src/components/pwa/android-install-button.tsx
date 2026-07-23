@@ -30,7 +30,9 @@ export function AndroidInstallButton() {
         await deferred.userChoice;
         setDeferred(null);
       }}
-      className="fixed bottom-4 right-4 z-50 bg-[#5EBE62] px-5 py-2 text-sm font-medium text-black"
+      /* Ink, not the hardcoded functional green (brand rule: green signals state, not chrome).
+         Moved to bottom-left so it no longer sits on top of the quick-add FAB at bottom-right. */
+      className="tf-press fixed bottom-4 left-4 z-50 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white shadow-lg"
     >
       {t('installApp')}
     </button>

@@ -32,10 +32,14 @@ export function SupportWidget(): ReactElement {
 
   return (
     <>
+      {/* Ink, not accent. Green is a functional signal only (streaks, positive deltas, success), and
+          a support tab is navigation, not a status, so bg-accent here was a decorative-green brand
+          violation. Also moved off the vertical centre (top-1/2), where a fixed solid tab crossed
+          the middle of every content card, down to just above the bottom nav where nothing sits. */}
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg bg-accent px-2 py-4 text-[11px] font-semibold uppercase tracking-[1px] text-accent-ink shadow-lg [writing-mode:vertical-rl]"
+        className="tf-press fixed right-0 bottom-[168px] z-40 rounded-l-lg bg-ink px-2 py-4 text-[11px] font-semibold uppercase tracking-[1px] text-white shadow-lg [writing-mode:vertical-rl] lg:bottom-28"
         aria-label={t('title')}
       >
         {t('tab')}
@@ -81,7 +85,7 @@ export function SupportWidget(): ReactElement {
                   <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} placeholder={t('descriptionPlaceholder')} className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2 text-[13px] outline-none focus:border-ink" />
                 </label>
                 {err && <p className="mt-2 text-[12px] text-alert-ink">{err}</p>}
-                <button type="button" onClick={submit} disabled={pending || !subject.trim()} className="tf-press mt-4 w-full rounded-xl bg-accent px-4 py-3 text-[14px] font-semibold text-accent-ink disabled:opacity-40">
+                <button type="button" onClick={submit} disabled={pending || !subject.trim()} className="tf-press mt-4 w-full rounded-xl bg-ink px-4 py-3 text-[14px] font-semibold text-surface disabled:opacity-40">
                   {pending ? t('sending') : t('submit')}
                 </button>
               </>
