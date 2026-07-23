@@ -16,6 +16,7 @@ import {
   type SafetySlug,
   type PregnancySlug,
 } from '@/lib/health-profile/labels';
+import { scoffPositive } from '@/lib/health-profile/screening';
 
 const KG_TO_LB = 2.20462;
 
@@ -104,25 +105,8 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-// Eating-disorder screen. Migrated Lenus rows hold up to five SCOFF booleans (clinical cutoff: >=2
-// positives). The in-app intake instead stores an explicit self-report, so one strong signal
-// (disorderedEatingHistory, or a stated preference for light tracking) also flips the coach into a
-// gentler, behavior-first posture. Read defensively; a missing/empty payload is a negative screen.
-const SCOFF_KEYS = [
-  'foodDomination',
-  'recentWeightLost',
-  'feelSickWhenNotFull',
-  'selfDoubtOverWeight',
-  'worryLostEatingControl',
-] as const;
-function scoffPositive(payload: Record<string, unknown> | null | undefined): boolean {
-  if (!payload || typeof payload !== 'object') return false;
-  if (payload.disorderedEatingHistory === true || payload.prefersLightTracking === true) return true;
-  let flags = 0;
-  for (const k of SCOFF_KEYS) if (payload[k] === true) flags += 1;
-  return flags >= 2;
-}
-
+// Eating-disorder screen: scoffPositive now lives in health-profile/screening.ts, so the coach
+// persona and the member-facing screens (You, Evolution) read ONE clinical definition of "gentle".
 // Turn a populated sleep_assessment jsonb into one short human line, or null when unassessed ({} or
 // missing). The in-app intake writes { sleep, stress } slugs, mapped to readable text here; any other
 // key shape degrades to a generic label so the summary survives future changes.

@@ -27,6 +27,7 @@ export async function YouScreen({
   streakWeeks,
   progressLbs,
   goal,
+  gentle = false,
   latestLb,
   latestWeightDate,
   supportEmail,
@@ -40,6 +41,9 @@ export async function YouScreen({
   streakWeeks: number;
   progressLbs: number;
   goal: GoalSummary | null;
+  /** Difficult-relationship-with-food screen: drop the shrinking-number goal hero and the
+   *  weight-loss-as-success colour. Weight tracking itself stays available below. */
+  gentle?: boolean;
   latestLb: number | null;
   latestWeightDate: string | null;
   children?: ReactNode;
@@ -111,12 +115,14 @@ export async function YouScreen({
         <Stat
           value={progressLbs === 0 ? '0' : `${progressLbs > 0 ? '+' : ''}${progressLbs}`}
           label={t('progressLbs')}
-          accent={progressLbs < 0}
+          accent={!gentle && progressLbs < 0}
         />
       </div>
 
-      {/* Goal */}
-      {goal != null && (
+      {/* Goal hero. Hidden under gentle framing: a shrinking start -> current -> goal is exactly the
+          "chasing smaller" hero the coach steers these members away from. Weight tracking stays
+          reachable below (the weight log + the You menu), just not led with. */}
+      {goal != null && !gentle && (
         <Card dark className="mb-[22px] p-5">
           <div className="mb-4 flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-[2px] text-white/70">

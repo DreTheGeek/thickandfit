@@ -104,12 +104,14 @@ function TimelineRow({
   weekLabel,
   title,
   locale,
+  gentle,
 }: {
   entry: EvolutionEntry;
   weekLabel: string;
   /** Already localized by the parent: entry.title is a message KEY, never display text. */
   title: string;
   locale: string;
+  gentle: boolean;
 }): ReactElement {
   const deltaText =
     entry.delta != null
@@ -136,7 +138,9 @@ function TimelineRow({
         )}
         {deltaText != null && (
           <div
-            className={`mt-0.5 text-[12px] font-semibold ${isLoss ? 'text-accent' : 'text-ink'}`}
+            className={`mt-0.5 text-[12px] font-semibold ${
+              isLoss && !gentle ? 'text-accent' : 'text-ink'
+            }`}
           >
             {deltaText}
           </div>
@@ -157,7 +161,16 @@ function TimelineRow({
   );
 }
 
-export function EvolutionTimeline({ data }: { data: EvolutionSummary }): ReactElement | null {
+export function EvolutionTimeline({
+  data,
+  gentle = false,
+}: {
+  data: EvolutionSummary;
+  /** Difficult-relationship-with-food screen: lead with the process tiles (photos, meals) instead
+   *  of a weight/waist-change hero, and never celebrate a loss in the success colour. The timeline
+   *  keeps every real entry; it just stops presenting shrinking as the win. */
+  gentle?: boolean;
+}): ReactElement | null {
   const t = useTranslations('app');
   const locale = useLocale();
 
@@ -168,9 +181,11 @@ export function EvolutionTimeline({ data }: { data: EvolutionSummary }): ReactEl
   const hasPair = first !== null && latest !== null && first.url !== latest.url;
   const lone = hasPair ? null : (first ?? latest);
 
+  // Under gentle framing the weight/waist tiles are suppressed, so the strip only exists if there
+  // is a process metric to show.
+  const showBodyStats = !gentle;
   const hasStats =
-    data.weightDelta != null ||
-    data.waistDelta != null ||
+    (showBodyStats && (data.weightDelta != null || data.waistDelta != null)) ||
     data.photoCount > 0 ||
     data.mealsLogged > 0;
 
@@ -189,7 +204,7 @@ export function EvolutionTimeline({ data }: { data: EvolutionSummary }): ReactEl
 
       {/* Only rendered when at least one cell has a real value. An empty strip is dead space. */}
       <div className={`mt-4 grid-cols-2 gap-3 sm:grid-cols-4 ${hasStats ? 'grid' : 'hidden'}`}>
-        {data.weightDelta != null && (
+        {showBodyStats && data.weightDelta != null && (
           <StatCell
             value={`${formatDelta(data.weightDelta, locale)}${
               data.weightUnit != null ? ` ${data.weightUnit}` : ''
@@ -198,7 +213,7 @@ export function EvolutionTimeline({ data }: { data: EvolutionSummary }): ReactEl
             accent={data.weightDelta < 0}
           />
         )}
-        {data.waistDelta != null && (
+        {showBodyStats && data.waistDelta != null && (
           <StatCell
             value={`${formatDelta(data.waistDelta, locale)}${
               data.lengthUnit != null ? ` ${data.lengthUnit}` : ''
@@ -255,6 +270,7 @@ export function EvolutionTimeline({ data }: { data: EvolutionSummary }): ReactEl
                 weekLabel={t('evolution.weekN', { n: entry.week })}
                 title={translateTitle(t, entry)}
                 locale={locale}
+                gentle={gentle}
               />
             ))}
           </ol>

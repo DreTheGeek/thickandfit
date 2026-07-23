@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getSupportEmail } from '@/lib/admin/settings';
 import { YouScreen, type GoalSummary } from '@/components/profile/you-screen';
 import { recomputeGamification } from '@/lib/gamification/engine';
+import { prefersGentleFraming } from '@/lib/health-profile/screening';
 import { StreakBadges } from '@/components/gamification/streak-badges';
 import type { GamificationSnapshot } from '@/lib/gamification/types';
 
@@ -89,6 +90,10 @@ export default async function YouPage(): Promise<ReactElement> {
   }
 
   const supportEmail = await getSupportEmail(ctx.companyId);
+  // Members whose screen flags a difficult relationship with food get the same gentle, non-weight
+  // forward framing the coach already gives them: no shrinking-number goal hero, no weight loss
+  // celebrated in the success colour. One clinical definition, shared with coach-ai/context.ts.
+  const gentle = ctx.companyId ? await prefersGentleFraming(ctx.userId, ctx.companyId) : false;
 
   return (
     <YouScreen
@@ -100,6 +105,7 @@ export default async function YouPage(): Promise<ReactElement> {
       streakWeeks={gamification?.streak.currentStreak ?? 0}
       progressLbs={progressLbs}
       goal={goal}
+      gentle={gentle}
       latestLb={latestLb}
       latestWeightDate={lwRow?.recorded_on ?? null}
     >

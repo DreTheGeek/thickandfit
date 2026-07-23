@@ -6,6 +6,7 @@ import type { ReactElement } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { getEvolution } from '@/lib/evolution/timeline';
+import { prefersGentleFraming } from '@/lib/health-profile/screening';
 import { PageTitle } from '@/components/ui/section';
 import { EvolutionTimeline } from '@/components/evolution/evolution-timeline';
 
@@ -14,14 +15,17 @@ export const dynamic = 'force-dynamic';
 export default async function EvolutionPage(): Promise<ReactElement> {
   const ctx = await requireEntitled();
   const t = await getTranslations('app.evolution');
-  const data = await getEvolution(ctx.userId, ctx.companyId);
+  const [data, gentle] = await Promise.all([
+    getEvolution(ctx.userId, ctx.companyId),
+    ctx.companyId ? prefersGentleFraming(ctx.userId, ctx.companyId) : Promise.resolve(false),
+  ]);
 
   return (
     <div className="px-[22px] pb-7 pt-3">
       <div className="mb-[18px]">
         <PageTitle>{t('title')}</PageTitle>
       </div>
-      <EvolutionTimeline data={data} />
+      <EvolutionTimeline data={data} gentle={gentle} />
     </div>
   );
 }
