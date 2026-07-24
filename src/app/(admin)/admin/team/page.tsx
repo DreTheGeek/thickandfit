@@ -6,6 +6,8 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { AdminPage, Card } from '@/components/admin/ui';
 import { TeamInviteForm } from '@/components/admin/team-invite-form';
 import { TeamRemoveButton } from '@/components/admin/team-remove-button';
+import { TeamDisableButton } from '@/components/admin/team-disable-button';
+import { getDisabledTeammateIds } from '@/lib/admin/access-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,14 +28,19 @@ type TeamRow = {
 export default async function TeamPage(): Promise<ReactElement> {
   const ctx = await requireOperator();
   const svc = createServiceClient();
-  const { data } = ctx.companyId
-    ? await svc
-        .from('profiles')
-        .select('id, full_name, email, role, created_at')
-        .eq('company_id', ctx.companyId)
-        .in('role', ['coach', 'assistant_coach', 'operator'])
-        .order('created_at', { ascending: true })
-    : { data: [] };
+  // Fetch the staff roster and the set of disabled auth users in parallel; the disabled set is used
+  // to render a "Disabled" pill and flip each row's Disable toggle to "Enable."
+  const [{ data }, disabledIds] = await Promise.all([
+    ctx.companyId
+      ? svc
+          .from('profiles')
+          .select('id, full_name, email, role, created_at')
+          .eq('company_id', ctx.companyId)
+          .in('role', ['coach', 'assistant_coach', 'operator'])
+          .order('created_at', { ascending: true })
+      : Promise.resolve({ data: [] }),
+    getDisabledTeammateIds(),
+  ]);
   const team = (data ?? []) as TeamRow[];
 
   return (
@@ -58,24 +65,33 @@ export default async function TeamPage(): Promise<ReactElement> {
                 </tr>
               </thead>
               <tbody>
-                {team.map((m) => (
-                  <tr key={m.id} className="border-t border-line">
-                    <td className="py-2.5 pr-4 text-ink">{m.full_name ?? '(no name)'}</td>
-                    <td className="py-2.5 pr-4 text-muted">{m.email ?? '-'}</td>
-                    <td className="py-2.5 pr-4">
-                      <span className="rounded-full bg-warm px-2.5 py-0.5 text-[11px] font-semibold text-soft">
-                        {ROLE_LABEL[m.role] ?? m.role}
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <TeamRemoveButton
-                        id={m.id}
-                        name={m.full_name?.trim() || m.email || 'this teammate'}
-                        isSelf={m.id === ctx.userId}
-                      />
-                    </td>
-                  </tr>
-                ))}
+                {team.map((m) => {
+                  const isDisabled = disabledIds.has(m.id);
+                  const isSelf = m.id === ctx.userId;
+                  const displayName = m.full_name?.trim() || m.email || 'this teammate';
+                  return (
+                    <tr key={m.id} className={['border-t border-line', isDisabled ? 'opacity-60' : ''].join(' ')}>
+                      <td className="py-2.5 pr-4 text-ink">{m.full_name ?? '(no name)'}</td>
+                      <td className="py-2.5 pr-4 text-muted">{m.email ?? '-'}</td>
+                      <td className="py-2.5 pr-4">
+                        <span className="mr-2 rounded-full bg-warm px-2.5 py-0.5 text-[11px] font-semibold text-soft">
+                          {ROLE_LABEL[m.role] ?? m.role}
+                        </span>
+                        {isDisabled && (
+                          <span className="rounded-full bg-alert px-2.5 py-0.5 text-[11px] font-semibold text-alert-ink">
+                            Disabled
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 text-right">
+                        <span className="inline-flex items-center gap-3">
+                          <TeamDisableButton id={m.id} disabled={isDisabled} isSelf={isSelf} />
+                          <TeamRemoveButton id={m.id} name={displayName} isSelf={isSelf} />
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

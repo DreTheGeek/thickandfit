@@ -159,6 +159,72 @@ export async function removeTeammateAction(input: unknown): Promise<AccessResult
   return { ok: true };
 }
 
+const disableSchema = z.object({ id: z.string().uuid(), disabled: z.boolean() });
+
+// Disable / re-enable a teammate. Reversible counterpart to removeTeammateAction: their account
+// (and every message/audit trail) is preserved, but they cannot sign in and their active session is
+// revoked. Enforced at Supabase's auth layer via ban_duration (100 years disabled, 'none' enabled),
+// so nothing in requireAuth changes and there's no new failure surface across every request path.
+// Same guards as remove: operator only, same company, staff-only, never yourself, never the last
+// operator (an operator disabling themselves or the last op would lock everyone out of /admin).
+export async function setTeammateDisabledAction(input: unknown): Promise<AccessResult> {
+  const parsed = disableSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireOperator();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+  const { id: targetId, disabled } = parsed.data;
+  if (targetId === ctx.userId) return { ok: false, error: 'self' };
+
+  const svc = createServiceClient();
+  const { data: prof } = await svc
+    .from('profiles')
+    .select('id, role, email, company_id')
+    .eq('id', targetId)
+    .maybeSingle();
+  const p = prof as { id: string; role: string; email: string | null; company_id: string | null } | null;
+  if (!p || p.company_id !== ctx.companyId) return { ok: false, error: 'not_found' };
+  if (!(TEAMMATE_ROLES as readonly string[]).includes(p.role)) return { ok: false, error: 'not_staff' };
+
+  if (disabled && p.role === 'operator') {
+    // Count ACTIVE operators only (not yet disabled), so disabling the second-to-last operator when
+    // one is already off doesn't strand the workspace.
+    const { count } = await svc
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', ctx.companyId)
+      .eq('role', 'operator');
+    if ((count ?? 0) <= 1) return { ok: false, error: 'last_operator' };
+  }
+
+  // Supabase's ban_duration: '876000h' ≈ 100 years (effectively permanent until reversed).
+  // 'none' clears the ban. This is the same mechanism the Supabase dashboard's ban button uses.
+  const banDuration = disabled ? '876000h' : 'none';
+  const { error: updErr } = await svc.auth.admin.updateUserById(targetId, {
+    ban_duration: banDuration,
+  } as { ban_duration: string });
+  if (updErr) {
+    console.error('setTeammateDisabledAction updateUserById:', updErr.message);
+    return { ok: false, error: 'failed' };
+  }
+  if (disabled) {
+    // Revoke any currently-open session. A ban blocks NEW auth but a live JWT stays valid until it
+    // expires; signing them out globally makes disable immediate.
+    const { error: soErr } = await svc.auth.admin.signOut(targetId, 'global');
+    if (soErr) console.error('setTeammateDisabledAction signOut:', soErr.message);
+  }
+
+  logCoachAction(svc, {
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    entityType: 'profile',
+    entityId: targetId,
+    action: disabled ? 'admin.disable_teammate' : 'admin.enable_teammate',
+    newState: { email: p.email, role: p.role, disabled },
+  });
+  revalidatePath('/admin/team');
+  return { ok: true };
+}
+
 // Passcode entry. Rate-limited hard (it is a shared secret) and only reachable by operators anyway.
 export async function enterAdminPasscodeAction(input: unknown): Promise<AccessResult> {
   const parsed = z.string().min(1).max(200).safeParse(input);
