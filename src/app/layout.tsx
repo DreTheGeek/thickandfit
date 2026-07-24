@@ -28,10 +28,11 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-// One source of truth for the public origin, shared with robots.ts + sitemap.ts. Override with
-// NEXT_PUBLIC_SITE_URL at the teamthickandfit.com cutover; the default is the domain that serves
-// this build today (so canonicals resolve and OG images load right now).
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://thicknfit.kaldrtech.com";
+// One source of truth for the public origin, shared with robots.ts + sitemap.ts + email/shell.ts +
+// seo/schema.ts. Post-DNS-cutover the fallback matches prod so canonicals + OG resolve even if the
+// env var is momentarily missing on a fresh preview. Override with NEXT_PUBLIC_SITE_URL for any
+// non-www surface (e.g. app.teamthickandfit.com if ever attached back).
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.teamthickandfit.com";
 
 // <=165 chars so search engines show it whole (was 237, truncated in results).
 const SITE_DESCRIPTION =

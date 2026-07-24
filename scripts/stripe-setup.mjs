@@ -18,7 +18,7 @@ import path from 'node:path';
 
 const KEY = process.env.STRIPE_SECRET_KEY;
 const WEBHOOK_URL =
-  process.env.STRIPE_WEBHOOK_URL ?? 'https://thicknfit.kaldrtech.com/api/stripe/webhook';
+  process.env.STRIPE_WEBHOOK_URL ?? 'https://www.teamthickandfit.com/api/stripe/webhook';
 // No free trial by decision (2026-07-23 launch call): "cancel anytime, no contract" instead.
 const TRIAL_DAYS = process.env.STRIPE_TRIAL_DAYS ?? '0';
 const PRICE_CENTS = 1997;

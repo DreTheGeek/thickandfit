@@ -11,7 +11,7 @@
 // questions the page does not show, or offers a page does not state. Injecting hidden schema is a
 // spam violation and gets the whole domain distrusted.
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thicknfit.kaldrtech.com').replace(/\/+$/, '');
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.teamthickandfit.com').replace(/\/+$/, '');
 
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const PERSON_ID = `${SITE_URL}/#stephanie`;

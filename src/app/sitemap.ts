@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { esPathFor } from '@/lib/seo/locale-alternates';
 
 // Public, indexable routes only. Base URL matches metadataBase in layout.tsx.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thicknfit.kaldrtech.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.teamthickandfit.com';
 
 type Entry = {
   path: string;

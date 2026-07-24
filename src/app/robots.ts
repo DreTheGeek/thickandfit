@@ -8,7 +8,7 @@ import type { MetadataRoute } from 'next';
 // agents to actually read the marketing pages. A bare `*` allow technically permits them, but naming
 // them is unambiguous, survives future default-deny changes, and is the standard signal that this
 // brand WANTS to be cited. The authed app stays disallowed for every agent.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thicknfit.kaldrtech.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.teamthickandfit.com';
 
 const DISALLOW = [
   '/auth/',
