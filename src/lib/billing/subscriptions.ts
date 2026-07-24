@@ -4,6 +4,7 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createNotification } from '@/lib/notifications/create';
+import { convertLead } from '@/lib/funnel/service';
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -169,6 +170,22 @@ export async function upsertSubscriptionFromStripe(sub: StripeSubscriptionObject
       .eq('company_id', resolvedCompany)
       .eq('profile_id', resolvedProfile);
     if (crmErr) console.error('upsertSubscriptionFromStripe CRM sync:', crmErr.message);
+  }
+
+  // Post-conversion suppression (kb-funnels doctrine 0): once this member has a paying
+  // subscription, they must exit the pre-launch drip immediately. If a buyer receives the "doors
+  // close in 24h" email tomorrow it's the highest-severity brand-damage event the launch can ship.
+  // convertLead is idempotent (only writes when converted_at is null) so re-firing on subsequent
+  // subscription events (updates, cancels) is safe. Best-effort: a suppression miss must never fail
+  // a money webhook — that would fail the retry loop for the actual entitlement grant.
+  if (sub.status === 'active' || sub.status === 'trialing') {
+    try {
+      const { data: prof } = await svc.from('profiles').select('email').eq('id', resolvedProfile).maybeSingle();
+      const email = (prof as { email?: string | null } | null)?.email;
+      if (email) await convertLead(email);
+    } catch (e) {
+      console.error('upsertSubscriptionFromStripe convertLead:', e instanceof Error ? e.message : e);
+    }
   }
 }
 
