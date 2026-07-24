@@ -17,6 +17,7 @@ import {
   type PregnancySlug,
 } from '@/lib/health-profile/labels';
 import { scoffPositive } from '@/lib/health-profile/screening';
+import { getPrediction, renderPredictionForPrompt } from '@/lib/prediction/read';
 
 const KG_TO_LB = 2.20462;
 
@@ -85,6 +86,11 @@ export type CoachContext = {
   workouts: WorkoutSummary;
   weight: WeightSummary;
   insights: Record<string, unknown> | null;
+  /** K7 deterministic projection from the K3 user_state snapshot: goal date + this-month kcal +
+   *  protein pace. Null when the member has no user_state row yet (fresh signup pre-materialize).
+   *  The chat renderer emits it as a compact block so the coach can answer "am I on pace" without
+   *  guessing. */
+  prediction: import('@/lib/prediction/read').MemberPrediction | null;
   recentMessages: { role: 'user' | 'assistant'; content: string; createdAt: string }[];
 };
 
@@ -358,6 +364,12 @@ export async function buildCoachContext(
     }
   }
 
+  // K7 prediction: deterministic goal-date + pace from the K3 user_state snapshot. Fetched here
+  // in parallel with everything else would be nicer, but the composition order stayed as-is (the
+  // read is one indexed query and shares no state with earlier steps). Null when the member has
+  // no user_state row yet (fresh signup pre-materialize) — the chat renderer emits nothing then.
+  const prediction = await getPrediction(profileId, companyId);
+
   return {
     contactId: ik?.contact_id ?? null,
     profile: { name: fullName, goal, locale, targets },
@@ -367,6 +379,7 @@ export async function buildCoachContext(
     workouts,
     weight,
     insights,
+    prediction,
     recentMessages,
   };
 }
@@ -546,6 +559,14 @@ export function renderContextBlock(ctx: CoachContext): string {
 
   if (ctx.insights && Object.keys(ctx.insights).length) {
     lines.push(`${L.insights}: ${JSON.stringify(ctx.insights)}`);
+  }
+
+  // K7 deterministic projection: rendered as its own block so the model treats it as source-of-truth
+  // (grounded pace math from user_state) rather than something to guess at from the raw nutrition
+  // rollups. Empty when there's no signal (no goal + no logged pace) — nothing to hallucinate.
+  if (ctx.prediction) {
+    const predictionBlock = renderPredictionForPrompt(ctx.prediction, ctx.profile.locale);
+    if (predictionBlock) lines.push(predictionBlock);
   }
 
   return lines.join('\n');
