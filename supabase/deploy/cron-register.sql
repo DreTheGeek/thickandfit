@@ -163,6 +163,40 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-materialize-user-state-nightly (K3): rebuilds user_state for every subscriber — goal,
+-- weight trends, adherence over the last 30 days, favorite foods, scan-quality rollup. Runs at
+-- 08:30 UTC, 30 min after tf-generate-insights-nightly so it can consume fresh insight signals
+-- if it wants. Idempotent upsert on (company_id, profile_id). Without this the K7/K8 surfaces
+-- (prediction engine + adherence-aware recommendations) have no reliable snapshot to read.
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-materialize-user-state-nightly' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-materialize-user-state-nightly',
+    '30 8 * * *',  -- 08:30 UTC nightly (30 min after tf-generate-insights-nightly)
+    $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/materialize-user-state',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer __CRON_SECRET__',
+          'Content-Type', 'application/json'
+        ),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 120000
+      );
+    $cron$
+  );
+  raise notice 'scheduled tf-materialize-user-state-nightly at 30 8 * * *';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-materialize-user-state-nightly.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- tf-index-memory-6h (unified member-memory reconciler: sweeps every per-member data source
 -- (food days incl. photo scans, meal plans, check-ins, weights, intake, coach notes, physique,
 -- measurements) into member_memory so the coach can semantically recall everything. Idempotent +
