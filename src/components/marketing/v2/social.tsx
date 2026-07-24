@@ -108,19 +108,15 @@ type FooterLinkDef = { labelKey: string; href: string };
 // Resolved shape handed to FooterColumn: label already translated, href already locale-prefixed.
 type FooterLink = { label: string; href: string };
 
-// Programs are the three pricing tiers, so they point at the pricing page (there is no per-tier
-// route). Pages and legal point at their real routes; About/Pricing/FAQ have Spanish twins.
+// Public offer surface is ONE tier (Foundation founding pricing) — mid/high-ticket ships as a
+// private-application flow post-launch, not as a public program. So the footer drops the
+// "Programs" column entirely; Pricing lives in the Pages column and that's enough.
 const PAGE_LINKS: readonly FooterLinkDef[] = [
   { labelKey: 'linkPricing', href: '/pricing' },
   { labelKey: 'linkFaq', href: '/faq' },
   { labelKey: 'linkAbout', href: '/about' },
   { labelKey: 'linkPrivacy', href: '/privacy' },
   { labelKey: 'linkTerms', href: '/terms' },
-];
-const PROGRAM_LINKS: readonly FooterLinkDef[] = [
-  { labelKey: 'linkFoundation', href: '/pricing' },
-  { labelKey: 'linkEvolution', href: '/pricing' },
-  { labelKey: 'linkElite', href: '/pricing' },
 ];
 
 function FooterColumn({
@@ -160,7 +156,7 @@ export async function SiteFooter(): Promise<ReactElement> {
   return (
     <footer className="bg-[#0e0e0e] px-5 py-16 text-white sm:px-8">
       <div className="mx-auto w-full max-w-[1200px]">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <Link href={lp('/')} aria-label="Thick &amp; Fit" className="inline-block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -169,7 +165,6 @@ export async function SiteFooter(): Promise<ReactElement> {
             <p className="mt-4 text-[14px] text-[#bcbcbc]">{t('tagline')}</p>
           </div>
           <FooterColumn heading={t('footerPagesHeading')} links={withLocale(PAGE_LINKS)} />
-          <FooterColumn heading={t('footerProgramsHeading')} links={withLocale(PROGRAM_LINKS)} />
           <div>
             <h3 className="text-[14px] font-bold uppercase text-white">
               {t('footerGetStartedHeading')}
