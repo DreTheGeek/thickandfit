@@ -39,6 +39,7 @@ type ContactRowRaw = {
   was_lead: boolean | null;
   product_type: string | null;
   created_at: string;
+  profile_id: string | null;
   client_subscriptions: SubRaw | SubRaw[] | null;
   contact_tags: TagJoinRaw[] | null;
 };
@@ -53,6 +54,37 @@ type SubRaw = {
   started_at: string | null;
 };
 type TagJoinRaw = { tag: TagLite | TagLite[] | null };
+
+// Native in-app Stripe subscription shape, keyed by profile_id (webhook-driven, table 0025).
+// Used to synthesize a SubRaw when the CRM contact was created by app signup and has no
+// client_subscriptions row (which is only populated by the ghl-sync cron from Lenus).
+type NativeSubRaw = {
+  profile_id: string;
+  status: string | null;
+  price_cents: number | string | null;
+  currency: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean | null;
+  canceled_at: string | null;
+  created_at: string | null;
+};
+
+/** Native Stripe subscription -> SubRaw shim, so an app subscriber appears in the CRM as healthy
+ *  instead of churned. billing_health/product_type/lifetime_paid_cents don't exist on native (they'd
+ *  need the payments-table aggregation) — set null; the rest maps cleanly. */
+function nativeToSubRaw(n: NativeSubRaw): SubRaw {
+  const price = n.price_cents == null ? null : Number(n.price_cents);
+  return {
+    status: n.status,
+    billing_health: null,
+    product_type: null,
+    grandfathered_price_cents: Number.isFinite(price as number) ? (price as number) : null,
+    currency: n.currency,
+    next_billing_date: n.cancel_at_period_end || !n.current_period_end ? null : n.current_period_end.slice(0, 10),
+    lifetime_paid_cents: null,
+    started_at: n.created_at,
+  };
+}
 
 function one<T>(v: T | T[] | null): T | null {
   if (v == null) return null;
@@ -101,22 +133,50 @@ function mapRow(c: ContactRowRaw, noName: string): ClientRow {
 
 async function loadClientRows(companyId: string): Promise<{ rows: ClientRow[]; truncated: boolean }> {
   const sb = createServiceClient();
-  const { data, error } = await sb
-    .from('contacts')
-    .select(
-      'id, first_name, last_name, email, phone, language, owner, is_legacy, was_lead, product_type, created_at, ' +
-        'client_subscriptions(status, billing_health, product_type, grandfathered_price_cents, currency, next_billing_date, lifetime_paid_cents, started_at), ' +
-        'contact_tags(tag:tags(slug, label, category, color))',
-    )
-    .eq('company_id', companyId)
-    .eq('type', 'client')
-    .limit(CLIENT_ROWS_CAP);
+  // Fetch contacts + their imported CRM subscriptions in parallel with the native in-app Stripe
+  // subscriptions table. Before this union, an app subscriber (whose contact has no
+  // client_subscriptions row because that table is only populated by the ghl-sync cron) rendered
+  // as "churned" here. Same pattern the Coach Billing & Renewals page already uses.
+  const [{ data, error }, { data: nativeData, error: nativeErr }] = await Promise.all([
+    sb
+      .from('contacts')
+      .select(
+        'id, first_name, last_name, email, phone, language, owner, is_legacy, was_lead, product_type, created_at, profile_id, ' +
+          'client_subscriptions(status, billing_health, product_type, grandfathered_price_cents, currency, next_billing_date, lifetime_paid_cents, started_at), ' +
+          'contact_tags(tag:tags(slug, label, category, color))',
+      )
+      .eq('company_id', companyId)
+      .eq('type', 'client')
+      .limit(CLIENT_ROWS_CAP),
+    sb
+      .from('subscriptions')
+      .select('profile_id, status, price_cents, currency, current_period_end, cancel_at_period_end, canceled_at, created_at')
+      .eq('company_id', companyId)
+      .limit(CLIENT_ROWS_CAP),
+  ]);
   if (error) throw new Error(`loadClientRows: ${error.message}`);
+  if (nativeErr) throw new Error(`loadClientRows.native: ${nativeErr.message}`);
   const t = await getTranslations('app.coach');
   const noName = t('noName');
   const raw = (data ?? []) as unknown as ContactRowRaw[];
+  // Newest-first per profile so a member who resubscribed sees the current sub, not a stale one.
+  const nativeByProfile = new Map<string, NativeSubRaw>();
+  const sortedNative = ((nativeData ?? []) as unknown as NativeSubRaw[])
+    .slice()
+    .sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')));
+  for (const n of sortedNative) {
+    if (n.profile_id && !nativeByProfile.has(n.profile_id)) nativeByProfile.set(n.profile_id, n);
+  }
+  // Synthesize a SubRaw shim only when the CRM row is missing one — never overwrite an imported sub.
+  const merged = raw.map((c) => {
+    if (!c.client_subscriptions && c.profile_id) {
+      const n = nativeByProfile.get(c.profile_id);
+      if (n) return { ...c, client_subscriptions: nativeToSubRaw(n) };
+    }
+    return c;
+  });
   // If we read exactly the cap, the list is windowed: totals/facets are a partial view, so flag it.
-  return { rows: raw.map((c) => mapRow(c, noName)), truncated: raw.length >= CLIENT_ROWS_CAP };
+  return { rows: merged.map((c) => mapRow(c, noName)), truncated: raw.length >= CLIENT_ROWS_CAP };
 }
 
 type FacetKey = 'q' | 'standing' | 'status' | 'health' | 'product' | 'lang' | 'owner' | 'tags' | 'cohort' | 'legacy';
@@ -247,6 +307,31 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     meal_plan_sent_at: string | null;
     workout_plan_sent_at: string | null;
   };
+
+  // Native Stripe sub -> FullSub shim (same idea as loadClientRows, richer shape). Fields the native
+  // subscriptions table doesn't have (lifetime charges, next amount preview, plan-sent stamps) stay
+  // null; they'd need the payments-table aggregation or a Stripe API call and are non-blocking.
+  const nativeToFullSub = (n: NativeSubRaw): FullSub => {
+    const price = n.price_cents == null ? null : Number(n.price_cents);
+    return {
+      status: n.status,
+      billing_health: null,
+      product_type: null,
+      grandfathered_price_cents: Number.isFinite(price as number) ? (price as number) : null,
+      currency: n.currency,
+      next_billing_date: n.cancel_at_period_end || !n.current_period_end ? null : n.current_period_end.slice(0, 10),
+      lifetime_paid_cents: null,
+      started_at: n.created_at,
+      next_amount_cents: null,
+      is_auto_renew: n.cancel_at_period_end == null ? null : !n.cancel_at_period_end,
+      ended_at: n.canceled_at,
+      last_charge_date: null,
+      num_charges: null,
+      days_since_last_charge: null,
+      meal_plan_sent_at: null,
+      workout_plan_sent_at: null,
+    };
+  };
   type Snap = {
     meal_plans: number | null;
     measurements_logged: number | null;
@@ -278,7 +363,20 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     contact_tags: TagJoinRaw[] | null;
   };
   const raw = c as unknown as DetailRaw;
-  const sub = one(raw.client_subscriptions);
+  let sub: FullSub | null = one(raw.client_subscriptions);
+  // If the imported CRM sub is missing but this contact links to an auth profile, look up the
+  // native in-app Stripe subscription and use it. Newest first so a resubscribe wins over a canceled row.
+  if (!sub && raw.profile_id) {
+    const { data: nrows } = await sb
+      .from('subscriptions')
+      .select('profile_id, status, price_cents, currency, current_period_end, cancel_at_period_end, canceled_at, created_at')
+      .eq('company_id', companyId)
+      .eq('profile_id', raw.profile_id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    const n = ((nrows ?? []) as unknown as NativeSubRaw[])[0];
+    if (n) sub = nativeToFullSub(n);
+  }
   const snap = one(raw.legacy_client_snapshot);
   const tags: TagLite[] = (raw.contact_tags ?? []).map((t) => one(t.tag)).filter((t): t is TagLite => t != null);
 

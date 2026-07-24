@@ -12,7 +12,9 @@ export function deriveStanding(status: string | null, health: string | null): St
   const h = health ?? '';
   if (s === 'canceled' || s === 'churned') return 'churned';
   if (s === 'past_due' || s === 'unpaid') return 'at_risk';
-  if (s === 'active') return AT_RISK_HEALTH.has(h) ? 'at_risk' : 'healthy';
+  // trialing = Stripe intermediate state (3DS challenge, card verification, legacy trial). The member
+  // IS entitled — treat as active so a subscriber in flight doesn't render as churned to their coach.
+  if (s === 'active' || s === 'trialing') return AT_RISK_HEALTH.has(h) ? 'at_risk' : 'healthy';
   return 'churned';
 }
 
