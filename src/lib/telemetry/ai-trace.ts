@@ -4,6 +4,7 @@
 import 'server-only';
 import { after } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { estimateCostCents } from '@/lib/ai/pricing';
 
 export type AiTrace = {
   feature: string;
@@ -28,6 +29,10 @@ export function logAiTrace(t: AiTrace): void {
   const write = async (): Promise<void> => {
     try {
       const svc = createServiceClient();
+      // K6 cost: estimate from model + token counts using the AI_MODELS-aligned pricing table.
+      // Falls back to null when the model is unknown to the price table (defensive) or when both
+      // token counts are missing — no wrong number ever lands in the ledger.
+      const costCents = estimateCostCents(t.model ?? null, t.promptTokens ?? null, t.completionTokens ?? null);
       await svc.from('ai_trace').insert({
         // company_id is NOT NULL with a single-tenant default; OMIT it when unknown (embeds, eval
         // traces) so the column default applies instead of a null that would reject the insert.
@@ -40,6 +45,7 @@ export function logAiTrace(t: AiTrace): void {
         latency_ms: t.latencyMs ?? null,
         prompt_tokens: t.promptTokens ?? null,
         completion_tokens: t.completionTokens ?? null,
+        cost_cents: costCents,
         retrieval_count: t.retrievalCount ?? null,
         input_preview: clip(t.inputPreview),
         output_preview: clip(t.outputPreview),

@@ -17,6 +17,7 @@ import 'server-only';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { retrieveKnowledge } from '@/lib/coach-ai/knowledge';
+import { estimateCostCents } from '@/lib/ai/pricing';
 import { SAFETY_CLAUSE_EN, planCaveat } from '@/lib/coach-ai/safety';
 import { AI_MODELS } from '@/lib/ai/models';
 import { aiConfigured, callJson } from '@/lib/ai/client';
@@ -259,14 +260,16 @@ function parsePlan(raw: string): ParsedPlan | null {
 async function logUsage(companyId: string, userId: string, usage: Usage): Promise<void> {
   try {
     const sb = createServiceClient();
+    const promptTokens = Math.max(0, Math.round(num(usage.prompt_tokens)));
+    const completionTokens = Math.max(0, Math.round(num(usage.completion_tokens)));
     await sb.from('ai_usage_log').insert({
       company_id: companyId,
       user_id: userId,
       feature: 'meal-plan-gen',
       model: PLAN_MODEL,
-      prompt_tokens: Math.max(0, Math.round(num(usage.prompt_tokens))),
-      completion_tokens: Math.max(0, Math.round(num(usage.completion_tokens))),
-      cost_cents: 0,
+      prompt_tokens: promptTokens,
+      completion_tokens: completionTokens,
+      cost_cents: estimateCostCents(PLAN_MODEL, promptTokens, completionTokens) ?? 0,
     });
   } catch {
     // Metering is best-effort; never fail the generation because logging failed.

@@ -17,6 +17,7 @@ import { aiConfigured, callJson } from '@/lib/ai/client';
 import { emitEvent } from '@/lib/events/emit';
 import { localDay } from '@/lib/datetime/local-day';
 import { fetchScanQuality, type ScanQuality } from '@/lib/coach-ai/scan-quality';
+import { estimateCostCents } from '@/lib/ai/pricing';
 
 // Cheap, reliable tier for the nightly batch extraction (runs once a day across all users).
 const INSIGHT_MODEL = AI_MODELS.insights;
@@ -405,18 +406,21 @@ async function extractNarrative(
   }
 }
 
-// Best-effort usage metering. Cost is left at 0 (OpenRouter does not return per-call cost here and
-// the project has no rate card wired yet); tokens are recorded so spend can be reconstructed later.
+// Best-effort usage metering. K6 (2026-07-24): cost is now computed from the model + token counts
+// via src/lib/ai/pricing.ts — no more hardcoded 0. Historic rows keep their 0; new rows carry real
+// cents. /admin/usage aggregation immediately becomes accurate for insights spend.
 async function logUsage(sub: ActiveSubscriber, usage: Usage): Promise<void> {
   const sb = createServiceClient();
+  const promptTokens = Math.max(0, Math.round(num(usage.prompt_tokens)));
+  const completionTokens = Math.max(0, Math.round(num(usage.completion_tokens)));
   await sb.from('ai_usage_log').insert({
     company_id: sub.companyId,
     user_id: sub.profileId,
     feature: 'nightly-insights',
     model: INSIGHT_MODEL,
-    prompt_tokens: Math.max(0, Math.round(num(usage.prompt_tokens))),
-    completion_tokens: Math.max(0, Math.round(num(usage.completion_tokens))),
-    cost_cents: 0,
+    prompt_tokens: promptTokens,
+    completion_tokens: completionTokens,
+    cost_cents: estimateCostCents(INSIGHT_MODEL, promptTokens, completionTokens) ?? 0,
   });
 }
 

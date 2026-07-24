@@ -197,6 +197,72 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-mine-silver-cases-weekly (K6): auto-promote real member corrections into "silver" eval cases
+-- so the offline eval set grows with real production photos over time. Runs Sun 09:00 UTC — 15 min
+-- before the weekly eval so freshly-mined silver cases score in the same run. Idempotent (skips
+-- storage_paths already present). Was previously only reachable via the manual seed CLI.
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-mine-silver-cases-weekly' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-mine-silver-cases-weekly',
+    '0 9 * * 0',  -- Sun 09:00 UTC
+    $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/mine-silver-scan-cases',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer __CRON_SECRET__',
+          'Content-Type', 'application/json'
+        ),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 120000
+      );
+    $cron$
+  );
+  raise notice 'scheduled tf-mine-silver-cases-weekly at 0 9 * * 0';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-mine-silver-cases-weekly.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
+-- tf-scan-eval-weekly (K6): run the smart-scan eval against the current golden + silver set. Runs
+-- Sun 09:15 UTC — 15 min after tf-mine-silver-cases-weekly so a fresh silver case scores this run.
+-- Adds one row to eval_run per run (that IS the accuracy time series). ~$0.15 per run at current
+-- fleet size (12 golden + a growing silver tail); weekly cadence keeps monthly cost near a dollar.
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-scan-eval-weekly' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-scan-eval-weekly',
+    '15 9 * * 0',  -- Sun 09:15 UTC
+    $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/run-scan-eval',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer __CRON_SECRET__',
+          'Content-Type', 'application/json'
+        ),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 300000
+      );
+    $cron$
+  );
+  raise notice 'scheduled tf-scan-eval-weekly at 15 9 * * 0';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-scan-eval-weekly.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- tf-index-memory-6h (unified member-memory reconciler: sweeps every per-member data source
 -- (food days incl. photo scans, meal plans, check-ins, weights, intake, coach notes, physique,
 -- measurements) into member_memory so the coach can semantically recall everything. Idempotent +
