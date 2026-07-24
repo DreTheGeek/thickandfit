@@ -11,7 +11,7 @@ import 'server-only';
 // those two columns.
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
-import { enrollInDrip } from '@/lib/ghl/client';
+import { enrollInDrip, upsertGhlContact } from '@/lib/ghl/client';
 import { sendLeadMagnet } from '@/lib/email/resend';
 
 const TENANT_SLUG = 'thick-and-fit';
@@ -193,6 +193,10 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
 /**
  * Store a quiz response and credit +2 entries once. Idempotent on the lead — a re-submit updates
  * the response row (via unique(lead_id)) but never adds a second quiz entry.
+ *
+ * Also pushes the quiz signal to GHL as additive tags (goal:*, where:*, days:*, eats:*, lang:*,
+ * quiz-done) so the drip's own behavior-triggered flows can select on "quiz completed" or "goal =
+ * lose_fat" without needing our DB. GHL tags are additive on upsert; existing tags stay.
  */
 export async function submitQuiz(input: QuizInput): Promise<{ entryCount: number; credited: boolean }> {
   const parsed = quizSchema.parse(input);
@@ -218,6 +222,27 @@ export async function submitQuiz(input: QuizInput): Promise<{ entryCount: number
   const credited = await recordEntry(companyId, parsed.leadId, 'quiz', ENTRY_POINTS.quiz, `quiz:${parsed.leadId}`);
   // Stamp the completion time on the lead itself (idempotent — first-write wins in practice).
   await supabase.from('waitlist_leads').update({ quiz_completed_at: new Date().toISOString() }).eq('id', parsed.leadId).is('quiz_completed_at', null);
+
+  // Push quiz signal to GHL. Best-effort, never blocks: GHL down must not fail the quiz response.
+  const { data: leadRow } = await supabase
+    .from('waitlist_leads')
+    .select('email, first_name, last_name')
+    .eq('id', parsed.leadId)
+    .maybeSingle();
+  const lead = leadRow as { email: string; first_name: string | null; last_name: string | null } | null;
+  if (lead?.email) {
+    const tags = [
+      'quiz-done',
+      ...parsed.goal.map((g) => `goal:${g}`),
+      `where:${parsed.home_or_gym}`,
+      `days:${parsed.days_per_week}`,
+      `eats:${parsed.how_they_eat}`,
+      `lang:${parsed.preferred_language ?? 'en'}`,
+    ];
+    void upsertGhlContact({ email: lead.email, firstName: lead.first_name, lastName: lead.last_name, tags }).catch(
+      (e: unknown) => console.error('submitQuiz upsertGhlContact:', e instanceof Error ? e.message : e),
+    );
+  }
 
   const entryCount = await refreshEntryCount(parsed.leadId);
   return { entryCount, credited };
@@ -267,21 +292,37 @@ export async function getLeadStats(leadId: string): Promise<LeadStats | null> {
 /**
  * Post-conversion suppression. Called from the Stripe checkout.session.completed webhook when the
  * customer's email matches a waitlist lead. Flipping converted_at excludes them from EVERY drip
- * send (scheduled + triggered) — see the kb-funnels route-rule doctrine. Idempotent.
+ * send in OUR filters (scheduled + triggered) — see the kb-funnels route-rule doctrine. Idempotent.
+ *
+ * Belt AND suspenders: also pushes a `converted` + `member` tag to GHL so GHL's own audience
+ * filters (which we do not own) suppress the "doors close in 24 hours" broadcast to a buyer. That
+ * mis-send is the highest-severity failure mode in the funnel. GHL update is best-effort — the
+ * DB flag is the source of truth.
  */
 export async function convertLead(email: string): Promise<{ found: boolean }> {
   const supabase = createServiceClient();
   const companyId = await resolveTenantId();
+  const emailNormalized = email.trim().toLowerCase();
   const { data, error } = await supabase
     .from('waitlist_leads')
     .update({ converted_at: new Date().toISOString() })
     .eq('company_id', companyId)
-    .eq('email', email.trim().toLowerCase())
+    .eq('email', emailNormalized)
     .is('converted_at', null)
-    .select('id');
+    .select('id, first_name, last_name');
   if (error) {
     console.error('funnel/service.convertLead:', error.message);
     return { found: false };
   }
-  return { found: ((data ?? []) as unknown[]).length > 0 };
+  const rows = (data ?? []) as { id: string; first_name: string | null; last_name: string | null }[];
+  if (rows.length > 0) {
+    const row = rows[0];
+    void upsertGhlContact({
+      email: emailNormalized,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      tags: ['converted', 'member'],
+    }).catch((e: unknown) => console.error('convertLead upsertGhlContact:', e instanceof Error ? e.message : e));
+  }
+  return { found: rows.length > 0 };
 }
