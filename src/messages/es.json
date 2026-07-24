@@ -1350,7 +1350,10 @@
       "msgSendFailed": "No se pudo enviar.",
       "msgEmailedTo": "Enviado por correo a {name}.",
       "msgSavedForJoin": "Guardado para cuando se una.",
-      "msgSent": "Enviado."
+      "msgSent": "Enviado.",
+      "formEmptyAnswer": "-",
+      "formYes": "Sí",
+      "formNo": "No"
     },
     "you": {
       "title": "Tú",

@@ -158,7 +158,7 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
             <div
               className={[
                 'text-[10px] font-semibold uppercase tracking-[1px]',
-                k.dark ? 'text-bg/55' : k.warn && Number(k.value) > 0 ? 'text-[#d9534f]' : 'text-faint',
+                k.dark ? 'text-bg/55' : k.warn && Number(k.value) > 0 ? 'text-accent' : 'text-faint',
               ].join(' ')}
             >
               {k.label}

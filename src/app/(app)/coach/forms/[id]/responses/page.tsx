@@ -14,9 +14,13 @@ export const dynamic = 'force-dynamic';
 type FieldRow = { id: string; label_en: string; label_es: string | null; type: string };
 type ResponseRow = { id: string; profile_id: string; answers: Record<string, unknown>; submitted_at: string };
 
-function formatAnswer(value: unknown): string {
-  if (value === null || value === undefined || value === '') return '—';
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+// Labels are passed in so the render inherits the coach's locale. Housekeeping: em-dash literal
+// removed per house style (universal `/sweep` rule), replaced by an ASCII glyph. Yes/No pulled
+// from i18n so a Spanish-speaking coach sees Sí / No, not English.
+type AnswerLabels = { empty: string; yes: string; no: string };
+function formatAnswer(value: unknown, labels: AnswerLabels): string {
+  if (value === null || value === undefined || value === '') return labels.empty;
+  if (typeof value === 'boolean') return value ? labels.yes : labels.no;
   if (Array.isArray(value)) return value.map((v) => String(v)).join(', ');
   return String(value);
 }
@@ -30,6 +34,7 @@ export default async function FormResponsesPage({
   const { id } = await params;
   const locale = await getLocale();
   const t = await getTranslations('app.coach');
+  const answerLabels = { empty: t('formEmptyAnswer'), yes: t('formYes'), no: t('formNo') };
 
   const loaded = ctx.companyId ? await getForm(ctx.companyId, id) : null;
   const responses = ctx.companyId ? ((await fetchResponses(ctx.companyId, id)) as ResponseRow[]) : [];
@@ -84,7 +89,7 @@ export default async function FormResponsesPage({
                 {fields.map((f) => (
                   <div key={f.id}>
                     <dt className="text-[11px] font-semibold uppercase tracking-[1px] text-faint">{labelOf(f)}</dt>
-                    <dd className="mt-0.5 whitespace-pre-wrap text-[14px] text-ink">{formatAnswer(r.answers?.[f.id])}</dd>
+                    <dd className="mt-0.5 whitespace-pre-wrap text-[14px] text-ink">{formatAnswer(r.answers?.[f.id], answerLabels)}</dd>
                   </div>
                 ))}
               </dl>

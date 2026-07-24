@@ -44,7 +44,7 @@ const UPDATE_PASSWORD_FAILED = 'Could not update your password. Please try again
 
 async function origin(): Promise<string> {
   const h = await headers();
-  return h.get('origin') ?? `https://${h.get('host') ?? 'app.teamthickandfit.com'}`;
+  return h.get('origin') ?? `https://${h.get('host') ?? 'www.teamthickandfit.com'}`;
 }
 
 // Security login audit (Fort Knox: who signed in, from where, success/failure). Service-role insert

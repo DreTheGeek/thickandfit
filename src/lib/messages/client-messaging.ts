@@ -17,7 +17,7 @@ import { notifyClientMessage } from '@/lib/notifications/triggers';
 export type DeliveryChannel = 'in_app' | 'email' | 'recorded';
 export type SendResult = { ok: boolean; channel?: DeliveryChannel; error?: string };
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.teamthickandfit.com';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.teamthickandfit.com';
 
 export async function sendCoachMessageToClient(
   companyId: string,

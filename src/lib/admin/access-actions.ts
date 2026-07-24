@@ -79,7 +79,7 @@ export async function inviteTeammateAction(input: unknown): Promise<InviteResult
   // /auth/reset-password to choose a password, then routes them by role (coach -> /coach etc.).
   // Origin from the request host so the link auto-adapts to the live domain at cutover.
   const h = await headers();
-  const origin = h.get('origin') ?? `https://${h.get('host') ?? 'app.teamthickandfit.com'}`;
+  const origin = h.get('origin') ?? `https://${h.get('host') ?? 'www.teamthickandfit.com'}`;
   const anon = createSbClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

@@ -41,7 +41,7 @@ function trialDays(): number {
 
 async function origin(): Promise<string> {
   const h = await headers();
-  return h.get('origin') ?? `https://${h.get('host') ?? 'app.teamthickandfit.com'}`;
+  return h.get('origin') ?? `https://${h.get('host') ?? 'www.teamthickandfit.com'}`;
 }
 
 async function clientMeta(): Promise<{ ip: string | null; ua: string | null }> {
