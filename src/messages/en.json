@@ -101,7 +101,15 @@
     "quizSubmitting": "Saving",
     "quizDone": "Answers saved. +2 entries added.",
     "quizError": "Couldn't save your answers. Try again in a minute.",
-    "quizMissingLead": "We couldn't identify your entry. Please rejoin the waitlist first."
+    "quizMissingLead": "We couldn't identify your entry. Please rejoin the waitlist first.",
+    "confirmedBanner": "Email confirmed. You are all set.",
+    "unconfirmedBanner": "Check your inbox to confirm your email — it keeps my messages out of your spam folder.",
+    "confirmFailedBanner": "That confirmation link did not resolve. Ask me to resend it from the address you signed up with.",
+    "shareIMessage": "iMessage",
+    "shareWhatsApp": "WhatsApp",
+    "shareX": "X",
+    "shareMore": "More options",
+    "shareLinkLabel": "Your share link"
   },
   "auth": {
     "signIn": "Sign in",
@@ -1653,7 +1661,8 @@
       "p1": "Thick & Fit provides fitness and nutrition guidance for general wellness. It is not medical advice and is not a substitute for care from a licensed healthcare provider.",
       "p2": "Consult your doctor before starting any exercise or nutrition program, especially if you are pregnant, nursing, or have a medical condition. Stop and seek help if you feel pain, dizziness, or shortness of breath.",
       "p3": "By continuing, you confirm you are at least 18, are participating voluntarily, and accept the risks of physical activity.",
-      "accept": "I understand and accept"
+      "accept": "I understand and accept",
+      "acked": "You've already acknowledged this."
     },
     "checkin": {
       "title": "Check-in",

@@ -31,11 +31,19 @@ async function resolveShareUrl(refCode: string): Promise<string> {
   return `${proto}://${host}/join?r=${encodeURIComponent(refCode)}`;
 }
 
-export default async function ThanksPage(): Promise<ReactElement> {
+export default async function ThanksPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<ReactElement> {
   const t = await getTranslations('funnel');
   const jar = await cookies();
   const leadId = jar.get('funnel_lead')?.value ?? null;
   const refCode = jar.get('funnel_ref')?.value ?? null;
+  const sp = await searchParams;
+  // Confirmation-arrival state from /api/funnel/confirm redirect: '1' = success, '0' = failed.
+  const justConfirmed = sp.confirmed === '1';
+  const confirmFailed = sp.confirmed === '0';
 
   const stats = leadId ? await getLeadStats(leadId) : null;
 
@@ -74,6 +82,27 @@ export default async function ThanksPage(): Promise<ReactElement> {
           {t('thanksSubline')}
         </p>
 
+        {/* Double-opt-in confirmation state (kb-funnels doctrine: only affects deliverability, never
+            blocks the page from loading). Three visible states, one small banner:
+              - justConfirmed=1  → success (green ish, "you're set")
+              - confirmFailed=0  → bad/expired link (asks to re-request)
+              - default: unconfirmed but no query param → "check your inbox" nudge */}
+        {justConfirmed && stats.confirmed && (
+          <p className="mt-6 rounded-md border border-white/15 bg-[#141414] px-4 py-3 text-[14px] text-white">
+            {t('confirmedBanner')}
+          </p>
+        )}
+        {confirmFailed && (
+          <p className="mt-6 rounded-md border border-[#ff2d55]/40 bg-[#ff2d55]/10 px-4 py-3 text-[14px] text-white">
+            {t('confirmFailedBanner')}
+          </p>
+        )}
+        {!justConfirmed && !confirmFailed && !stats.confirmed && (
+          <p className="mt-6 rounded-md border border-white/15 bg-[#141414] px-4 py-3 text-[14px] text-white/85">
+            {t('unconfirmedBanner')}
+          </p>
+        )}
+
         <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5">
           <div className="rounded-2xl bg-[#141414] p-6">
             <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/60">
@@ -81,7 +110,7 @@ export default async function ThanksPage(): Promise<ReactElement> {
             </div>
             <div
               className="mt-2 font-extrabold leading-none text-white"
-              style={{ fontSize: 'clamp(48px, 12vw, 92px)' }}
+              style={{ fontSize: 'clamp(72px, 12vw, 96px)' }}
             >
               {stats.entryCount}
             </div>
@@ -92,7 +121,7 @@ export default async function ThanksPage(): Promise<ReactElement> {
             </div>
             <div
               className="mt-2 font-extrabold leading-none text-white"
-              style={{ fontSize: 'clamp(48px, 12vw, 92px)' }}
+              style={{ fontSize: 'clamp(72px, 12vw, 96px)' }}
             >
               {stats.position != null ? `#${stats.position}` : '—'}
             </div>

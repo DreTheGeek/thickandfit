@@ -10,9 +10,10 @@ import 'server-only';
 // is the truth for every drip send filter. Nothing else in this service or the drip owner may bypass
 // those two columns.
 import { z } from 'zod';
+import { headers } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/service';
 import { enrollInDrip, upsertGhlContact } from '@/lib/ghl/client';
-import { sendLeadMagnet } from '@/lib/email/resend';
+import { sendLeadMagnet, sendWaitlistConfirmation } from '@/lib/email/resend';
 
 const TENANT_SLUG = 'thick-and-fit';
 
@@ -37,6 +38,11 @@ export const signupSchema = z.object({
   locale: z.enum(['en', 'es']).default('en'),
   referred_by_code: z.string().trim().min(4).max(40).optional(),
   source: z.string().max(120).optional(),
+  // Cloudflare Turnstile challenge response, produced by the widget on the client. Server
+  // verifies it in /api/funnel/signup before submitSignup runs. Schema accepts it optional so
+  // an existing curl / server-side caller with no widget stays valid — the verify layer in the
+  // route is the gate, not the schema.
+  turnstile_token: z.string().max(2048).optional(),
 });
 export type SignupInput = z.infer<typeof signupSchema>;
 
@@ -157,7 +163,7 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
   const { data: lead, error } = await supabase
     .from('waitlist_leads')
     .upsert(patch, { onConflict: 'company_id,email' })
-    .select('id, referral_code, entry_count, created_at')
+    .select('id, referral_code, confirm_token, entry_count, confirmed_at, created_at')
     .single();
   if (error || !lead) throw new Error(`funnel/service.submitSignup: ${error?.message ?? 'no row'}`);
 
@@ -174,7 +180,7 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
     await creditReferral(companyId, referrer.id, lead.id);
   }
 
-  // Best-effort deliverability side effects. Both return false rather than throw when unconfigured.
+  // Best-effort deliverability side effects. Every one returns false rather than throw when unconfigured.
   void sendLeadMagnet(parsed.email, parsed.locale).catch((e) => console.error('sendLeadMagnet:', e?.message));
   void enrollInDrip(parsed.email, parsed.locale)
     .then((ghl) => {
@@ -182,12 +188,38 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
     })
     .catch((e) => console.error('enrollInDrip:', e?.message));
 
+  // Double-opt-in: send the confirmation email once, only for a brand-new lead OR one that has
+  // not yet confirmed. A returning-but-unconfirmed signup gets a fresh nudge instead of silence.
+  // Absolute URL is built from the request host so preview + prod both work; falls back to prod.
+  const alreadyConfirmed = (lead as { confirmed_at: string | null }).confirmed_at != null;
+  if (!alreadyConfirmed) {
+    const confirmToken = (lead as { confirm_token: string }).confirm_token;
+    const origin = await requestOrigin();
+    const confirmUrl = `${origin}/api/funnel/confirm?t=${encodeURIComponent(confirmToken)}`;
+    void sendWaitlistConfirmation(parsed.email, parsed.locale, confirmUrl).catch((e) =>
+      console.error('sendWaitlistConfirmation:', e?.message),
+    );
+  }
+
   return {
     leadId: lead.id as string,
     referralCode: (lead as { referral_code: string }).referral_code,
     entryCount,
     isNew,
   };
+}
+
+/** Build the public origin from the request headers with a safe production fallback. */
+async function requestOrigin(): Promise<string> {
+  try {
+    const h = await headers();
+    const proto = h.get('x-forwarded-proto') ?? 'https';
+    const host = h.get('x-forwarded-host') ?? h.get('host');
+    if (host) return `${proto}://${host}`;
+  } catch {
+    // headers() throws outside a request scope (e.g. eval, cron) — fall through to the prod default.
+  }
+  return 'https://www.teamthickandfit.com';
 }
 
 /**
@@ -253,6 +285,7 @@ export type LeadStats = {
   referralCount: number; // credited referrals so far (0..REFERRAL_CAP)
   referralCapRemaining: number;
   quizDone: boolean;
+  confirmed: boolean; // double-opt-in state; drives the "check your email" banner on /join/thanks
   socialFollows: number;
   position: number | null; // rank by entry_count DESC across the tenant; null if unknown
 };
@@ -263,7 +296,7 @@ export async function getLeadStats(leadId: string): Promise<LeadStats | null> {
   const companyId = await resolveTenantId();
   const { data: lead } = await supabase
     .from('waitlist_leads')
-    .select('id, entry_count, quiz_completed_at')
+    .select('id, entry_count, quiz_completed_at, confirmed_at')
     .eq('id', leadId)
     .maybeSingle();
   if (!lead) return null;
@@ -284,9 +317,52 @@ export async function getLeadStats(leadId: string): Promise<LeadStats | null> {
     referralCount,
     referralCapRemaining: Math.max(0, REFERRAL_CAP - referralCount),
     quizDone: (lead as { quiz_completed_at: string | null }).quiz_completed_at != null,
+    confirmed: (lead as { confirmed_at: string | null }).confirmed_at != null,
     socialFollows: followCount ?? 0,
     position: aheadCount == null ? null : aheadCount + 1,
   };
+}
+
+/**
+ * Double-opt-in confirmation. Called from GET /api/funnel/confirm when a user clicks the emailed
+ * confirm link. Flips confirmed_at (idempotent — a second click on the same link returns ok:true
+ * silently) and pushes a `confirmed` GHL tag so GHL's audience filter can promote the lead from
+ * the pre-confirmation holding audience into the live drip. Bad/unknown token returns ok:false;
+ * the caller redirects to /join/thanks?confirmed=0 without leaking token validity.
+ */
+export async function confirmLeadByToken(token: string): Promise<{ ok: boolean }> {
+  const supabase = createServiceClient();
+  const companyId = await resolveTenantId();
+  const { data, error } = await supabase
+    .from('waitlist_leads')
+    .update({ confirmed_at: new Date().toISOString() })
+    .eq('company_id', companyId)
+    .eq('confirm_token', token)
+    .is('confirmed_at', null)
+    .select('id, email, first_name, last_name');
+  if (error) {
+    console.error('funnel/service.confirmLeadByToken:', error.message);
+    return { ok: false };
+  }
+  const rows = (data ?? []) as { id: string; email: string; first_name: string | null; last_name: string | null }[];
+  if (rows.length === 0) {
+    // Token already used OR unknown. Check the already-confirmed case so a legitimate re-click is friendly.
+    const { data: existing } = await supabase
+      .from('waitlist_leads')
+      .select('id, confirmed_at')
+      .eq('company_id', companyId)
+      .eq('confirm_token', token)
+      .maybeSingle();
+    return { ok: Boolean((existing as { confirmed_at: string | null } | null)?.confirmed_at) };
+  }
+  const row = rows[0];
+  void upsertGhlContact({
+    email: row.email,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    tags: ['confirmed'],
+  }).catch((e: unknown) => console.error('confirmLeadByToken upsertGhlContact:', e instanceof Error ? e.message : e));
+  return { ok: true };
 }
 
 /**
