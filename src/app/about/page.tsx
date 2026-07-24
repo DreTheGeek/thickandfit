@@ -1,22 +1,20 @@
-// About. Rebuilt from the pre-launch pitch page that used to live here.
+// About. The warm-follower conversion asset (per .planning/MARKETING-AUDIENCE.md): her story, the
+// difference a member feels, who it is for, the real numbers, a soft CTA. Restyled onto the v2
+// marketing shell (dark ground, crimson accent) with her own shoot photos; the copy stays in the
+// bilingual about.* keys so this page is EN/ES already.
 //
-// That version was correctly carrying robots noindex: it was written for partners, not customers.
-// It named and criticised the platform she is leaving, stated that her paying clients were being
-// migrated off it and how their rev-share was handled, asserted that competitors had been fined by
-// the FTC, listed named private individuals and their roles, disclosed the vendor roadmap and the
-// stack, and described the coach feature as shipped when its PRD is still blocked. None of that
-// belongs on an indexed page. All of it is gone, and the reasons are in the commit.
-//
-// What remains is true, shipped, and customer-facing: her story, the differences a member actually
-// experiences, who it is for, and the real numbers. Styled to match the rest of the marketing
-// surface (monochrome cream and ink, tf-display headings) rather than the decorative green the old
-// page used, which breaks the brand rule that green is functional only.
+// LEGAL CAUTION PRESERVED from the prior version: this indexed page does NOT name or criticize the
+// platform she is leaving, assert competitor fines, list private individuals, disclose the vendor
+// roadmap/stack, or claim an unshipped feature as shipped. The "wound" is framed as "a platform she
+// did not own, built for an audience it ignored" without naming it. Her credential is "certified
+// personal trainer" (verified) - never "nutritionist"/"PN-certified" (she is not one, and the
+// meal-plan disclaimer says the plans do not replace one).
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 import { getTranslations } from 'next-intl/server';
-import { MarketingNav } from '@/components/marketing/marketing-nav';
-import { MarketingFooter } from '@/components/marketing/marketing-footer';
+import { MarketingShell } from '@/components/marketing/v2/shell';
+import { LSection, LH2, LBody, LEyebrow } from '@/components/marketing/v2/ui';
 import { JsonLd } from '@/components/seo/json-ld';
 import { localeAlternates } from '@/lib/seo/locale-alternates';
 import {
@@ -27,6 +25,8 @@ import {
   websiteNode,
   type JsonLdNode,
 } from '@/lib/seo/schema';
+
+export const dynamic = 'force-dynamic';
 
 type Diff = { t: string; d: string };
 type Stat = { n: string; l: string };
@@ -51,7 +51,7 @@ export default async function AboutPage(): Promise<ReactElement> {
   const diffs = t.raw('diffs') as Diff[];
   const stats = t.raw('stats') as Stat[];
 
-  // About is the entity surface: it is the page an answer engine reads to decide who Stephanie and
+  // About is the entity surface: the page an answer engine reads to decide who Stephanie and
   // Thick & Fit are, so it carries the full identity graph rather than a product node.
   const nodes = [organizationNode(), personNode(), websiteNode(), breadcrumbNode([
     { name: 'Home', path: '/' },
@@ -59,116 +59,124 @@ export default async function AboutPage(): Promise<ReactElement> {
   ])].filter((n): n is JsonLdNode => n !== null);
 
   return (
-    <div className="tf-light">
+    <MarketingShell>
       <JsonLd data={graph(nodes)} />
-      <MarketingNav />
 
-      <main className="bg-white text-ink">
-        {/* Hero */}
-        <section className="bg-bg">
-          <div className="mx-auto max-w-[1180px] px-6 pb-16 pt-14 sm:pt-20">
-            <p className="text-[12px] font-semibold uppercase tracking-[2px] text-soft">
+      {/* Hero: lead with her, per the research (creator trust converts on the person). */}
+      <section className="relative isolate overflow-hidden bg-[#0e0e0e]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/shoot/walk-white.avif"
+          alt="Stephanie Pantoja"
+          className="absolute inset-0 hidden h-full w-full object-cover object-[60%_18%] lg:block"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/shoot/walk-white.avif"
+          alt="Stephanie Pantoja"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_15%] lg:hidden"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20 lg:hidden"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 hidden lg:block lg:bg-[linear-gradient(to_right,rgba(8,8,8,0.9)_0%,rgba(8,8,8,0.78)_40%,rgba(8,8,8,0.25)_75%,transparent_100%)]"
+        />
+        <div className="relative z-10 mx-auto flex min-h-[70svh] w-full max-w-[1200px] flex-col justify-end px-5 pb-16 pt-28 sm:px-8 lg:min-h-[78svh] lg:justify-center lg:py-28">
+          <div className="max-w-[36ch]">
+            <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-white/55">
               {t('eyebrow')}
             </p>
-            <h1 className="tf-display mt-5 max-w-[15ch] text-[clamp(44px,9vw,84px)] leading-[0.9]">
+            <h1 className="mt-4 text-[40px] font-extrabold uppercase leading-[0.95] tracking-[-0.01em] text-white sm:text-[56px] lg:text-[64px]">
               {t('h1a')}
               <br />
-              <span className="text-faint">{t('h1b')}</span>
+              <span className="text-[#ff2d55]">{t('h1b')}</span>
             </h1>
-            <p className="mt-8 max-w-[62ch] text-[16px] leading-[1.75] text-soft sm:text-[17px]">
+            <p className="mt-6 max-w-[52ch] text-[16px] leading-[1.6] text-white/80 sm:text-[18px]">
               {t('intro')}
             </p>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Origin, on ink for the same contrast rhythm the home page uses. */}
-        <section className="bg-ink text-white">
-          <div className="mx-auto max-w-[1180px] px-6 py-24 sm:py-28">
-            <p className="text-[12px] font-semibold uppercase tracking-[2px] text-white/50">
-              {t('originEyebrow')}
-            </p>
-            <h2 className="tf-display mt-5 max-w-[18ch] text-[clamp(32px,5.5vw,64px)] leading-[0.94]">
-              {t('originHead')}
-            </h2>
-            <div className="mt-12 grid gap-8 border-t border-white/15 pt-10 sm:grid-cols-2 sm:gap-14">
-              <p className="text-[16px] leading-[1.75] text-white/70">{t('originA')}</p>
-              <p className="text-[16px] leading-[1.75] text-white/70">{t('originB')}</p>
+      {/* Origin / the wound */}
+      <LSection tone="dark">
+        <LEyebrow className="text-white/55">{t('originEyebrow')}</LEyebrow>
+        <LH2 className="mt-4 max-w-[18ch] text-white">{t('originHead')}</LH2>
+        <div className="mt-10 grid gap-8 border-t border-white/12 pt-10 sm:grid-cols-2 sm:gap-14">
+          <LBody className="max-w-none text-[#bcbcbc]">{t('originA')}</LBody>
+          <LBody className="max-w-none text-[#bcbcbc]">{t('originB')}</LBody>
+        </div>
+      </LSection>
+
+      {/* The difference a member feels. A definition list: answer-shaped and liftable for AEO. */}
+      <LSection tone="bone">
+        <LEyebrow className="text-[#0e0e0e]">{t('diffEyebrow')}</LEyebrow>
+        <LH2 className="mt-4 max-w-[16ch] text-[#0e0e0e]">{t('diffHead')}</LH2>
+        <dl className="mt-10 flex flex-col">
+          {diffs.map((d) => (
+            <div
+              key={d.t}
+              className="grid gap-3 border-t border-black/10 py-8 first:border-t-0 first:pt-0 sm:grid-cols-[0.85fr_1.15fr] sm:gap-10"
+            >
+              <dt className="text-[19px] font-bold leading-snug text-[#0e0e0e] sm:text-[21px]">
+                {d.t}
+              </dt>
+              <dd className="max-w-[62ch] text-[15px] leading-[1.7] text-[#4a4a4a]">{d.d}</dd>
             </div>
-          </div>
-        </section>
+          ))}
+        </dl>
+      </LSection>
 
-        {/* Differences. A definition list, which is answer-shaped and liftable. */}
-        <section className="mx-auto max-w-[1180px] px-6 py-20 sm:py-28">
-          <p className="text-[12px] font-semibold uppercase tracking-[2px] text-soft">
-            {t('diffEyebrow')}
-          </p>
-          <h2 className="tf-display mt-5 max-w-[16ch] text-[clamp(32px,5.5vw,60px)] leading-[0.94]">
-            {t('diffHead')}
-          </h2>
-          <dl className="mt-12 flex flex-col">
-            {diffs.map((d) => (
-              <div
-                key={d.t}
-                className="grid gap-3 border-t border-line py-8 first:border-t-0 first:pt-0 sm:grid-cols-[0.85fr_1.15fr] sm:gap-10"
-              >
-                <dt className="text-[19px] font-semibold leading-snug sm:text-[21px]">{d.t}</dt>
-                <dd className="max-w-[62ch] text-[15px] leading-[1.7] text-soft">{d.d}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-
-        {/* Audience + the real numbers. */}
-        <section className="border-y border-line bg-bg">
-          <div className="mx-auto max-w-[1180px] px-6 py-20 sm:py-24">
-            <p className="text-[12px] font-semibold uppercase tracking-[2px] text-soft">
-              {t('whoEyebrow')}
-            </p>
-            <h2 className="tf-display mt-5 max-w-[16ch] text-[clamp(30px,5vw,58px)] leading-[0.94]">
-              {t('whoHeadA')}
-              <br />
-              <span className="text-faint">{t('whoHeadB')}</span>
-            </h2>
-            <div className="mt-12 grid gap-10 lg:grid-cols-2 lg:gap-16">
-              <div className="flex flex-col gap-5">
-                <p className="max-w-[58ch] text-[16px] leading-[1.75] text-soft">{t('whoA')}</p>
-                <p className="max-w-[58ch] text-[16px] leading-[1.75] text-soft">{t('whoB')}</p>
-              </div>
-              <div className="grid gap-8 sm:grid-cols-3 lg:gap-6">
-                {stats.map((s) => (
-                  <div key={s.l}>
-                    <div className="tf-display text-[clamp(34px,5vw,56px)] leading-[0.85]">{s.n}</div>
-                    {/* text-soft, not text-faint: faint fails 4.5:1 on the cream ground. */}
-                    <div className="mt-3 text-[12px] uppercase tracking-[1.5px] text-soft">
-                      {s.l}
-                    </div>
+      {/* Who it is for + the real numbers, over a photo band. */}
+      <LSection tone="dark">
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+          <div>
+            <LEyebrow className="text-white/55">{t('whoEyebrow')}</LEyebrow>
+            <LH2 className="mt-4 max-w-[16ch] text-white">
+              {t('whoHeadA')} <span className="text-[#ff2d55]">{t('whoHeadB')}</span>
+            </LH2>
+            <LBody className="mt-6 max-w-none text-[#bcbcbc]">{t('whoA')}</LBody>
+            <LBody className="mt-4 max-w-none text-[#bcbcbc]">{t('whoB')}</LBody>
+            <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/12 pt-8">
+              {stats.map((s) => (
+                <div key={s.l}>
+                  <div className="text-[clamp(28px,4vw,44px)] font-extrabold leading-none text-white">
+                    {s.n}
                   </div>
-                ))}
-              </div>
+                  <div className="mt-2 text-[11px] uppercase tracking-[1.4px] text-white/55">
+                    {s.l}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </section>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/shoot/trust-process.avif"
+            alt="Stephanie Pantoja"
+            className="aspect-[4/5] w-full rounded-xl object-cover object-[center_20%]"
+          />
+        </div>
+      </LSection>
 
-        {/* CTA */}
-        <section className="bg-ink text-white">
-          <div className="mx-auto max-w-[1180px] px-6 py-24 text-center sm:py-28">
-            <h2 className="tf-display text-[clamp(38px,8vw,92px)] leading-[0.88]">
-              {t('ctaHead')}
-            </h2>
-            <p className="mx-auto mt-7 max-w-xl text-[16px] leading-[1.7] text-white/70">
-              {t('ctaBody')}
-            </p>
+      {/* CTA */}
+      <LSection tone="raised">
+        <div className="text-center">
+          <LH2 className="text-white">{t('ctaHead')}</LH2>
+          <LBody className="mx-auto mt-6 text-center text-[#bcbcbc]">{t('ctaBody')}</LBody>
+          <div className="mt-8">
             <Link
               href="/join"
-              className="tf-press mt-10 inline-block bg-white px-10 py-4 text-[12px] font-semibold uppercase tracking-[2px] text-ink"
+              className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
               {t('ctaButton')}
             </Link>
           </div>
-        </section>
-      </main>
-
-      <MarketingFooter />
-    </div>
+        </div>
+      </LSection>
+    </MarketingShell>
   );
 }
