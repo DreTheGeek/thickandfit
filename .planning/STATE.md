@@ -23,7 +23,7 @@ deploy sequence, cut list, decisions).
 **Gates to launch are NOT engineering** — they are: Stephanie's content (AI knowledge base = long
 pole, 369 demo videos, approved recipe/exercise lists, offer blueprint), external account keys
 (Stripe/OpenRouter-in-prod/Resend/Mux/Sentry/PostHog/VAPID/Twilio), the domain cutover
-(app.teamthickandfit.com not yet attached; re-register the 5 pg_cron URLs at cutover), and two
+(www.teamthickandfit.com not yet attached; re-register the 5 pg_cron URLs at cutover), and two
 decisions before arming Stripe: (1) the ~256 migrated Lenus clients (client_subscriptions) have no
 native subscription row and would be paywalled — comp-grant or union the tables FIRST; (2) pin the
 Stripe webhook to a pre-Basil API version.

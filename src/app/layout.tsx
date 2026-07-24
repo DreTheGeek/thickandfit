@@ -31,7 +31,7 @@ const inter = Inter({
 // One source of truth for the public origin, shared with robots.ts + sitemap.ts + email/shell.ts +
 // seo/schema.ts. Post-DNS-cutover the fallback matches prod so canonicals + OG resolve even if the
 // env var is momentarily missing on a fresh preview. Override with NEXT_PUBLIC_SITE_URL for any
-// non-www surface (e.g. app.teamthickandfit.com if ever attached back).
+// non-www surface if one is ever added.
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.teamthickandfit.com";
 
 // <=165 chars so search engines show it whole (was 237, truncated in results).

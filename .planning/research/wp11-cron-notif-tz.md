@@ -125,7 +125,7 @@ begin
     '0 * * * *',  -- top of every hour, UTC
     $cron$
       select net.http_post(
-        url := 'https://app.teamthickandfit.com/api/internal/notify-reminders',
+        url := 'https://www.teamthickandfit.com/api/internal/notify-reminders',
         headers := jsonb_build_object(
           'Authorization', 'Bearer __CRON_SECRET__',
           'Content-Type', 'application/json'
@@ -352,7 +352,7 @@ where not exists (
    - Unclear: whether this project's access token has superuser-equivalent rights for the GUC.
    - Recommendation: write the migration for the hardcoded-`__CRON_SECRET__`-substitution path (proven), attempt GUC as an optional upgrade. `.qa-visual/sql.cjs` uses `SUPABASE_ACCESS_TOKEN`; test `alter database` rights there first.
 
-2. **What endpoint host does pg_net call — `app.teamthickandfit.com` or a Supabase Edge Function?**
+2. **What endpoint host does pg_net call — `www.teamthickandfit.com` or a Supabase Edge Function?**
    - Known: the generators live in Next routes (to reuse `createNotification`). pg_net must reach the deployed Vercel URL.
    - Unclear: whether prod URL is stable/reachable from Supabase egress at plan time (it should be; public HTTPS).
    - Recommendation: store the base URL as part of the substituted cron body (like craneop's `edge_base_url`), default to the Vercel production domain.

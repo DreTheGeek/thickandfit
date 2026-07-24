@@ -8,7 +8,7 @@ audience of women across the US and Latin America. Structured workouts with her 
 the most accurate low-friction nutrition tracking in the category, a living community, and an AI
 coach in her voice. One-line category: creator-led bilingual fitness coaching app.
 
-**Live at:** app.teamthickandfit.com (planned)
+**Live at:** www.teamthickandfit.com (planned)
 **Repo:** github.com/DreTheGeek/thickandfit (private)
 **Owner:** Stephanie Pantoja (Thick & Fit by Steph's Blessed)
 **Build partners:** LevelUp Automations (scope) + Kaldr Tech (engineering)

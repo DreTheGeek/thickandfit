@@ -4,7 +4,7 @@
 
 Built by [Kaldr Tech](https://kaldrbusiness.com) for Thick & Fit by Steph's Blessed x LevelUp Automations.
 
-> Live at: `app.teamthickandfit.com` (planned)
+> Live at: `www.teamthickandfit.com` (planned)
 > Owner: Stephanie Pantoja — CPT, ~562K IG followers (@stephsblessedd), 256 paying clients
 > Stack: Next.js 16 · Supabase · OpenRouter · Stripe Connect · Mux · Twilio · Vercel
 

@@ -116,7 +116,7 @@ production environment**. "Degrades to" = what happens today when the key is abs
    the live chat probe. (Reminder for future deploys: `git push` only; never also run
    `vercel deploy --prod` — double-builds, and Hobby caps crons at 1/day, which has frozen prod.)
 4. **Apply `supabase/deploy/cron-register.sql`** once the app is live at the prod URL:
-   - Substitute `__APP_URL__` (e.g. `https://app.teamthickandfit.com`) and `__CRON_SECRET__` (the
+   - Substitute `__APP_URL__` (e.g. `https://www.teamthickandfit.com`) and `__CRON_SECRET__` (the
      exact Vercel value). Never commit the substituted file.
    - Registers 6 jobs: reminders (hourly), renewals (14:00), checkins (15:00), insights (08:00),
      close-challenges (09:00), **ghl-sync (every 6h)**.

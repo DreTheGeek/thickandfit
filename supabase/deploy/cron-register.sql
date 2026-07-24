@@ -13,7 +13,7 @@
 --
 -- SUBSTITUTION (never commit the real secret):
 --   * Replace __CRON_SECRET__ with the exact value of the Vercel CRON_SECRET env var.
---   * Replace __APP_URL__ with the production origin, e.g. https://app.teamthickandfit.com
+--   * Replace __APP_URL__ with the production origin, e.g. https://www.teamthickandfit.com
 --   Then apply via the Supabase SQL editor or Management API. The placeholders must be substituted
 --   at apply time; the substituted file is never written back to git.
 --

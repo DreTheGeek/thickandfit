@@ -6,7 +6,7 @@ Thick & Fit is a creator-led, bilingual (EN/ES) fitness coaching app for Stephan
 audience of women across the US and Latin America. It replaces Lenus with an owned platform:
 structured workouts with her filmed demos, the most accurate low-friction nutrition tracking in
 the category, a living community, and an AI coach in her voice. One-line category: creator-led
-bilingual fitness coaching app. Web app at app.teamthickandfit.com (planned).
+bilingual fitness coaching app. Web app at www.teamthickandfit.com (planned).
 
 ## Core Value
 
