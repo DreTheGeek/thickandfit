@@ -35,7 +35,7 @@ export function KnowExactly(): ReactElement {
             execute.
           </LBody>
           <LCta className="mt-8" href="/join">
-            Start your 3 days free
+            Start today
           </LCta>
         </div>
 
@@ -98,7 +98,7 @@ export function LearnFromBest(): ReactElement {
             you are working toward.
           </LBody>
           <LCta className="mt-8" href="/join">
-            Start your 3 days free
+            Start today
           </LCta>
         </div>
       </div>

@@ -67,11 +67,11 @@ export function FindPlan(): ReactElement {
         <LH2>This is the last time you start over.</LH2>
         <div className="mx-auto max-w-[52ch]">
           <LBody className="mx-auto mt-5 text-center text-[#bcbcbc]">
-            Three days free. Cancel before it ends and you are not charged.
+            Cancel anytime, no contract. Founders lock in $19.97 for life.
           </LBody>
         </div>
         <LCta className="mt-8" href="/join">
-          Start your 3 days free
+          Start today
         </LCta>
       </div>
     </LSection>

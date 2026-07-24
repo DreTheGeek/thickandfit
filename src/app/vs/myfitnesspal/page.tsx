@@ -95,7 +95,7 @@ const FAQ: readonly { question: string; answer: string }[] = [
     question: 'Can I cancel easily?',
     answer:
       'Yes. You can cancel in one tap from inside the app, with no phone call and no hidden steps. ' +
-      'The price is shown before you ever pay, and you start with a free trial.',
+      'The price is shown before you ever pay, and there is no contract.',
   },
 ];
 
@@ -143,9 +143,9 @@ export default function VsMyFitnessPalPage(): ReactElement {
               href="/join"
               className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Start 3 days free
+              Start today
             </Link>
-            <p className="mt-3 text-[13px] text-white/50">No card to start. Cancel any time, one tap.</p>
+            <p className="mt-3 text-[13px] text-white/50">Cancel anytime, no contract.</p>
           </div>
         </div>
       </section>
@@ -256,10 +256,10 @@ export default function VsMyFitnessPalPage(): ReactElement {
               href="/join"
               className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Start 3 days free
+              Start today
             </Link>
             <p className="mt-3 text-[13px] text-white/50">
-              No card to start. Then $19.97 a month. Cancel any time, one tap.
+              $19.97 a month. Cancel anytime, no contract.
             </p>
           </div>
         </div>

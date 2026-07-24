@@ -424,7 +424,7 @@
       "tierStephName": "1-on-1 with Coach Steph",
       "tierStephPrice": "$3,000 / 3 mo",
       "tierStephBlurb": "Work directly with Stephanie herself. Limited spots. Her highest level of access.",
-      "tierTrialNote": "Try it free for 3 days. Cancel anytime before it ends and you won't be charged. No games.",
+      "tierTrialNote": "Cancel anytime, no contract. You are never locked in, and founders keep $19.97 for life.",
       "continue": "Continue",
       "back": "Back",
       "seePlan": "Show me my plan",
@@ -1912,7 +1912,7 @@
       },
       {
         "q": "Is there a free trial?",
-        "a": "Yes. You can try it free before you are charged anything. Cancel before the trial ends and you are not charged. No tricks."
+        "a": "No free trial, but no contract either. Cancel anytime and you keep any free resources you grabbed. No tricks."
       },
       {
         "q": "How does the food photo tracking work?",
@@ -1944,7 +1944,7 @@
     "eyebrow": "Pricing",
     "title": "How do you want me in your corner?",
     "subtitle": "Start free. Cancel in one tap. No games, ever.",
-    "trialNote": "Every plan starts with a free trial. Cancel before it ends and you are not charged.",
+    "trialNote": "No contract, ever. Cancel anytime and you are never locked in.",
     "perMonth": "/month",
     "popular": "Most popular",
     "tiers": [
@@ -2016,12 +2016,12 @@
       "accent": "fall in love",
       "line2": "with the journey.",
       "sub": "Photograph the food your family actually cooks and it logs, cooked or raw. Workouts built around the equipment you have. Her and her team in your corner, every week.",
-      "cta": "Start your 3 days free",
+      "cta": "Start today",
       "alt": "Coach Stephanie Pantoja",
       "definition": "Thick & Fit is a bilingual coaching app from Stephanie Pantoja: your workouts, your meals, and your check-ins with her team, in English or Spanish.",
       "h1": "Train with Stephanie, in English or Spanish.",
       "proofLine": "562,000 women follow Stephanie",
-      "reassure": "No card to start. Cancel anytime, no phone call.",
+      "reassure": "Cancel anytime, no contract.",
       "priceLine": "Then $19.97 a month. Same price in every country."
     },
     "proof": {
@@ -2102,9 +2102,9 @@
       "eyebrow": "Pricing",
       "line1": "Start free.",
       "line2": "Cancel in one tap.",
-      "body": "$19.97 a month, a free trial before you pay anything, and cancelling takes one tap. You have been burned by an app before. Not here.",
+      "body": "$19.97 a month, no contract, and cancelling takes one tap. You have been burned by an app before. Not here.",
       "cta": "See the plans",
-      "cancelLine": "3 days free. Cancel anytime, no phone call and no guilt. Same price in every country."
+      "cancelLine": "No contract, cancel anytime, no guilt. Same price in every country."
     },
     "closing": {
       "line1": "If you're ready",

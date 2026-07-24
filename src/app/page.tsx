@@ -14,7 +14,7 @@ import { AnnounceBar, SiteNav, Hero } from '@/components/marketing/v2/top';
 import { BigWordmark, TheDifference, BusyPeople } from '@/components/marketing/v2/proof';
 import { KnowExactly, SaveTime, LearnFromBest, TrackBlocks } from '@/components/marketing/v2/features';
 import { TierCards, FindPlan } from '@/components/marketing/v2/coaches';
-import { Testimonials, FreeTrial, Faq, SiteFooter } from '@/components/marketing/v2/social';
+import { Testimonials, StartToday, Faq, SiteFooter } from '@/components/marketing/v2/social';
 import { JsonLd } from '@/components/seo/json-ld';
 import {
   graph,
@@ -75,7 +75,7 @@ export default async function Home(): Promise<ReactElement> {
         <TierCards />
         <FindPlan />
         <Testimonials />
-        <FreeTrial />
+        <StartToday />
         <Faq />
       </main>
       <SiteFooter />

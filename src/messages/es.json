@@ -424,7 +424,7 @@
       "tierStephName": "1 a 1 con Coach Steph",
       "tierStephPrice": "$3,000 / 3 meses",
       "tierStephBlurb": "Trabaja directamente con Stephanie. Cupos limitados. Su nivel de acceso más alto.",
-      "tierTrialNote": "Pruébalo gratis 3 días. Cancela antes de que termine y no te cobramos. Sin trucos.",
+      "tierTrialNote": "Cancela cuando quieras, sin contrato. Nunca quedas atrapada, y las fundadoras conservan $19.97 de por vida.",
       "continue": "Continuar",
       "back": "Atrás",
       "seePlan": "Muéstrame mi plan",
@@ -1912,7 +1912,7 @@
       },
       {
         "q": "¿Hay prueba gratis?",
-        "a": "Sí. Puedes probarla gratis antes de que te cobren. Cancela antes de que termine la prueba y no te cobramos. Sin trucos."
+        "a": "No hay prueba gratis, pero tampoco hay contrato. Cancela cuando quieras y conservas los recursos gratis que ya tomaste. Sin trucos."
       },
       {
         "q": "¿Cómo funciona el registro de comida por foto?",
@@ -1944,7 +1944,7 @@
     "eyebrow": "Precios",
     "title": "¿Cómo quieres que te acompañe?",
     "subtitle": "Empieza gratis. Cancela con un toque. Sin trucos, nunca.",
-    "trialNote": "Todos los planes empiezan con una prueba gratis. Cancela antes de que termine y no te cobramos.",
+    "trialNote": "Sin contrato, nunca. Cancela cuando quieras y nunca quedas atrapada.",
     "perMonth": "/mes",
     "popular": "El más elegido",
     "tiers": [
@@ -2016,12 +2016,12 @@
       "accent": "enamorarse",
       "line2": "del proceso.",
       "sub": "Toma una foto de la comida que de verdad cocina tu familia y se registra, cruda o cocida. Entrenamientos armados con el equipo que tienes. Ella y su equipo contigo, cada semana.",
-      "cta": "Empieza tus 3 días gratis",
+      "cta": "Empieza hoy",
       "alt": "Coach Stephanie Pantoja",
       "definition": "Thick & Fit es una app de coaching bilingüe de Stephanie Pantoja: tus entrenamientos, tus comidas y tus check-ins con su equipo, en inglés o español.",
       "h1": "Entrena con Stephanie, en inglés o español.",
       "proofLine": "562,000 mujeres siguen a Stephanie",
-      "reassure": "Sin tarjeta para empezar. Cancela cuando quieras, sin llamadas.",
+      "reassure": "Cancela cuando quieras, sin contrato.",
       "priceLine": "Después $19.97 al mes. El mismo precio en cada país."
     },
     "proof": {
@@ -2102,9 +2102,9 @@
       "eyebrow": "Precios",
       "line1": "Empieza gratis.",
       "line2": "Cancela con un toque.",
-      "body": "$19.97 al mes, con prueba gratis antes de pagar nada, y cancelar toma un toque. Ya te falló una app antes. Aquí no.",
+      "body": "$19.97 al mes, sin contrato, y cancelar toma un toque. Ya te falló una app antes. Aquí no.",
       "cta": "Ver los planes",
-      "cancelLine": "3 días gratis. Cancela cuando quieras, sin llamadas y sin culpa. El mismo precio en cada país."
+      "cancelLine": "Sin contrato, cancela cuando quieras, sin culpa. El mismo precio en cada país."
     },
     "closing": {
       "line1": "Si estás lista",

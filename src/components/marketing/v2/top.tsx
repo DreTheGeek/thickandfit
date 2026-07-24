@@ -63,7 +63,7 @@ export async function SiteNav(): Promise<ReactElement> {
           <img src="/brand/logo-white.svg" alt="Thick &amp; Fit" className="h-5 w-auto" />
         </Link>
 
-        <NavMenu links={links} cta={{ label: 'Start your 3 days free', href: '/join' }} />
+        <NavMenu links={links} cta={{ label: 'Start today', href: '/join' }} />
       </nav>
     </header>
   );
@@ -121,11 +121,11 @@ export function Hero(): ReactElement {
           </p>
 
           <div className="mt-7">
-            <LCta href="/join" className="w-full max-w-[380px] sm:w-auto">Start your 3 days free</LCta>
+            <LCta href="/join" className="w-full max-w-[380px] sm:w-auto">Start today</LCta>
           </div>
 
           <p className="mt-3 text-[14px] font-semibold leading-tight text-white">
-            No card to start. Cancel anytime, no phone call.
+            Cancel anytime, no contract.
           </p>
         </div>
       </div>

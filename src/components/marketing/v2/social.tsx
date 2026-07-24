@@ -1,4 +1,4 @@
-// Social proof, trial pitch, FAQ and footer for the Thick & Fit landing page.
+// Social proof, start-today pitch, FAQ and footer for the Thick & Fit landing page.
 //
 // The LAYOUT is a structural clone of joinladder.com (measured 2026-07-22). Every line of copy,
 // every colour token and every asset below is ours: real client quotes, real pricing, real tiers.
@@ -68,17 +68,17 @@ export function Testimonials(): ReactElement {
   );
 }
 
-/** The trial pitch: one two line headline with the second line in crimson, then the CTA. */
-export function FreeTrial(): ReactElement {
+/** The start-today pitch: a two line headline with the second line in crimson, then the CTA. */
+export function StartToday(): ReactElement {
   return (
     <LSection tone="dark">
       <LH2 className="text-center">
-        Three days free,
+        Start today,
         <br />
-        <span className="text-[#ff2d55]">then decide.</span>
+        <span className="text-[#ff2d55]">cancel anytime.</span>
       </LH2>
       <LCta href="/join" className="mx-auto mt-8 block w-fit">
-        Start your 3 days free
+        Start today
       </LCta>
     </LSection>
   );
@@ -101,7 +101,7 @@ const FAQS: readonly Faq[] = [
   },
   {
     q: 'Is there a free trial?',
-    a: 'Yes. Three days, free. If it is not for you, cancel before the third day ends and you are never charged.',
+    a: 'No free trial, but no contract either. Cancel anytime and you are never locked in, and you keep any free resources you picked up along the way.',
   },
   {
     q: 'How does the food photo tracking work?',
@@ -199,9 +199,9 @@ export async function SiteFooter(): Promise<ReactElement> {
           <div>
             <h3 className="text-[14px] font-bold uppercase text-white">Get started</h3>
             <LCta href="/join" className="mt-4 block w-fit">
-              Start your 3 days free
+              Start today
             </LCta>
-            <p className="mt-3 text-[13px] text-[#bcbcbc]">Three days free. No card to start.</p>
+            <p className="mt-3 text-[13px] text-[#bcbcbc]">Cancel anytime, no contract.</p>
           </div>
         </div>
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
