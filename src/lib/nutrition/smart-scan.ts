@@ -13,6 +13,7 @@ import type { FoodLite, MacroTotals } from '@/lib/nutrition/macros';
 import { AI_MODELS } from '@/lib/ai/models';
 import { aiConfigured, callJson, hashInput } from '@/lib/ai/client';
 import { logInference } from '@/lib/ai/inferences';
+import { buildScanContext, renderScanContextForPrompt } from '@/lib/nutrition/scan-context';
 
 // Model routing lives in the central router (AI_MODELS), NOT hardcoded here, so the eval harness can
 // A/B models and swap in one place. The scan tries the primary (smartScan = gpt-5, benchmarked faster +
@@ -21,7 +22,10 @@ import { logInference } from '@/lib/ai/inferences';
 const SCAN_CHAIN = [AI_MODELS.smartScan, AI_MODELS.smartScanFallback];
 // Bump when PROMPT changes so replay/eval can group inferences by prompt generation. Exported so the
 // eval harness records the version under test instead of duplicating the string.
-export const PROMPT_VERSION = 'smart-scan.v1';
+// v2 (2026-07-24): adds K1 member-context injection when ctx is provided. Base PROMPT unchanged,
+// so a ctx-less eval run (the golden-set harness) hits the exact same v1 behavior and its score
+// cannot regress from this wire. The v2 bump lets the trace show WHICH prompt generation ran.
+export const PROMPT_VERSION = 'smart-scan.v2';
 const FOOD_COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
 
 export type SmartScanResult =
@@ -159,16 +163,30 @@ export async function analyzeSmartPhoto(
   const tVision = Date.now();
   const inputHash = hashInput(image);
   try {
-    const messages = [
+    // K1 loop-close: retrieve this member's structured history (habits + past corrections) and
+    // fold it in as an ADDITIONAL system message. Base PROMPT stays untouched so eval attribution
+    // is clean and a member with no history gets the exact same v1 behavior. Fire-and-forget SQL:
+    // a failed context read logs and returns empty rather than blocking the scan.
+    let memberContextText: string | null = null;
+    if (ctx) {
+      try {
+        const context = await buildScanContext(ctx.profileId, ctx.companyId);
+        memberContextText = renderScanContextForPrompt(context);
+      } catch (e) {
+        console.error('smart-scan buildScanContext:', e instanceof Error ? e.message : String(e));
+      }
+    }
+    const messages: { role: string; content: unknown }[] = [
       { role: 'system', content: PROMPT },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: 'Classify and read this photo (a meal, or a single packaged product/label).' },
-          { type: 'image_url', image_url: { url: image } },
-        ],
-      },
     ];
+    if (memberContextText) messages.push({ role: 'system', content: memberContextText });
+    messages.push({
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Classify and read this photo (a meal, or a single packaged product/label).' },
+        { type: 'image_url', image_url: { url: image } },
+      ],
+    });
     // The shared client runs the chain: primary then fallback, each attempt bounded to 75s so the
     // fallback still fits the route's 300s ceiling; latency-sorted provider + low reasoning effort
     // keep gpt-5 sub-second (its default heavy reasoning was the old ~40s cost). Provenance is
