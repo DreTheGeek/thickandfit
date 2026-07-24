@@ -1623,7 +1623,14 @@
       "mpTipWeigh": "Las cantidades son en peso CRUDO salvo que se indique lo contrario. Pesa antes de cocinar, y solo la parte que vas a comer.",
       "mpTipSpices": "Las especias y sazonadores son para dar sabor. Cambia u omite los que no te gusten; revisa etiquetas si tienes alergias.",
       "mpTipPrep": "Prepara varias porciones de una vez: multiplica la receta, divide en recipientes, refrigera unos días o congela.",
-      "mpTipWeekly": "Lo que comes en la SEMANA es lo que determina tus resultados, no una sola comida. Sé flexible con los horarios; encuentra el ritmo que va con tu vida."
+      "mpTipWeekly": "Lo que comes en la SEMANA es lo que determina tus resultados, no una sola comida. Sé flexible con los horarios; encuentra el ritmo que va con tu vida.",
+      "photoLowQuality": "Esta foto podría estar más clara.",
+      "photoLowQualityDark": "Esta foto está oscura.",
+      "photoLowQualityBlur": "Esta foto se ve borrosa.",
+      "photoLowQualityBoth": "Esta foto está oscura y borrosa.",
+      "photoLowQualityHelp": "Una foto con más luz y enfoque será mucho más precisa.",
+      "photoLowQualityRetake": "Tomar otra",
+      "photoLowQualityProceed": "Escanear de todos modos"
     },
     "disclaimer": {
       "title": "Antes de empezar",

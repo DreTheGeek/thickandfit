@@ -1623,7 +1623,14 @@
       "mpTipWeigh": "Ingredient amounts are RAW weight unless stated otherwise. Weigh before cooking, and only the part you will actually eat.",
       "mpTipSpices": "Spices and seasonings are there for flavor. Swap or skip any you dislike; just read labels if you have allergies.",
       "mpTipPrep": "Prep several portions at once: multiply a recipe, portion into containers, fridge for a few days or freeze for later.",
-      "mpTipWeekly": "It is what you eat over the WEEK that determines results, not any single meal. Be flexible with meal times; find the rhythm that fits your life."
+      "mpTipWeekly": "It is what you eat over the WEEK that determines results, not any single meal. Be flexible with meal times; find the rhythm that fits your life.",
+      "photoLowQuality": "This photo could be clearer.",
+      "photoLowQualityDark": "This photo is dark.",
+      "photoLowQualityBlur": "This photo looks blurry.",
+      "photoLowQualityBoth": "This photo is dark and blurry.",
+      "photoLowQualityHelp": "A brighter, sharper shot will be much more accurate.",
+      "photoLowQualityRetake": "Retake",
+      "photoLowQualityProceed": "Scan it anyway"
     },
     "disclaimer": {
       "title": "Before you begin",

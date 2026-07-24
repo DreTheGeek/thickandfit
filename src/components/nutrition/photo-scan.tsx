@@ -20,6 +20,7 @@ import {
   type ServingUnit,
 } from '@/lib/nutrition/macros';
 import { decodeBarcodeFromImage } from '@/lib/nutrition/barcode-scan';
+import { measureImageQuality, type ImageQuality } from '@/lib/nutrition/image-quality';
 
 // Client-safe mirror of the server pipeline's response shape (server module is server-only).
 type Macros = { kcal: number; proteinG: number; carbG: number; fatG: number };
@@ -30,6 +31,8 @@ type Candidate = {
   matched: boolean;
   food: { id: string; name: string } | null;
   macros: Macros | null;
+  /** K5 (trust surface): the model's stated portion-reasoning; nice UX per item when we have it. */
+  basis?: string;
 };
 type ApiResult =
   | { status: 'ok'; candidates: Candidate[]; totals: Macros; inferenceId?: string }
@@ -154,7 +157,11 @@ export function PhotoScan({
     if (open) warmupScan();
   }, [open]);
   const [preview, setPreview] = useState<string | null>(null);
-  const [phase, setPhase] = useState<'idle' | 'analyzing' | 'review' | 'product' | 'clarify' | 'notConfigured' | 'noFood' | 'error'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'analyzing' | 'lowQuality' | 'review' | 'product' | 'clarify' | 'notConfigured' | 'noFood' | 'error'>('idle');
+  // K2: when a captured photo trips the quality gate we stash it here so [Scan anyway] can proceed
+  // without a re-encode. Cleared on retake / new photo. `qualityInfo` drives the message tone.
+  const [qualityInfo, setQualityInfo] = useState<ImageQuality | null>(null);
+  const [stashedScanImage, setStashedScanImage] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   // Provenance id of the scan that produced these candidates + the ORIGINAL predicted grams per row, so
   // logging can send the predicted-vs-edited delta (the correction signal) back to the inference.
@@ -197,6 +204,8 @@ export function PhotoScan({
     setUnit('g');
     setProductLogged(false);
     setClarify(null);
+    setQualityInfo(null);
+    setStashedScanImage(null);
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -278,6 +287,24 @@ export function PhotoScan({
     }
     // Downscale for the vision call (the barcode was already read from the full-res original above).
     const scanImage = await resizeImage(dataUrl, 1280, 0.82);
+
+    // K2 image-quality gate: cheap client-side check on the resized pixels the model will see.
+    // If it trips, stash the image and surface the retake/proceed choice — but never block a photo
+    // we can't measure (older phones, weird formats), and never block on non-lowQuality metrics.
+    const quality = await measureImageQuality(scanImage);
+    if (quality?.lowQuality) {
+      setQualityInfo(quality);
+      setStashedScanImage(scanImage);
+      setPhase('lowQuality');
+      return;
+    }
+    await runVisionScan(scanImage);
+  }
+
+  /** The vision-model round-trip + response routing, extracted so [Scan anyway] can re-enter it
+   *  without a duplicate downscale or a second quality check. Keeps the API/state flow in one place. */
+  async function runVisionScan(scanImage: string): Promise<void> {
+    setPhase('analyzing');
     try {
       const res = await fetch('/api/nutrition/photo', {
         method: 'POST',
@@ -487,6 +514,40 @@ export function PhotoScan({
               </div>
             )}
 
+            {phase === 'lowQuality' && (
+              <div className="rounded-2xl border border-line bg-surface p-5 text-center">
+                <p className="text-[14px] font-semibold">
+                  {qualityInfo?.tooDark && qualityInfo?.tooBlurry
+                    ? t('photoLowQualityBoth')
+                    : qualityInfo?.tooDark
+                      ? t('photoLowQualityDark')
+                      : qualityInfo?.tooBlurry
+                        ? t('photoLowQualityBlur')
+                        : t('photoLowQuality')}
+                </p>
+                <p className="mt-1 text-[12px] text-faint">{t('photoLowQualityHelp')}</p>
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="tf-press rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-surface"
+                  >
+                    {t('photoLowQualityRetake')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!stashedScanImage) return;
+                      void runVisionScan(stashedScanImage);
+                    }}
+                    className="tf-press text-[12px] font-medium text-faint underline underline-offset-2"
+                  >
+                    {t('photoLowQualityProceed')}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {phase === 'error' && (
               <div className="rounded-2xl border border-line bg-surface p-5 text-center">
                 <p className="text-[14px] font-semibold text-alert-ink">{t('photoError')}</p>
@@ -528,6 +589,13 @@ export function PhotoScan({
                           </div>
                           {c.matched && c.food && c.food.name.toLowerCase() !== c.predictedName.toLowerCase() && (
                             <div className="text-[11px] text-faint">{t('photoDetectedAs', { name: c.predictedName })}</div>
+                          )}
+                          {/* K5 trust surface: the model's own portion reasoning ("dinner plate ~26cm,
+                              food covers ~1/3, thickness ~2cm"). Shown at text-muted so it carries a
+                              bit more weight than the "detected as" breadcrumb — it's WHY, not
+                              plumbing. Only rendered when the model actually returned one. */}
+                          {c.basis && (
+                            <div className="mt-1 text-[11px] leading-snug text-muted">{c.basis}</div>
                           )}
                           {c.matched && c.macros ? (
                             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
