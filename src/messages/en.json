@@ -2206,7 +2206,6 @@
       "faq5A": "You photograph your plate and it reads what is on it and how much, cooked or raw. No scale, no database searching, no guessing at your abuela's cooking.",
       "tagline": "The system that turns starting over into staying.",
       "footerPagesHeading": "Pages",
-      "footerProgramsHeading": "Programs",
       "footerGetStartedHeading": "Get started",
       "footerCancelNote": "Cancel anytime, no contract.",
       "footerCopyright": "© 2026 Thick Fit Coaching LLC",
@@ -2214,10 +2213,7 @@
       "linkFaq": "FAQ",
       "linkAbout": "About",
       "linkPrivacy": "Privacy",
-      "linkTerms": "Terms",
-      "linkFoundation": "Foundation",
-      "linkEvolution": "Evolution",
-      "linkElite": "Elite"
+      "linkTerms": "Terms"
     }
   },
   "marketing": {

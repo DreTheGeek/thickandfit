@@ -2206,7 +2206,6 @@
       "faq5A": "Le tomas una foto a tu plato y lee qué tiene y cuánto, cocido o crudo. Sin báscula, sin buscar en una base de datos, sin adivinar la comida de tu abuela.",
       "tagline": "El sistema que convierte volver a empezar en quedarte.",
       "footerPagesHeading": "Páginas",
-      "footerProgramsHeading": "Programas",
       "footerGetStartedHeading": "Empieza",
       "footerCancelNote": "Cancela cuando quieras, sin contrato.",
       "footerCopyright": "© 2026 Thick Fit Coaching LLC",
@@ -2214,10 +2213,7 @@
       "linkFaq": "FAQ",
       "linkAbout": "Nosotras",
       "linkPrivacy": "Privacidad",
-      "linkTerms": "Términos",
-      "linkFoundation": "Foundation",
-      "linkEvolution": "Evolution",
-      "linkElite": "Elite"
+      "linkTerms": "Términos"
     }
   },
   "marketing": {
