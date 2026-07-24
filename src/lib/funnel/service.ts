@@ -118,19 +118,63 @@ async function refreshEntryCount(leadId: string): Promise<number> {
   return sum;
 }
 
+/**
+ * Milestone thresholds at which we push a `referred:<N>` tag to the referrer's GHL contact so
+ * Shakira can run congrats/top-referrer sequences off audience filters. Additive — a referrer at
+ * 6 ends up with `referred:1` AND `referred:5`. Cap-hit gets `referred:20` explicitly so a "you
+ * maxed out" sequence can fire distinctly from mid-tier congrats.
+ */
+const REFERRAL_MILESTONES: readonly number[] = [1, 5, 20];
+
 /** Credit the referrer for a confirmed referral. Enforces the 20-cap by counting existing
- *  referral events on the referrer (cheap: one indexed count) before writing. */
-async function creditReferral(companyId: string, referrerLeadId: string, newLeadId: string): Promise<void> {
+ *  referral events on the referrer (cheap: one indexed count) before writing. Returns the new
+ *  count so the caller can push milestone tags to GHL when a threshold has just been crossed. */
+async function creditReferral(
+  companyId: string,
+  referrerLeadId: string,
+  newLeadId: string,
+): Promise<{ credited: boolean; newCount: number }> {
   const supabase = createServiceClient();
-  const { count } = await supabase
+  const { count: prior } = await supabase
     .from('waitlist_entry_events')
     .select('id', { count: 'exact', head: true })
     .eq('lead_id', referrerLeadId)
     .eq('kind', 'referral');
-  if ((count ?? 0) >= REFERRAL_CAP) return; // cap reached, silently skip credit
+  const priorCount = prior ?? 0;
+  if (priorCount >= REFERRAL_CAP) return { credited: false, newCount: priorCount };
   const idem = `ref:${newLeadId}`;
   const inserted = await recordEntry(companyId, referrerLeadId, 'referral', ENTRY_POINTS.referral, idem, newLeadId);
-  if (inserted) await refreshEntryCount(referrerLeadId);
+  if (!inserted) return { credited: false, newCount: priorCount };
+  await refreshEntryCount(referrerLeadId);
+  return { credited: true, newCount: priorCount + 1 };
+}
+
+/**
+ * Push referral-milestone tags to GHL when the referrer's new count JUST crossed a threshold.
+ * Idempotent by GHL's additive-tag semantics — a second call with the same tag is a no-op. Runs
+ * best-effort in the background; GHL being down never blocks the referral credit itself.
+ */
+async function pushReferralMilestoneTag(
+  companyId: string,
+  referrerLeadId: string,
+  priorCount: number,
+  newCount: number,
+): Promise<void> {
+  const crossed = REFERRAL_MILESTONES.filter((m) => priorCount < m && newCount >= m);
+  if (crossed.length === 0) return;
+  const supabase = createServiceClient();
+  const { data: row } = await supabase
+    .from('waitlist_leads')
+    .select('email, first_name, last_name')
+    .eq('id', referrerLeadId)
+    .eq('company_id', companyId)
+    .maybeSingle();
+  const referrer = row as { email: string; first_name: string | null; last_name: string | null } | null;
+  if (!referrer?.email) return;
+  const tags = crossed.map((n) => `referred:${n}`);
+  void upsertGhlContact({ email: referrer.email, firstName: referrer.first_name, lastName: referrer.last_name, tags }).catch(
+    (e: unknown) => console.error('pushReferralMilestoneTag:', e instanceof Error ? e.message : e),
+  );
 }
 
 /**
@@ -176,8 +220,14 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
   const entryCount = signupInserted ? await refreshEntryCount(lead.id) : (lead as { entry_count: number }).entry_count;
 
   // Referral credit — only when we resolved a code AND the referrer isn't the lead themselves.
+  // Milestone push runs after credit so a threshold-crossing referral surfaces the tag same-request.
   if (referrer && referrer.id !== lead.id) {
-    await creditReferral(companyId, referrer.id, lead.id);
+    const { credited, newCount } = await creditReferral(companyId, referrer.id, lead.id);
+    if (credited) {
+      // priorCount = newCount - 1 (creditReferral just added exactly one). Fire-and-forget: never
+      // block signup on a GHL tag update; the referral itself is durable in the DB regardless.
+      void pushReferralMilestoneTag(companyId, referrer.id, newCount - 1, newCount);
+    }
   }
 
   // Best-effort deliverability side effects. Every one returns false rather than throw when unconfigured.
