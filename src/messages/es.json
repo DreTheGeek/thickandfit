@@ -2104,20 +2104,12 @@
   },
   "home": {
     "tiers": {
-      "heading": "Tú decides hasta dónde quieres llegar.",
-      "subhead": "Empieza donde estés. Sube de nivel cuando estés lista.",
+      "heading": "Una sola oferta. Precio fundador de por vida.",
+      "subhead": "Únete a la lista y entra primero el día de mi cumpleaños, 27 de septiembre. Las miembros fundadoras se quedan con $19.97 al mes, para siempre.",
       "cardAlt": "Thick & Fit {name}",
       "foundation": {
         "name": "Foundation",
-        "blurb": "Crea constancia. El sistema completo: tu entrenamiento, tu alimentación y tu evolución, todo en un solo lugar."
-      },
-      "evolution": {
-        "name": "Evolution",
-        "blurb": "El sistema completo de transformación, con su equipo entrenado ajustándolo a ti cada semana."
-      },
-      "elite": {
-        "name": "Elite",
-        "blurb": "Máximo acompañamiento, directamente con Stephanie. Cupos limitados."
+        "blurb": "El sistema completo: tu entrenamiento, tu comida y tu evolución en un solo lugar. Las fundadoras se quedan con este precio desde que abrimos."
       },
       "findPlanHeading": "Esta es la última vez que empiezas de cero.",
       "reassure": "Cancela cuando quieras, sin contrato. Las fundadoras se quedan con $19.97 de por vida.",

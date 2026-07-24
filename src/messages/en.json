@@ -2104,20 +2104,12 @@
   },
   "home": {
     "tiers": {
-      "heading": "Choose how far you want to go.",
-      "subhead": "Start anywhere. Move up whenever you are ready.",
+      "heading": "One offer. Founding pricing for life.",
+      "subhead": "Join the waitlist and get in first on my birthday, Sept 27. Founding members lock in $19.97 a month, forever.",
       "cardAlt": "Thick & Fit {name}",
       "foundation": {
         "name": "Foundation",
-        "blurb": "Build consistency. The full system: your training, your fuel, and your evolution tracked in one place."
-      },
-      "evolution": {
-        "name": "Evolution",
-        "blurb": "The full transformation system, with her trained team adjusting it around you every week."
-      },
-      "elite": {
-        "name": "Elite",
-        "blurb": "Maximum accountability, directly with Stephanie. Limited spots."
+        "blurb": "The full system: your training, your fuel, and your evolution tracked in one place. Founding members keep this price the day the doors open."
       },
       "findPlanHeading": "This is the last time you start over.",
       "reassure": "Cancel anytime, no contract. Founders lock in $19.97 for life.",
