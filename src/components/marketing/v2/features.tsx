@@ -4,13 +4,15 @@
 // accent is our crimson #ff2d55, not Ladder's lime. The media blocks are still placeholders: swap
 // each one for real product art before this ships.
 import type { ReactElement } from 'react';
+import { getTranslations } from 'next-intl/server';
 
 import { LBody, LCta, LEyebrow, LH2, LSection } from '@/components/marketing/v2/ui';
 
 const DAY_LABELS: readonly string[] = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 /** Day strip plus copy on the left, the app phone on the right. */
-export function KnowExactly(): ReactElement {
+export async function KnowExactly(): Promise<ReactElement> {
+  const t = await getTranslations('home.features');
   return (
     <LSection tone="dark">
       <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -29,13 +31,10 @@ export function KnowExactly(): ReactElement {
               </span>
             ))}
           </div>
-          <LH2 className="mt-8">Never wonder what to do when you walk into the gym again.</LH2>
-          <LBody className="mt-5 text-[#bcbcbc]">
-            Every day already decided, built around the equipment you actually have. You show up and
-            execute.
-          </LBody>
+          <LH2 className="mt-8">{t('knowGymHeading')}</LH2>
+          <LBody className="mt-5 text-[#bcbcbc]">{t('knowGymBody')}</LBody>
           <LCta className="mt-8" href="/join">
-            Start today
+            {t('startToday')}
           </LCta>
         </div>
 
@@ -54,7 +53,8 @@ export function KnowExactly(): ReactElement {
 }
 
 /** The one light band: media left, fuel copy right. */
-export function SaveTime(): ReactElement {
+export async function SaveTime(): Promise<ReactElement> {
+  const t = await getTranslations('home.features');
   return (
     <LSection tone="bone">
       <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -66,12 +66,9 @@ export function SaveTime(): ReactElement {
         />
 
         <div>
-          <LEyebrow className="text-[#0e0e0e]">Fuel</LEyebrow>
-          <LH2 className="mt-1">Eat with confidence instead of guilt.</LH2>
-          <LBody className="mt-5 text-[#4a4a4a]">
-            The food you already eat, in the amounts that move you forward. No weighing, no math, no
-            guilt at the table.
-          </LBody>
+          <LEyebrow className="text-[#0e0e0e]">{t('fuelEyebrow')}</LEyebrow>
+          <LH2 className="mt-1">{t('fuelHeading')}</LH2>
+          <LBody className="mt-5 text-[#4a4a4a]">{t('fuelBody')}</LBody>
         </div>
       </div>
     </LSection>
@@ -79,7 +76,8 @@ export function SaveTime(): ReactElement {
 }
 
 /** Coach video left, coaching copy and the CTA right. */
-export function LearnFromBest(): ReactElement {
+export async function LearnFromBest(): Promise<ReactElement> {
+  const t = await getTranslations('home.features');
   return (
     <LSection tone="dark">
       <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -91,14 +89,11 @@ export function LearnFromBest(): ReactElement {
         />
 
         <div>
-          <LEyebrow className="text-white">Accountability</LEyebrow>
-          <LH2 className="mt-1">You stop doing this alone.</LH2>
-          <LBody className="mt-5 text-[#bcbcbc]">
-            Her team is in your corner every week. Someone who knows your name, your plan and what
-            you are working toward.
-          </LBody>
+          <LEyebrow className="text-white">{t('accountabilityEyebrow')}</LEyebrow>
+          <LH2 className="mt-1">{t('accountabilityHeading')}</LH2>
+          <LBody className="mt-5 text-[#bcbcbc]">{t('accountabilityBody')}</LBody>
           <LCta className="mt-8" href="/join">
-            Start today
+            {t('startToday')}
           </LCta>
         </div>
       </div>
@@ -107,16 +102,15 @@ export function LearnFromBest(): ReactElement {
 }
 
 /** Two stacked identity bands that alternate sides on desktop. */
-export function TrackBlocks(): ReactElement {
+export async function TrackBlocks(): Promise<ReactElement> {
+  const t = await getTranslations('home.features');
   return (
     <LSection tone="dark">
       <div className="grid items-center gap-12 lg:grid-cols-2">
         <div>
-          <LEyebrow>Evolution</LEyebrow>
-          <LH2 className="mt-1">Watch yourself become unrecognizable.</LH2>
-          <LBody className="mt-5 text-[#bcbcbc]">
-            The change you cannot see day to day, laid out so it is impossible to miss.
-          </LBody>
+          <LEyebrow>{t('evolutionEyebrow')}</LEyebrow>
+          <LH2 className="mt-1">{t('evolutionHeading')}</LH2>
+          <LBody className="mt-5 text-[#bcbcbc]">{t('evolutionBody')}</LBody>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -128,11 +122,9 @@ export function TrackBlocks(): ReactElement {
 
       <div className="mt-24 grid items-center gap-12 lg:grid-cols-2">
         <div className="order-1 lg:order-2">
-          <LEyebrow>Discipline</LEyebrow>
-          <LH2 className="mt-1">Become the person people ask for advice.</LH2>
-          <LBody className="mt-5 text-[#bcbcbc]">
-            Consistency compounds. In twelve weeks you are the one being asked how you did it.
-          </LBody>
+          <LEyebrow>{t('disciplineEyebrow')}</LEyebrow>
+          <LH2 className="mt-1">{t('disciplineHeading')}</LH2>
+          <LBody className="mt-5 text-[#bcbcbc]">{t('disciplineBody')}</LBody>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

@@ -8,6 +8,7 @@
 // transaction detail and lives further down the page.
 import type { ReactElement } from 'react';
 import { headers } from 'next/headers';
+import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
 import { LCta } from '@/components/marketing/v2/ui';
@@ -16,15 +17,16 @@ import { NavMenu, type NavLink } from '@/components/marketing/v2/nav-menu';
 import { withLocalePrefix, twinPathFor } from '@/lib/seo/locale-alternates';
 
 /** Thin promo strip that sits above the nav. */
-export function AnnounceBar(): ReactElement {
+export async function AnnounceBar(): Promise<ReactElement> {
+  const t = await getTranslations('home.top');
   return (
     <div className="border-b border-white/10 bg-[#0e0e0e] px-5 py-2.5 text-center text-[13px] leading-tight text-white">
-      <span>Coaching in English and Spanish</span>{' '}
+      <span>{t('announce')}</span>{' '}
       <span aria-hidden="true" className="text-[#ff2d55]">
         &rarr;
       </span>{' '}
       <a href="/join" className="font-semibold text-[#ff2d55] underline underline-offset-2">
-        BEGIN
+        {t('announceCta')}
       </a>
     </div>
   );
@@ -74,7 +76,8 @@ export async function SiteNav(): Promise<ReactElement> {
  *  The fold shows the Today screen rather than describing the app, because the thing worth buying is
  *  not any single feature, it is that the day is already decided. Her photograph stays as the ground
  *  so the page still opens on the person, not on a UI card floating in space. */
-export function Hero(): ReactElement {
+export async function Hero(): Promise<ReactElement> {
+  const t = await getTranslations('home.top');
   return (
     <section className="relative isolate overflow-hidden bg-[#0e0e0e]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -110,22 +113,23 @@ export function Hero(): ReactElement {
 
         <div className="text-center">
           <h1 className="text-[36px] font-extrabold uppercase leading-[0.95] tracking-[-0.01em] text-white sm:text-[52px] lg:whitespace-nowrap lg:text-[60px]">
-            Every day,
+            {t('heroHeadline1')}
             <br />
-            already decided.
+            {t('heroHeadline2')}
           </h1>
 
           <p className="mx-auto mt-5 max-w-[52ch] text-[16px] leading-snug text-white/85 sm:text-[18px]">
-            Open it and the day is already waiting. What to train, what to eat, what is left. You
-            stop deciding and start doing.
+            {t('heroSub')}
           </p>
 
           <div className="mt-7">
-            <LCta href="/join" className="w-full max-w-[380px] sm:w-auto">Start today</LCta>
+            <LCta href="/join" className="w-full max-w-[380px] sm:w-auto">
+              {t('heroCta')}
+            </LCta>
           </div>
 
           <p className="mt-3 text-[14px] font-semibold leading-tight text-white">
-            Cancel anytime, no contract.
+            {t('heroReassure')}
           </p>
         </div>
       </div>
