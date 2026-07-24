@@ -29,7 +29,12 @@ export type ComputeResult = {
 type OnboardingRow = {
   answers: { weightKg?: number; goalWeightKg?: number; goal?: string } | null;
   goal_type: string | null;
-  computed_targets: { kcal?: number; proteinG?: number } | null;
+  // The shape actually written by src/lib/onboarding/prediction.ts: `calories` (not kcal) and
+  // `macros.protein_g` (not proteinG). Also carries bmr/tdee/weeklyKg/curve — grabbing only what
+  // K3 surfaces today. If prediction.ts's shape ever changes, adjust here in ONE place.
+  computed_targets:
+    | { calories?: number; macros?: { protein_g?: number; carbs_g?: number; fat_g?: number } }
+    | null;
 };
 
 type WeightRow = { weight_kg: number; recorded_on: string };
@@ -130,8 +135,9 @@ export async function computeUserState(profileId: string, companyId: string): Pr
   // Adherence: what percentage of the target did the member hit on average, over LOGGING days. If
   // they didn't log at all, adherence is unknown (null), not zero — a zero would misread "quiet" as
   // "failed target." Capped at 300% by the DB check constraint.
-  const targetKcal = typeof targets.kcal === 'number' ? Math.round(targets.kcal) : null;
-  const targetProtein = typeof targets.proteinG === 'number' ? Math.round(targets.proteinG) : null;
+  const targetKcal = typeof targets.calories === 'number' ? Math.round(targets.calories) : null;
+  const targetProtein =
+    typeof targets.macros?.protein_g === 'number' ? Math.round(targets.macros.protein_g) : null;
   const kcalAdherence = avgKcal != null && targetKcal != null && targetKcal > 0
     ? Math.min(300, Math.round((avgKcal / targetKcal) * 100))
     : null;
