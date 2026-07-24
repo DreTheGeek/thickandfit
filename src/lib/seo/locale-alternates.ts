@@ -16,7 +16,7 @@ export function esPathFor(enPath: string): string {
 }
 
 /** Marketing routes that exist in both languages. */
-const BILINGUAL_PATHS = ['/', '/pricing', '/faq', '/about'] as const;
+const BILINGUAL_PATHS = ['/', '/pricing', '/faq', '/about', '/join', '/join/thanks', '/join/quiz'] as const;
 
 /**
  * Which language a marketing URL IS, as opposed to which language the visitor last picked.
@@ -42,8 +42,9 @@ export function urlLocaleFor(pathname: string | null | undefined): 'en' | 'es' |
 /** Public, unauthenticated pages, including their /es twins. Anything else is the app. */
 const PUBLIC_PATHS = ['/', '/pricing', '/faq', '/about', '/join', '/terms', '/privacy'] as const;
 
-/** Auth screens are publicly reachable too, and only read the `auth` namespace. */
-const PUBLIC_PREFIXES = ['/auth/'] as const;
+/** Auth screens are publicly reachable too, and only read the `auth` namespace. Same for every
+ *  nested page under /join (thank-you, quiz) — the whole funnel is unauthenticated. */
+const PUBLIC_PREFIXES = ['/auth/', '/join/'] as const;
 
 /**
  * True for a public marketing route. Used by the root layout to decide whether the client message

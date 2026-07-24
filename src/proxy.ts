@@ -115,6 +115,21 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(url, 307);
   }
 
+  // Waitlist referral persistence: a friend clicked /join?r=<code>. Server components on GET can't
+  // set cookies, so this middleware stashes the code for 60 days. The server render reads it back
+  // to prefill the form + resolve the friend's name; a returning visitor without ?r= still credits.
+  // Scoped to /join* and safe on every other route.
+  if (req.nextUrl.pathname.startsWith('/join')) {
+    const rParam = req.nextUrl.searchParams.get('r');
+    if (rParam) {
+      res.cookies.set('funnel_ref_incoming', rParam.trim().toLowerCase(), {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 60,
+        sameSite: 'lax',
+      });
+    }
+  }
+
   // The response carries the same CSP the render was nonced against.
   res.headers.set('Content-Security-Policy', csp);
   return res;
