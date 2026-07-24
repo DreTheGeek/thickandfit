@@ -126,7 +126,20 @@
     "updatePasswordCta": "Actualizar contraseña",
     "oauthError": "No pudimos iniciar tu sesión con ese proveedor. Inténtalo de nuevo o usa el correo.",
     "authError": "Algo salió mal al iniciar tu sesión. Inténtalo de nuevo.",
-    "agreeNotice": "Al crear una cuenta, aceptas nuestros <terms>Términos de Servicio</terms> y <privacy>Política de Privacidad</privacy>."
+    "agreeNotice": "Al crear una cuenta, aceptas nuestros <terms>Términos de Servicio</terms> y <privacy>Política de Privacidad</privacy>.",
+    "errors": {
+      "tooMany": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
+      "invalidCredentials": "Ingresa un correo válido y una contraseña de al menos 8 caracteres.",
+      "invalidSignup": "Ingresa tu nombre y apellido, un correo válido y una contraseña de al menos 8 caracteres.",
+      "invalidEmail": "Ingresa un correo válido.",
+      "invalidPassword": "La contraseña debe tener al menos 8 caracteres.",
+      "signinFailed": "Correo o contraseña incorrectos. Vuelve a intentarlo.",
+      "signupFailed": "No se pudo completar el registro. Vuelve a intentarlo.",
+      "alreadyRegistered": "Ya existe una cuenta con este correo. Inicia sesión o usa \"¿Olvidaste tu contraseña?\" para restablecerla.",
+      "updatePasswordFailed": "No se pudo actualizar tu contraseña. Vuelve a intentarlo.",
+      "passwordMismatch": "Las contraseñas no coinciden.",
+      "resetLinkExpired": "Tu enlace de restablecimiento expiró. Pide uno nuevo."
+    }
   },
   "pwa": {
     "iosInstall": "Instala Thick & Fit: toca <b>Compartir</b>, luego <b>Añadir a pantalla de inicio</b>.",

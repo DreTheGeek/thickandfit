@@ -126,7 +126,20 @@
     "updatePasswordCta": "Update password",
     "oauthError": "We could not sign you in with that provider. Try again or use email.",
     "authError": "Something went wrong signing you in. Please try again.",
-    "agreeNotice": "By creating an account, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>."
+    "agreeNotice": "By creating an account, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
+    "errors": {
+      "tooMany": "Too many attempts. Please wait a minute and try again.",
+      "invalidCredentials": "Enter a valid email and a password of at least 8 characters.",
+      "invalidSignup": "Enter your first and last name, a valid email, and a password of at least 8 characters.",
+      "invalidEmail": "Enter a valid email address.",
+      "invalidPassword": "Password must be at least 8 characters.",
+      "signinFailed": "Invalid email or password. Please try again.",
+      "signupFailed": "Could not complete sign-up. Please try again.",
+      "alreadyRegistered": "An account with this email already exists. Sign in instead, or use \"Forgot password?\" to reset your password.",
+      "updatePasswordFailed": "Could not update your password. Please try again.",
+      "passwordMismatch": "Passwords do not match.",
+      "resetLinkExpired": "Your reset link has expired. Request a new one."
+    }
   },
   "pwa": {
     "iosInstall": "Install Thick & Fit: tap <b>Share</b>, then <b>Add to Home Screen</b>.",

@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { headers, cookies } from 'next/headers';
 import { after } from 'next/server';
+import { getTranslations } from 'next-intl/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -14,7 +15,26 @@ import { ensureCrmContact } from '@/lib/crm/ensure-contact';
 
 export type AuthState = { error?: string; sent?: boolean };
 
-const TOO_MANY = 'Too many attempts. Please wait a minute and try again.';
+// P1 audit fix (2026-07-24): auth error strings resolve in the subscriber's locale via
+// auth.errors.* i18n keys so a Spanish user doesn't see English mid-flow. `authErrors()` is
+// called once at the top of each server action; strings below stay only as reference/comments
+// for the eng team reading grep.
+async function authErrors(): Promise<Record<string, string>> {
+  const t = await getTranslations('auth.errors');
+  return {
+    tooMany: t('tooMany'),
+    invalidCredentials: t('invalidCredentials'),
+    invalidSignup: t('invalidSignup'),
+    invalidEmail: t('invalidEmail'),
+    invalidPassword: t('invalidPassword'),
+    signinFailed: t('signinFailed'),
+    signupFailed: t('signupFailed'),
+    alreadyRegistered: t('alreadyRegistered'),
+    updatePasswordFailed: t('updatePasswordFailed'),
+    passwordMismatch: t('passwordMismatch'),
+    resetLinkExpired: t('resetLinkExpired'),
+  };
+}
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -29,18 +49,10 @@ const signUpSchema = credentialsSchema.extend({
 const emailSchema = z.object({ email: z.string().email() });
 const passwordSchema = z.object({ password: z.string().min(8) });
 
-const INVALID_CREDENTIALS = 'Enter a valid email and a password of at least 8 characters.';
-const INVALID_SIGNUP =
-  'Enter your first and last name, a valid email, and a password of at least 8 characters.';
-const INVALID_EMAIL = 'Enter a valid email address.';
-const INVALID_PASSWORD = 'Password must be at least 8 characters.';
-// Sanitized, non-enumerating messages. The raw Supabase error is logged server-side, never returned
-// to the client (would leak "User already registered" / rate-limit internals -> account enumeration).
-const SIGNIN_FAILED = 'Invalid email or password. Please try again.';
-const SIGNUP_FAILED = 'Could not complete sign-up. Please try again.';
-const ALREADY_REGISTERED =
-  'An account with this email already exists. Sign in instead, or use "Forgot password?" to reset your password.';
-const UPDATE_PASSWORD_FAILED = 'Could not update your password. Please try again.';
+// All error strings are now sourced from auth.errors.* via authErrors() so a Spanish user gets
+// Spanish error text. The messages are still sanitized + non-enumerating (raw Supabase errors are
+// logged server-side, never returned to the client — that would leak "User already registered" /
+// rate-limit internals and enable account enumeration).
 
 async function origin(): Promise<string> {
   const h = await headers();
@@ -72,19 +84,20 @@ async function logSignIn(
 }
 
 export async function signInAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const err = await authErrors();
   const parsed = credentialsSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
   });
-  if (!parsed.success) return { error: INVALID_CREDENTIALS };
-  if (!(await checkRateLimit(await clientIp(), 'auth-signin', 5, 60, { failClosed: true }))) return { error: TOO_MANY };
+  if (!parsed.success) return { error: err.invalidCredentials };
+  if (!(await checkRateLimit(await clientIp(), 'auth-signin', 5, 60, { failClosed: true }))) return { error: err.tooMany };
   const { email, password } = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     console.error('signInAction:', error.message);
     after(() => logSignIn(false, { reason: 'bad_credentials' }));
-    return { error: SIGNIN_FAILED };
+    return { error: err.signinFailed };
   }
   // Route by role + onboarding state, reusing the just-authenticated client.
   const {
@@ -116,14 +129,15 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
 }
 
 export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const err = await authErrors();
   const parsed = signUpSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
   });
-  if (!parsed.success) return { error: INVALID_SIGNUP };
-  if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60, { failClosed: true }))) return { error: TOO_MANY };
+  if (!parsed.success) return { error: err.invalidSignup };
+  if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60, { failClosed: true }))) return { error: err.tooMany };
   const { email, password, firstName, lastName } = parsed.data;
   const fullName = `${firstName} ${lastName}`;
   const supabase = await createClient();
@@ -138,7 +152,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   });
   if (error) {
     console.error('signUpAction:', error.message);
-    return { error: SIGNUP_FAILED };
+    return { error: err.signupFailed };
   }
   // Supabase enumeration protection: signing up with an already-registered email "succeeds" with a
   // fake user carrying zero identities, and NO email is ever sent. Without this check the UI shows
@@ -146,7 +160,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   // got the dead-end, then failed sign-in). Telling them the account exists is a deliberate UX >
   // enumeration tradeoff here; the 3/min rate limit above bounds abuse.
   if (data.user && (data.user.identities?.length ?? 0) === 0) {
-    return { error: ALREADY_REGISTERED };
+    return { error: err.alreadyRegistered };
   }
   if (data.user) {
     // The auth trigger already created the profile row (it fires on the auth.users insert), but it
@@ -209,9 +223,10 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
 }
 
 export async function requestResetAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const err = await authErrors();
   const parsed = emailSchema.safeParse({ email: formData.get('email') });
-  if (!parsed.success) return { error: INVALID_EMAIL };
-  if (!(await checkRateLimit(await clientIp(), 'auth-reset', 3, 60, { failClosed: true }))) return { error: TOO_MANY };
+  if (!parsed.success) return { error: err.invalidEmail };
+  if (!(await checkRateLimit(await clientIp(), 'auth-reset', 3, 60, { failClosed: true }))) return { error: err.tooMany };
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${await origin()}/auth/callback?next=/auth/reset-password`,
@@ -226,21 +241,22 @@ export async function requestResetAction(_prev: AuthState, formData: FormData): 
 // Completes a password reset. The recovery callback has already established a session,
 // so updateUser runs against the authenticated SSR client. Returns the role home on success.
 export async function updatePasswordAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const err = await authErrors();
   const parsed = passwordSchema.safeParse({ password: formData.get('password') });
-  if (!parsed.success) return { error: INVALID_PASSWORD };
+  if (!parsed.success) return { error: err.invalidPassword };
   const confirm = String(formData.get('confirm') ?? '');
-  if (confirm !== parsed.data.password) return { error: 'Passwords do not match.' };
+  if (confirm !== parsed.data.password) return { error: err.passwordMismatch };
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: 'Your reset link has expired. Request a new one.' };
+  if (!user) return { error: err.resetLinkExpired };
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
     console.error('updatePasswordAction:', error.message);
-    return { error: UPDATE_PASSWORD_FAILED };
+    return { error: err.updatePasswordFailed };
   }
 
   const { data: profile } = await supabase
