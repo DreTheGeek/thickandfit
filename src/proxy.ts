@@ -9,9 +9,14 @@ import { createServerClient } from '@supabase/ssr';
 import { localeForCountry } from '@/lib/i18n/geo';
 import { urlLocaleFor, esPathFor } from '@/lib/seo/locale-alternates';
 
-// On the admin.<domain> host, only the admin portal + auth are reachable; everything else (all of
-// /coach and the member app) redirects to /admin, so the ops surface is fully isolated.
-const ADMIN_ALLOW = [/^\/admin(\/|$)/, /^\/auth\//];
+// On the admin.<domain> host, the operator can reach the admin portal, the coach console, and
+// auth — so Stephanie can run her whole operator+coach day from one host without bouncing to www.
+// The member app + marketing site still hard-redirect to /admin, so the host stays ops-scoped.
+// Safety: /coach/* is already requireCoach()-gated at the page level — the host isn't the auth
+// boundary, per-route auth is. When white-label ever lands, tighten this back to /admin only and
+// mirror the ops-shaped coach surfaces (clients, subscribers, leads, billing, broadcasts,
+// approvals, community moderation) as /admin/* pages with requireOperator.
+const ADMIN_ALLOW = [/^\/admin(\/|$)/, /^\/coach(\/|$)/, /^\/auth\//];
 
 // Per-request CSP with a script nonce (Next.js reads it from the request CSP header during SSR and
 // stamps it onto every framework + app inline script). script-src is now nonce + strict-dynamic
@@ -21,12 +26,17 @@ const ADMIN_ALLOW = [/^\/admin(\/|$)/, /^\/auth\//];
 function buildCsp(nonce: string, isDev: boolean): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''} https://*.mux.com https://*.posthog.com`,
+    // Cloudflare Turnstile loads its api.js from challenges.cloudflare.com; adding the origin here
+    // lets 'strict-dynamic' (which trusts nonce'd scripts to load further scripts) reach it. The
+    // widget renders an iframe from the same origin — covered by frame-src below.
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''} https://*.mux.com https://*.posthog.com https://challenges.cloudflare.com`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     // data: for the landing page's base64-embedded webfonts (lifted Webflow CSS).
     "font-src 'self' data:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.r2.dev https://*.mux.com https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.r2.dev https://*.mux.com https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io https://challenges.cloudflare.com",
+    // Turnstile mounts its challenge UI inside a same-origin iframe on challenges.cloudflare.com.
+    "frame-src https://challenges.cloudflare.com",
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
