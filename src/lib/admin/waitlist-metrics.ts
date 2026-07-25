@@ -75,10 +75,11 @@ export async function getWaitlistMetrics(): Promise<WaitlistMetrics> {
   const dayAgoIso = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
   const hourAgoIso = new Date(nowMs - 60 * 60 * 1000).toISOString();
 
-  // Head-only COUNT(*) queries are cheap; every filter is on an indexed column (company_id +
-  // partial where clauses on idx_waitlist_active for the active-lead filters).
-  const c = (filter: (q: ReturnType<typeof sb.from>) => ReturnType<typeof sb.from>) =>
-    filter(sb.from('waitlist_leads').select('id', { count: 'exact', head: true }).eq('company_id', companyId));
+  // Head-only COUNT(*) queries; every filter is on an indexed column (company_id + partial where
+  // clauses on idx_waitlist_active for the active-lead filters). Queries are inlined instead of
+  // hidden behind a helper because @supabase/postgrest-js's chained builder types don't survive
+  // a wrapper's return-type inference — inlining keeps `.count` typed correctly on each result.
+  const leads = () => sb.from('waitlist_leads').select('id', { count: 'exact', head: true }).eq('company_id', companyId);
 
   const [
     totalRes,
@@ -94,15 +95,15 @@ export async function getWaitlistMetrics(): Promise<WaitlistMetrics> {
     topReferrersRes,
     tierCandidatesRes,
   ] = await Promise.all([
-    c((q) => q),
-    c((q) => q.not('confirmed_at', 'is', null)),
-    c((q) => q.not('converted_at', 'is', null)),
-    c((q) => q.not('unsubscribed_at', 'is', null)),
-    c((q) => q.gte('created_at', dayAgoIso)),
-    c((q) => q.gte('created_at', hourAgoIso)),
-    c((q) => q.not('quiz_completed_at', 'is', null)),
-    c((q) => q.eq('locale', 'es')),
-    c((q) => q.eq('locale', 'en')),
+    leads(),
+    leads().not('confirmed_at', 'is', null),
+    leads().not('converted_at', 'is', null),
+    leads().not('unsubscribed_at', 'is', null),
+    leads().gte('created_at', dayAgoIso),
+    leads().gte('created_at', hourAgoIso),
+    leads().not('quiz_completed_at', 'is', null),
+    leads().eq('locale', 'es'),
+    leads().eq('locale', 'en'),
     sb
       .from('waitlist_entry_events')
       .select('lead_id', { count: 'exact' })
