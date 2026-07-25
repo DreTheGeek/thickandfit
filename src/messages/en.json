@@ -2040,18 +2040,18 @@
   },
   "pricing": {
     "eyebrow": "Pricing",
-    "title": "How do you want me in your corner?",
-    "subtitle": "Start free. Cancel in one tap. No games, ever.",
+    "title": "One offer. Founding pricing for life.",
+    "subtitle": "The full app for the price of a single Chipotle bowl. Founding members lock it in forever.",
     "trialNote": "No contract, ever. Cancel anytime and you are never locked in.",
     "perMonth": "/month",
     "popular": "Most popular",
     "tiers": [
       {
         "id": "self",
-        "name": "Self-Guided",
+        "name": "Foundation",
         "price": "$19.97",
-        "period": "/month",
-        "blurb": "The full app, built on my system. You run the show.",
+        "period": "/month · founding",
+        "blurb": "The full app, built on my system. Founding members lock in $19.97 a month forever; standard price is $24.97 after the 5-day founding window closes.",
         "features": [
           "Workout programs with my filmed demos",
           "Photo nutrition tracking that understands real food",
@@ -2060,34 +2060,6 @@
           "Your coach in the app, in your language"
         ],
         "cta": "Join the waitlist"
-      },
-      {
-        "id": "team",
-        "name": "Team Thick & Fit",
-        "price": "From $200",
-        "period": "/month",
-        "blurb": "Everything above, plus real coaching from my trained team.",
-        "features": [
-          "Everything in Self-Guided",
-          "A real coach checking in on you",
-          "Your plan adjusted to your life",
-          "Direct messaging with your coach"
-        ],
-        "cta": "Apply"
-      },
-      {
-        "id": "steph",
-        "name": "1-on-1 with Steph",
-        "price": "Premium",
-        "period": "by application",
-        "blurb": "You and me, directly. Limited spots.",
-        "features": [
-          "Everything in Team Thick & Fit",
-          "Coached by me personally",
-          "Fully custom programming and nutrition",
-          "Priority access to me"
-        ],
-        "cta": "Apply"
       }
     ],
     "billingTitle": "How billing works here",

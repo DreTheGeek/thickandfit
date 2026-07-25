@@ -5,6 +5,12 @@
 //
 // Pre-launch every CTA points at the waitlist: the app is not charging yet, so promising instant
 // checkout would be a lie.
+//
+// Public offer surface = ONE tier (Foundation founding pricing). Mid-ticket ("Team Thick & Fit")
+// and high-ticket ("1-on-1 with Steph") are NOT pushed publicly at launch (2026-07-23 call): the
+// waitlist quiz tags interested candidates and they get a private application + booking link
+// post-launch. Single-card layout keeps the funnel focused on "one offer, five days to lock the
+// founding price for life."
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
@@ -74,12 +80,18 @@ export default async function PricingPage(): Promise<ReactElement> {
         <h1 className="tf-display mt-3 max-w-3xl text-5xl leading-[0.95] sm:text-6xl">{t('title')}</h1>
         <p className="mt-5 max-w-xl text-lg text-neutral-700">{t('subtitle')}</p>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        {/* One centered card. A 3-column grid rendering a single card reads as "grid with holes";
+            a hero'd solo card reads as intentional and hero's the one offer. Max-width matches the
+            landing's TierCards (max-w-[520px]) so the two surfaces feel of the same system. */}
+        <div className="mt-12 flex justify-center">
           {tiers.map((tier) => (
-            <div key={tier.id} className="flex flex-col border border-neutral-200 p-7">
+            <div
+              key={tier.id}
+              className="flex w-full max-w-[520px] flex-col border border-neutral-200 p-8"
+            >
               <h2 className="text-xl font-semibold">{tier.name}</h2>
               <div className="mt-4 flex items-baseline gap-1.5">
-                <span className="tf-display text-4xl leading-none">{tier.price}</span>
+                <span className="tf-display text-5xl leading-none">{tier.price}</span>
                 <span className="text-sm text-neutral-500">{tier.period}</span>
               </div>
               <p className="mt-4 text-[15px] leading-relaxed text-neutral-700">{tier.blurb}</p>

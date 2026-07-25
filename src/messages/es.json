@@ -2040,18 +2040,18 @@
   },
   "pricing": {
     "eyebrow": "Precios",
-    "title": "¿Cómo quieres que te acompañe?",
-    "subtitle": "Empieza gratis. Cancela con un toque. Sin trucos, nunca.",
-    "trialNote": "Sin contrato, nunca. Cancela cuando quieras y nunca quedas atrapada.",
+    "title": "Una sola oferta. Precio fundador de por vida.",
+    "subtitle": "La app completa por lo que cuesta un almuerzo. Las fundadoras se lo quedan para siempre.",
+    "trialNote": "Sin contrato, nunca. Cancela cuando quieras, sin ataduras.",
     "perMonth": "/mes",
     "popular": "El más elegido",
     "tiers": [
       {
         "id": "self",
-        "name": "Autoguiado",
+        "name": "Foundation",
         "price": "$19.97",
-        "period": "/mes",
-        "blurb": "La app completa, con mi sistema. Tú llevas el ritmo.",
+        "period": "/mes · fundadoras",
+        "blurb": "La app completa, con mi sistema. Las fundadoras se quedan con $19.97 al mes para siempre; el precio normal es $24.97 después de la ventana fundadora de 5 días.",
         "features": [
           "Programas de entrenamiento con mis videos",
           "Registro de comida por foto que entiende la comida real",
@@ -2060,34 +2060,6 @@
           "Tu coach en la app, en tu idioma"
         ],
         "cta": "Unirme a la lista"
-      },
-      {
-        "id": "team",
-        "name": "Equipo Thick & Fit",
-        "price": "Desde $200",
-        "period": "/mes",
-        "blurb": "Todo lo anterior, más coaching real de mi equipo.",
-        "features": [
-          "Todo lo de Autoguiado",
-          "Una coach de verdad pendiente de ti",
-          "Tu plan ajustado a tu vida",
-          "Mensajes directos con tu coach"
-        ],
-        "cta": "Solicitar"
-      },
-      {
-        "id": "steph",
-        "name": "1 a 1 con Steph",
-        "price": "Premium",
-        "period": "por solicitud",
-        "blurb": "Tú y yo, directo. Lugares limitados.",
-        "features": [
-          "Todo lo de Equipo Thick & Fit",
-          "Entrenada por mí personalmente",
-          "Programación y nutrición totalmente a tu medida",
-          "Acceso prioritario a mí"
-        ],
-        "cta": "Solicitar"
       }
     ],
     "billingTitle": "Cómo funciona el cobro aquí",
