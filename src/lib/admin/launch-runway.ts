@@ -208,6 +208,16 @@ export type BlockerCounts = {
   pct: number;
 };
 
+/**
+ * Whole-number days from now until an ISO instant, floored at 0. Lives here rather than in the page
+ * because Date.now() is impure and a React render body must stay pure (Path A rule: never call
+ * Date.now() / new Date() in a render). Server modules are the right home for clock reads.
+ */
+export function daysUntil(iso: string): number {
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 86_400_000));
+}
+
 /** Roll up blocker status for one milestone bucket. */
 export function countByMilestone(milestone: BlockerMilestone): BlockerCounts {
   const bucket = BLOCKERS.filter((b) => b.milestone === milestone);

@@ -222,6 +222,104 @@ function empty(): WaitlistMetrics {
   };
 }
 
+// ────────────────────────────────────────────────────────────────────────────────
+// Full leaderboard, powers /admin/waitlist/referrers (the top-10 in the main dashboard is only a
+// preview). Loads every referral event once, aggregates in memory (bounded: max 20 credited
+// referrals per lead by the cap), joins to waitlist_leads for name/email/code. Returns the top N
+// plus the two roll-up KPIs the page needs so the caller does not have to also invoke
+// getWaitlistMetrics for total/unique. Never throws, empty result on any read failure.
+
+export type ReferrerRow = {
+  leadId: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  referralCode: string;
+  referralCount: number;
+  entryCount: number;
+  firstReferredAt: string | null;
+  milestones: string[]; // referred:1 / referred:5 / referred:20
+};
+
+export type TopReferrersResult = {
+  referrers: ReferrerRow[];
+  totalReferrals: number;
+  uniqueReferrers: number;
+};
+
+export async function getTopReferrers(limit: number = 100): Promise<TopReferrersResult> {
+  const sb = createServiceClient();
+  const companyId = await resolveTenantId(sb);
+  if (!companyId) return { referrers: [], totalReferrals: 0, uniqueReferrers: 0 };
+
+  // One pass, ascending by created_at so the FIRST row per lead becomes their firstReferredAt.
+  const { data: events } = await sb
+    .from('waitlist_entry_events')
+    .select('lead_id, created_at')
+    .eq('company_id', companyId)
+    .eq('kind', 'referral')
+    .order('created_at', { ascending: true });
+
+  const rows = (events ?? []) as { lead_id: string; created_at: string }[];
+  const perLead = new Map<string, { count: number; firstReferredAt: string }>();
+  for (const row of rows) {
+    const existing = perLead.get(row.lead_id);
+    if (existing) existing.count += 1;
+    else perLead.set(row.lead_id, { count: 1, firstReferredAt: row.created_at });
+  }
+
+  const totalReferrals = rows.length;
+  const uniqueReferrers = perLead.size;
+
+  const cappedLimit = Math.max(0, Math.min(limit, 1000));
+  const ranked = Array.from(perLead.entries())
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, cappedLimit);
+
+  if (ranked.length === 0) {
+    return { referrers: [], totalReferrals, uniqueReferrers };
+  }
+
+  const leadIds = ranked.map(([id]) => id);
+  const { data: leads } = await sb
+    .from('waitlist_leads')
+    .select('id, first_name, last_name, email, referral_code, entry_count')
+    .eq('company_id', companyId)
+    .in('id', leadIds);
+
+  type LeadRow = {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string;
+    referral_code: string;
+    entry_count: number;
+  };
+  const leadById = new Map<string, LeadRow>();
+  for (const l of (leads ?? []) as LeadRow[]) leadById.set(l.id, l);
+
+  const referrers: ReferrerRow[] = ranked.map(([leadId, agg]) => {
+    const lead = leadById.get(leadId);
+    const milestones: string[] = [];
+    if (agg.count >= 1) milestones.push('referred:1');
+    if (agg.count >= 5) milestones.push('referred:5');
+    if (agg.count >= 20) milestones.push('referred:20');
+    return {
+      leadId,
+      firstName: lead?.first_name ?? null,
+      lastName: lead?.last_name ?? null,
+      email: lead?.email ?? '(unknown)',
+      referralCode: lead?.referral_code ?? '',
+      referralCount: agg.count,
+      entryCount: lead?.entry_count ?? 0,
+      firstReferredAt: agg.firstReferredAt,
+      milestones,
+    };
+  });
+
+  return { referrers, totalReferrals, uniqueReferrers };
+}
+
 // Exported for the /admin/launch runway page — it wants "days until Aug 4" and "days until Sept 27"
 // as tiles, and they belong in the same schedule module.
 export const CAMPAIGN_SCHEDULE = {

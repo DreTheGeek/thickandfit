@@ -8,7 +8,7 @@
 import type { ReactElement } from 'react';
 import { requireOperator } from '@/lib/auth/guards';
 import { AdminPage, Card, Stat } from '@/components/admin/ui';
-import { BLOCKERS, countByMilestone, type Blocker, type BlockerStatus } from '@/lib/admin/launch-runway';
+import { BLOCKERS, countByMilestone, daysUntil, type Blocker, type BlockerStatus } from '@/lib/admin/launch-runway';
 import { CAMPAIGN_SCHEDULE } from '@/lib/admin/waitlist-metrics';
 
 export const dynamic = 'force-dynamic';
@@ -20,9 +20,8 @@ export default async function AdminLaunchPage(): Promise<ReactElement> {
   const sept27 = countByMilestone('sept27');
   const ongoing = countByMilestone('ongoing');
 
-  const now = Date.now();
-  const daysUntilAug4 = Math.max(0, Math.ceil((new Date(CAMPAIGN_SCHEDULE.waitlistOpensIso).getTime() - now) / (1000 * 60 * 60 * 24)));
-  const daysUntilSept27 = Math.max(0, Math.ceil((new Date(CAMPAIGN_SCHEDULE.doorsOpenIso).getTime() - now) / (1000 * 60 * 60 * 24)));
+  const daysUntilAug4 = daysUntil(CAMPAIGN_SCHEDULE.waitlistOpensIso);
+  const daysUntilSept27 = daysUntil(CAMPAIGN_SCHEDULE.doorsOpenIso);
 
   return (
     <AdminPage
