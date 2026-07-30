@@ -11,6 +11,7 @@ import 'server-only';
 // those two columns.
 import { z } from 'zod';
 import { headers } from 'next/headers';
+import { after } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { enrollInDrip, upsertGhlContact } from '@/lib/ghl/client';
 import { sendLeadMagnet, sendWaitlistConfirmation } from '@/lib/email/resend';
@@ -230,19 +231,40 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
     }
   }
 
-  // Best-effort deliverability side effects. Every one returns false rather than throw when unconfigured.
-  void sendLeadMagnet(parsed.email, parsed.locale).catch((e) => console.error('sendLeadMagnet:', e?.message));
-  // Pass her name + phone so the GHL contact is not anonymous: a drip that opens "Hey ," is worse
-  // than no drip, and the SMS track needs the number.
-  void enrollInDrip(parsed.email, parsed.locale, {
-    firstName: parsed.first_name,
-    lastName: parsed.last_name,
-    phone: parsed.phone,
-  })
-    .then((ghl) => {
-      if (ghl.contactId) void supabase.from('waitlist_leads').update({ ghl_contact_id: ghl.contactId }).eq('id', lead.id);
-    })
-    .catch((e) => console.error('enrollInDrip:', e?.message));
+  // Best-effort deliverability side effects, all inside after().
+  //
+  // These were bare `void` calls, and on Vercel a bare void after the response RACES the freezing
+  // lambda. That is not theoretical here: a prod probe on 2026-07-30 signed up fine and the Resend
+  // confirmation email arrived (~300ms, wins the race) while the GHL contact never appeared
+  // (~1-2s, loses it). Same bug, different latency, and it would have left the Aug 4 drip with an
+  // empty audience. after() keeps the lambda alive until they finish.
+  const sideEffects = async (): Promise<void> => {
+    await sendLeadMagnet(parsed.email, parsed.locale).catch((e) =>
+      console.error('sendLeadMagnet:', e?.message),
+    );
+    // Name + phone so the GHL contact is not anonymous: a drip that opens "Hey ," is worse than no
+    // drip, and the SMS track needs the number.
+    const ghl = await enrollInDrip(parsed.email, parsed.locale, {
+      firstName: parsed.first_name,
+      lastName: parsed.last_name,
+      phone: parsed.phone,
+    }).catch((e) => {
+      console.error('enrollInDrip:', e?.message);
+      return { enrolled: false, contactId: null as string | null };
+    });
+    if (ghl.contactId) {
+      await supabase
+        .from('waitlist_leads')
+        .update({ ghl_contact_id: ghl.contactId })
+        .eq('id', lead.id);
+    }
+  };
+  try {
+    after(sideEffects);
+  } catch {
+    // Outside a request scope (a script or a test): run it inline rather than dropping it.
+    void sideEffects();
+  }
 
   // Double-opt-in: send the confirmation email once, only for a brand-new lead OR one that has
   // not yet confirmed. A returning-but-unconfirmed signup gets a fresh nudge instead of silence.
@@ -252,9 +274,18 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
     const confirmToken = (lead as { confirm_token: string }).confirm_token;
     const origin = await requestOrigin();
     const confirmUrl = `${origin}/api/funnel/confirm?t=${encodeURIComponent(confirmToken)}`;
-    void sendWaitlistConfirmation(parsed.email, parsed.locale, confirmUrl).catch((e) =>
-      console.error('sendWaitlistConfirmation:', e?.message),
-    );
+    const sendConfirm = (): Promise<void> =>
+      sendWaitlistConfirmation(parsed.email, parsed.locale, confirmUrl).then(
+        () => undefined,
+        (e: { message?: string }) => console.error('sendWaitlistConfirmation:', e?.message),
+      );
+    // This one happened to win the race before, but "happened to" is not a guarantee: the whole
+    // entry economy is gated on this email, so it gets the same protection.
+    try {
+      after(sendConfirm);
+    } catch {
+      void sendConfirm();
+    }
   }
 
   return {

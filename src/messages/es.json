@@ -2286,7 +2286,8 @@
       "linkFaq": "FAQ",
       "linkAbout": "Nosotras",
       "linkPrivacy": "Privacidad",
-      "linkTerms": "Términos"
+      "linkTerms": "Términos",
+      "linkSupport": "Soporte"
     }
   },
   "marketing": {
@@ -2409,8 +2410,7 @@
       "company": "Nosotras",
       "legalLabel": "Legal",
       "rights": "Todos los derechos reservados.",
-      "creatorLink": "Más de Steph",
-      "linkSupport": "Soporte"
+      "creatorLink": "Más de Steph"
     },
     "story": {
       "eyebrow": "Una semana conmigo",
