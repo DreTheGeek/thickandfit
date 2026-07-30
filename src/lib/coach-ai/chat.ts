@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { buildCoachContext, renderContextBlock, type CoachLocale } from '@/lib/coach-ai/context';
 import { embedText } from '@/lib/coach-ai/embeddings';
+import { behaviorTermsFrom } from '@/lib/memory/rerank';
 import { retrieveMemberMemories, renderMemberMemoryBlock } from '@/lib/coach-ai/memory-store';
 import { retrieveKnowledge, renderKnowledgeBlock } from '@/lib/coach-ai/knowledge';
 import { SAFETY_CLAUSE_EN } from '@/lib/coach-ai/safety';
@@ -221,8 +222,11 @@ export async function streamChat(
   // chat, check-ins, meal plans, weights, intake, coach notes, progress), by profile_id and their
   // migrated contact_id. Replaces the old two-source union.
   const queryVec = await embedText(request.message);
+  // K10: her actual question feeds the behavior-match signal, so a memory that NAMES the thing she is
+  // asking about outranks one that is merely semantically nearby.
+  const behaviorTerms = behaviorTermsFrom({ question: request.message });
   const memories = queryVec
-    ? await retrieveMemberMemories(profileId, ctx.contactId, queryVec, 6)
+    ? await retrieveMemberMemories(profileId, ctx.contactId, queryVec, 6, behaviorTerms)
     : [];
   const memoryBlock = renderMemberMemoryBlock(memories, locale);
 

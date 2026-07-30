@@ -7,6 +7,7 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { embedText, toVectorLiteral } from '@/lib/coach-ai/embeddings';
+import { rerankMemories } from '@/lib/memory/rerank';
 
 export type MemorySource =
   | 'food_day'
@@ -84,13 +85,23 @@ type MatchRow = {
   occurred_at: string;
 };
 
-// Recall the top `limit` memories nearest to `queryEmbedding` for this member (by profile_id and/or
-// contact_id, so claimed migrated clients recall their Lenus history too). [] on any failure.
+// Recall the best `limit` memories for this member (by profile_id and/or contact_id, so claimed
+// migrated clients recall their Lenus history too). [] on any failure.
+//
+// K10: this OVER-FETCHES a wide candidate pool by vector similarity, then reranks it on four signals
+// (semantic + recency + importance + behavior) in @/lib/memory/rerank. Fetching only `limit` and
+// reranking that would be pointless: the whole failure being fixed is a durable safety fact that
+// similarity ranks 12th, and you cannot rescue it from a pool of 6.
+const RERANK_POOL_MULTIPLIER = 5;
+const MAX_POOL = 40;
+
 export async function retrieveMemberMemories(
   profileId: string | null,
   contactId: string | null,
   queryEmbedding: number[],
   limit = 6,
+  /** Optional live context (her question, today's foods) for the behavior-match signal. */
+  behaviorTerms: string[] = [],
 ): Promise<MemberMemory[]> {
   if (!profileId && !contactId) return [];
   try {
@@ -99,10 +110,10 @@ export async function retrieveMemberMemories(
       p_profile_id: profileId,
       p_contact_id: contactId,
       query_embedding: toVectorLiteral(queryEmbedding),
-      match_count: limit,
+      match_count: Math.min(MAX_POOL, limit * RERANK_POOL_MULTIPLIER),
     });
     if (error || !Array.isArray(data)) return [];
-    return (data as MatchRow[])
+    const pool = (data as MatchRow[])
       .map((r): MemberMemory | null => {
         const content = (r.content ?? '').trim();
         if (!content) return null;
@@ -115,6 +126,16 @@ export async function retrieveMemberMemories(
         };
       })
       .filter((x): x is MemberMemory => x !== null);
+
+    // Reorder the pool, then cut to `limit`. The reranker also drops near-duplicates, which matters
+    // because the memory budget in the prompt is small and two rows saying the same thing waste half.
+    return rerankMemories(pool, { now: new Date(), behaviorTerms, limit }).map((m) => ({
+      source: m.source,
+      kind: m.kind,
+      content: m.content,
+      similarity: m.similarity,
+      occurredAt: m.occurredAt,
+    }));
   } catch {
     return [];
   }
