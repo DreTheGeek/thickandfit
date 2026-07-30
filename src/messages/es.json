@@ -2061,6 +2061,19 @@
         "ovulation": "Aquí suele estar tu punto más fuerte. Las articulaciones están un poco más laxas, así que cuida la técnica en pierna pesada.",
         "luteal": "El apetito y los antojos suelen subir y la báscula puede quedarse igual por retención. Es normal. No recortes calorías por eso."
       }
+    },
+    "shopping": {
+      "title": "Lista de compras",
+      "intro": "Hecha con las comidas que elegiste arriba. Pon cuántas porciones vas a hacer y se ajusta sola.",
+      "servings": "Porciones",
+      "fewer": "Menos porciones",
+      "more": "Más porciones",
+      "groceries": "Para comprar",
+      "pantry": "Especias y despensa",
+      "pantryHint": "Seguramente ya tienes casi todo esto.",
+      "empty": "Nada aquí.",
+      "copy": "Copiar lista",
+      "copied": "Copiada"
     }
   },
   "faq": {

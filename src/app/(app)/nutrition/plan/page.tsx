@@ -11,6 +11,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { getClientMealPlan } from '@/lib/coach/meal-plans';
 import { StructuredPlanView } from '@/components/nutrition/structured-plan-view';
 import { PlanPrintButton } from '@/components/nutrition/plan-print-button';
+import { ShoppingList } from '@/components/nutrition/shopping-list';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 
@@ -173,6 +174,11 @@ export default async function ClientMealPlanPage(): Promise<ReactElement> {
                 {t('mpMeals')}
               </div>
               <StructuredPlanView plan={s} />
+              {/* Shopping list sits AFTER the plan: she reads what she is eating, then buys for it.
+                  print:hidden because the PDF handout is the plan itself, not the groceries. */}
+              <div className="print:hidden">
+                <ShoppingList slots={s.slots ?? []} />
+              </div>
             </>
           ) : plan.groups.length > 0 ? (
             <>

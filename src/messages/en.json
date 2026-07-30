@@ -2061,6 +2061,19 @@
         "ovulation": "Strength usually peaks here. Joints are a little looser, so keep your form tight on heavy lower body.",
         "luteal": "Appetite and cravings often rise and the scale can hold from water. That is normal. Do not cut calories over it."
       }
+    },
+    "shopping": {
+      "title": "Shopping list",
+      "intro": "Built from the meals you picked above. Set how many servings you are making and it scales.",
+      "servings": "Servings",
+      "fewer": "Fewer servings",
+      "more": "More servings",
+      "groceries": "Groceries",
+      "pantry": "Spices and pantry",
+      "pantryHint": "You probably have most of these already.",
+      "empty": "Nothing here.",
+      "copy": "Copy list",
+      "copied": "Copied"
     }
   },
   "faq": {
