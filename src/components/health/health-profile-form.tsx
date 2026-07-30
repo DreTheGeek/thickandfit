@@ -6,7 +6,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { ReactElement } from "react";
+import type { Dispatch, ReactElement, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { saveHealthProfileAction } from "@/lib/health-profile/actions";
@@ -19,6 +19,7 @@ import {
   SAFETY,
   MEDICATIONS,
   EXPERIENCE,
+  TRAINING_LOCATION,
   SLEEP,
   STRESS,
   FOOD_REL,
@@ -47,19 +48,23 @@ export function HealthProfileForm({
   const [experience, setExperience] = useState<string | undefined>(
     initial.trainingExperience,
   );
+  const [trainingLocation, setTrainingLocation] = useState<string | undefined>(
+    initial.trainingLocation,
+  );
   const [sleep, setSleep] = useState<string | undefined>(initial.sleep);
   const [stress, setStress] = useState<string | undefined>(initial.stress);
   const [food, setFood] = useState<string | undefined>(
     initial.foodRelationship,
   );
 
+  // Functional updater, NOT set(list.filter(...)): React batches updates, so two fast chip taps in a
+  // single batch would both read the same stale array and the second would discard the first.
   function toggle(
-    list: string[],
-    set: (v: string[]) => void,
+    set: Dispatch<SetStateAction<string[]>>,
     value: string,
   ): void {
-    set(
-      list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
+    set((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
     );
     setStatus("idle");
   }
@@ -76,6 +81,7 @@ export function HealthProfileForm({
         safety,
         medications: meds,
         trainingExperience: experience,
+        trainingLocation,
         sleep,
         stress,
         foodRelationship: food,
@@ -103,7 +109,7 @@ export function HealthProfileForm({
             options={DIETARY}
             tk="opt.dietary"
             selected={dietary}
-            onToggle={(v) => toggle(dietary, setDietary, v)}
+            onToggle={(v) => toggle(setDietary, v)}
             t={t}
             noneLabel={t("none")}
             onNone={() => {
@@ -127,7 +133,7 @@ export function HealthProfileForm({
             options={INJURIES}
             tk="opt.injuries"
             selected={injuries}
-            onToggle={(v) => toggle(injuries, setInjuries, v)}
+            onToggle={(v) => toggle(setInjuries, v)}
             t={t}
             noneLabel={t("none")}
             onNone={() => {
@@ -155,7 +161,7 @@ export function HealthProfileForm({
             options={CONDITIONS}
             tk="opt.conditions"
             selected={conditions}
-            onToggle={(v) => toggle(conditions, setConditions, v)}
+            onToggle={(v) => toggle(setConditions, v)}
             t={t}
             noneLabel={t("none")}
             onNone={() => {
@@ -183,7 +189,7 @@ export function HealthProfileForm({
             options={SAFETY}
             tk="opt.safety"
             selected={safety}
-            onToggle={(v) => toggle(safety, setSafety, v)}
+            onToggle={(v) => toggle(setSafety, v)}
             t={t}
             noneLabel={t("safetyNone")}
             onNone={() => {
@@ -203,7 +209,7 @@ export function HealthProfileForm({
             options={MEDICATIONS}
             tk="opt.meds"
             selected={meds}
-            onToggle={(v) => toggle(meds, setMeds, v)}
+            onToggle={(v) => toggle(setMeds, v)}
             t={t}
             noneLabel={t("none")}
             onNone={() => {
@@ -226,7 +232,20 @@ export function HealthProfileForm({
           />
         </Section>
 
-        <Section n={8} title={t("sec.sleep.q")}>
+        <Section n={8} title={t("sec.trainingLocation.q")}>
+          <ChoiceRow
+            options={TRAINING_LOCATION}
+            tk="opt.trainingLocation"
+            value={trainingLocation}
+            onPick={(v) => {
+              setTrainingLocation(v);
+              setStatus("idle");
+            }}
+            t={t}
+          />
+        </Section>
+
+        <Section n={9} title={t("sec.sleep.q")}>
           <ChoiceRow
             options={SLEEP}
             tk="opt.sleep"
@@ -249,7 +268,7 @@ export function HealthProfileForm({
           />
         </Section>
 
-        <Section n={9} title={t("sec.food.q")} why={t("sec.food.why")}>
+        <Section n={10} title={t("sec.food.q")} why={t("sec.food.why")}>
           <ChoiceRow
             options={FOOD_REL}
             tk="opt.food"

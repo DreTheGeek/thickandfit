@@ -206,6 +206,9 @@
         "food": {
           "q": "So we support you the right way, anything to be mindful of?",
           "why": "This shapes how your coach talks about food with you. There is no wrong answer."
+        },
+        "trainingLocation": {
+          "q": "Where will you train?"
         }
       },
       "opt": {
@@ -280,6 +283,11 @@
           "struggled": "I’ve struggled with disordered eating",
           "light_tracking": "I’d rather not track calories closely",
           "prefer_not": "Prefer not to say"
+        },
+        "trainingLocation": {
+          "home": "Home",
+          "gym": "Gym",
+          "both": "Both"
         }
       }
     },

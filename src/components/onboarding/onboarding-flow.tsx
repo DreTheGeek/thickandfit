@@ -18,7 +18,14 @@ import type { Dispatch, ReactElement, ReactNode, SetStateAction } from 'react';
 import { setUiLocaleAction, setContentLocaleAction } from '@/lib/i18n/actions';
 import { computePlan, type OnboardingInput } from '@/lib/onboarding/prediction';
 import { PRIMARY_GOALS, deriveGoalDirection, type PrimaryGoal } from '@/lib/onboarding/goals';
-import { INJURIES, CONDITIONS, PREGNANCY, SAFETY } from '@/lib/health-profile/labels';
+import {
+  INJURIES,
+  CONDITIONS,
+  PREGNANCY,
+  SAFETY,
+  EXPERIENCE,
+  TRAINING_LOCATION,
+} from '@/lib/health-profile/labels';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/ring';
 import { Icon } from '@/components/ui/icons';
@@ -101,6 +108,11 @@ export function OnboardingFlow({
   const [conditions, setConditions] = useState<string[]>([]);
   const [pregnancy, setPregnancy] = useState<string>('none');
   const [safety, setSafety] = useState<string[]>([]);
+  // Training experience + where they train. On the About step rather than the health step: they are
+  // TRAINING questions, and both decide whether the plan preview two screens later is executable.
+  // One tap each, and both are already asked in the waitlist quiz, so a lead answers nothing new.
+  const [experience, setExperience] = useState<string>('some');
+  const [trainingLocation, setTrainingLocation] = useState<string>('both');
   const safetyFlagged = safety.length > 0;
 
   // Functional updater, NOT `set(list.filter(...))`. React batches updates, so two chip taps inside
@@ -199,7 +211,14 @@ export function OnboardingFlow({
           phone: phone.trim() || undefined,
           // Health & safety. Sent as one object so the route can hand it straight to
           // saveHealthProfile without re-assembling it field by field.
-          health: { injuries, conditions, pregnancy, safety },
+          health: {
+            injuries,
+            conditions,
+            pregnancy,
+            safety,
+            trainingExperience: experience,
+            trainingLocation,
+          },
         }),
       });
       if (!res.ok) {
@@ -349,6 +368,32 @@ export function OnboardingFlow({
                 <option value="moderate">{t('actModerate')}</option>
                 <option value="active">{t('actActive')}</option>
                 <option value="very_active">{t('actVeryActive')}</option>
+              </select>
+            </Field>
+            <Field label={th('sec.experience.q')}>
+              <select
+                className={selectCls}
+                value={experience}
+                onChange={(e) => setExperience(e.target.value)}
+              >
+                {EXPERIENCE.map((x) => (
+                  <option key={x} value={x}>
+                    {th(`opt.experience.${x}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={th('sec.trainingLocation.q')}>
+              <select
+                className={selectCls}
+                value={trainingLocation}
+                onChange={(e) => setTrainingLocation(e.target.value)}
+              >
+                {TRAINING_LOCATION.map((x) => (
+                  <option key={x} value={x}>
+                    {th(`opt.trainingLocation.${x}`)}
+                  </option>
+                ))}
               </select>
             </Field>
           </div>

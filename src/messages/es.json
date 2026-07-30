@@ -206,6 +206,9 @@
         "food": {
           "q": "Para apoyarte de la mejor forma, ¿hay algo que debamos tener presente?",
           "why": "Esto define cómo tu entrenadora habla de la comida contigo. No hay respuesta incorrecta."
+        },
+        "trainingLocation": {
+          "q": "¿Dónde vas a entrenar?"
         }
       },
       "opt": {
@@ -280,6 +283,11 @@
           "struggled": "He tenido problemas con la alimentación",
           "light_tracking": "Prefiero no contar calorías de cerca",
           "prefer_not": "Prefiero no decir"
+        },
+        "trainingLocation": {
+          "home": "En casa",
+          "gym": "En el gym",
+          "both": "Ambos"
         }
       }
     },

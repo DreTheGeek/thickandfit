@@ -121,6 +121,8 @@ const check = (name, pass, detail) => {
       conditions: ['pcos', 'hypothyroid'],
       pregnancy: 'postpartum',
       safety: ['dizziness'],
+      trainingExperience: 'new',
+      trainingLocation: 'home',
     },
   };
 
@@ -171,7 +173,7 @@ const check = (name, pass, detail) => {
 
   const { data: intake } = await svc
     .from('client_intake')
-    .select('injuries, dietary_exclusions, custom_fields, source')
+    .select('injuries, dietary_exclusions, custom_fields, source, training_experience')
     .eq('company_id', companyId)
     .eq('contact_id', ct.id)
     .maybeSingle();
@@ -180,6 +182,10 @@ const check = (name, pass, detail) => {
   check('healthProfile.conditions captured', JSON.stringify(hp.conditions) === JSON.stringify(['pcos', 'hypothyroid']), JSON.stringify(hp.conditions));
   check('healthProfile.pregnancy captured', hp.pregnancy === 'postpartum', String(hp.pregnancy));
   check('healthProfile.safety captured', JSON.stringify(hp.safety) === JSON.stringify(['dizziness']), JSON.stringify(hp.safety));
+  // Experience + where-they-train: pre-paywall because they decide whether the plan preview on the
+  // next screen is executable. Experience lands on the flat column, location inside healthProfile.
+  check('training_experience captured', intake?.training_experience === 'new', String(intake?.training_experience));
+  check('healthProfile.trainingLocation captured', hp.trainingLocation === 'home', String(hp.trainingLocation));
 
   // The non-destructive-merge assertions. These are the ones that catch a real regression.
   check(

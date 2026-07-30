@@ -17,6 +17,7 @@ import {
   SAFETY,
   MEDICATIONS,
   EXPERIENCE,
+  TRAINING_LOCATION,
   SLEEP,
   STRESS,
   FOOD_REL,
@@ -32,6 +33,9 @@ export const healthProfileSchema = z.object({
   safety: z.array(z.enum(SAFETY)).max(SAFETY.length).default([]),
   medications: z.array(z.enum(MEDICATIONS)).max(MEDICATIONS.length).default([]),
   trainingExperience: z.enum(EXPERIENCE).optional(),
+  // Where they train. Pre-paywall (captured in the onboarding wizard) because it decides whether the
+  // plan preview on the next screen is executable at all.
+  trainingLocation: z.enum(TRAINING_LOCATION).optional(),
   sleep: z.enum(SLEEP).optional(),
   stress: z.enum(STRESS).optional(),
   foodRelationship: z.enum(FOOD_REL).optional(),
@@ -130,6 +134,7 @@ export async function loadHealthProfile(
     safety: keep(SAFETY, hp.safety),
     medications: keep(MEDICATIONS, hp.medications),
     trainingExperience: one(EXPERIENCE, row.training_experience),
+    trainingLocation: one(TRAINING_LOCATION, hp.trainingLocation),
     sleep: one(SLEEP, (sleep as Record<string, unknown>).sleep),
     stress: one(STRESS, (sleep as Record<string, unknown>).stress),
     foodRelationship: one(
@@ -187,6 +192,7 @@ export async function saveHealthProfile(
   if (!contactId) return { ok: false };
 
   const prevCustom = (row?.custom_fields ?? {}) as Record<string, unknown>;
+  const prevHp = (prevCustom.healthProfile ?? {}) as Record<string, unknown>;
   const prevSleep = (row?.sleep_assessment ?? {}) as Record<string, unknown>;
   const prevEds = (row?.eating_disorder_screening ?? {}) as Record<
     string,
@@ -214,6 +220,9 @@ export async function saveHealthProfile(
         pregnancy: input.pregnancy ?? null,
         safety: input.safety,
         medications: input.medications,
+        // Preserve a previously stored location when this caller did not ask for it, so the
+        // pre-paywall answer is not wiped by a later post-paywall save that omits it.
+        trainingLocation: input.trainingLocation ?? (prevHp.trainingLocation ?? null),
       },
     },
     source: "app_intake",

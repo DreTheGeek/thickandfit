@@ -11,10 +11,12 @@ import {
   MEDICATION_LABEL_EN,
   SAFETY_LABEL_EN,
   PREGNANCY_LABEL_EN,
+  TRAINING_LOCATION_LABEL_EN,
   type ConditionSlug,
   type MedicationSlug,
   type SafetySlug,
   type PregnancySlug,
+  type TrainingLocationSlug,
 } from '@/lib/health-profile/labels';
 import { scoffPositive } from '@/lib/health-profile/screening';
 import { getPrediction, renderPredictionForPrompt } from '@/lib/prediction/read';
@@ -65,6 +67,8 @@ export type CoachContext = {
     medicalConditions: string | null;
     allergies: string | null;
     trainingExperience: string | null;
+    // Where she trains. Instruction-bearing: it bounds which exercises the coach may prescribe.
+    trainingLocation: string | null;
     // Derived from the SCOFF-style eating_disorder_screening jsonb: positive when >=2 flags are
     // true (the clinical SCOFF cutoff) or the in-app self-report signals it. Drives a gentler,
     // behavior-first coaching posture.
@@ -326,6 +330,7 @@ export async function buildCoachContext(
   } | null;
   const hp = (ik?.custom_fields?.healthProfile ?? null) as {
     conditions?: unknown; medications?: unknown; safety?: unknown; pregnancy?: unknown;
+    trainingLocation?: unknown;
   } | null;
   const asStrings = (v: unknown): string[] | null =>
     Array.isArray(v) && v.length ? v.filter((x): x is string => typeof x === 'string') : null;
@@ -338,6 +343,7 @@ export async function buildCoachContext(
         medicalConditions: ik.medical_conditions,
         allergies: ik.allergies,
         trainingExperience: ik.training_experience,
+        trainingLocation: typeof hp?.trainingLocation === 'string' ? (hp.trainingLocation as string) : null,
         edScreenPositive: scoffPositive(ik.eating_disorder_screening),
         sleep: summarizeSleep(ik.sleep_assessment),
         conditions: asStrings(hp?.conditions),
@@ -467,6 +473,12 @@ export function renderContextBlock(ctx: CoachContext): string {
     if (h.targetWeightKg != null) lines.push((es ? 'Peso meta: ' : 'Target weight: ') + `${h.targetWeightKg}kg`);
     if (h.trainingExperience && h.trainingExperience.trim()) {
       lines.push((es ? 'Experiencia de entrenamiento: ' : 'Training experience: ') + h.trainingExperience.trim());
+    }
+    // Equipment bound. Prescribing barbell work to someone training in a bedroom is the fastest way
+    // to make a plan feel like it was written for somebody else, so this is stated as a constraint.
+    if (h.trainingLocation) {
+      const loc = TRAINING_LOCATION_LABEL_EN[h.trainingLocation as TrainingLocationSlug];
+      if (loc) lines.push((es ? 'Donde entrena (respeta el equipo disponible): ' : 'Where she trains (respect the available equipment): ') + loc);
     }
     if (h.sleep) lines.push((es ? 'Sueno/recuperacion: ' : 'Sleep/recovery: ') + h.sleep);
     // Positive eating-disorder screen: the single most important posture change. Instruction-bearing

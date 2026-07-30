@@ -11,7 +11,14 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { ensureCrmContact } from '@/lib/crm/ensure-contact';
 import { upsertGhlContact } from '@/lib/ghl/client';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
-import { INJURIES, CONDITIONS, PREGNANCY, SAFETY } from '@/lib/health-profile/labels';
+import {
+  INJURIES,
+  CONDITIONS,
+  PREGNANCY,
+  SAFETY,
+  EXPERIENCE,
+  TRAINING_LOCATION,
+} from '@/lib/health-profile/labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +46,8 @@ const submitSchema = onboardingInputSchema.extend({
       conditions: z.array(z.enum(CONDITIONS)).max(CONDITIONS.length).default([]),
       pregnancy: z.enum(PREGNANCY).optional(),
       safety: z.array(z.enum(SAFETY)).max(SAFETY.length).default([]),
+      trainingExperience: z.enum(EXPERIENCE).optional(),
+      trainingLocation: z.enum(TRAINING_LOCATION).optional(),
     })
     .optional(),
 });
@@ -130,6 +139,8 @@ async function POST_h(req: Request) {
           conditions: health.conditions,
           pregnancy: health.pregnancy ?? existing.pregnancy,
           safety: health.safety,
+          trainingExperience: health.trainingExperience ?? existing.trainingExperience,
+          trainingLocation: health.trainingLocation ?? existing.trainingLocation,
         });
         if (!saved.ok) console.error('onboarding saveHealthProfile: write failed');
       } catch (e) {
