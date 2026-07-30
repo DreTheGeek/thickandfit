@@ -117,6 +117,7 @@ const PAGE_LINKS: readonly FooterLinkDef[] = [
   { labelKey: 'linkAbout', href: '/about' },
   { labelKey: 'linkPrivacy', href: '/privacy' },
   { labelKey: 'linkTerms', href: '/terms' },
+  { labelKey: 'linkSupport', href: '/support' },
 ];
 
 function FooterColumn({
