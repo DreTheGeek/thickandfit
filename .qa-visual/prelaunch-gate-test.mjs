@@ -80,8 +80,11 @@ const mustStayPublic = [
   '/api/funnel/confirm',
   '/api/stripe/webhook',
   '/auth/callback',
-  '/auth/login',
-  '/today',
+  // The REAL sign-in path. This list previously said '/auth/login', which does not exist, so that
+  // assertion passed while proving nothing about whether the team could still log in while dark.
+  '/auth/sign-in',
+  '/auth/sign-up',
+  '/auth/forgot-password',
   '/you',
   '/coach/clients',
   '/admin/waitlist',
