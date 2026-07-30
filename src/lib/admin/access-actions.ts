@@ -12,7 +12,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { verifyAndSetAdminGate } from '@/lib/admin/passcode';
 import { logCoachAction } from '@/lib/coach/audit';
 import { TEAMMATE_ROLES } from '@/lib/admin/access-types';
-import type { AccessResult, InviteResult } from '@/lib/admin/access-types';
+import type { AccessResult, InviteResult, ResendResult } from '@/lib/admin/access-types';
 
 const inviteSchema = z.object({
   email: z.string().trim().email(),
@@ -103,6 +103,58 @@ export async function inviteTeammateAction(input: unknown): Promise<InviteResult
   });
   revalidatePath('/admin/team');
   return { ok: true, status };
+}
+
+// Re-send the set-password email to a teammate who never accepted. Separate from invite because the
+// operator should not have to retype a name and role to fix a link that simply expired: the Supabase
+// recovery TTL is ONE HOUR, so any invite not clicked the same hour needs this.
+export async function resendTeammateInviteAction(profileId: unknown): Promise<ResendResult> {
+  const parsed = z.string().uuid().safeParse(profileId);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireOperator();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+  if (!(await checkRateLimit(ctx.userId, 'admin-invite', 20, 3600, { failClosed: true }))) {
+    return { ok: false, error: 'rate_limited' };
+  }
+
+  const svc = createServiceClient();
+  // Scope the lookup to THIS company and to staff roles: an operator must not be able to trigger a
+  // password email for an arbitrary uuid, or for a member, by hand-crafting the action payload.
+  const { data: teammate } = await svc
+    .from('profiles')
+    .select('email, role')
+    .eq('id', parsed.data)
+    .eq('company_id', ctx.companyId)
+    .in('role', TEAMMATE_ROLES)
+    .maybeSingle();
+  const email = (teammate as { email: string | null } | null)?.email?.trim();
+  if (!email) return { ok: false, error: 'not_found' };
+
+  const h = await headers();
+  const origin = h.get('origin') ?? `https://${h.get('host') ?? 'www.teamthickandfit.com'}`;
+  const anon = createSbClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } },
+  );
+  const { error: mailErr } = await anon.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/auth/reset-password`,
+  });
+  if (mailErr) {
+    console.error('resendTeammateInviteAction:', mailErr.message);
+    return { ok: false, error: 'email_failed' };
+  }
+
+  logCoachAction(svc, {
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    entityType: 'profile',
+    entityId: parsed.data,
+    action: 'admin.resend_teammate_invite',
+    newState: { email },
+  });
+  revalidatePath('/admin/team');
+  return { ok: true };
 }
 
 const removeSchema = z.string().uuid();

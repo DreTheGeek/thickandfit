@@ -7,7 +7,8 @@ import { AdminPage, Card } from '@/components/admin/ui';
 import { TeamInviteForm } from '@/components/admin/team-invite-form';
 import { TeamRemoveButton } from '@/components/admin/team-remove-button';
 import { TeamDisableButton } from '@/components/admin/team-disable-button';
-import { getDisabledTeammateIds } from '@/lib/admin/access-status';
+import { TeamResendButton } from '@/components/admin/team-resend-button';
+import { getDisabledTeammateIds, getNeverSignedInIds } from '@/lib/admin/access-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ export default async function TeamPage(): Promise<ReactElement> {
   const svc = createServiceClient();
   // Fetch the staff roster and the set of disabled auth users in parallel; the disabled set is used
   // to render a "Disabled" pill and flip each row's Disable toggle to "Enable."
-  const [{ data }, disabledIds] = await Promise.all([
+  const [{ data }, disabledIds, pendingIds] = await Promise.all([
     ctx.companyId
       ? svc
           .from('profiles')
@@ -40,6 +41,7 @@ export default async function TeamPage(): Promise<ReactElement> {
           .order('created_at', { ascending: true })
       : Promise.resolve({ data: [] }),
     getDisabledTeammateIds(),
+    getNeverSignedInIds(),
   ]);
   const team = (data ?? []) as TeamRow[];
 
@@ -61,12 +63,16 @@ export default async function TeamPage(): Promise<ReactElement> {
                   <th className="pb-2 pr-4 font-semibold">Name</th>
                   <th className="pb-2 pr-4 font-semibold">Email</th>
                   <th className="pb-2 pr-4 font-semibold">Role</th>
+                  <th className="pb-2 pr-4 font-semibold">Status</th>
                   <th className="pb-2 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {team.map((m) => {
                   const isDisabled = disabledIds.has(m.id);
+                  // Never signed in = the invite was never accepted. The set-password link expires in
+                  // an hour, so this is the difference between a real teammate and a dead row.
+                  const isPending = pendingIds.has(m.id);
                   const isSelf = m.id === ctx.userId;
                   const displayName = m.full_name?.trim() || m.email || 'this teammate';
                   return (
@@ -83,8 +89,21 @@ export default async function TeamPage(): Promise<ReactElement> {
                           </span>
                         )}
                       </td>
+                      <td className="py-2.5 pr-4">
+                        {isPending ? (
+                          <span
+                            className="rounded-full bg-warm px-2.5 py-0.5 text-[11px] font-semibold text-ink"
+                            title="Invited, but has never signed in. The set-password link expires after one hour."
+                          >
+                            Invite pending
+                          </span>
+                        ) : (
+                          <span className="text-[12px] text-muted">Active</span>
+                        )}
+                      </td>
                       <td className="py-2.5 text-right">
                         <span className="inline-flex items-center gap-3">
+                          {isPending && !isSelf && <TeamResendButton id={m.id} name={displayName} />}
                           <TeamDisableButton id={m.id} disabled={isDisabled} isSelf={isSelf} />
                           <TeamRemoveButton id={m.id} name={displayName} isSelf={isSelf} />
                         </span>

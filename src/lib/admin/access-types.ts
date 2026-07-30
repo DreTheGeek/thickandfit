@@ -9,3 +9,4 @@ export type TeammateRole = (typeof TEAMMATE_ROLES)[number];
 
 export type AccessResult = { ok: boolean; error?: string };
 export type InviteResult = { ok: boolean; error?: string; status?: 'created' | 'updated' };
+export type ResendResult = { ok: boolean; error?: string };
