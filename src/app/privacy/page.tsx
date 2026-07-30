@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { getLocale } from 'next-intl/server';
 import { LegalPage } from '@/components/legal/legal-page';
 import { CONSENT_VERSION } from '@/lib/legal/consent';
+import { privacySections } from '@/lib/legal/privacy-content';
 
 const CONTACT_EMAIL = 'hello@teamthickandfit.com';
 
@@ -12,7 +13,13 @@ export const metadata: Metadata = {
 };
 
 // Sign-up captures versioned consent to this Privacy Policy; this route makes the referenced document
-// reachable. Final legal copy is pending review (see launch punch-list) -- interim notice only.
+// reachable.
+//
+// The placeholder that used to live here ("we are finalizing the full text") was a real exposure on
+// two fronts: the waitlist is already collecting emails and phone numbers under it, and App Store
+// review treats a policy that fails to name its data recipients as a submission blocker. The sections
+// below are the factual disclosure, generated from the actual vendor list in the codebase. The
+// remaining legal clauses (governing law, arbitration, liability) are still a human deliverable.
 export default async function PrivacyPage(): Promise<ReactElement> {
   const es = (await getLocale()) === 'es';
   return (
@@ -21,9 +28,10 @@ export default async function PrivacyPage(): Promise<ReactElement> {
       version={CONSENT_VERSION}
       notice={
         es
-          ? 'Estamos finalizando la versión completa de nuestra Política de Privacidad antes del lanzamiento público. Usamos tus datos únicamente para ofrecerte el servicio de coaching y nunca vendemos tu información personal. Si tienes preguntas sobre cómo manejamos tus datos antes de la publicación de la versión final, contáctanos.'
-          : 'We are finalizing the full text of our Privacy Policy ahead of public launch. We use your data only to deliver the coaching service and never sell your personal information. If you have questions about how we handle your data before the final version is published, please reach out.'
+          ? 'Esto explica exactamente qué datos recopilamos, quién más los ve y cómo los borras. Sin letra chica: no vendemos tu información personal, y tu información de salud nunca se usa para marketing.'
+          : 'This explains exactly what we collect, who else sees it, and how you delete it. No fine print: we do not sell your personal information, and your health information is never used for marketing.'
       }
+      sections={privacySections(es)}
       contactLabel={es ? 'Contacto:' : 'Contact:'}
       contactEmail={CONTACT_EMAIL}
       homeLabel={es ? '← Volver al inicio' : '← Back to home'}
