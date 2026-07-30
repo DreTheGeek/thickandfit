@@ -8,6 +8,16 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { localeForCountry } from '@/lib/i18n/geo';
 import { urlLocaleFor, esPathFor } from '@/lib/seo/locale-alternates';
+import {
+  PREVIEW_COOKIE,
+  PREVIEW_MAX_AGE_S,
+  PREVIEW_PARAM,
+  gateRedirectPath,
+  hasPreviewAccess,
+  isGatedPath,
+  isPrelaunchEnabled,
+  presentedPreviewToken,
+} from '@/lib/launch/prelaunch';
 
 // On the admin.<domain> host, the operator can reach the admin portal, the coach console, and
 // auth — so Stephanie can run her whole operator+coach day from one host without bouncing to www.
@@ -53,6 +63,37 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
       url.pathname = '/admin';
       url.search = '';
       return NextResponse.redirect(url);
+    }
+  }
+
+  // Pre-launch gate: hide the public marketing site while leaving the waitlist funnel live.
+  // Runs BEFORE the session refresh below, so a hidden page never touches Supabase at all.
+  // Off unless PRELAUNCH_HIDE_SITE is set, and never applies on the admin host.
+  if (!host.startsWith('admin.') && isPrelaunchEnabled()) {
+    const { pathname, searchParams } = req.nextUrl;
+    // The team clears the gate with /?preview=<token>, which is exchanged for a cookie so the rest
+    // of their browsing needs no query string.
+    const presented = presentedPreviewToken(searchParams);
+    if (presented) {
+      const url = req.nextUrl.clone();
+      url.searchParams.delete(PREVIEW_PARAM);
+      const res = NextResponse.redirect(url);
+      res.cookies.set(PREVIEW_COOKIE, presented, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: PREVIEW_MAX_AGE_S,
+      });
+      return res;
+    }
+    if (isGatedPath(pathname) && !hasPreviewAccess(req.cookies.get(PREVIEW_COOKIE)?.value)) {
+      const url = req.nextUrl.clone();
+      url.pathname = gateRedirectPath(pathname);
+      url.search = '';
+      // 307, not 308: this is a temporary state that ends when doors open on Sept 27, and a
+      // permanent redirect would be cached by browsers and CDNs long after the site goes live.
+      return NextResponse.redirect(url, 307);
     }
   }
 
