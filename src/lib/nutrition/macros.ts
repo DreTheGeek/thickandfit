@@ -102,10 +102,28 @@ export function convertCookedRaw(grams: number, factor: number, to: 'cooked' | '
 export type FoodState = 'raw' | 'cooked';
 
 // Infer whether a food row's macros are stated for the raw or cooked form, from its name (EN/ES).
+//
+// Returning null is a REAL answer, not a failure: it means the raw/cooked distinction does not apply
+// to this food, so the diary hides the conversion toggle. That is correct for prepared and packaged
+// items. A bagel, a tortilla, protein powder and canned beans all sit in categories that HAVE a yield
+// factor, but applying one would be badly wrong (the grain factor is 3.0, so a "raw" bagel would
+// triple). Only widen the vocabulary below with words that genuinely describe a cooking transform.
+//
+// The cooked list covers method words, not just the literal "cooked", because a food library names
+// things the way a person would: "Chicken breast, grilled", "Rotisserie chicken", "Turkey breast,
+// roasted". Those were being missed, so a member weighing raw chicken got no way to convert.
+//
+// Word boundaries matter here: \b keeps "refried" (already-prepared beans) from matching "fried".
 export function foodStateFromName(name: string): FoodState | null {
   const n = name.toLowerCase();
-  if (/\b(raw|dry|crud|seca|seco)\b/.test(n)) return 'raw';
-  if (/\b(cooked|cocid|cocida)\b/.test(n)) return 'cooked';
+  if (/\b(raw|dry|crud|cruda|crudo|seca|seco)\b/.test(n)) return 'raw';
+  if (
+    /\b(cooked|cocid|cocida|cocido|grilled|roasted|rotisserie|baked|boiled|steamed|fried|braised|sauteed|sautéed|seared|poached|asado|asada|horneado|horneada|hervido|hervida|plancha|frito|frita|salteado|salteada|vapor)\b/.test(
+      n,
+    )
+  ) {
+    return 'cooked';
+  }
   return null;
 }
 
