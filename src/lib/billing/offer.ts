@@ -14,11 +14,13 @@
 /** Money in cents, the project convention. */
 export const FOUNDING_PRICE_CENTS = 1997;
 
-// NOTE: $24.97 per Dre on 2026-07-23 ("lets have the 24.97 after launch"). The LevelUp App Store
-// checklist says $29.97, and the 2026-07-01 call notes also say $29.97. That conflict is UNRESOLVED
-// and it has to be settled before the Stripe price is created, because an auto-renewing price cannot
-// be edited afterwards, only replaced. Changing this constant + re-running scripts/stripe-setup.mjs
-// is the entire change.
+// LOCKED at $24.97 by Dre on 2026-07-30, confirming his 07-23 call. This supersedes the $29.97 in the
+// LevelUp App Store checklist and in the 2026-07-01 notes; the app's own marketing copy already said
+// $24.97 throughout, so those two documents are the outliers and should be corrected, not this.
+//
+// Do not change this casually after go-live: an auto-renewing Stripe price cannot be edited, only
+// replaced, and moving existing subscribers is exactly the "tricky price change" Apple treats as a
+// Code of Conduct issue. Founding members are insulated regardless (see productKeyForOffer).
 export const STANDARD_PRICE_CENTS = 2497;
 
 /** Doors open: 2026-09-27, midnight Pacific (Stephanie's audience is US-anchored). */

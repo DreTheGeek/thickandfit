@@ -23,8 +23,8 @@ const WEBHOOK_URL =
 const TRIAL_DAYS = process.env.STRIPE_TRIAL_DAYS ?? '0';
 // Two prices, not one. Founding is held FOR LIFE by whoever claims it in the 5-day window; standard
 // is what everyone after pays. Keep these in lockstep with src/lib/billing/offer.ts, which is what
-// the app reads. A live Stripe price cannot be edited, only replaced, so getting the standard number
-// settled BEFORE go-live matters (see the unresolved $24.97 vs $29.97 note in offer.ts).
+// the app reads. Standard is LOCKED at $24.97 (Dre, 2026-07-30). A live Stripe price cannot be
+// edited, only replaced, so do not change these casually once real subscriptions exist.
 const FOUNDING_PRICE_CENTS = 1997;
 const STANDARD_PRICE_CENTS = 2497;
 const PRODUCT_NAME = 'Thick & Fit Self-Guided';
