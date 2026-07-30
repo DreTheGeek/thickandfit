@@ -2074,6 +2074,19 @@
       "empty": "Nada aquí.",
       "copy": "Copiar lista",
       "copied": "Copiada"
+    },
+    "intelligence": {
+      "title": "De tu entrenadora",
+      "goalEta": "Vas camino a tu meta para el {date}",
+      "goalEtaWhy": "Según tus últimos 30 días, unos {weekly} kg por semana.",
+      "proteinAvg": "{have}g de {target}g",
+      "mealTitle": "Lo que te está funcionando",
+      "mealWhy": "{food} aparece en el {pct}% de los días que llegas a tu proteína. Vale la pena repetirlo esta semana.",
+      "pace": {
+        "ahead": "Vas por encima de tu proteína",
+        "on_pace": "Vas justo en tu proteína",
+        "behind": "Vas por debajo de tu proteína"
+      }
     }
   },
   "faq": {

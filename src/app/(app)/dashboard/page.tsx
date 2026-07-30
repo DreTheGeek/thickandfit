@@ -12,9 +12,19 @@ import { getDiary } from '@/lib/nutrition/diary';
 import { getCommunity } from '@/lib/community/feed';
 import { getProfileTimezone } from '@/lib/datetime/profile-timezone';
 import { getSupportEmail } from '@/lib/admin/settings';
+import { getPrediction } from '@/lib/prediction/read';
+import { getMealIntelligence } from '@/lib/intelligence/meal-recs';
+import { IntelligenceCard } from '@/components/dashboard/intelligence-card';
 import { TodayScreen, type WeekDay, type TodayNutrition, type CatchUp } from '@/components/dashboard/today-screen';
 
 export const dynamic = 'force-dynamic';
+
+/** Weeks elapsed since `startedAt`, 1-based. Module scope, NOT the render body: the purity rule bans
+ *  clock reads inside a component (same reason launch-runway.ts hoists daysUntil). */
+function weeksSince(startedAt: string | null): number | null {
+  if (!startedAt) return null;
+  return Math.max(1, Math.floor((Date.now() - Date.parse(startedAt)) / (7 * 86_400_000)) + 1);
+}
 
 export default async function DashboardPage(): Promise<ReactElement> {
   const ctx = await requireEntitled();
@@ -160,12 +170,19 @@ export default async function DashboardPage(): Promise<ReactElement> {
   // Null when neither is known, so the line is hidden rather than showing a fabricated week 1.
   const startedAt =
     onbStartedAt ?? ((profile as { created_at?: string } | null)?.created_at ?? null);
-  const weeksIn = startedAt
-    ? Math.max(1, Math.floor((Date.now() - Date.parse(startedAt)) / (7 * 86_400_000)) + 1)
-    : null;
+  const weeksIn = weeksSince(startedAt);
+
+  // K9: goal projection (K7) + adherence-aware meal rec (K8). Both engines refuse to speak without
+  // enough signal, so the card renders nothing rather than padding the screen with generic advice.
+  // Fetched in parallel; neither is allowed to fail the home screen.
+  const [prediction, meals] = await Promise.all([
+    ctx.companyId ? getPrediction(ctx.userId, ctx.companyId).catch(() => null) : Promise.resolve(null),
+    ctx.companyId ? getMealIntelligence(ctx.userId, ctx.companyId).catch(() => null) : Promise.resolve(null),
+  ]);
 
   return (
     <TodayScreen
+      intelligence={<IntelligenceCard prediction={prediction} meals={meals} />}
       name={firstName}
       dateLabel={dateLabel}
       weekDays={weekDays}

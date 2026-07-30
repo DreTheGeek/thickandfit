@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Skeleton } from '@/components/states/skeleton';
 import { ErrorState } from '@/components/states/error-state';
 import { STEP_GOAL, SLEEP_GOAL_MIN, formatSleep } from '@/lib/dailymetrics/goals';
@@ -50,6 +50,7 @@ export function TodayScreen({
   supportEmail,
   weeksIn,
   daily,
+  intelligence,
 }: {
   name: string;
   dateLabel: string;
@@ -63,6 +64,10 @@ export function TodayScreen({
   supportEmail: string;
   weeksIn: number | null;
   daily: { steps: number | null; sleepMinutes: number | null };
+  /** K9: server-rendered intelligence strip, passed in as a slot. It is a SERVER component (all of
+   *  its data is derived server-side and none of it is interactive), so it cannot be imported here
+   *  in a 'use client' module and arrives as a prop instead. */
+  intelligence?: ReactNode;
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
@@ -342,6 +347,7 @@ export function TodayScreen({
       {nutrition ? <NutritionCard n={nutrition} t={t} /> : null}
 
       {/* Catch-up: newest coach broadcast + active challenge progress, so home feels alive. */}
+      {intelligence}
       {catchUp && (catchUp.broadcast || catchUp.challenge) ? <CatchUpCard c={catchUp} t={t} /> : null}
 
       {/* Plateau nudge: dismissible, only when the latest insight flags an active plateau. */}

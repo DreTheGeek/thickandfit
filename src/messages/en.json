@@ -2074,6 +2074,19 @@
       "empty": "Nothing here.",
       "copy": "Copy list",
       "copied": "Copied"
+    },
+    "intelligence": {
+      "title": "From your coach",
+      "goalEta": "On pace for your goal by {date}",
+      "goalEtaWhy": "Based on your last 30 days, about {weekly} kg a week.",
+      "proteinAvg": "{have}g of {target}g",
+      "mealTitle": "What is working for you",
+      "mealWhy": "{food} shows up on {pct}% of the days you hit your protein. Worth repeating this week.",
+      "pace": {
+        "ahead": "Protein is ahead of target",
+        "on_pace": "Protein is on target",
+        "behind": "Protein is running behind"
+      }
     }
   },
   "faq": {
