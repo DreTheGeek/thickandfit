@@ -16,32 +16,18 @@ import 'server-only';
 // both non-reproducible and banned in this codebase).
 import { createHash, randomBytes } from 'node:crypto';
 import { createServiceClient } from '@/lib/supabase/service';
+import type { DrawKind, PoolEntry, DrawFilters, DrawRow, VerifyResult } from '@/lib/admin/draw-types';
 
-export type DrawKind = 'early_bird' | 'main' | 'founding_final' | 'bonus';
-
-/** One row of the frozen pool. Kept deliberately tiny: this is stored as jsonb per draw. */
-export type PoolEntry = { leadId: string; weight: number };
+// Client-safe shapes + constants live in draw-types.ts so 'use client' components can import them
+// without dragging this server-only module (node:crypto, service client) into the browser bundle.
+// Re-exported here as types-only for server callers that already import from this file.
+export type { DrawKind, PoolEntry, DrawFilters, DrawRow, VerifyResult };
 
 export type DrawPool = {
   entries: PoolEntry[];
   entrantCount: number;
   totalEntries: number;
   poolHash: string;
-};
-
-export type DrawFilters = {
-  /** Only leads who completed double-opt-in. Recommended: an unconfirmed email cannot be notified. */
-  confirmedOnly: boolean;
-  /** Only leads who converted to paying members. This is what makes the final draw founding-only. */
-  convertedOnly: boolean;
-  /** Drop obvious internal/test addresses so staff cannot win. */
-  excludeTestAddresses: boolean;
-};
-
-export const DEFAULT_FILTERS: DrawFilters = {
-  confirmedOnly: true,
-  convertedOnly: false,
-  excludeTestAddresses: true,
 };
 
 /** Addresses that must never win: our own QA seeds and internal domains. */
@@ -145,23 +131,6 @@ export function selectWinner(entries: PoolEntry[], seed: string): string | null 
   return entries[entries.length - 1].leadId;
 }
 
-export type DrawRow = {
-  id: string;
-  kind: DrawKind;
-  label: string;
-  seed: string;
-  poolHash: string;
-  entrantCount: number;
-  totalEntries: number;
-  winnerLeadId: string | null;
-  winnerEmail: string | null;
-  winnerName: string | null;
-  drawnAt: string;
-  voidedAt: string | null;
-  voidReason: string | null;
-  filters: DrawFilters | Record<string, unknown>;
-};
-
 /** Past draws, newest first. */
 export async function listDraws(companyId: string): Promise<DrawRow[]> {
   const sb = createServiceClient();
@@ -193,10 +162,6 @@ export async function listDraws(companyId: string): Promise<DrawRow[]> {
   }));
 }
 
-export type VerifyResult =
-  | { ok: true; recomputedWinnerLeadId: string; matches: boolean; poolHashMatches: boolean }
-  | { ok: false; reason: string };
-
 /**
  * Re-run a stored draw from its own snapshot and report whether it still produces the recorded
  * winner. This is the button an operator presses when someone questions the result: it proves the
@@ -227,9 +192,5 @@ export async function verifyDraw(companyId: string, drawId: string): Promise<Ver
   };
 }
 
-export const DRAW_LABELS: Record<DrawKind, string> = {
-  early_bird: 'Early-bird (around Aug 18)',
-  main: 'Main prize (doors open, Sept 27)',
-  founding_final: 'Founding-members final (window close)',
-  bonus: 'Bonus drawing',
-};
+// DRAW_LABELS + DEFAULT_FILTERS intentionally live in draw-types.ts (client-safe). Import them
+// from there, not from here.

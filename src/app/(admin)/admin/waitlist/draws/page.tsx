@@ -12,7 +12,8 @@ import type { ReactElement } from 'react';
 import { requireOperator } from '@/lib/auth/guards';
 import { AdminPage, Card, Stat } from '@/components/admin/ui';
 import { DrawRunner, DrawRowActions } from '@/components/admin/draw-runner';
-import { buildPool, listDraws, DEFAULT_FILTERS, type DrawRow } from '@/lib/admin/waitlist-draw';
+import { buildPool, listDraws } from '@/lib/admin/waitlist-draw';
+import { DEFAULT_FILTERS, type DrawRow } from '@/lib/admin/draw-types';
 
 export const dynamic = 'force-dynamic';
 

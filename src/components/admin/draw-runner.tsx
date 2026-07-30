@@ -5,7 +5,8 @@
 import { useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { runDrawAction, voidDrawAction, verifyDrawAction } from '@/lib/admin/waitlist-draw-actions';
-import { DRAW_LABELS, type DrawKind, type VerifyResult } from '@/lib/admin/waitlist-draw';
+// From draw-types (client-safe), never from waitlist-draw (server-only: node:crypto + service client).
+import { DRAW_LABELS, type DrawKind, type VerifyResult } from '@/lib/admin/draw-types';
 
 const KINDS: DrawKind[] = ['early_bird', 'main', 'founding_final', 'bonus'];
 

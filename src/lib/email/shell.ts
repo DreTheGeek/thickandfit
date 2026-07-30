@@ -6,7 +6,7 @@ import 'server-only';
 
 // Served from public/brand/. Points at the live app origin; falls back to the known-good host.
 const LOGO_URL =
-  (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.teamthickandfit.com').replace(/\/+$/, '') +
+  (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.teamthickandfit.com').replace(/\/+$/, '') +
   '/brand/logo-black.svg';
 
 const FONT =

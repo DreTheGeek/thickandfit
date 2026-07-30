@@ -10,16 +10,8 @@ import { requireOperator } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { logCoachAction } from '@/lib/coach/audit';
-import {
-  buildPool,
-  newSeed,
-  selectWinner,
-  verifyDraw,
-  DEFAULT_FILTERS,
-  DRAW_LABELS,
-  type DrawKind,
-  type VerifyResult,
-} from '@/lib/admin/waitlist-draw';
+import { buildPool, newSeed, selectWinner, verifyDraw } from '@/lib/admin/waitlist-draw';
+import { DEFAULT_FILTERS, DRAW_LABELS, type DrawKind, type VerifyResult } from '@/lib/admin/draw-types';
 
 export type RunDrawResult =
   | { ok: true; drawId: string; winnerEmail: string | null; winnerName: string | null; entrantCount: number; totalEntries: number }

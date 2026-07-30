@@ -32,7 +32,11 @@ const inter = Inter({
 // seo/schema.ts. Post-DNS-cutover the fallback matches prod so canonicals + OG resolve even if the
 // env var is momentarily missing on a fresh preview. Override with NEXT_PUBLIC_SITE_URL for any
 // non-www surface if one is ever added.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.teamthickandfit.com";
+// `||` not `??` on purpose: an env var that exists but is EMPTY ("") must still fall back. With `??`
+// an empty value slips through and `new URL("")` below throws ERR_INVALID_URL, which fails the build
+// at page-data collection rather than at request time. `vercel env pull` can legitimately produce an
+// empty local value, so this is not hypothetical.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.teamthickandfit.com";
 
 // <=165 chars so search engines show it whole (was 237, truncated in results).
 const SITE_DESCRIPTION =
