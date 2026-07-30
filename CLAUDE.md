@@ -107,6 +107,22 @@ typecheck, lint (PostToolUse). Exit 2 blocks the write. Never disable a hook to 
 
 ---
 
+## Site Visibility (pre-launch gate)
+Rodney, 2026-07-30: the marketing site stays out of public view until doors open Sept 27. The
+launch is two funnels: the waitlist (Aug 4) and the main app signup (Sept 27).
+
+`PRELAUNCH_HIDE_SITE=1` in Vercel prod turns it on. `src/lib/launch/prelaunch.ts` holds the list.
+- HIDDEN: `/` `/about` `/faq` `/pricing` `/vs/*` and every `/es` twin, 307 -> `/join` (`/es/join`).
+- LIVE: `/join*` (the whole waitlist funnel), `/api/*`, `/auth/*`, legal (`/terms` `/privacy`
+  `/disclaimer` - App Store review and CAN-SPAM need these reachable), `/support`, the authed app,
+  and the `admin.` host.
+- Team preview: visit `/?preview=<PRELAUNCH_PREVIEW_TOKEN>` once; it sets a 30-day cookie.
+- TO GO LIVE Sept 27: `vercel env rm PRELAUNCH_HIDE_SITE production`, then redeploy. That is the
+  whole switch. Do not delete the code; the gate is reused for any future dark period.
+- Adding a new public marketing page? Add it to `GATED_PATHS` or it ships visible.
+- Cost to know about: hidden pages get de-indexed while dark, so the `/vs/*` comparison pages and
+  the AEO work restart their indexing clock when the site goes live. Accepted deliberately.
+
 ## Manual / Post-Deploy Steps
 1. Supabase: project cpwesaeyhklmjbqppeah. Apply migrations. Set auth hooks. Store service role
    key as Postgres GUC for pg_cron (app.service_role_key).
