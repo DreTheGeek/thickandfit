@@ -16,6 +16,7 @@ import {
   hasPreviewAccess,
   isGatedPath,
   isPrelaunchEnabled,
+  isWaitlistClosed,
   presentedPreviewToken,
 } from '@/lib/launch/prelaunch';
 
@@ -69,7 +70,9 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   // Pre-launch gate: hide the public marketing site while leaving the waitlist funnel live.
   // Runs BEFORE the session refresh below, so a hidden page never touches Supabase at all.
   // Off unless PRELAUNCH_HIDE_SITE is set, and never applies on the admin host.
-  if (!host.startsWith('admin.') && isPrelaunchEnabled()) {
+  const siteHidden = isPrelaunchEnabled();
+  const waitlistClosed = isWaitlistClosed();
+  if (!host.startsWith('admin.') && (siteHidden || waitlistClosed)) {
     const { pathname, searchParams } = req.nextUrl;
     // The team clears the gate with /?preview=<token>, which is exchanged for a cookie so the rest
     // of their browsing needs no query string.
@@ -87,9 +90,12 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
       });
       return res;
     }
-    if (isGatedPath(pathname) && !hasPreviewAccess(req.cookies.get(PREVIEW_COOKIE)?.value)) {
+    if (
+      isGatedPath(pathname, { siteHidden, waitlistClosed }) &&
+      !hasPreviewAccess(req.cookies.get(PREVIEW_COOKIE)?.value)
+    ) {
       const url = req.nextUrl.clone();
-      url.pathname = gateRedirectPath(pathname);
+      url.pathname = gateRedirectPath(pathname, waitlistClosed);
       url.search = '';
       // 307, not 308: this is a temporary state that ends when doors open on Sept 27, and a
       // permanent redirect would be cached by browsers and CDNs long after the site goes live.

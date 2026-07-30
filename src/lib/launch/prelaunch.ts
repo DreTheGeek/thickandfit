@@ -28,6 +28,19 @@ const GATED_PATHS: RegExp[] = [
   /^\/vs(\/|$)/, // competitor comparison pages (/vs/myfitnesspal, /vs/fitia, ...)
 ];
 
+/**
+ * The waitlist funnel. Gated only by the SECOND switch (PRELAUNCH_WAITLIST_CLOSED), never by
+ * PRELAUNCH_HIDE_SITE, because the two funnels open on different dates: the waitlist on Aug 4 and
+ * the marketing site on Sept 27. One flag could not express that.
+ */
+const WAITLIST_PATHS: RegExp[] = [/^\/join(\/|$)/];
+
+/**
+ * The single public face during a full blackout. Must NEVER be gated by anything: it is the target
+ * every other gated path redirects to, so gating it is an immediate redirect loop.
+ */
+export const HOLDING_PATH = '/soon';
+
 /** Cookie that remembers a team member cleared the preview token. */
 export const PREVIEW_COOKIE = 'tf_site_preview';
 /** Query param that grants preview access: /?preview=<PRELAUNCH_PREVIEW_TOKEN>. */
@@ -40,7 +53,25 @@ export const PREVIEW_MAX_AGE_S = 60 * 60 * 24 * 30; // 30 days
  * production blackout from riding in on a deploy.
  */
 export function isPrelaunchEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  const v = (env.PRELAUNCH_HIDE_SITE ?? '').trim().toLowerCase();
+  return isTruthy(env.PRELAUNCH_HIDE_SITE);
+}
+
+/**
+ * Is the WAITLIST closed too? Independent of the marketing gate on purpose.
+ *
+ * Dre, 2026-07-30: nobody should be able to join the waitlist yet, but the team still needs to reach
+ * the site to log in and test. This closes the second funnel without disturbing the first switch, so
+ * Aug 4 is `vercel env rm PRELAUNCH_WAITLIST_CLOSED` and Sept 27 is `vercel env rm
+ * PRELAUNCH_HIDE_SITE`. Two dates, two switches, neither one entangled with the other.
+ *
+ * Defaults OFF, same as the marketing gate: shipping this code closes nothing by itself.
+ */
+export function isWaitlistClosed(env: NodeJS.ProcessEnv = process.env): boolean {
+  return isTruthy(env.PRELAUNCH_WAITLIST_CLOSED);
+}
+
+function isTruthy(raw: string | undefined): boolean {
+  const v = (raw ?? '').trim().toLowerCase();
   return v === '1' || v === 'on' || v === 'true' || v === 'yes';
 }
 
@@ -55,22 +86,38 @@ export function stripLocale(pathname: string): string {
   return p.startsWith('/es/') ? p.slice(3) : p;
 }
 
-/** True when this path is one of the marketing surfaces the gate hides. */
-export function isGatedPath(pathname: string): boolean {
+/**
+ * True when this path is hidden given the two switches.
+ *
+ * The holding page is checked FIRST and is never gated under any combination of flags. Everything
+ * gated redirects there, so one wrong answer here is not a 404, it is an infinite redirect on the
+ * only page a visitor can reach.
+ */
+export function isGatedPath(
+  pathname: string,
+  opts: { siteHidden: boolean; waitlistClosed: boolean },
+): boolean {
   const bare = stripLocale(pathname);
-  return GATED_PATHS.some((re) => re.test(bare));
+  if (bare === HOLDING_PATH) return false;
+  if (opts.waitlistClosed && WAITLIST_PATHS.some((re) => re.test(bare))) return true;
+  return opts.siteHidden && GATED_PATHS.some((re) => re.test(bare));
 }
 
 /**
- * Where a gated visitor goes: the waitlist, in their own language.
+ * Where a gated visitor goes, in their own language.
  *
- * A redirect rather than a "coming soon" page on purpose. Stray traffic to the domain before doors
+ * A redirect rather than a "coming soon" page on purpose: stray traffic to the domain before doors
  * open is exactly the traffic the waitlist wants, so sending it to /join converts it instead of
- * dead-ending it, and it leaves the domain with a single public face pre-launch, which is what
- * "two separate funnels" means in practice.
+ * dead-ending it, and it leaves the domain with a single public face pre-launch.
+ *
+ * ONCE THE WAITLIST IS CLOSED THAT TARGET IS GONE, and redirecting to a gated /join would loop
+ * forever. So the destination follows the flag: /join while the waitlist is open, the holding page
+ * once it is not.
  */
-export function gateRedirectPath(pathname: string): string {
-  return pathname === '/es' || pathname.startsWith('/es/') ? '/es/join' : '/join';
+export function gateRedirectPath(pathname: string, waitlistClosed: boolean): string {
+  const isEs = pathname === '/es' || pathname.startsWith('/es/');
+  const target = waitlistClosed ? HOLDING_PATH : '/join';
+  return isEs ? `/es${target}` : target;
 }
 
 /**
