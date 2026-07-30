@@ -19,6 +19,11 @@ const OWNER = [
   ['user_insights', 'profile_id'], ['push_subscriptions', 'profile_id'],
   ['body_measurements', 'profile_id'], ['food_photos', 'profile_id'],
   ['member_memory', 'profile_id'],
+  // Added 2026-07-30 with migrations 0095-0097. The suite has a HARDCODED list, so a new table is
+  // silently untested and reports a false green until it is added here.
+  ['entitlements', 'profile_id'],
+  ['cycle_logs', 'profile_id'],
+  ['community_blocks', 'blocker_profile_id'],
 ];
 const FORBIDDEN = [
   'contacts', 'client_subscriptions', 'contact_transactions', 'opportunities', 'pipelines',
