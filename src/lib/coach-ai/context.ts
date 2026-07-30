@@ -18,6 +18,8 @@ import {
   type PregnancySlug,
   type TrainingLocationSlug,
 } from '@/lib/health-profile/labels';
+import { loadCycleLogs } from '@/lib/cycle/data';
+import { currentPhase, PHASE_COACHING_EN } from '@/lib/cycle/phase';
 import { scoffPositive } from '@/lib/health-profile/screening';
 import { getPrediction, renderPredictionForPrompt } from '@/lib/prediction/read';
 
@@ -82,6 +84,10 @@ export type CoachContext = {
     safetyFlags: string[] | null;
     pregnancy: string | null;
   } | null;
+  /** One instruction-bearing line about where she is in her cycle, or null when she does not track
+   *  it. Logging a period IS the opt-in: with no logs this stays null and the coach never raises the
+   *  subject on its own. */
+  cycleLine: string | null;
   // Knowledge-graph neighborhood (kg_client_facts): the relational facts the flat intake misses -
   // the foods this client actually eats most and the plan they're on. Grounds the coach in what
   // they really do, not just what they declared at intake. Null when the client isn't in the graph.
@@ -376,10 +382,31 @@ export async function buildCoachContext(
   // no user_state row yet (fresh signup pre-materialize) — the chat renderer emits nothing then.
   const prediction = await getPrediction(profileId, companyId);
 
+  // Cycle phase. Best-effort and opt-in by behavior: no logs -> null -> the coach never mentions it.
+  // Wrapped because a tracker failure must never take down a chat.
+  let cycleLine: string | null = null;
+  try {
+    const cycleLogs = await loadCycleLogs(profileId, 12);
+    if (cycleLogs.length) {
+      const today = new Date().toISOString().slice(0, 10);
+      const { phase, cycleDay } = currentPhase(cycleLogs, today);
+      if (phase !== 'unknown') {
+        cycleLine =
+          (locale === 'es' ? 'Ciclo (dia ' : 'Cycle (day ') +
+          String(cycleDay ?? '?') +
+          (locale === 'es' ? '): esta ' : '): she is ') +
+          PHASE_COACHING_EN[phase];
+      }
+    }
+  } catch (e) {
+    console.warn('cycle context failed (non-fatal):', e instanceof Error ? e.message : String(e));
+  }
+
   return {
     contactId: ik?.contact_id ?? null,
     profile: { name: fullName, goal, locale, targets },
     health,
+    cycleLine,
     graph,
     nutrition: { days, avgKcal, avgProteinG },
     workouts,
@@ -481,6 +508,8 @@ export function renderContextBlock(ctx: CoachContext): string {
       if (loc) lines.push((es ? 'Donde entrena (respeta el equipo disponible): ' : 'Where she trains (respect the available equipment): ') + loc);
     }
     if (h.sleep) lines.push((es ? 'Sueno/recuperacion: ' : 'Sleep/recovery: ') + h.sleep);
+    // Cycle phase, only when SHE tracks it (see CoachContext.cycleLine).
+    if (ctx.cycleLine) lines.push(ctx.cycleLine);
     // Positive eating-disorder screen: the single most important posture change. Instruction-bearing
     // so the coach leads with feelings and behavior, keeps numbers gentle, and never pushes restriction.
     if (h.edScreenPositive) {

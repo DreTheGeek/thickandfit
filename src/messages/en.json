@@ -1461,7 +1461,8 @@
       "strengthTitle": "You are getting stronger",
       "strengthSub": "Every session builds on the last. Keep showing up.",
       "feelBetterTitle": "You keep showing up",
-      "feelBetterSub": "Consistency is the whole game. One day at a time."
+      "feelBetterSub": "Consistency is the whole game. One day at a time.",
+      "cycle": "Your cycle"
     },
     "gamification": {
       "dayStreak": "day streak",
@@ -2029,6 +2030,37 @@
       "yesterday": "Yesterday",
       "messagePlaceholder": "Message...",
       "send": "Send"
+    },
+    "cycle": {
+      "title": "Your cycle",
+      "intro": "Track your period so your plan works with your body instead of against it.",
+      "privacy": "Private. Only you can see this, and your coach never browses it.",
+      "noDataTitle": "Nothing logged yet",
+      "noDataBody": "Tap below on the first day of your next period and this fills in from there.",
+      "dayLabel": "Day {day}",
+      "logToday": "My period started today",
+      "endToday": "It ended today",
+      "saveError": "Could not save that. Try again.",
+      "rhythmLabel": "Your rhythm",
+      "avgLength": "About {days} days between periods",
+      "irregularNote": "Your cycles vary quite a bit, so we will not pretend to name an exact day. Here is the window to expect.",
+      "expectedBetween": "Expect it between {from} and {to}",
+      "nextExpected": "Next one around {date}",
+      "inDays": "in {days} days",
+      "historyLabel": "History",
+      "remove": "Remove",
+      "phase": {
+        "menstrual": "On your period",
+        "follicular": "Follicular phase",
+        "ovulation": "Around ovulation",
+        "luteal": "Luteal phase"
+      },
+      "phaseBody": {
+        "menstrual": "Energy often dips and cramps are common. Go lighter if you need to. A gentler week is not falling behind.",
+        "follicular": "Energy and recovery are usually at their best right now. Good week to push.",
+        "ovulation": "Strength usually peaks here. Joints are a little looser, so keep your form tight on heavy lower body.",
+        "luteal": "Appetite and cravings often rise and the scale can hold from water. That is normal. Do not cut calories over it."
+      }
     }
   },
   "faq": {

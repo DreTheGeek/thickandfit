@@ -1461,7 +1461,8 @@
       "strengthTitle": "Te estás poniendo más fuerte",
       "strengthSub": "Cada sesión se apoya en la anterior. Sigue apareciendo.",
       "feelBetterTitle": "Sigues apareciendo",
-      "feelBetterSub": "La constancia es todo. Un día a la vez."
+      "feelBetterSub": "La constancia es todo. Un día a la vez.",
+      "cycle": "Tu ciclo"
     },
     "gamification": {
       "dayStreak": "días seguidos",
@@ -2029,6 +2030,37 @@
       "yesterday": "Ayer",
       "messagePlaceholder": "Mensaje...",
       "send": "Enviar"
+    },
+    "cycle": {
+      "title": "Tu ciclo",
+      "intro": "Registra tu periodo para que tu plan trabaje con tu cuerpo, no en contra.",
+      "privacy": "Privado. Solo tú lo ves, y tu entrenadora nunca lo revisa.",
+      "noDataTitle": "Aún no hay registros",
+      "noDataBody": "Toca abajo el primer día de tu próximo periodo y desde ahí se llena solo.",
+      "dayLabel": "Día {day}",
+      "logToday": "Mi periodo empezó hoy",
+      "endToday": "Terminó hoy",
+      "saveError": "No se pudo guardar. Inténtalo de nuevo.",
+      "rhythmLabel": "Tu ritmo",
+      "avgLength": "Unos {days} días entre periodos",
+      "irregularNote": "Tus ciclos varían bastante, así que no vamos a inventar un día exacto. Este es el rango que puedes esperar.",
+      "expectedBetween": "Espéralo entre el {from} y el {to}",
+      "nextExpected": "El próximo cerca del {date}",
+      "inDays": "en {days} días",
+      "historyLabel": "Historial",
+      "remove": "Quitar",
+      "phase": {
+        "menstrual": "En tu periodo",
+        "follicular": "Fase folicular",
+        "ovulation": "Cerca de la ovulación",
+        "luteal": "Fase lútea"
+      },
+      "phaseBody": {
+        "menstrual": "La energía suele bajar y los cólicos son comunes. Baja la intensidad si lo necesitas. Una semana más suave no es atrasarte.",
+        "follicular": "Tu energía y recuperación suelen estar en su mejor momento. Buena semana para exigirte.",
+        "ovulation": "Aquí suele estar tu punto más fuerte. Las articulaciones están un poco más laxas, así que cuida la técnica en pierna pesada.",
+        "luteal": "El apetito y los antojos suelen subir y la báscula puede quedarse igual por retención. Es normal. No recortes calorías por eso."
+      }
     }
   },
   "faq": {
