@@ -20,6 +20,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin/usage', label: 'AI usage & spend', icon: 'sparkles' },
   { href: '/admin/status', label: 'Status & crons', icon: 'refresh' },
   { href: '/admin/support', label: 'Support tickets', icon: 'chat' },
+  { href: '/admin/crm/segments', label: 'Past-client segments', icon: 'user' },
   { href: '/admin/learning', label: 'AI learning', icon: 'sparkles' },
   { href: '/admin/graph', label: 'Knowledge graph', icon: 'grid' },
   { href: '/admin/knowledge', label: 'Knowledge base', icon: 'book' },
