@@ -5,8 +5,27 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createNotification } from '@/lib/notifications/create';
 import { convertLead } from '@/lib/funnel/service';
+import { upsertEntitlement, type EntitlementStatus } from '@/lib/billing/entitlement';
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
+
+/** Map Stripe's subscription status onto the entitlement vocabulary (0095's CHECK constraint).
+ *  Anything Stripe reports that we do not model becomes 'expired' (deny) rather than being assumed
+ *  active: an unknown status must never silently grant paid access. */
+function entitlementStatusForStripe(status: string): EntitlementStatus {
+  switch (status) {
+    case 'active':
+      return 'active';
+    case 'trialing':
+      return 'trialing';
+    case 'past_due':
+      return 'past_due';
+    case 'canceled':
+      return 'canceled';
+    default:
+      return 'expired';
+  }
+}
 
 // Minimal currency formatter (no shared util exists). Cents -> localized money string.
 function formatCents(cents: number | null | undefined, currency = 'usd'): string {
@@ -157,6 +176,22 @@ export async function upsertSubscriptionFromStripe(sub: StripeSubscriptionObject
   // THROW on failure: the webhook's catch marks the ledger row failed (reclaimable), so Stripe's
   // retry re-runs this idempotent upsert. Swallowing left a charged user without their entitlement.
   if (error) throw new Error(`upsertSubscriptionFromStripe: ${error.message}`);
+
+  // Project the grant into the authoritative entitlement table (0095). The row above stays the
+  // Stripe billing DETAIL (card, period end, cancel flag) that the billing UI renders; access itself
+  // is decided only by entitlements, so Apple IAP can grant the same product without a second oracle.
+  // THROWS on failure for the same reason as above: an unwritten entitlement is a paying member
+  // locked out, and Stripe's retry must get another chance at it.
+  const ent = await upsertEntitlement({
+    companyId: resolvedCompany,
+    profileId: resolvedProfile,
+    source: 'stripe',
+    status: entitlementStatusForStripe(sub.status),
+    externalTxnId: sub.id,
+    expiresAt: epochToIso(sub.current_period_end),
+    rawPayload: { stripe_status: sub.status, price_id: price?.id ?? null },
+  });
+  if (!ent.ok) throw new Error(`upsertSubscriptionFromStripe: entitlement write failed for ${sub.id}`);
 
   // Reflect the app subscription back onto the CRM contact so nurture targets correctly: without this
   // the ghl-sync mirror (GHL->Supabase, one-way) would keep a paying member marked as a lead/lost and
