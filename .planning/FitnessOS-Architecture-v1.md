@@ -217,3 +217,25 @@ The learning-loop build closed most ADOPT-NOW/DESIGN-NOW rows in one run (16 com
    And Stripe: Connect custodian accounts vs separate merchant accounts?
 8. **User corrections:** is there a UI for correcting a logged meal ("200g not 150g")? If not, that
    feedback loop into `ai_inferences.correction` is a Phase 2 gap. **(Being built now, Bucket 1.)**
+
+## K10 Memory OS — layer 1 landed 2026-07-30 (commit 13c7576)
+
+**Weighted retrieval reranker** (`src/lib/memory/rerank.ts`). Recall was cosine-similarity-only, top 6.
+Now: over-fetch 5x (cap 40) by vector, then rerank on semantic 0.5 / recency 0.2 / importance 0.2 /
+behavior 0.1, cut to 6, drop near-duplicates.
+
+The load-bearing idea: **decay is per-KIND**, not global. fact 3650d half-life, summary 120d,
+episodic 7d. A durable safety fact must never age out of the window; a single moment should. One
+global half-life cannot express both, and that is exactly why similarity-only retrieval surfaced
+chatter over constraints. Importance is a geometric mean of source x kind so a chat line tagged
+'fact' cannot score like an intake answer.
+
+Wired into coach chat, which passes the member's question as behavior terms.
+
+**Remaining K10 layers, deliberately not built yet** (they want production traffic to tune against,
+and the plan gates K10 on K1-K9 being validated in prod):
+1. separated vector domains (coach docs / food / exercise / company knowledge) - today everything
+   shares one embedding space, which is fine at 16 memory rows and will not be at 16,000
+2. behavioral + episodic memory as first-class stores rather than `kind` values on one table
+3. the context orchestrator generalized so scan, chat, insights and recommendations all assemble
+   context from one engine instead of each building its own
