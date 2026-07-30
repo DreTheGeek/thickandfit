@@ -1,13 +1,42 @@
 // Page-level auth guards (redirect on failure). For app pages, not API routes.
 import 'server-only';
 import { redirect } from 'next/navigation';
-import { resolveAuth, hasRole, COACH_ROLES, APPROVER_ROLES, type AuthContext } from '@/lib/auth/session';
+import {
+  resolveAuth,
+  hasRole,
+  homePathForUser,
+  COACH_ROLES,
+  APPROVER_ROLES,
+  MEMBER_ROLES,
+  type AuthContext,
+} from '@/lib/auth/session';
 import { isEntitled, hasAckedHealth } from '@/lib/billing/entitlement';
 import { isStripeConfigured } from '@/lib/billing/stripe';
 
 export async function requireAuth(): Promise<AuthContext> {
   const ctx = await resolveAuth();
   if (!ctx) redirect('/auth/sign-in');
+  return ctx;
+}
+
+/**
+ * Member-only surfaces (onboarding, and anything that writes a member's health/goal data).
+ *
+ * Nothing ROUTES staff here: homePathForUser sends operators to /admin and coaches to /coach before
+ * it ever looks at onboarding. But the page was guarded by requireAuth alone, so a bookmark or a
+ * pasted link dropped a coach into the member wizard, which would ask her for her body fat and PAR-Q
+ * answers and write a member health profile onto a staff account. The intent was already visible in
+ * the submit route (the CRM contact was gated on these two roles); this makes the rest match.
+ *
+ * Sends staff to their own console rather than 404ing: they are not doing anything wrong, they are
+ * just in the wrong place.
+ */
+export async function requireMember(): Promise<AuthContext> {
+  const ctx = await requireAuth();
+  // homePathForUser is the single source of truth for where a role belongs. Re-deriving it here
+  // would be a second copy to keep in sync, and it already returns /admin for operators and /coach
+  // for coach roles without touching onboarding_responses for either.
+  if (!hasRole(ctx.role, MEMBER_ROLES)) redirect(await homePathForUser(ctx.userId, ctx.role));
   return ctx;
 }
 

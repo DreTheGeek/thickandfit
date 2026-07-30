@@ -83,6 +83,11 @@ export const COACH_ROLES: Role[] = ['coach', 'assistant_coach', 'operator'];
 // APPROVE their own work, so the mid-ticket "last-eyes" gate must check this set, not COACH_ROLES.
 export const APPROVER_ROLES: Role[] = ['coach', 'operator'];
 
+// The people the PRODUCT is for. Onboarding, the health profile and the CRM contact are all
+// member-only concepts: a coach has no goal weight, no PAR-Q answers and no macro targets, and
+// asking her for them writes member data onto a staff account.
+export const MEMBER_ROLES: Role[] = ['subscriber', 'free'];
+
 // Where to send a freshly-authenticated user. Coaches/operators go to the app home;
 // subscribers/free go to onboarding until they've completed it, then the dashboard.
 // NEVER returns '/' (the marketing landing): an authed user should land in the app.

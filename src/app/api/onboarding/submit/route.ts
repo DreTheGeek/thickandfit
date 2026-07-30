@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { cookies } from 'next/headers';
 import { after } from 'next/server';
-import { resolveAuth } from '@/lib/auth/session';
+import { resolveAuth, hasRole, MEMBER_ROLES } from '@/lib/auth/session';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { onboardingInputSchema, computePlan } from '@/lib/onboarding/prediction';
 import { PRIMARY_GOALS } from '@/lib/onboarding/goals';
@@ -56,6 +56,11 @@ async function POST_h(req: Request) {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
   if (!ctx.companyId) return apiError('No company scope', 400);
+  // Member-only, enforced here and not just on the page: the page guard stops a coach who follows a
+  // link, this stops a direct POST. Without it a staff account could still write itself an
+  // onboarding_responses row and a member health profile. The CRM-contact block below was already
+  // gated on these two roles; this makes the two writes above it agree.
+  if (!hasRole(ctx.role, MEMBER_ROLES)) return apiError('Onboarding is for members only', 403);
 
   let body: unknown;
   try {

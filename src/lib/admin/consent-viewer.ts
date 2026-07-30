@@ -6,6 +6,7 @@ import 'server-only';
 // Never throws: on DB error every field falls back to zero / empty so /admin/security/consent
 // still renders. Every query is scoped to the caller's companyId, no cross-tenant leaks.
 import { createServiceClient } from '@/lib/supabase/service';
+import { MEMBER_ROLES } from '@/lib/auth/session';
 
 export type ConsentRow = {
   id: string;
@@ -42,7 +43,9 @@ export type ConsentFilters = {
 const ROW_CAP_DEFAULT = 200;
 const SIGNUP_TYPES = ['terms_of_service', 'privacy_policy', 'signup'] as const;
 const BILLING_TYPES = ['billing', 'auto_renewal_disclosure'] as const;
-const MEMBER_ROLES = ['subscriber', 'free'] as const;
+// Was a local copy of the same two roles. Now imported from session.ts so "who is a member" has one
+// definition: a fifth role added later must not silently mean one thing here and another in the
+// onboarding guard.
 
 export async function getConsentSnapshot(
   companyId: string | null,

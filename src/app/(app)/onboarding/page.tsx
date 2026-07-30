@@ -1,7 +1,7 @@
-// Onboarding page. Requires auth (a client just signed up). Renders the wizard,
-// which owns its own full-screen chrome (progress + steps).
+// Onboarding page. Member-only (a client just signed up). Renders the wizard, which owns its own
+// full-screen chrome (progress + steps).
 import type { ReactElement } from 'react';
-import { requireAuth } from '@/lib/auth/guards';
+import { requireMember } from '@/lib/auth/guards';
 import { getSessionUser } from '@/lib/auth/session';
 import { createServiceClient } from '@/lib/supabase/service';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
@@ -9,7 +9,8 @@ import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 export const dynamic = 'force-dynamic';
 
 export default async function OnboardingPage(): Promise<ReactElement> {
-  const ctx = await requireAuth();
+  // Staff never belong here: requireMember bounces a coach to /coach and an operator to /admin.
+  const ctx = await requireMember();
   // Prefill the name captured at signup (email form sets first/last; OAuth providers set full_name)
   // so the wizard never asks for it twice. The fields stay editable in the wizard.
   const user = await getSessionUser();
