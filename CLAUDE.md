@@ -111,16 +111,23 @@ typecheck, lint (PostToolUse). Exit 2 blocks the write. Never disable a hook to 
 Rodney, 2026-07-30: the marketing site stays out of public view until doors open Sept 27. The
 launch is two funnels: the waitlist (Aug 4) and the main app signup (Sept 27).
 
-TWO INDEPENDENT SWITCHES, because the two funnels open on different dates. `src/lib/launch/prelaunch.ts`
-holds both lists. Both default OFF, so deploying the code darkens nothing by itself.
+**CURRENT STATE (2026-07-30): the site is FULLY LIVE. Both switches are OFF in Vercel prod.**
+Dre took the site public on 2026-07-30, ahead of the Aug 4 / Sept 27 dates below. The marketing site
+is publicly visible and the waitlist is accepting real signups now. The gate CODE stays in place and
+is inert; re-darkening is an env var, not a revert.
 
-| switch | closes | remove it on |
+TWO INDEPENDENT SWITCHES, because the two funnels were scoped to open on different dates.
+`src/lib/launch/prelaunch.ts` holds both lists. Both default OFF, so deploying the code darkens
+nothing by itself.
+
+| switch | closes | originally scheduled |
 |---|---|---|
-| `PRELAUNCH_WAITLIST_CLOSED=1` | `/join*` (the waitlist funnel) + `/api/funnel/signup` | **Aug 4** |
-| `PRELAUNCH_HIDE_SITE=1` | `/` `/about` `/faq` `/pricing` `/vs/*` (+ every `/es` twin) | **Sept 27** |
+| `PRELAUNCH_WAITLIST_CLOSED=1` | `/join*` (the waitlist funnel) + `/api/funnel/signup` | open Aug 4 |
+| `PRELAUNCH_HIDE_SITE=1` | `/` `/about` `/faq` `/pricing` `/vs/*` (+ every `/es` twin) | open Sept 27 |
 
-- Both on (the state as of 2026-07-30): the whole public surface 307s to `/soon`, a bare holding page.
-- Only `PRELAUNCH_HIDE_SITE`: marketing 307s to `/join`. This is the Aug 4 -> Sept 27 state.
+- Both off (now): everything public, `/soon` still exists but nothing points at it.
+- Both on: the whole public surface 307s to `/soon`, a bare holding page.
+- Only `PRELAUNCH_HIDE_SITE`: marketing 307s to `/join`. Marketing dark, waitlist live.
 - ALWAYS LIVE: `/soon`, `/api/*` (except funnel signup while closed), `/auth/*`, legal (`/terms`
   `/privacy` `/disclaimer` - App Store review and CAN-SPAM need these reachable), `/support`, the
   authed app, and the `admin.` host. Login always works, so the team can test while dark.
