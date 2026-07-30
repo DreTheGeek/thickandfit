@@ -3,6 +3,7 @@
 import { useOptimistic, useRef, useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { PostModerationMenu } from '@/components/community/post-moderation-menu';
 import { createClient } from '@/lib/supabase/client';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
@@ -342,9 +343,20 @@ function DeleteButton({ postId, dark }: { postId: string; dark?: boolean }): Rea
   );
 }
 
-function PostCard({ post, canDelete }: { post: FeedPost; canDelete: boolean }): ReactElement {
+function PostCard({
+  post,
+  canDelete,
+  viewerId,
+}: {
+  post: FeedPost;
+  canDelete: boolean;
+  viewerId: string;
+}): ReactElement {
   const locale = useLocale();
   const t = useTranslations('app.community');
+  // Report/Block never render on your OWN post: there is nothing to report and self-blocking is
+  // rejected server-side anyway.
+  const isOwn = post.author.id === viewerId;
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center gap-3">
@@ -356,7 +368,16 @@ function PostCard({ post, canDelete }: { post: FeedPost; canDelete: boolean }): 
           </div>
           <span className="text-[12px] text-faint">{relativeTime(post.createdAt, locale)}</span>
         </div>
-        {canDelete ? <DeleteButton postId={post.id} /> : null}
+        <span className="ml-auto inline-flex items-center gap-1">
+          {!isOwn && (
+            <PostModerationMenu
+              postId={post.id}
+              authorProfileId={post.author.id}
+              authorName={post.author.name}
+            />
+          )}
+          {canDelete ? <DeleteButton postId={post.id} /> : null}
+        </span>
       </div>
       <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-soft">{post.body}</p>
       {post.mediaUrl ? (
@@ -440,7 +461,12 @@ export function CommunityFeed({
         </Card>
       ) : (
         data.posts.map((p) => (
-          <PostCard key={p.id} post={p} canDelete={canBroadcast || p.author.id === viewerId} />
+          <PostCard
+            key={p.id}
+            post={p}
+            canDelete={canBroadcast || p.author.id === viewerId}
+            viewerId={viewerId}
+          />
         ))
       )}
     </div>

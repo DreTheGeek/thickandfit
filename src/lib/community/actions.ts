@@ -10,8 +10,35 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { getComments } from '@/lib/community/feed';
 import { REACTION_EMOJIS, type FeedComment } from '@/lib/community/types';
 import { notifyBroadcast, notifyMember } from '@/lib/notifications/triggers';
+import { classifyContent, blockMessageKey } from '@/lib/community/content-filter';
 
 export type CommunityResult = { ok: boolean; error?: string };
+
+// Raise a moderation report on the app's own behalf. Used when the content filter FLAGS rather than
+// blocks (self-harm), so a human reaches the member fast without the post being deleted first.
+// reporter_profile_id stays null: this was the system, not a member, and the queue shows it as such.
+// Best-effort by design; a reporting failure must never undo a member's post.
+async function autoReportPost(
+  companyId: string,
+  postId: string,
+  authorProfileId: string,
+  reason: 'self_harm',
+): Promise<void> {
+  try {
+    const svc = createServiceClient();
+    const { error } = await svc.from('community_reports').insert({
+      company_id: companyId,
+      post_id: postId,
+      reporter_profile_id: null,
+      reported_profile_id: authorProfileId,
+      reason,
+      note: 'Raised automatically by the content filter.',
+    });
+    if (error) console.error('autoReportPost:', error.message);
+  } catch (e) {
+    console.error('autoReportPost:', e instanceof Error ? e.message : e);
+  }
+}
 
 const PostInput = z
   .object({
@@ -34,17 +61,34 @@ export async function createPostAction(input: unknown): Promise<CommunityResult>
   const isCoach = COACH_ROLES.includes(ctx.role);
   const isBroadcast = Boolean(parsed.data.isBroadcast) && isCoach;
 
+  // Objectionable-content filter (App Store guideline 1.2). Runs BEFORE the write so blocked content
+  // never reaches the feed. A self-harm 'flag' still writes, then raises a report for a human.
+  const verdict = classifyContent(parsed.data.body);
+  if (verdict.action === 'block') {
+    return { ok: false, error: blockMessageKey(verdict.reason) };
+  }
+
   const sb = await createClient();
-  const { error } = await sb.from('community_posts').insert({
-    company_id: ctx.companyId,
-    author_profile_id: ctx.userId,
-    body: parsed.data.body,
-    media_url: parsed.data.mediaUrl ?? null,
-    is_broadcast: isBroadcast,
-  });
+  const { data: inserted, error } = await sb
+    .from('community_posts')
+    .insert({
+      company_id: ctx.companyId,
+      author_profile_id: ctx.userId,
+      body: parsed.data.body,
+      media_url: parsed.data.mediaUrl ?? null,
+      is_broadcast: isBroadcast,
+    })
+    .select('id')
+    .single();
   if (error) {
     console.error('createPostAction:', error.message);
     return { ok: false, error: 'insert_failed' };
+  }
+
+  // Self-harm language: the post stays up (deleting a member's cry for help is the wrong response)
+  // and an open report puts it at the top of the moderation queue so a coach reaches them fast.
+  if (verdict.action === 'flag' && inserted?.id) {
+    void autoReportPost(ctx.companyId, inserted.id, ctx.userId, verdict.reason);
   }
 
   // Real trigger: a coach broadcast notifies every other member (in-app + best-effort push).
@@ -175,6 +219,14 @@ export async function addCommentAction(input: unknown): Promise<CommunityResult>
   if (!parsed.success) return { ok: false, error: 'invalid' };
   const ctx = await requireAuth();
   if (!ctx.companyId) return { ok: false, error: 'no_company' };
+
+  // Same filter as posts: comments are the higher-volume abuse surface, so gating only posts would
+  // leave the actual problem open.
+  const verdict = classifyContent(parsed.data.body);
+  if (verdict.action === 'block') {
+    return { ok: false, error: blockMessageKey(verdict.reason) };
+  }
+
   const sb = await createClient();
   const { error } = await sb.from('post_comments').insert({
     post_id: parsed.data.postId,
@@ -185,6 +237,10 @@ export async function addCommentAction(input: unknown): Promise<CommunityResult>
   if (error) {
     console.error('addCommentAction:', error.message);
     return { ok: false, error: 'insert_failed' };
+  }
+  // A self-harm comment flags the PARENT post so the whole thread lands in the queue together.
+  if (verdict.action === 'flag') {
+    void autoReportPost(ctx.companyId, parsed.data.postId, ctx.userId, verdict.reason);
   }
   // Notify the post's author that someone commented (unless they commented on their own post).
   // after() survives the frozen lambda; failures never block the comment.
@@ -223,8 +279,10 @@ export async function addCommentAction(input: unknown): Promise<CommunityResult>
 export async function fetchCommentsAction(postId: unknown): Promise<FeedComment[]> {
   const parsed = z.string().uuid().safeParse(postId);
   if (!parsed.success) return [];
-  await requireAuth();
-  return getComments(parsed.data);
+  // Pass the viewer so a blocked member's comments are hidden here too. Without this, blocking a
+  // member removes them from the feed but they reappear the moment a thread is expanded.
+  const ctx = await requireAuth();
+  return getComments(parsed.data, ctx.userId);
 }
 
 export async function joinChallengeAction(challengeId: unknown): Promise<CommunityResult> {
@@ -248,5 +306,110 @@ export async function joinChallengeAction(challengeId: unknown): Promise<Communi
     return { ok: false, error: 'join_failed' };
   }
   revalidatePath('/community');
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Member blocking (App Store guideline 1.2). One-way and silent: the blocked
+// member is never notified, because telling someone they were blocked is itself
+// a harassment vector. Enforcement is on the READ path (feed.ts), so nothing is
+// deleted and the content survives for moderation evidence.
+// ---------------------------------------------------------------------------
+
+/** Hide every post and comment by `profileId` from the current member's feed. Idempotent. */
+export async function blockMemberAction(profileId: unknown): Promise<CommunityResult> {
+  const parsed = z.string().uuid().safeParse(profileId);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireAuth();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+  if (parsed.data === ctx.userId) return { ok: false, error: 'self' };
+
+  const sb = await createClient();
+  // upsert, not insert: tapping Block twice must not 409 at the unique index.
+  const { error } = await sb.from('community_blocks').upsert(
+    {
+      company_id: ctx.companyId,
+      blocker_profile_id: ctx.userId,
+      blocked_profile_id: parsed.data,
+    },
+    { onConflict: 'company_id,blocker_profile_id,blocked_profile_id' },
+  );
+  if (error) {
+    console.error('blockMemberAction:', error.message);
+    return { ok: false, error: 'failed' };
+  }
+  revalidatePath('/community');
+  return { ok: true };
+}
+
+/** Reverse a block. */
+export async function unblockMemberAction(profileId: unknown): Promise<CommunityResult> {
+  const parsed = z.string().uuid().safeParse(profileId);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireAuth();
+
+  const sb = await createClient();
+  // RLS restricts the delete to the caller's own rows, so no extra ownership check is needed here.
+  const { error } = await sb
+    .from('community_blocks')
+    .delete()
+    .eq('blocker_profile_id', ctx.userId)
+    .eq('blocked_profile_id', parsed.data);
+  if (error) {
+    console.error('unblockMemberAction:', error.message);
+    return { ok: false, error: 'failed' };
+  }
+  revalidatePath('/community');
+  return { ok: true };
+}
+
+/**
+ * Member-facing report. The moderation TABLE and the operator queue at /admin/community/reports
+ * already existed, but nothing let a member actually file one, so guideline 1.2's "report mechanism"
+ * was only half built.
+ *
+ * Idempotent per reporter via the unique index in 0093, so a double-tap does not inflate the queue.
+ * reported_profile_id is denormalized from the post's author at insert time so the report still names
+ * who was reported even if the post is later deleted.
+ */
+export async function reportPostAction(input: unknown): Promise<CommunityResult> {
+  const parsed = z
+    .object({
+      postId: z.string().uuid(),
+      reason: z.enum(['spam', 'harassment', 'self_harm', 'nudity', 'misinformation', 'other']),
+      note: z.string().trim().max(500).optional(),
+    })
+    .safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireAuth();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+
+  const svc = createServiceClient();
+  const { data: post } = await svc
+    .from('community_posts')
+    .select('author_profile_id, company_id')
+    .eq('id', parsed.data.postId)
+    .maybeSingle();
+  const row = post as { author_profile_id: string | null; company_id: string } | null;
+  if (!row) return { ok: false, error: 'not_found' };
+  // Cross-tenant guard: a member may only report inside their own company.
+  if (row.company_id !== ctx.companyId) return { ok: false, error: 'not_found' };
+  if (row.author_profile_id === ctx.userId) return { ok: false, error: 'self' };
+
+  const { error } = await svc.from('community_reports').upsert(
+    {
+      company_id: ctx.companyId,
+      post_id: parsed.data.postId,
+      reporter_profile_id: ctx.userId,
+      reported_profile_id: row.author_profile_id,
+      reason: parsed.data.reason,
+      note: parsed.data.note ?? null,
+    },
+    { onConflict: 'company_id,post_id,reporter_profile_id' },
+  );
+  if (error) {
+    console.error('reportPostAction:', error.message);
+    return { ok: false, error: 'failed' };
+  }
   return { ok: true };
 }

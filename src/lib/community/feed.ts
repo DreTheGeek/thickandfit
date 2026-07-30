@@ -62,16 +62,36 @@ type PostRow = {
   created_at: string;
 };
 
+/** Profile ids this viewer has blocked. Enforcement for guideline 1.2 lives on the READ path so the
+ *  blocked member's content stays intact for moderation evidence and visible to everyone else.
+ *  Returns an empty set on error: a failed block lookup must not blank the whole feed. */
+async function blockedIdsFor(viewerId: string): Promise<Set<string>> {
+  const sb = await createClient();
+  const { data, error } = await sb
+    .from('community_blocks')
+    .select('blocked_profile_id')
+    .eq('blocker_profile_id', viewerId);
+  if (error) {
+    console.error('blockedIdsFor:', error.message);
+    return new Set();
+  }
+  return new Set((data ?? []).map((r) => (r as { blocked_profile_id: string }).blocked_profile_id));
+}
+
 export async function getCommunity(viewerId: string): Promise<CommunityData> {
   const sb = await createClient();
 
-  const { data: postRows, error } = await sb
-    .from('community_posts')
-    .select('id, author_profile_id, body, media_url, is_broadcast, created_at')
-    .order('created_at', { ascending: false })
-    .limit(FEED_LIMIT);
+  const [{ data: postRows, error }, blocked] = await Promise.all([
+    sb
+      .from('community_posts')
+      .select('id, author_profile_id, body, media_url, is_broadcast, created_at')
+      .order('created_at', { ascending: false })
+      .limit(FEED_LIMIT),
+    blockedIdsFor(viewerId),
+  ]);
   if (error) throw new Error(`getCommunity posts: ${error.message}`);
-  const posts = (postRows ?? []) as PostRow[];
+  // Drop blocked authors before anything else, so their posts never reach reaction/comment hydration.
+  const posts = ((postRows ?? []) as PostRow[]).filter((p) => !blocked.has(p.author_profile_id));
   const postIds = posts.map((p) => p.id);
 
   // Bulk reactions + comment counts so the feed stays O(1) round-trips.
@@ -200,14 +220,19 @@ async function getActiveChallenge(
   };
 }
 
-export async function getComments(postId: string): Promise<FeedComment[]> {
+export async function getComments(postId: string, viewerId?: string): Promise<FeedComment[]> {
   const sb = await createClient();
   const { data } = await sb
     .from('post_comments')
     .select('id, profile_id, body, created_at')
     .eq('post_id', postId)
     .order('created_at', { ascending: true });
-  const rows = (data ?? []) as { id: string; profile_id: string; body: string; created_at: string }[];
+  let rows = (data ?? []) as { id: string; profile_id: string; body: string; created_at: string }[];
+  // Blocking has to reach comments too, or a blocked member simply moves to the reply thread.
+  if (viewerId) {
+    const blocked = await blockedIdsFor(viewerId);
+    rows = rows.filter((r) => !blocked.has(r.profile_id));
+  }
   const authors = await loadAuthors(rows.map((r) => r.profile_id));
   return rows.map((r) => ({
     id: r.id,
