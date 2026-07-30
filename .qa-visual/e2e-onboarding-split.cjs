@@ -64,10 +64,16 @@ const check = (name, pass, detail) => {
     .from('contacts')
     .insert({
       company_id: companyId,
+      // type + lifecycle_stage mirror what ensureCrmContact inserts. `type` is NOT NULL with no
+      // default and CHECKed against ('client','lead'), so omitting it fails the insert.
+      type: 'client',
+      lifecycle_stage: 'active',
       profile_id: profileId,
       first_name: 'Onboard',
       last_name: 'Tester',
       email: EMAIL,
+      is_legacy: false,
+      source: 'app',
     })
     .select('id')
     .single();

@@ -536,7 +536,8 @@
       "bodyFatPlaceholder": "If you know it",
       "bodyFatRange": "Body fat should be between 3 and 70, or leave it blank.",
       "healthTitle": "Anything I should know?",
-      "healthSub": "This is what makes the plan yours. I build around your body, not a template."
+      "healthSub": "This is what makes the plan yours. I build around your body, not a template.",
+      "predictRecompNote": "You picked losing fat AND building muscle, so we hold your calories at maintenance and change what your body is made of. Expect the scale to stay flatter than you think while your shape changes. That is the plan working, not stalling."
     },
     "exercise": {
       "back": "Back",

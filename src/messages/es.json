@@ -536,7 +536,8 @@
       "bodyFatPlaceholder": "Si lo sabes",
       "bodyFatRange": "El porcentaje de grasa debe estar entre 3 y 70, o déjalo en blanco.",
       "healthTitle": "¿Algo que deba saber?",
-      "healthSub": "Esto es lo que hace que el plan sea tuyo. Lo armo según tu cuerpo, no una plantilla."
+      "healthSub": "Esto es lo que hace que el plan sea tuyo. Lo armo según tu cuerpo, no una plantilla.",
+      "predictRecompNote": "Elegiste bajar grasa Y ganar músculo, así que mantenemos tus calorías y cambiamos de qué está hecho tu cuerpo. La báscula se va a mover menos de lo que esperas mientras tu figura cambia. Así se ve el plan funcionando, no estancado."
     },
     "exercise": {
       "back": "Espalda",

@@ -14,7 +14,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import type { ReactElement, ReactNode } from 'react';
+import type { Dispatch, ReactElement, ReactNode, SetStateAction } from 'react';
 import { setUiLocaleAction, setContentLocaleAction } from '@/lib/i18n/actions';
 import { computePlan, type OnboardingInput } from '@/lib/onboarding/prediction';
 import { PRIMARY_GOALS, deriveGoalDirection, type PrimaryGoal } from '@/lib/onboarding/goals';
@@ -103,8 +103,11 @@ export function OnboardingFlow({
   const [safety, setSafety] = useState<string[]>([]);
   const safetyFlagged = safety.length > 0;
 
-  function toggle(list: string[], set: (v: string[]) => void, value: string): void {
-    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+  // Functional updater, NOT `set(list.filter(...))`. React batches updates, so two chip taps inside
+  // one batch would both read the same stale array and the second would silently discard the first.
+  // Caught in prod QA: tapping Knees then Lower back fast persisted only Lower back.
+  function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
+    set((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
   }
   function toggleGoal(value: PrimaryGoal): void {
     setPrimaryGoals((prev) =>
@@ -150,6 +153,9 @@ export function OnboardingFlow({
   const goalsValid = primaryGoals.length > 0;
 
   const goal = useMemo(() => deriveGoalDirection(primaryGoals), [primaryGoals]);
+  // True when the derived direction holds weight steady but the member asked for a different number
+  // on the scale, i.e. recomposition. Drives the explainer on the prediction step.
+  const isRecomp = goal === 'maintain' && Math.round(goalKg) !== Math.round(weightKg);
 
   const input: OnboardingInput = useMemo(
     () => ({
@@ -365,7 +371,7 @@ export function OnboardingFlow({
               <ChipRow
                 options={INJURIES}
                 selected={injuries}
-                onToggle={(v) => toggle(injuries, setInjuries, v)}
+                onToggle={(v) => toggle(setInjuries, v)}
                 label={(v) => th(`opt.injuries.${v}`)}
                 noneLabel={th('none')}
                 onNone={() => setInjuries([])}
@@ -376,7 +382,7 @@ export function OnboardingFlow({
               <ChipRow
                 options={CONDITIONS}
                 selected={conditions}
-                onToggle={(v) => toggle(conditions, setConditions, v)}
+                onToggle={(v) => toggle(setConditions, v)}
                 label={(v) => th(`opt.conditions.${v}`)}
                 noneLabel={th('none')}
                 onNone={() => setConditions([])}
@@ -396,7 +402,7 @@ export function OnboardingFlow({
               <ChipRow
                 options={SAFETY}
                 selected={safety}
-                onToggle={(v) => toggle(safety, setSafety, v)}
+                onToggle={(v) => toggle(setSafety, v)}
                 label={(v) => th(`opt.safety.${v}`)}
                 noneLabel={th('safetyNone')}
                 onNone={() => setSafety([])}
@@ -428,6 +434,15 @@ export function OnboardingFlow({
               </span>
             </div>
           </div>
+          {/* Recomposition needs saying out loud. Someone who picked BOTH lose fat and build muscle
+              derives to `maintain`, so the projection line is deliberately FLAT while their goal
+              weight sits below it. Unexplained, that reads as "you will never get there" at the exact
+              moment we are asking them to trust the plan. */}
+          {isRecomp && (
+            <p className="mt-5 rounded-[12px] bg-warm px-4 py-3 text-[14px] leading-[1.55] text-soft">
+              {t('predictRecompNote')}
+            </p>
+          )}
           <p className="mt-5 text-[14px] leading-[1.6] text-soft">{t('predictNote')}</p>
         </>
       )}
