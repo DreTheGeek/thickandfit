@@ -133,6 +133,24 @@ typecheck, lint (PostToolUse). Exit 2 blocks the write. Never disable a hook to 
 | Secret | Rotated | By | Notes |
 |---|---|---|---|
 | CRON_SECRET | 2026-07-03 | Claude (launch hardening) | rotated to align Vercel prod + pg_cron registrations; old value unrecoverable (encrypted) |
+| Supabase `smtp_pass` (Resend key) | 2026-07-30 | Claude (email restore) | new sending-only key `supabase-smtp-2026-07-30`; the previous value was cleared by a partial auth-config PATCH and is unrecoverable (the Management API returns it masked) |
+
+## Auth email: two config traps that cause outages
+1. **A partial PATCH to `/config/auth` CLEARS the rest of the SMTP group.** Sending only
+   `smtp_admin_email` nulled `smtp_host`/`smtp_port`/`smtp_user`/`smtp_pass` and took email down. Always
+   PATCH the WHOLE block together: host, port (as the STRING `'465'`), user, pass, admin_email,
+   sender_name, `external_email_enabled`. Non-SMTP keys (`mailer_otp_exp`) are a separate group and are
+   safe to patch alone.
+2. **`rate_limit_email_sent` silently reverts to 2/hour.** It reset during the SMTP patch above, and
+   2/hour is low enough that the 3rd invite in a batch fails with "email rate limit exceeded". Re-assert
+   `rate_limit_email_sent: 30` after ANY auth-config change, and re-check it before a launch send.
+
+Sending domain is `teamthickandfit.com` (verified 2026-07-30). `thicknfit.kaldrtech.com` was REMOVED
+from the Resend account on ~2026-07-24, which is what broke every auth email until this was found: the
+sender pointed at a domain the account no longer had. Resend requires, on `send.<domain>`, an MX to
+`feedback-smtp.us-east-1.amazonses.com` (10) plus a TXT of LITERALLY `v=spf1 include:amazonses.com ~all`.
+DNS is GoDaddy; disable its SPF-merge for that record or it rewrites it to a `_spfm` indirection and
+verification fails. Still TODO: no DMARC record on `_dmarc.teamthickandfit.com`.
 
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
