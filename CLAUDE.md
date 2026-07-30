@@ -111,17 +111,31 @@ typecheck, lint (PostToolUse). Exit 2 blocks the write. Never disable a hook to 
 Rodney, 2026-07-30: the marketing site stays out of public view until doors open Sept 27. The
 launch is two funnels: the waitlist (Aug 4) and the main app signup (Sept 27).
 
-`PRELAUNCH_HIDE_SITE=1` in Vercel prod turns it on. `src/lib/launch/prelaunch.ts` holds the list.
-- HIDDEN: `/` `/about` `/faq` `/pricing` `/vs/*` and every `/es` twin, 307 -> `/join` (`/es/join`).
-- LIVE: `/join*` (the whole waitlist funnel), `/api/*`, `/auth/*`, legal (`/terms` `/privacy`
-  `/disclaimer` - App Store review and CAN-SPAM need these reachable), `/support`, the authed app,
-  and the `admin.` host.
-- Team preview: visit `/?preview=<PRELAUNCH_PREVIEW_TOKEN>` once; it sets a 30-day cookie.
-- TO GO LIVE Sept 27: `vercel env rm PRELAUNCH_HIDE_SITE production`, then redeploy. That is the
-  whole switch. Do not delete the code; the gate is reused for any future dark period.
+TWO INDEPENDENT SWITCHES, because the two funnels open on different dates. `src/lib/launch/prelaunch.ts`
+holds both lists. Both default OFF, so deploying the code darkens nothing by itself.
+
+| switch | closes | remove it on |
+|---|---|---|
+| `PRELAUNCH_WAITLIST_CLOSED=1` | `/join*` (the waitlist funnel) + `/api/funnel/signup` | **Aug 4** |
+| `PRELAUNCH_HIDE_SITE=1` | `/` `/about` `/faq` `/pricing` `/vs/*` (+ every `/es` twin) | **Sept 27** |
+
+- Both on (the state as of 2026-07-30): the whole public surface 307s to `/soon`, a bare holding page.
+- Only `PRELAUNCH_HIDE_SITE`: marketing 307s to `/join`. This is the Aug 4 -> Sept 27 state.
+- ALWAYS LIVE: `/soon`, `/api/*` (except funnel signup while closed), `/auth/*`, legal (`/terms`
+  `/privacy` `/disclaimer` - App Store review and CAN-SPAM need these reachable), `/support`, the
+  authed app, and the `admin.` host. Login always works, so the team can test while dark.
+- Team preview: visit `/?preview=<PRELAUNCH_PREVIEW_TOKEN>` once; it sets a 30-day cookie that
+  bypasses BOTH switches, including the signup API, so the full funnel stays testable while closed.
+  Rotating the token invalidates every existing preview cookie.
+- `/soon` must never be gated. Every gated path redirects there, so gating it is an infinite redirect
+  on the only reachable page. `isGatedPath` checks it first; the test asserts it in all four modes.
 - Adding a new public marketing page? Add it to `GATED_PATHS` or it ships visible.
+- Closing the page is not closing the funnel: `/api/funnel/signup` creates the lead, the GHL contact
+  and the referral code, so it enforces the flag itself. A page redirect alone leaves it POSTable.
 - Cost to know about: hidden pages get de-indexed while dark, so the `/vs/*` comparison pages and
   the AEO work restart their indexing clock when the site goes live. Accepted deliberately.
+- Verify after flipping either switch: `node .qa-visual/prelaunch-gate-test.mjs` (unit, 139 cases)
+  then curl the real matrix on prod. A gate is not proven by the flag being set.
 
 ## Manual / Post-Deploy Steps
 1. Supabase: project cpwesaeyhklmjbqppeah. Apply migrations. Set auth hooks. Store service role
