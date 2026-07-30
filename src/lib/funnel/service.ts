@@ -232,7 +232,13 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
 
   // Best-effort deliverability side effects. Every one returns false rather than throw when unconfigured.
   void sendLeadMagnet(parsed.email, parsed.locale).catch((e) => console.error('sendLeadMagnet:', e?.message));
-  void enrollInDrip(parsed.email, parsed.locale)
+  // Pass her name + phone so the GHL contact is not anonymous: a drip that opens "Hey ," is worse
+  // than no drip, and the SMS track needs the number.
+  void enrollInDrip(parsed.email, parsed.locale, {
+    firstName: parsed.first_name,
+    lastName: parsed.last_name,
+    phone: parsed.phone,
+  })
     .then((ghl) => {
       if (ghl.contactId) void supabase.from('waitlist_leads').update({ ghl_contact_id: ghl.contactId }).eq('id', lead.id);
     })

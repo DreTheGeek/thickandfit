@@ -56,36 +56,56 @@ export async function upsertGhlContact(
   }
 }
 
+/**
+ * Put a waitlist lead into GoHighLevel, then optionally into the drip workflow.
+ *
+ * Uses upsertGhlContact rather than its own POST /contacts/ call. That separate create path was
+ * failing silently in production: a probe signup on 2026-07-30 landed in waitlist_leads but never
+ * reached GHL (ghl_contact_id null), while the onboarding path through upsert linked 2/2. GHL's
+ * create endpoint rejects an existing contact, and the old code returned {enrolled:false} without
+ * logging the status, so every miss was invisible. Two code paths to the same vendor is how that
+ * drift survives; now there is one.
+ *
+ * Name and phone are passed through so the contact is not anonymous. A drip that opens "Hey ," is
+ * worse than no drip.
+ *
+ * The workflow enrollment is BEST-EFFORT and optional: without GHL_WAITLIST_WORKFLOW_ID the contact
+ * and its tags still land, which is all a tag-triggered workflow needs (see
+ * .planning/GHL-WAITLIST-WORKFLOW-SPEC.md).
+ */
 export async function enrollInDrip(
   email: string,
   locale: 'en' | 'es',
+  profile: { firstName?: string | null; lastName?: string | null; phone?: string | null } = {},
 ): Promise<{ enrolled: boolean; contactId: string | null }> {
   if (!apiKey || !locationId) return { enrolled: false, contactId: null };
-  try {
-    const res = await fetch(`${BASE}/contacts/`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        Version: VERSION,
-      },
-      body: JSON.stringify({ email, locationId, tags: ['waitlist', `lang:${locale}`] }),
-    });
-    if (!res.ok) return { enrolled: false, contactId: null };
-    const json = (await res.json().catch(() => null)) as { contact?: { id?: string } } | null;
-    const contactId = json?.contact?.id ?? null;
 
-    if (contactId && dripWorkflowId) {
-      await fetch(`${BASE}/contacts/${contactId}/workflow/${dripWorkflowId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, Version: VERSION },
-      }).catch((e: unknown) => {
-        // The contact exists but missed the drip enrollment: log it, or the miss is invisible.
-        console.error('enrollInDrip workflow:', e instanceof Error ? e.message : e);
-      });
-    }
-    return { enrolled: Boolean(contactId), contactId };
-  } catch {
+  const { ok, contactId } = await upsertGhlContact({
+    email,
+    firstName: profile.firstName ?? null,
+    lastName: profile.lastName ?? null,
+    phone: profile.phone ?? null,
+    tags: ['waitlist', `lang:${locale}`],
+  });
+  if (!ok || !contactId) {
+    console.error('enrollInDrip: contact upsert failed for', email);
     return { enrolled: false, contactId: null };
   }
+
+  if (dripWorkflowId) {
+    try {
+      const res = await fetch(`${BASE}/contacts/${contactId}/workflow/${dripWorkflowId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, Version: VERSION },
+      });
+      // Log the STATUS, not just an exception: a 4xx here is the common failure and it does not throw.
+      if (!res.ok) {
+        console.error('enrollInDrip workflow:', res.status, (await res.text()).slice(0, 160));
+      }
+    } catch (e) {
+      console.error('enrollInDrip workflow:', e instanceof Error ? e.message : e);
+    }
+  }
+
+  return { enrolled: true, contactId };
 }
