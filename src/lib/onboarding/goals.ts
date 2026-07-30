@@ -48,8 +48,3 @@ export function deriveGoalDirection(goals: readonly PrimaryGoal[]): GoalDirectio
   if (wantsMuscle) return 'gain';
   return 'maintain';
 }
-
-/** i18n key suffix per goal, so the wizard renders `app.onboarding.goal_<slug>`. */
-export function goalLabelKey(goal: PrimaryGoal): string {
-  return `goal_${goal}`;
-}
