@@ -119,6 +119,11 @@ export async function createCheckoutSession(args: {
   companyId: string;
   /** Optional free-trial length in days; omitted/0 means charge immediately. */
   trialDays?: number;
+  /** Entitlement product_key for the offer being sold ('self_guided_founding' | ...). Carried in
+   *  subscription metadata so the webhook can stamp the grandfathering record without re-deriving
+   *  the offer from a timestamp, which would misclassify anyone whose webhook lands after the
+   *  founding window shuts. */
+  productKey?: string;
 }): Promise<StripeResult<StripeCheckoutSession>> {
   const trial = args.trialDays && args.trialDays > 0 ? Math.floor(args.trialDays) : undefined;
   // Idempotent per (profile, price) within an hour bucket: a double-submit reuses the same Checkout
@@ -140,9 +145,17 @@ export async function createCheckoutSession(args: {
       subscription_data: {
         // encodeForm drops undefined, so no trial key is sent when trial is unset.
         trial_period_days: trial,
-        metadata: { profile_id: args.profileId, company_id: args.companyId },
+        metadata: {
+          profile_id: args.profileId,
+          company_id: args.companyId,
+          product_key: args.productKey,
+        },
       },
-      metadata: { profile_id: args.profileId, company_id: args.companyId },
+      metadata: {
+        profile_id: args.profileId,
+        company_id: args.companyId,
+        product_key: args.productKey,
+      },
     },
     `checkout:${args.profileId}:${args.priceId}:${hourBucket}`,
   );

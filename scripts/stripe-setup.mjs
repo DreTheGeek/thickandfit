@@ -21,7 +21,12 @@ const WEBHOOK_URL =
   process.env.STRIPE_WEBHOOK_URL || 'https://www.teamthickandfit.com/api/stripe/webhook';
 // No free trial by decision (2026-07-23 launch call): "cancel anytime, no contract" instead.
 const TRIAL_DAYS = process.env.STRIPE_TRIAL_DAYS ?? '0';
-const PRICE_CENTS = 1997;
+// Two prices, not one. Founding is held FOR LIFE by whoever claims it in the 5-day window; standard
+// is what everyone after pays. Keep these in lockstep with src/lib/billing/offer.ts, which is what
+// the app reads. A live Stripe price cannot be edited, only replaced, so getting the standard number
+// settled BEFORE go-live matters (see the unresolved $24.97 vs $29.97 note in offer.ts).
+const FOUNDING_PRICE_CENTS = 1997;
+const STANDARD_PRICE_CENTS = 2497;
 const PRODUCT_NAME = 'Thick & Fit Self-Guided';
 const PRODUCT_TAG = 'thickandfit:self-guided'; // stable metadata key for idempotent lookup
 const EVENTS = [
@@ -91,26 +96,31 @@ async function main() {
     console.log(`product: created ${product.id}`);
   }
 
-  // 2. Price (idempotent: an active $19.97/mo recurring price on this product).
+  // 2. Prices (idempotent: matched by amount on this product).
   const prices = await stripe('GET', `/prices?product=${product.id}&active=true&limit=100`);
-  let price = prices.data.find(
-    (pr) =>
-      pr.unit_amount === PRICE_CENTS &&
-      pr.currency === 'usd' &&
-      pr.recurring?.interval === 'month',
-  );
-  if (price) {
-    console.log(`price: reused ${price.id}`);
-  } else {
-    price = await stripe('POST', '/prices', {
+  const findOrCreate = async (cents, offer) => {
+    const found = prices.data.find(
+      (pr) => pr.unit_amount === cents && pr.currency === 'usd' && pr.recurring?.interval === 'month',
+    );
+    if (found) {
+      console.log(`price(${offer}): reused ${found.id} ($${(cents / 100).toFixed(2)}/mo)`);
+      return found;
+    }
+    const made = await stripe('POST', '/prices', {
       product: product.id,
-      unit_amount: PRICE_CENTS,
+      unit_amount: cents,
       currency: 'usd',
       recurring: { interval: 'month' },
-      metadata: { tag: PRODUCT_TAG },
+      metadata: { tag: PRODUCT_TAG, offer },
     });
-    console.log(`price: created ${price.id} ($19.97/mo)`);
-  }
+    console.log(`price(${offer}): created ${made.id} ($${(cents / 100).toFixed(2)}/mo)`);
+    return made;
+  };
+  const foundingPrice = await findOrCreate(FOUNDING_PRICE_CENTS, 'founding');
+  const standardPrice = await findOrCreate(STANDARD_PRICE_CENTS, 'standard');
+  // STRIPE_PRICE_SELF stays pointed at founding so any legacy single-price code path sells the
+  // cheaper of the two. Overcharging someone because an env var was missing is the worse failure.
+  const price = foundingPrice;
 
   // 3. Webhook endpoint (idempotent by URL). The signing secret is only returned at CREATE time,
   //    so if one already exists we cannot re-read it; the script reports that and leaves the
@@ -141,12 +151,16 @@ async function main() {
     env = re.test(env) ? env.replace(re, line) : env.replace(/\n?$/, `\n${line}\n`);
   };
   setVar('STRIPE_PRICE_SELF', price.id);
+  setVar('STRIPE_PRICE_SELF_FOUNDING', foundingPrice.id);
+  setVar('STRIPE_PRICE_SELF_STANDARD', standardPrice.id);
   setVar('STRIPE_TRIAL_DAYS', TRIAL_DAYS);
   if (webhookSecret) setVar('STRIPE_WEBHOOK_SECRET', webhookSecret);
   fs.writeFileSync(envPath, env);
 
   console.log('\n.env.local updated:');
   console.log(`  STRIPE_PRICE_SELF=${price.id}`);
+  console.log(`  STRIPE_PRICE_SELF_FOUNDING=${foundingPrice.id}`);
+  console.log(`  STRIPE_PRICE_SELF_STANDARD=${standardPrice.id}`);
   console.log(`  STRIPE_TRIAL_DAYS=${TRIAL_DAYS}`);
   console.log(
     `  STRIPE_WEBHOOK_SECRET=${webhookSecret ? webhookSecret.slice(0, 8) + '... (new)' : '(unchanged; existing endpoint)'}`,
@@ -156,7 +170,7 @@ async function main() {
   fs.writeFileSync(
     path.join(process.cwd(), '.stripe-setup.json'),
     JSON.stringify(
-      { mode: MODE, productId: product.id, priceId: price.id, webhookId: hook.id, webhookUrl: WEBHOOK_URL, events: EVENTS, trialDays: Number(TRIAL_DAYS), webhookSecretWritten: Boolean(webhookSecret) },
+      { mode: MODE, productId: product.id, priceId: price.id, foundingPriceId: foundingPrice.id, standardPriceId: standardPrice.id, webhookId: hook.id, webhookUrl: WEBHOOK_URL, events: EVENTS, trialDays: Number(TRIAL_DAYS), webhookSecretWritten: Boolean(webhookSecret) },
       null,
       2,
     ),

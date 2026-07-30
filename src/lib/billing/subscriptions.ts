@@ -187,6 +187,10 @@ export async function upsertSubscriptionFromStripe(sub: StripeSubscriptionObject
     profileId: resolvedProfile,
     source: 'stripe',
     status: entitlementStatusForStripe(sub.status),
+    // The grandfathering record. Taken from the subscription metadata set at checkout, NOT re-derived
+    // from the clock: a webhook that lands after the founding window shuts must still record the
+    // founding member as founding.
+    productKey: sub.metadata?.product_key || undefined,
     externalTxnId: sub.id,
     expiresAt: epochToIso(sub.current_period_end),
     rawPayload: { stripe_status: sub.status, price_id: price?.id ?? null },

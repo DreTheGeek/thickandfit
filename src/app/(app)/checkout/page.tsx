@@ -13,6 +13,12 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { BillingActions } from '@/components/billing/billing-actions';
 import { normalizeTier, isSelfServe } from '@/lib/billing/tiers';
+import {
+  currentOffer,
+  foundingDaysLeft,
+  priceCentsForOffer,
+  formatPriceCents,
+} from '@/lib/billing/offer';
 import { getSupportEmail } from '@/lib/admin/settings';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +46,13 @@ export default async function CheckoutPage(): Promise<ReactElement> {
   const supportEmail = selfServe ? '' : await getSupportEmail(ctx.companyId);
 
   const features = [t('featureWorkouts'), t('featureNutrition'), t('featureCoach'), t('featureCommunity')];
+
+  // The live price. Read the clock ONCE here in the server component rather than inside the render
+  // body of a child (the project's purity rule), and show the member the exact number the checkout
+  // action will charge: a page that says $19.97 while the action bills $24.97 is a dispute.
+  const offer = currentOffer(new Date());
+  const selfPrice = formatPriceCents(priceCentsForOffer(offer));
+  const daysLeft = foundingDaysLeft(new Date());
 
   return (
     <div className="mx-auto w-full max-w-md px-[22px] pb-10 pt-6">
@@ -79,7 +92,14 @@ export default async function CheckoutPage(): Promise<ReactElement> {
         </div>
         <Card className="p-5">
           <div className="font-display text-[20px]">{t(`tier.${tier}.name`)}</div>
-          <div className="mt-0.5 text-[13px] text-muted">{t(`tier.${tier}.price`)}</div>
+          <div className="mt-0.5 text-[13px] text-muted">
+            {selfServe ? `${selfPrice}/mo` : t(`tier.${tier}.price`)}
+          </div>
+          {selfServe && offer === 'founding' ? (
+            <p className="mt-1.5 text-[12px] leading-[1.5] text-accent-ink">
+              {t('foundingNote', { days: daysLeft })}
+            </p>
+          ) : null}
 
           {selfServe ? (
             <BillingActions mode="none" tier={tier} />
@@ -103,7 +123,7 @@ export default async function CheckoutPage(): Promise<ReactElement> {
             <div className="mb-1.5 text-[12px] text-muted">{t('orSelfGuided')}</div>
             <Card className="p-5">
               <div className="font-display text-[18px]">{t('tier.self.name')}</div>
-              <div className="mt-0.5 text-[13px] text-muted">{t('tier.self.price')}</div>
+              <div className="mt-0.5 text-[13px] text-muted">{selfPrice}/mo</div>
               <BillingActions mode="none" tier="self" />
             </Card>
           </div>

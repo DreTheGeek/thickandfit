@@ -18,17 +18,27 @@ import {
 } from '@/lib/billing/stripe';
 import { getSubscriptionForProfile } from '@/lib/billing/subscriptions';
 import { normalizeTier, isSelfServe, type CheckoutTier } from '@/lib/billing/tiers';
+import { currentOffer, productKeyForOffer, type Offer } from '@/lib/billing/offer';
 
 export type BillingState = { error?: string; ok?: boolean; checkoutUrl?: string };
 
 const CONSENT_VERSION = '2026-06';
 
-// Tier -> Stripe price id, with legacy fallbacks so existing single-price config keeps working.
-// self ($19.97) is the only self-serve tier; team/steph prices exist so a future direct sale can be
+// Tier + offer -> Stripe price id, with legacy fallbacks so existing single-price config keeps
+// working. self is the only self-serve tier; team/steph prices exist so a future direct sale can be
 // switched on, but the action still gates them behind isSelfServe (see startCheckoutAction).
-function priceForTier(tier: CheckoutTier): string | undefined {
+//
+// The founding/standard split only applies to `self`: the high-ticket tiers are sold by conversation,
+// not by a window. If the founding price id is missing we fall back to the single self price rather
+// than failing checkout, so a half-configured Stripe account still sells at the legacy price instead
+// of showing "not configured" to a member holding a card.
+function priceForTier(tier: CheckoutTier, offer: Offer): string | undefined {
   const e = process.env;
-  if (tier === 'self') return e.STRIPE_PRICE_SELF ?? e.STRIPE_PRICE_LOW ?? e.STRIPE_PRICE_ID ?? undefined;
+  if (tier === 'self') {
+    const byOffer =
+      offer === 'founding' ? e.STRIPE_PRICE_SELF_FOUNDING : e.STRIPE_PRICE_SELF_STANDARD;
+    return byOffer ?? e.STRIPE_PRICE_SELF ?? e.STRIPE_PRICE_LOW ?? e.STRIPE_PRICE_ID ?? undefined;
+  }
   if (tier === 'team') return e.STRIPE_PRICE_TEAM ?? e.STRIPE_PRICE_MID ?? undefined;
   return e.STRIPE_PRICE_STEPH ?? e.STRIPE_PRICE_HIGH ?? undefined;
 }
@@ -71,7 +81,10 @@ export async function startCheckoutAction(
   // the UI already routes them to the "team will reach out" flow rather than this button).
   const tier = normalizeTier(formData.get('tier'));
   if (!isSelfServe(tier)) return { error: 'salesAssisted' };
-  const priceId = priceForTier(tier);
+  // Resolve the offer ONCE, here, and carry it through checkout. Reading the clock again later could
+  // straddle the window boundary and charge a member a price they were not shown.
+  const offer = currentOffer(new Date());
+  const priceId = priceForTier(tier, offer);
   if (!priceId) return { error: 'notConfigured' };
 
   const supabase = await createClient();
@@ -134,6 +147,9 @@ export async function startCheckoutAction(
     profileId: ctx.userId,
     companyId: ctx.companyId,
     trialDays: trialDays(),
+    // Stamps the grandfathering record onto the subscription, so the webhook records a founding
+    // member as founding even if it lands after the window has shut.
+    productKey: productKeyForOffer(offer),
   });
   if (!session.ok || !session.data.url) return { error: 'stripeError' };
   return { ok: true, checkoutUrl: session.data.url };

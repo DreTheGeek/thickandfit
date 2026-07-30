@@ -1818,7 +1818,8 @@
       "applyTitle": "This one’s by application",
       "applyBody": "Team and 1-on-1 coaching are personal, so we set them up with you directly. Reach out and Stephanie’s team will get you started.",
       "applyCta": "Contact the team",
-      "orSelfGuided": "Or start today on your own:"
+      "orSelfGuided": "Or start today on your own:",
+      "foundingNote": "Founding rate, locked in for life. {days} days left to claim it."
     },
     "billing": {
       "title": "Billing",

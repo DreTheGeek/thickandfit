@@ -1818,7 +1818,8 @@
       "applyTitle": "Este plan es por solicitud",
       "applyBody": "El coaching en equipo y 1 a 1 es personal, por eso lo configuramos contigo directamente. Escríbenos y el equipo de Stephanie te ayudará a empezar.",
       "applyCta": "Contactar al equipo",
-      "orSelfGuided": "O empieza hoy por tu cuenta:"
+      "orSelfGuided": "O empieza hoy por tu cuenta:",
+      "foundingNote": "Precio de fundadora, fijo de por vida. Quedan {days} días para tomarlo."
     },
     "billing": {
       "title": "Facturación",
