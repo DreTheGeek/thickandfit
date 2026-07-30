@@ -1,21 +1,40 @@
 'use client';
-// Onboarding wizard: Goal -> About -> Prediction (live chart) -> Plan, re-skinned to
-// the design-handoff prototype. Same engine the API stores; weight collected in lb,
-// converted to kg for the metric prediction engine.
+// Onboarding wizard, PRE-PAYWALL half: Goals -> About -> Health & safety -> Prediction (live chart)
+// -> Tier -> Plan. Re-skinned to the design-handoff prototype. Same engine the API stores; weight
+// collected in lb, converted to kg for the metric prediction engine.
+//
+// Pre/post-paywall split (2026-07-23 call): everything needed to BUILD the plan and train safely is
+// asked before the paywall - body stats, body fat, phone, and the health/safety screen. The deeper
+// intake (dietary, equipment, meds, sleep/stress, relationship with food, photos, measurements) lives
+// post-paywall at /you/health, so a prospect is not interrogated before they have seen their plan.
+//
+// The health step deliberately renders through the `app.health` namespace rather than new onboarding
+// keys: /you/health already ships EN + ES for every slug, and duplicating them is how the two screens
+// drift into asking the same question two different ways.
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { setUiLocaleAction, setContentLocaleAction } from '@/lib/i18n/actions';
 import { computePlan, type OnboardingInput } from '@/lib/onboarding/prediction';
+import { PRIMARY_GOALS, deriveGoalDirection, type PrimaryGoal } from '@/lib/onboarding/goals';
+import { INJURIES, CONDITIONS, PREGNANCY, SAFETY } from '@/lib/health-profile/labels';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/ring';
 import { Icon } from '@/components/ui/icons';
 
 const LB_PER_KG = 2.20462;
-const TOTAL = 5;
+const TOTAL = 6;
+// Step indices, named so the footer/guard logic reads as intent instead of magic numbers. Adding a
+// step used to mean hunting every bare `step === 3` in the footer; that is how the submit button
+// ends up on the wrong screen.
+const S_GOALS = 0;
+const S_ABOUT = 1;
+const S_HEALTH = 2;
+const S_PREDICT = 3;
+const S_TIER = 4;
+const S_PLAN = 5;
 
-type Goal = OnboardingInput['goal'];
 type Activity = OnboardingInput['activity'];
 // Coaching tier chosen at onboarding (call 2026-07-01). Captured as intent; checkout maps it to a
 // Stripe price once billing is live. 'team' = coached by Steph's team (Dani), not Steph one-on-one.
@@ -29,6 +48,9 @@ export function OnboardingFlow({
   initialLastName?: string;
 }): ReactElement {
   const t = useTranslations('app.onboarding');
+  // Second namespace: the health/safety step reuses the /you/health copy verbatim (EN + ES already
+  // authored there) so the two screens can never ask the same question two different ways.
+  const th = useTranslations('app.health');
   const locale = useLocale();
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -53,7 +75,11 @@ export function OnboardingFlow({
   }
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
-  const [goal, setGoal] = useState<Goal>('lose');
+  // Phone is pre-paywall: Twilio launch-week support and the founding-window texts both need it, and
+  // asking after checkout means the members who need help most are the ones we cannot reach.
+  const [phone, setPhone] = useState('');
+  // Multi-select. The calorie direction is derived from it below, never asked separately.
+  const [primaryGoals, setPrimaryGoals] = useState<PrimaryGoal[]>(['lose_fat']);
   const [sex, setSex] = useState<OnboardingInput['sex']>('female');
   const [age, setAge] = useState(30);
   // Units: imperial (lb + ft/in) or metric (kg + cm). Default from locale; ES -> metric.
@@ -65,6 +91,26 @@ export function OnboardingFlow({
   const [goalVal, setGoalVal] = useState(locale === 'es' ? 64 : 140);
   const [activity, setActivity] = useState<Activity>('moderate');
   const [tier, setTier] = useState<Tier>('self');
+  // Body fat as a free-text string, not a number: an empty box must stay empty. Binding a number
+  // input to 0 would show a "0" the member has to delete, and 0 is a value the schema would reject.
+  const [bodyFat, setBodyFat] = useState('');
+
+  // Health & safety (pre-paywall). Slugs are the same ones /you/health writes, so the post-paywall
+  // form loads these back pre-filled instead of asking again.
+  const [injuries, setInjuries] = useState<string[]>([]);
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [pregnancy, setPregnancy] = useState<string>('none');
+  const [safety, setSafety] = useState<string[]>([]);
+  const safetyFlagged = safety.length > 0;
+
+  function toggle(list: string[], set: (v: string[]) => void, value: string): void {
+    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+  }
+  function toggleGoal(value: PrimaryGoal): void {
+    setPrimaryGoals((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  }
 
   // Convert displayed values when switching units so nothing is lost or misread.
   function switchUnits(next: 'imperial' | 'metric'): void {
@@ -93,7 +139,17 @@ export function OnboardingFlow({
     age >= 13 && age <= 100 &&
     heightCmCanonical >= 100 && heightCmCanonical <= 250 &&
     weightKg >= 30 && weightKg <= 300;
-  const step1Valid = firstName.trim() !== '' && lastName.trim() !== '' && bodyValid;
+  // Body fat: blank is fine, but a typed value must be in range or the submit would 400 after the
+  // member has already sat through the whole wizard.
+  const bodyFatNum = bodyFat.trim() === '' ? null : Number(bodyFat);
+  const bodyFatValid =
+    bodyFatNum === null || (Number.isFinite(bodyFatNum) && bodyFatNum >= 3 && bodyFatNum <= 70);
+  const step1Valid =
+    firstName.trim() !== '' && lastName.trim() !== '' && bodyValid && bodyFatValid;
+  // At least one goal, or the derived direction is a silent guess.
+  const goalsValid = primaryGoals.length > 0;
+
+  const goal = useMemo(() => deriveGoalDirection(primaryGoals), [primaryGoals]);
 
   const input: OnboardingInput = useMemo(
     () => ({
@@ -104,8 +160,9 @@ export function OnboardingFlow({
       goalWeightKg: Math.round(goalKg),
       activity,
       goal,
+      ...(bodyFatNum !== null && bodyFatValid ? { bodyFatPct: bodyFatNum } : {}),
     }),
-    [sex, age, heightCmCanonical, weightKg, goalKg, activity, goal],
+    [sex, age, heightCmCanonical, weightKg, goalKg, activity, goal, bodyFatNum, bodyFatValid],
   );
   const plan = useMemo(() => computePlan(input), [input]);
   // Chart points in the user's display unit.
@@ -126,7 +183,18 @@ export function OnboardingFlow({
       const res = await fetch('/api/onboarding/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...input, firstName: firstName.trim(), lastName: lastName.trim(), language, tier }),
+        body: JSON.stringify({
+          ...input,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          language,
+          tier,
+          primaryGoals,
+          phone: phone.trim() || undefined,
+          // Health & safety. Sent as one object so the route can hand it straight to
+          // saveHealthProfile without re-assembling it field by field.
+          health: { injuries, conditions, pregnancy, safety },
+        }),
       });
       if (!res.ok) {
         // Do NOT advance to the "plan ready" screen on a failed save, or the user sees a plan that
@@ -134,7 +202,7 @@ export function OnboardingFlow({
         setSaveError(true);
         return;
       }
-      setStep(4);
+      setStep(S_PLAN);
     } catch {
       setSaveError(true);
     } finally {
@@ -154,8 +222,8 @@ export function OnboardingFlow({
         {t('stepOf', { step: step + 1, total: TOTAL })}
       </div>
 
-      {/* Step 0: Language + Goal */}
-      {step === 0 && (
+      {/* Step 0: Language + primary goals (multi-select) */}
+      {step === S_GOALS && (
         <>
           <div className="mb-7">
             <p className="mb-2.5 text-[13px] font-semibold text-muted">{t('languageQuestion')}</p>
@@ -164,21 +232,23 @@ export function OnboardingFlow({
               <LangBtn label="Español" active={language === 'es'} onClick={() => chooseLanguage('es')} />
             </div>
           </div>
-          <h2 className="tf-display mb-6 text-[38px]">{t('goalTitle')}</h2>
+          <h2 className="tf-display mb-2 text-[38px]">{t('goalTitle')}</h2>
+          <p className="mb-6 text-[14px] leading-[1.5] text-soft">{t('goalSub')}</p>
           <div className="flex flex-col gap-3">
-            <GoalCard label={t('goalLose')} active={goal === 'lose'} onClick={() => setGoal('lose')} />
-            <GoalCard label={t('goalGain')} active={goal === 'gain'} onClick={() => setGoal('gain')} />
-            <GoalCard
-              label={t('goalMaintain')}
-              active={goal === 'maintain'}
-              onClick={() => setGoal('maintain')}
-            />
+            {PRIMARY_GOALS.map((g) => (
+              <GoalCard
+                key={g}
+                label={t(`goal_${g}`)}
+                active={primaryGoals.includes(g)}
+                onClick={() => toggleGoal(g)}
+              />
+            ))}
           </div>
         </>
       )}
 
       {/* Step 1: About */}
-      {step === 1 && (
+      {step === S_ABOUT && (
         <>
           <h2 className="tf-display mb-6 text-[38px]">{t('aboutTitle')}</h2>
           <div className="flex flex-col gap-3.5">
@@ -204,6 +274,18 @@ export function OnboardingFlow({
                 />
               </Field>
             </div>
+            <Field label={t('phone')}>
+              <input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                className={selectCls}
+                placeholder={t('phonePlaceholder')}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <span className="mt-1.5 block text-[11px] leading-[1.45] text-faint">{t('phoneHint')}</span>
+            </Field>
             <Field label={t('sex')}>
               <select className={selectCls} value={sex} onChange={(e) => setSex(e.target.value as OnboardingInput['sex'])}>
                 <option value="female">{t('female')}</option>
@@ -238,7 +320,22 @@ export function OnboardingFlow({
               <Field label={units === 'metric' ? t('goalWeightKg') : t('goalWeightLbs')}>
                 <input type="number" className={numCls} value={goalVal} onChange={(e) => setGoalVal(Number(e.target.value))} />
               </Field>
+              <Field label={t('bodyFat')}>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  className={numCls}
+                  placeholder={t('bodyFatPlaceholder')}
+                  value={bodyFat}
+                  onChange={(e) => setBodyFat(e.target.value)}
+                />
+              </Field>
             </div>
+            {bodyFat.trim() !== '' && !bodyFatValid && (
+              <p role="alert" className="text-[12px] leading-[1.45] text-alert-ink">
+                {t('bodyFatRange')}
+              </p>
+            )}
             <Field label={t('activity')}>
               <select className={selectCls} value={activity} onChange={(e) => setActivity(e.target.value as Activity)}>
                 <option value="sedentary">{t('actSedentary')}</option>
@@ -252,8 +349,70 @@ export function OnboardingFlow({
         </>
       )}
 
-      {/* Step 2: Prediction */}
-      {step === 2 && (
+      {/* Step 2: Health & safety. Pre-paywall because the plan on the next screen is a TRAINING
+          prescription: injuries change the exercise selection, the hormonal picture changes the
+          nutrition, and the PAR-Q+ screen is the difference between coaching someone and coaching
+          someone who should see a doctor first. Asking it after checkout means the first plan we
+          hand a member is one built without it. */}
+      {step === S_HEALTH && (
+        <>
+          <h2 className="tf-display mb-2 text-[34px]">{t('healthTitle')}</h2>
+          <p className="mb-1 text-[14px] leading-[1.55] text-soft">{t('healthSub')}</p>
+          <p className="mb-7 text-[12px] text-faint">{th('privacy')}</p>
+
+          <div className="flex flex-col gap-7">
+            <HealthSection title={th('sec.injuries.q')}>
+              <ChipRow
+                options={INJURIES}
+                selected={injuries}
+                onToggle={(v) => toggle(injuries, setInjuries, v)}
+                label={(v) => th(`opt.injuries.${v}`)}
+                noneLabel={th('none')}
+                onNone={() => setInjuries([])}
+              />
+            </HealthSection>
+
+            <HealthSection title={th('sec.conditions.q')} why={th('sec.conditions.why')}>
+              <ChipRow
+                options={CONDITIONS}
+                selected={conditions}
+                onToggle={(v) => toggle(conditions, setConditions, v)}
+                label={(v) => th(`opt.conditions.${v}`)}
+                noneLabel={th('none')}
+                onNone={() => setConditions([])}
+              />
+            </HealthSection>
+
+            <HealthSection title={th('sec.pregnancy.q')}>
+              <ChipRow
+                options={PREGNANCY}
+                selected={[pregnancy]}
+                onToggle={(v) => setPregnancy(v)}
+                label={(v) => th(`opt.pregnancy.${v}`)}
+              />
+            </HealthSection>
+
+            <HealthSection title={th('sec.safety.q')} why={th('sec.safety.why')}>
+              <ChipRow
+                options={SAFETY}
+                selected={safety}
+                onToggle={(v) => toggle(safety, setSafety, v)}
+                label={(v) => th(`opt.safety.${v}`)}
+                noneLabel={th('safetyNone')}
+                onNone={() => setSafety([])}
+              />
+              {safetyFlagged && (
+                <p className="mt-1 rounded-[12px] bg-warm px-4 py-3 text-[13px] leading-[1.5] text-soft">
+                  {th('sec.safety.note')}
+                </p>
+              )}
+            </HealthSection>
+          </div>
+        </>
+      )}
+
+      {/* Step 3: Prediction */}
+      {step === S_PREDICT && (
         <>
           <h2 className="tf-display mb-5 text-[34px]">{t('predictTitle')}</h2>
           <div className="rounded-[18px] bg-warm p-[22px]">
@@ -273,8 +432,8 @@ export function OnboardingFlow({
         </>
       )}
 
-      {/* Step 3: Coaching tier (Self-Guided / Team Thick & Fit / 1-on-1 with Coach Steph) */}
-      {step === 3 && (
+      {/* Step 4: Coaching tier (Self-Guided / Team Thick & Fit / 1-on-1 with Coach Steph) */}
+      {step === S_TIER && (
         <>
           <h2 className="tf-display mb-2 text-[34px]">{t('tierTitle')}</h2>
           <p className="mb-6 text-[14px] leading-[1.5] text-soft">{t('tierSub')}</p>
@@ -305,8 +464,8 @@ export function OnboardingFlow({
         </>
       )}
 
-      {/* Step 4: Plan */}
-      {step === 4 && (
+      {/* Step 5: Plan */}
+      {step === S_PLAN && (
         <>
           <h2 className="tf-display text-[40px]">{t('planTitle')}</h2>
           <p className="mb-1 mt-3 text-[14px] leading-[1.5] text-soft">{t('planSub')}</p>
@@ -322,8 +481,10 @@ export function OnboardingFlow({
             <PlanRow label={t('planMacros')} value={`${plan.calories} kcal · P${plan.macros.protein_g}`} />
             <PlanRow label={t('planCheck')} value={t('planCheckV')} />
           </div>
-          {/* Hand-off into the health profile: the highest-intent moment to capture foods/injuries/
-              conditions that light up the coach. Skippable (footer still goes straight to dashboard). */}
+          {/* Hand-off into the POST-paywall half of the intake. Injuries, conditions, pregnancy and
+              the safety screen are already captured above, so this CTA is for what is left: foods
+              avoided, equipment, meds, sleep/stress, relationship with food. Skippable (the footer
+              still goes straight to the dashboard). */}
           <div className="mt-6 rounded-[16px] border border-line p-[18px]">
             <div className="flex items-center gap-2">
               <span className="text-ink"><Icon name="heart" size={16} strokeWidth={2.2} /></span>
@@ -337,7 +498,7 @@ export function OnboardingFlow({
         </>
       )}
 
-      {step === 3 && saveError && (
+      {step === S_TIER && saveError && (
         <p role="alert" className="mt-5 text-[13px] leading-[1.5] text-alert-ink">
           {t('saveError')}
         </p>
@@ -345,27 +506,27 @@ export function OnboardingFlow({
 
       {/* Footer */}
       <div className="mt-auto flex items-center gap-3 pt-8">
-        {step > 0 && step < 4 && (
+        {step > S_GOALS && step < S_PLAN && (
           <Button variant="outline" size="md" onClick={() => setStep((s) => s - 1)}>
             {t('back')}
           </Button>
         )}
-        {step < 3 && (
+        {step < S_TIER && (
           <Button
             size="block"
-            disabled={step === 1 && !step1Valid}
+            disabled={(step === S_GOALS && !goalsValid) || (step === S_ABOUT && !step1Valid)}
             onClick={() => setStep((s) => s + 1)}
           >
             {t('continue')}
           </Button>
         )}
-        {step === 3 && (
+        {step === S_TIER && (
           <Button size="block" disabled={busy} onClick={submit}>
             {busy ? '…' : t('seePlan')}
           </Button>
         )}
-        {step === 4 && (
-          // Onboarding is already persisted (step 3 submit), so the user is fully onboarded. Send
+        {step === S_PLAN && (
+          // Onboarding is already persisted (the tier-step submit), so the user is fully onboarded. Send
           // them INTO the app. /checkout is a real paywall page now, but requireEntitled deliberately
           // does not gate while Stripe is unconfigured (guards.ts), so this path stays alive pre-launch
           // and pay-to-enter turns on automatically when the live keys land.
@@ -449,12 +610,89 @@ function TierCard({
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactElement }): ReactElement {
+// ReactNode, not ReactElement: some fields render an input plus a hint line beneath it.
+function Field({ label, children }: { label: string; children: ReactNode }): ReactElement {
   return (
     <label className="block">
       <span className="mb-1.5 block text-[12px] text-muted">{label}</span>
       {children}
     </label>
+  );
+}
+
+// One health question. Mirrors the /you/health Section visually without the numbered marker: this
+// step has four questions inside a six-step wizard, and a second number sequence would read as
+// progress the member does not actually have.
+function HealthSection({
+  title,
+  why,
+  children,
+}: {
+  title: string;
+  why?: string;
+  children: ReactNode;
+}): ReactElement {
+  return (
+    <div>
+      <h3 className="mb-1 text-[15px] font-semibold leading-[1.4]">{title}</h3>
+      {why ? <p className="mb-3 text-[12px] leading-[1.5] text-faint">{why}</p> : <div className="mb-3" />}
+      {children}
+    </div>
+  );
+}
+
+// Multi- or single-select chips. `selected` drives the active state, so passing a single-item array
+// (as the pregnancy question does) makes it behave as a radio group. `onNone` renders the explicit
+// "None" escape hatch: without it, leaving a health question blank is ambiguous between "nothing
+// applies to me" and "I skipped this", and the coach cannot tell those apart.
+function ChipRow({
+  options,
+  selected,
+  onToggle,
+  label,
+  noneLabel,
+  onNone,
+}: {
+  options: readonly string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  label: (value: string) => string;
+  noneLabel?: string;
+  onNone?: () => void;
+}): ReactElement {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => (
+        <Chip key={o} label={label(o)} active={selected.includes(o)} onClick={() => onToggle(o)} />
+      ))}
+      {noneLabel && onNone && (
+        <Chip label={noneLabel} active={selected.length === 0} onClick={onNone} />
+      )}
+    </div>
+  );
+}
+
+function Chip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}): ReactElement {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={[
+        'tf-press rounded-full px-3.5 py-2 text-[13px] leading-none transition',
+        active ? 'border-[1.5px] border-ink font-semibold text-ink' : 'border border-line text-soft',
+      ].join(' ')}
+    >
+      {label}
+    </button>
   );
 }
 

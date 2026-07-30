@@ -10,7 +10,14 @@ export const onboardingInputSchema = z.object({
   weightKg: z.number().min(35).max(300),
   goalWeightKg: z.number().min(35).max(300),
   activity: z.enum(['sedentary', 'light', 'moderate', 'active', 'very_active']),
+  // The calorie DIRECTION. Derived from the member's multi-select primary goals by
+  // deriveGoalDirection() in @/lib/onboarding/goals - the member is never asked this twice.
   goal: z.enum(['lose', 'maintain', 'gain']),
+  // Body-fat percent. Pre-paywall by owner decision (2026-07-23 exchange: "weight and body fat i
+  // feel is pre"). Optional because most members genuinely do not know it, and a required guess is
+  // worse than an absent value: the calorie math below never reads it, so a wrong number here would
+  // silently corrupt the coach's read of a member's composition for nothing.
+  bodyFatPct: z.number().min(3).max(70).optional(),
 });
 export type OnboardingInput = z.infer<typeof onboardingInputSchema>;
 

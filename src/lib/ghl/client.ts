@@ -14,6 +14,9 @@ export type GhlUpsertInput = {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
+  // Optional so a blank phone is OMITTED from the payload rather than sent as empty. GHL treats an
+  // empty string as a write, which would blank the number a migrated Lenus contact already has.
+  phone?: string | null;
   tags: string[];
 };
 
@@ -37,6 +40,7 @@ export async function upsertGhlContact(
         email: input.email,
         ...(input.firstName ? { firstName: input.firstName } : {}),
         ...(input.lastName ? { lastName: input.lastName } : {}),
+        ...(input.phone ? { phone: input.phone } : {}),
         tags: input.tags,
       }),
     });
