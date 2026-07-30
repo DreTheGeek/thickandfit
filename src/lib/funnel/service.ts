@@ -18,6 +18,50 @@ import { sendLeadMagnet, sendWaitlistConfirmation } from '@/lib/email/resend';
 
 const TENANT_SLUG = 'thick-and-fit';
 
+/**
+ * Run a side effect that must OUTLIVE the response without blocking it.
+ *
+ * On Vercel a bare `void asyncFn()` after the response races the freezing lambda, and slow vendors
+ * lose that race silently. Proven in prod on 2026-07-30: a probe signup sent its Resend email
+ * (~300ms, won) but never created its GHL contact (~1-2s, lost), so `ghl_contact_id` stayed null on
+ * every lead. `after()` keeps the lambda alive until the work finishes.
+ *
+ * Every GHL tag push in this file goes through here. Those tags are not cosmetic: they are the
+ * triggers and the EXIT CONDITION of the drip built in GoHighLevel, so a dropped `converted` tag
+ * means a paying member keeps receiving "doors close in 24 hours".
+ */
+function runInBackground(label: string, fn: () => Promise<unknown>): void {
+  const guarded = async (): Promise<void> => {
+    try {
+      await fn();
+    } catch (e: unknown) {
+      console.error(`${label}:`, e instanceof Error ? e.message : e);
+    }
+  };
+  try {
+    after(guarded);
+  } catch {
+    // Outside a request scope (a script or a test): run it inline rather than dropping it.
+    void guarded();
+  }
+}
+
+/** Tag a GHL contact in the background. See runInBackground for why this is not a bare void. */
+function tagContactInBackground(
+  label: string,
+  contact: { email: string; firstName?: string | null; lastName?: string | null },
+  tags: string[],
+): void {
+  runInBackground(label, () =>
+    upsertGhlContact({
+      email: contact.email,
+      firstName: contact.firstName ?? null,
+      lastName: contact.lastName ?? null,
+      tags,
+    }),
+  );
+}
+
 // Entry point values (spec locked in the 2026-07-23 call + kb-funnels/references/referral-mechanics.md).
 export const ENTRY_POINTS = {
   signup: 1,
@@ -173,9 +217,15 @@ async function pushReferralMilestoneTag(
   const referrer = row as { email: string; first_name: string | null; last_name: string | null } | null;
   if (!referrer?.email) return;
   const tags = crossed.map((n) => `referred:${n}`);
-  void upsertGhlContact({ email: referrer.email, firstName: referrer.first_name, lastName: referrer.last_name, tags }).catch(
-    (e: unknown) => console.error('pushReferralMilestoneTag:', e instanceof Error ? e.message : e),
-  );
+  // Awaited, NOT scheduled here. This function does a DB read first, so scheduling the tag from
+  // inside it would mean calling after() once the response may already be gone. The caller wraps
+  // this whole function in runInBackground instead, so there is exactly one scheduling point.
+  await upsertGhlContact({
+    email: referrer.email,
+    firstName: referrer.first_name,
+    lastName: referrer.last_name,
+    tags,
+  });
 }
 
 /**
@@ -225,19 +275,19 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
   if (referrer && referrer.id !== lead.id) {
     const { credited, newCount } = await creditReferral(companyId, referrer.id, lead.id);
     if (credited) {
-      // priorCount = newCount - 1 (creditReferral just added exactly one). Fire-and-forget: never
-      // block signup on a GHL tag update; the referral itself is durable in the DB regardless.
-      void pushReferralMilestoneTag(companyId, referrer.id, newCount - 1, newCount);
+      // priorCount = newCount - 1 (creditReferral just added exactly one). Backgrounded, never
+      // blocking: the referral itself is durable in the DB whether or not GHL takes the tag.
+      const ref = referrer;
+      runInBackground('pushReferralMilestoneTag', () =>
+        pushReferralMilestoneTag(companyId, ref.id, newCount - 1, newCount),
+      );
     }
   }
 
-  // Best-effort deliverability side effects, all inside after().
-  //
-  // These were bare `void` calls, and on Vercel a bare void after the response RACES the freezing
-  // lambda. That is not theoretical here: a prod probe on 2026-07-30 signed up fine and the Resend
-  // confirmation email arrived (~300ms, wins the race) while the GHL contact never appeared
-  // (~1-2s, loses it). Same bug, different latency, and it would have left the Aug 4 drip with an
-  // empty audience. after() keeps the lambda alive until they finish.
+  // Best-effort deliverability side effects. See runInBackground for why these cannot be bare voids:
+  // a prod probe on 2026-07-30 signed up fine and the Resend confirmation arrived (~300ms, won the
+  // race) while the GHL contact never appeared (~1-2s, lost it), which would have left the Aug 4
+  // drip with an empty audience.
   const sideEffects = async (): Promise<void> => {
     await sendLeadMagnet(parsed.email, parsed.locale).catch((e) =>
       console.error('sendLeadMagnet:', e?.message),
@@ -259,12 +309,7 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
         .eq('id', lead.id);
     }
   };
-  try {
-    after(sideEffects);
-  } catch {
-    // Outside a request scope (a script or a test): run it inline rather than dropping it.
-    void sideEffects();
-  }
+  runInBackground('submitSignup sideEffects', sideEffects);
 
   // Double-opt-in: send the confirmation email once, only for a brand-new lead OR one that has
   // not yet confirmed. A returning-but-unconfirmed signup gets a fresh nudge instead of silence.
@@ -274,18 +319,11 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
     const confirmToken = (lead as { confirm_token: string }).confirm_token;
     const origin = await requestOrigin();
     const confirmUrl = `${origin}/api/funnel/confirm?t=${encodeURIComponent(confirmToken)}`;
-    const sendConfirm = (): Promise<void> =>
-      sendWaitlistConfirmation(parsed.email, parsed.locale, confirmUrl).then(
-        () => undefined,
-        (e: { message?: string }) => console.error('sendWaitlistConfirmation:', e?.message),
-      );
     // This one happened to win the race before, but "happened to" is not a guarantee: the whole
-    // entry economy is gated on this email, so it gets the same protection.
-    try {
-      after(sendConfirm);
-    } catch {
-      void sendConfirm();
-    }
+    // entry economy is gated on this email, so it gets the same protection as the rest.
+    runInBackground('sendWaitlistConfirmation', () =>
+      sendWaitlistConfirmation(parsed.email, parsed.locale, confirmUrl),
+    );
   }
 
   return {
@@ -358,8 +396,10 @@ export async function submitQuiz(input: QuizInput): Promise<{ entryCount: number
       `eats:${parsed.how_they_eat}`,
       `lang:${parsed.preferred_language ?? 'en'}`,
     ];
-    void upsertGhlContact({ email: lead.email, firstName: lead.first_name, lastName: lead.last_name, tags }).catch(
-      (e: unknown) => console.error('submitQuiz upsertGhlContact:', e instanceof Error ? e.message : e),
+    tagContactInBackground(
+      'submitQuiz upsertGhlContact',
+      { email: lead.email, firstName: lead.first_name, lastName: lead.last_name },
+      tags,
     );
   }
 
@@ -443,12 +483,11 @@ export async function confirmLeadByToken(token: string): Promise<{ ok: boolean }
     return { ok: Boolean((existing as { confirmed_at: string | null } | null)?.confirmed_at) };
   }
   const row = rows[0];
-  void upsertGhlContact({
-    email: row.email,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    tags: ['confirmed'],
-  }).catch((e: unknown) => console.error('confirmLeadByToken upsertGhlContact:', e instanceof Error ? e.message : e));
+  tagContactInBackground(
+    'confirmLeadByToken upsertGhlContact',
+    { email: row.email, firstName: row.first_name, lastName: row.last_name },
+    ['confirmed'],
+  );
   return { ok: true };
 }
 
@@ -480,12 +519,11 @@ export async function convertLead(email: string): Promise<{ found: boolean }> {
   const rows = (data ?? []) as { id: string; first_name: string | null; last_name: string | null }[];
   if (rows.length > 0) {
     const row = rows[0];
-    void upsertGhlContact({
-      email: emailNormalized,
-      firstName: row.first_name,
-      lastName: row.last_name,
-      tags: ['converted', 'member'],
-    }).catch((e: unknown) => console.error('convertLead upsertGhlContact:', e instanceof Error ? e.message : e));
+    tagContactInBackground(
+      'convertLead upsertGhlContact',
+      { email: emailNormalized, firstName: row.first_name, lastName: row.last_name },
+      ['converted', 'member'],
+    );
   }
   return { found: rows.length > 0 };
 }
