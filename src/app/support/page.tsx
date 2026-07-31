@@ -14,6 +14,7 @@ import type { Metadata } from 'next';
 import { getLocale } from 'next-intl/server';
 import { localeAlternates } from '@/lib/seo/locale-alternates';
 import { PageTitle } from '@/components/ui/section';
+import { SupportForm } from '@/components/support/support-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,13 @@ export default async function SupportPage(): Promise<ReactElement> {
       >
         {SUPPORT_EMAIL}
       </a>
+
+      {/* The form is the actual intake. The mailto above stays because a reviewer and a member who
+          cannot load JS both need a plain address, but a mailto alone put the burden on the member's
+          mail client and landed nothing in the support board. */}
+      <section className="mt-10">
+        <SupportForm es={es} />
+      </section>
 
       <section className="mt-12">
         <h2 className="text-[18px] font-semibold">{es ? 'Con qué te ayudamos' : 'What we help with'}</h2>

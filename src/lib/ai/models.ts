@@ -27,6 +27,13 @@ export const AI_MODELS = {
   // compare against gemini-2.5-flash if cost needs trimming (the research leaned Gemini Flash on cost).
   chat: 'anthropic/claude-haiku-4.5',
 
+  // SUPPORT TRIAGE. Internal-only classification + a draft reply a human edits, running once per
+  // inbound ticket. The hard part (who is this member, are they entitled, did their scans fail) is
+  // solved by a SQL dossier before the model runs, so this is a cheap read-and-label job, not a
+  // reasoning one. Haiku keeps the draft in the coach's register; the chain falls back to `chat`,
+  // which is the same model today but stays correct if either is re-routed independently.
+  supportTriage: 'anthropic/claude-haiku-4.5',
+
   // NIGHTLY INSIGHTS. Batch across many users -> cheap + reliable; a short personalized insight does
   // not need a flagship. Re-routed from claude-sonnet to gemini-2.5-flash $0.30/$2.50.
   insights: 'google/gemini-2.5-flash',

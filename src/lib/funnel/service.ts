@@ -15,8 +15,8 @@ import { after } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { enrollInDrip, upsertGhlContact } from '@/lib/ghl/client';
 import { sendLeadMagnet, sendWaitlistConfirmation } from '@/lib/email/resend';
+import { resolveTenantId } from '@/lib/tenant';
 
-const TENANT_SLUG = 'thick-and-fit';
 
 /**
  * Run a side effect that must OUTLIVE the response without blocking it.
@@ -107,13 +107,6 @@ export type SignupResult = {
   entryCount: number;
   isNew: boolean;
 };
-
-async function resolveTenantId(): Promise<string> {
-  const supabase = createServiceClient();
-  const { data } = await supabase.from('companies').select('id').eq('slug', TENANT_SLUG).maybeSingle();
-  if (!data) throw new Error('funnel/service: tenant not configured');
-  return (data as { id: string }).id;
-}
 
 /** Look up a referrer by their share code. Case-insensitive, tenant-scoped. */
 export async function findLeadByReferralCode(code: string): Promise<{ id: string; first_name: string | null } | null> {

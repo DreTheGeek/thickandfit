@@ -77,16 +77,27 @@ export async function getCronStatus(): Promise<CronRow[]> {
 // `body` and `source` are part of this on purpose. The board could only ever show the subject line,
 // so a ticket was unreadable and therefore unworkable: the column was written on create and never
 // read back anywhere.
-export type Ticket = { id: string; subject: string; body: string | null; email: string | null; category: string | null; priority: string; status: string; source: string | null; createdAt: string };
+export type TicketTriage = {
+  category?: string;
+  priority?: string;
+  summary?: string;
+  memberFound?: boolean;
+  memberContext?: string;
+  likelyArea?: string[];
+  suggestedReply?: string;
+  confidence?: number;
+};
+
+export type Ticket = { id: string; subject: string; body: string | null; email: string | null; category: string | null; priority: string; status: string; source: string | null; createdAt: string; triage: TicketTriage | null; githubIssueUrl: string | null };
 
 export async function getSupportTickets(companyId: string): Promise<{ tickets: Ticket[]; openCount: number }> {
   const sb = createServiceClient();
   const [{ data }, { count: openCount }] = await Promise.all([
-    sb.from('support_tickets').select('id, subject, body, email, category, priority, status, source, created_at').eq('company_id', companyId).order('created_at', { ascending: false }).limit(100),
+    sb.from('support_tickets').select('id, subject, body, email, category, priority, status, source, created_at, triage, github_issue_url').eq('company_id', companyId).order('created_at', { ascending: false }).limit(100),
     sb.from('support_tickets').select('id', { count: 'exact', head: true }).eq('company_id', companyId).in('status', ['open', 'in_progress']),
   ]);
-  const tickets = ((data ?? []) as { id: string; subject: string; body: string | null; email: string | null; category: string | null; priority: string; status: string; source: string | null; created_at: string }[]).map((t) => ({
-    id: t.id, subject: t.subject, body: t.body, email: t.email, category: t.category, priority: t.priority, status: t.status, source: t.source, createdAt: t.created_at,
+  const tickets = ((data ?? []) as { id: string; subject: string; body: string | null; email: string | null; category: string | null; priority: string; status: string; source: string | null; created_at: string; triage: TicketTriage | null; github_issue_url: string | null }[]).map((t) => ({
+    id: t.id, subject: t.subject, body: t.body, email: t.email, category: t.category, priority: t.priority, status: t.status, source: t.source, createdAt: t.created_at, triage: t.triage, githubIssueUrl: t.github_issue_url,
   }));
   return { tickets, openCount: openCount ?? 0 };
 }

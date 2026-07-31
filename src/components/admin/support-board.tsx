@@ -132,11 +132,51 @@ export function SupportBoard({ tickets }: { tickets: Ticket[] }): ReactElement {
                         have only a subject.
                       </p>
                     )}
+                    {t.triage ? (
+                      <div className="mt-4 rounded-xl bg-warm px-4 py-3">
+                        <div className="text-[10px] font-semibold uppercase tracking-[1.5px] text-faint">
+                          Triage{typeof t.triage.confidence === 'number' ? ` · ${Math.round(t.triage.confidence * 100)}% confident` : ''}
+                        </div>
+                        {t.triage.summary ? <p className="mt-1.5 text-[13px] font-medium text-ink">{t.triage.summary}</p> : null}
+                        {t.triage.memberContext ? (
+                          <p className="mt-1.5 text-[12px] leading-[1.5] text-soft">
+                            <span className="font-semibold">Account:</span> {t.triage.memberContext}
+                          </p>
+                        ) : null}
+                        {t.triage.likelyArea?.length ? (
+                          <p className="mt-1.5 text-[12px] text-soft">
+                            <span className="font-semibold">Look first:</span> {t.triage.likelyArea.join(', ')}
+                          </p>
+                        ) : null}
+                        {t.triage.suggestedReply ? (
+                          <div className="mt-3">
+                            {/* DRAFT, never sent. Copy-to-clipboard rather than a Send button is the
+                                whole safety design: a human reads and edits every word that reaches
+                                a member. */}
+                            <div className="text-[10px] font-semibold uppercase tracking-[1.5px] text-faint">Draft reply (not sent)</div>
+                            <p className="mt-1 whitespace-pre-wrap text-[13px] leading-[1.6] text-soft">{t.triage.suggestedReply}</p>
+                            <button
+                              type="button"
+                              onClick={() => void navigator.clipboard?.writeText(t.triage?.suggestedReply ?? '')}
+                              className="tf-press mt-2 rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-muted hover:border-ink hover:text-ink"
+                            >
+                              Copy draft
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
                     <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-faint">
                       <span>Source: {t.source ?? 'manual'}</span>
                       {t.email ? (
                         <a href={`mailto:${t.email}?subject=${encodeURIComponent(`Re: ${t.subject}`)}`} className="underline underline-offset-2 hover:text-ink">
                           Reply to {t.email}
+                        </a>
+                      ) : null}
+                      {t.githubIssueUrl ? (
+                        <a href={t.githubIssueUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">
+                          GitHub issue
                         </a>
                       ) : null}
                     </div>
