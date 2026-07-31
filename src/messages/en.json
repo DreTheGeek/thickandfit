@@ -148,7 +148,8 @@
       "updatePasswordFailed": "Could not update your password. Please try again.",
       "passwordMismatch": "Passwords do not match.",
       "resetLinkExpired": "Your reset link has expired. Request a new one."
-    }
+    },
+    "emailConfirmed": "Your email is confirmed. Sign in to get started."
   },
   "pwa": {
     "iosInstall": "Install Thick & Fit: tap <b>Share</b>, then <b>Add to Home Screen</b>.",

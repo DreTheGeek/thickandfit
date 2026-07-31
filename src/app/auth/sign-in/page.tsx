@@ -10,12 +10,20 @@ export const metadata: Metadata = { title: 'Sign in' };
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; confirmed?: string }>;
 }): Promise<ReactElement> {
   const t = await getTranslations('auth');
-  const { error } = await searchParams;
+  const { error, confirmed } = await searchParams;
   return (
     <AuthShell title={t('signIn')}>
+      {/* Arrives from /auth/callback when the email was verified but no session could be opened in
+          THIS browser (the mail app's webview does not hold the PKCE code_verifier). Their address
+          IS confirmed, so this is good news and must not render as an error. */}
+      {confirmed === '1' && error == null && (
+        <p role="status" className="mb-4 bg-warm px-3 py-2 text-sm text-ink">
+          {t('emailConfirmed')}
+        </p>
+      )}
       {error != null && (
         <p role="alert" className="mb-4 bg-alert px-3 py-2 text-sm text-alert-ink">
           {error === 'oauth' ? t('oauthError') : t('authError')}

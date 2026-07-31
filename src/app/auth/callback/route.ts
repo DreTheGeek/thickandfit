@@ -67,6 +67,31 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(dest);
     }
     console.error('callback verifyOtp:', error.message, 'type:', type);
+
+    // A PKCE-issued hash is not an OTP hash. signUp() runs on the SSR client, which uses the PKCE
+    // flow, so {{ .TokenHash }} renders as `pkce_<hash>` and verifyOtp above cannot mint a session
+    // from it. Walked on prod 2026-07-30: a brand-new member clicked Confirm and landed on
+    // sign-in?error=auth ("Something went wrong signing you in") even though the click HAD verified
+    // their address. Every new signup hit this.
+    //
+    // Try the PKCE exchange, which succeeds when the link is opened in the browser that submitted
+    // the form (the one holding the code_verifier cookie).
+    if (tokenHash.startsWith('pkce_')) {
+      const { error: pkceErr } = await supabase.auth.exchangeCodeForSession(tokenHash);
+      if (!pkceErr) {
+        const dest = await resolveDestination(supabase, origin, next);
+        return NextResponse.redirect(dest);
+      }
+      console.error('callback pkce exchange:', pkceErr.message, 'type:', type);
+    }
+
+    // Could not open a session here, which is expected when the link is opened from a mail app's
+    // webview: the code_verifier lives in the browser that signed up. But verifyOtp already marked
+    // the address confirmed, so the honest destination is sign-in with a SUCCESS notice. Showing a
+    // red error for a confirmation that actually worked is what made this look broken.
+    if (type === 'signup' || type === 'invite' || type === 'email') {
+      return NextResponse.redirect(`${origin}/auth/sign-in?confirmed=1`);
+    }
   }
 
   // Path 2 — PKCE code (OAuth flows that start + finish in the same browser).
