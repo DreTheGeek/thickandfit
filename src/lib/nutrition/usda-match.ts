@@ -64,6 +64,28 @@ export function brandConflicts(query: string, f: UsdaCandidate): boolean {
 }
 
 /**
+ * Does an off-target penalty word actually appear in the description, as a WORD?
+ *
+ * The penalty list existed to stop "grilled salmon" resolving to "Fish oil, salmon", and it was
+ * applied with a plain substring test. That silently wrecked the most-logged food in a fitness app:
+ *
+ *   "Chicken, br(oil)er or fryers, breast, skinless, boneless, meat only, cooked, grilled"
+ *
+ * USDA writes nearly every chicken row that way, so "oil" matched inside "broiler" and every correct
+ * chicken entry took the -5 intended for cooking oil. Measured against the live API on 2026-07-31,
+ * that pushed the right answer from 5.59 to 0.61 and handed the query to "Lunchmeat, chicken breast,
+ * sliced" at 3.84. Same trap waits in "boiled" and "spoiled".
+ *
+ * Word-boundary matching keeps the original intent and drops the collateral damage.
+ */
+export function penaltyApplies(description: string, penaltyWord: string): boolean {
+  const w = penaltyWord.trim().toLowerCase();
+  if (!w) return false;
+  const re = new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+  return re.test(description);
+}
+
+/**
  * Reject rows whose macros cannot be true per 100g.
  *
  * Two jobs at once. (1) USDA Branded is partly submitted by manufacturers and carries real garbage.

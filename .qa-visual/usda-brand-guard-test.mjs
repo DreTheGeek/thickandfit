@@ -9,6 +9,7 @@ import {
   usdaBrandOf,
   brandConflicts,
   isPlausiblePer100g,
+  penaltyApplies,
 } from '../src/lib/nutrition/usda-match.ts';
 
 let pass = 0;
@@ -73,6 +74,23 @@ ok('McDonalds query accepts it', brandConflicts('mcdonalds big mac', { descripti
 ok('Beef generic', usdaBrandOf({ description: 'Beef, ground, 85% lean' }) === null);
 ok('Egg generic', usdaBrandOf({ description: 'Egg, whole, raw, fresh' }) === null);
 ok('KFC is a brand', usdaBrandOf({ description: 'KFC, Fried Chicken, Original Recipe' }) === 'kfc');
+
+// --- penalty words must match as WORDS, not substrings ---------------------------------------------
+// The bug: USDA writes chicken as "Chicken, broiler or fryers, ...". A substring test for the
+// cooking-oil penalty matched "oil" inside "broiler" and penalised every correct chicken row by -5,
+// handing "grilled chicken breast" to "Lunchmeat, chicken breast, sliced". Measured on the live API.
+const CHICKEN = 'chicken, broiler or fryers, breast, skinless, boneless, meat only, cooked, grilled';
+ok('THE BUG: broiler is not oil', penaltyApplies(CHICKEN, 'oil') === false);
+ok('boiled is not oil', penaltyApplies('potato, boiled, drained', 'oil') === false);
+ok('spoiled is not oil', penaltyApplies('milk, spoiled', 'oil') === false);
+// ...while the penalty still does its original job.
+ok('real oil still penalised', penaltyApplies('fish oil, salmon', 'oil') === true);
+ok('oil at start', penaltyApplies('Oil, olive, extra virgin', 'oil') === true);
+ok('oil with punctuation', penaltyApplies('salad dressing (oil).', 'oil') === true);
+ok('baby food still caught', penaltyApplies('babyfood, carrots', 'baby') === false);
+ok('baby as a word caught', penaltyApplies('baby food, carrots', 'baby') === true);
+ok('supplement caught', penaltyApplies('protein supplement powder', 'supplement') === true);
+ok('empty penalty safe', penaltyApplies('anything', '') === false);
 
 console.log(`usda brand guard: ${pass}/${pass + fails.length} passed`);
 if (fails.length) {

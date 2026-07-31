@@ -11,7 +11,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import type { FoodLite } from '@/lib/nutrition/macros';
 // Pure matching rules live in their own module so they can be unit-tested without a network call or
 // a service-role client. See .qa-visual/usda-brand-guard-test.mjs.
-import { brandConflicts, isPlausiblePer100g, usdaBrandOf } from '@/lib/nutrition/usda-match';
+import { brandConflicts, isPlausiblePer100g, penaltyApplies, usdaBrandOf } from '@/lib/nutrition/usda-match';
 
 const USDA_KEY = process.env.USDA_API_KEY;
 const UA = 'ThickAndFit/1.0 (contact@teamthickandfit.com)';
@@ -127,7 +127,9 @@ function pickBestUsda(query: string, foods: UsdaFood[]): UsdaFood | null {
     }
     let s = 0;
     for (const w of qWords) if (desc.includes(w)) s += 2;
-    for (const b of USDA_PENALTY) if (desc.includes(b) && !ql.includes(b)) s -= 5;
+    // penaltyApplies, NOT desc.includes: the substring form matched "oil" inside "broiler" and
+    // penalised every canonical USDA chicken row by -5. See usda-match.ts for the measurement.
+    for (const b of USDA_PENALTY) if (penaltyApplies(desc, b) && !ql.includes(b)) s -= 5;
     s -= desc.length / 200;
     // Prefer a generic row over a branded one at equal relevance. A member typing "chicken breast"
     // wants the food, not somebody's frozen entree that happens to share the words.
