@@ -72,8 +72,12 @@ export async function openIssueForTicket(input: {
     'the file list is a starting point, not a diagnosis. Do not reply to the member from here.',
   );
 
-  try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/issues`, {
+  const title = `[support] ${input.triage.summary.slice(0, 120)}`;
+  const body = lines.join('\n');
+  const labels = ['support', 'bug', ...(input.triage.priority === 'urgent' ? ['urgent'] : [])];
+
+  const post = async (withLabels: string[]): Promise<Response> =>
+    fetch(`https://api.github.com/repos/${REPO}/issues`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${TOKEN}`,
@@ -81,12 +85,19 @@ export async function openIssueForTicket(input: {
         'X-GitHub-Api-Version': '2022-11-28',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        title: `[support] ${input.triage.summary.slice(0, 120)}`,
-        body: lines.join('\n'),
-        labels: ['support', 'bug', ...(input.triage.priority === 'urgent' ? ['urgent'] : [])],
-      }),
+      body: JSON.stringify({ title, body, ...(withLabels.length ? { labels: withLabels } : {}) }),
     });
+
+  try {
+    let res = await post(labels);
+    // GitHub 422s the whole issue when a label does not exist in the repo, and the token may also
+    // lack permission to create one. Losing a member's bug report over a missing tag is absurd, so
+    // retry bare. The `support`/`bug`/`urgent` labels were created 2026-07-31; this is the guard for
+    // the day someone deletes one or the repo changes.
+    if (res.status === 422 && labels.length) {
+      console.error('openIssueForTicket: 422 with labels, retrying without');
+      res = await post([]);
+    }
     if (!res.ok) {
       console.error('openIssueForTicket:', res.status, (await res.text()).slice(0, 200));
       return null;
