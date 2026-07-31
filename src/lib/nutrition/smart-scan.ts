@@ -380,6 +380,11 @@ export async function analyzeSmartPhoto(
       // Provenance is deferred (enriched + logged after resolve), so label the trace explicitly here
       // or the scan - the moat surface - aggregates under 'unknown' on /admin/traces.
       traceFeature: 'photo-scan',
+      // How many context blocks actually reached the model this call (population priors + this
+      // member's own history). Without it the injection is unobservable in prod: ai_trace stores no
+      // prompt input, so "the prior was applied" would be an assumption rather than a fact. This
+      // makes it a number anyone can query after the event.
+      retrievalCount: (populationBiasText ? 1 : 0) + (memberContextText ? 1 : 0),
     });
     if (call.status === 'notConfigured') return { status: 'notConfigured' };
     // PRD-A: a provider outage (every model in the chain failed) used to return here with no
