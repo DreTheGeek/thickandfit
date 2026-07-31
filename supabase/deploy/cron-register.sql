@@ -197,6 +197,42 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-refresh-population-bias-nightly (K4): recompute the cross-member portion bias from corrected
+-- photo scans. Runs at 08:45 UTC, AFTER tf-materialize-user-state-nightly, so the day's corrections
+-- are already settled before the aggregate reads them.
+--
+-- Nightly rather than per-scan for two reasons: the aggregate reads every corrected scan in the
+-- tenant (fine daily, absurd on a scan's hot path), and a prior that shifted between two scans of the
+-- same plate would make the engine look unstable to the member who just corrected it.
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-refresh-population-bias-nightly' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+
+  perform cron.schedule(
+    'tf-refresh-population-bias-nightly',
+    '45 8 * * *',  -- 08:45 UTC nightly (15 min after tf-materialize-user-state-nightly)
+    $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/refresh-population-bias',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer __CRON_SECRET__',
+          'Content-Type', 'application/json'
+        ),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 120000
+      );
+    $cron$
+  );
+  raise notice 'scheduled tf-refresh-population-bias-nightly at 45 8 * * *';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-refresh-population-bias-nightly.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- tf-mine-silver-cases-weekly (K6): auto-promote real member corrections into "silver" eval cases
 -- so the offline eval set grows with real production photos over time. Runs Sun 09:00 UTC — 15 min
 -- before the weekly eval so freshly-mined silver cases score in the same run. Idempotent (skips
