@@ -1,0 +1,74 @@
+# Guard rail for agent-authored pull requests.
+#
+# support-fix.yml TELLS the agent which paths are off limits. This ENFORCES it. A prompt is a
+# request; a failing required check is a guarantee, and the difference matters when the thing being
+# asked is "please do not touch the migrations that run against production member data".
+#
+# Fails the PR if an agent-authored branch changes anything in a protected area. Also fails if the
+# PR carries more than a sane number of files, since a small bug fix that rewrites forty files is
+# not a small bug fix.
+name: Agent PR guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guard:
+    # Only agent branches. A human PR touching billing is normal work and must not be blocked by
+    # this. claude-code-action pushes to branches prefixed `claude/`.
+    if: startsWith(github.head_ref, 'claude/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Block protected paths
+        run: |
+          set -euo pipefail
+          BASE="origin/${{ github.base_ref }}"
+          git fetch --quiet origin "${{ github.base_ref }}"
+          CHANGED=$(git diff --name-only "$BASE"...HEAD)
+
+          echo "Files changed by the agent:"
+          echo "$CHANGED" | sed 's/^/  /'
+          echo
+
+          # Anchored patterns. Each is something an agent must never change unreviewed:
+          #   migrations  - runs against production member data, irreversible
+          #   auth        - the boundary between a member and everyone else's data
+          #   billing     - money
+          #   workflows   - these guard rails themselves
+          #   env         - secrets
+          BLOCKED=$(echo "$CHANGED" | grep -E '^(supabase/migrations/|src/lib/auth/|src/app/auth/|src/lib/billing/|src/app/api/stripe/|\.github/workflows/|\.env)' || true)
+
+          if [ -n "$BLOCKED" ]; then
+            echo "::error::Agent PR touches protected paths. A human must make these changes."
+            echo "$BLOCKED" | sed 's/^/  BLOCKED: /'
+            exit 1
+          fi
+
+          COUNT=$(echo "$CHANGED" | grep -c . || true)
+          if [ "$COUNT" -gt 25 ]; then
+            echo "::error::Agent PR changes $COUNT files. A support bug fix should be small; review manually."
+            exit 1
+          fi
+
+          echo "OK: $COUNT file(s), none protected."
+
+      - name: Never auto-merge
+        run: |
+          # Belt and braces. auto-merge should be disabled by branch protection, but if someone
+          # enables it repo-wide later, an agent PR must still not sail through on green checks.
+          if gh pr view "${{ github.event.pull_request.number }}" --json autoMergeRequest -q '.autoMergeRequest' | grep -qv '^null$'; then
+            echo "::error::Auto-merge is enabled on an agent PR. Disable it; these require human review."
+            exit 1
+          fi
+          echo "OK: auto-merge not enabled."
+        env:
+          GH_TOKEN: ${{ github.token }}
