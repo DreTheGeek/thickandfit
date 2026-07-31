@@ -1,0 +1,104 @@
+# Support bug -> analysis -> pull request.
+#
+# Chain: a member writes in -> /api/support/ticket -> triage classifies it as a bug -> a GitHub
+# issue is filed with the member's words, their account facts, and the likely files -> this runs.
+#
+# IT OPENS PULL REQUESTS. IT NEVER MERGES. Everything below exists to keep that true.
+name: Support bug fix
+
+on:
+  # Fires once per label added, so an issue created with `support` + `bug` triggers this exactly once
+  # (on the `support` label) rather than twice.
+  issues:
+    types: [labeled]
+  # Manual re-run for an issue the agent skipped or got wrong.
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to analyze
+        required: true
+
+# One run per issue. A re-label or a fast edit must not start a second agent racing the first for
+# the same branch.
+concurrency:
+  group: support-fix-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write # branch + commit
+  pull-requests: write # open the PR
+  issues: write # post the analysis back on the issue
+
+jobs:
+  fix:
+    # THREE independent conditions, all required:
+    #  1. AGENT_FIX_ENABLED is the kill switch. A repository VARIABLE, not a secret, so it is
+    #     flipped from the GitHub UI in seconds with no code change and no deploy. Absent = off,
+    #     which means merging this file turns nothing on by itself.
+    #  2. the `support` label, so only triage-filed issues qualify (a human issue never triggers it).
+    #  3. the `bug` label, because "analyze and fix" is meaningless for a billing question.
+    if: >
+      vars.AGENT_FIX_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.label.name == 'support' &&
+        contains(github.event.issue.labels.*.name, 'bug')))
+    runs-on: ubuntu-latest
+    # A runaway agent burns money and Actions minutes. Bounded here AND by --max-turns below.
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --max-turns 30
+            --model claude-opus-5
+          prompt: |
+            You are fixing a bug reported by a real member of Thick & Fit, a live fitness coaching
+            app. Issue #${{ github.event.issue.number || inputs.issue_number }} in this repository
+            contains their words, what we know about their account, and the files our triage step
+            guessed are involved.
+
+            Read the issue first with `gh issue view`.
+
+            HOW TO WORK
+
+            1. Reproduce the reasoning. Read the actual code paths before forming a theory. The
+               "look first" file list in the issue is a STARTING POINT produced by a model that
+               never read the repo. It is often right and sometimes wrong. Verify it.
+            2. Find the true cause. Do not fix a symptom you cannot explain. If the member's report
+               and the code disagree, say so.
+            3. Make the SMALLEST change that fixes it. This app is days from launch. A tidy-up
+               bundled with a fix is how a one-line fix becomes a risk.
+            4. Verify: `pnpm exec tsc --noEmit`, `pnpm exec eslint <files you touched>`, and
+               `pnpm build`. All three must pass. If a test harness covers the area, run it.
+            5. Open a pull request explaining what was broken, why, and what you changed. Link the
+               issue. State plainly what you could NOT verify.
+
+            IF YOU ARE NOT CONFIDENT, DO NOT OPEN A PULL REQUEST.
+            Post your analysis as a comment on the issue instead and stop. A wrong PR on a live
+            product costs far more than a comment saying "here is what I found and here is what I
+            could not determine". This is a success, not a failure.
+
+            NEVER TOUCH, under any circumstances:
+              - supabase/migrations/**   (a migration runs against production data)
+              - src/lib/auth/**, src/app/auth/**   (authentication)
+              - src/lib/billing/**, src/app/api/stripe/**   (money)
+              - .github/workflows/**   (your own guard rails)
+              - any .env file, or anything containing a secret
+            If the real fix lives in one of those, explain it on the issue and let a human do it.
+            A separate guard job fails your PR automatically if it touches these, so ignoring this
+            wastes the run.
+
+            HOUSE RULES (CLAUDE.md and AGENTS.md are in the repo root; read them):
+              - TypeScript strict. No `any`. Explicit return types.
+              - No em dashes anywhere in code, comments, or copy.
+              - Never use the words "AI" or "artificial intelligence" in anything a member can see.
+              - Every table needs RLS. Money is BIGINT cents.
+              - Comments explain WHY, not what.
+
+            Do not reply to the member. Do not close the issue. Do not merge anything.
