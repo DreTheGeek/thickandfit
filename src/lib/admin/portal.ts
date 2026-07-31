@@ -88,17 +88,52 @@ export type TicketTriage = {
   confidence?: number;
 };
 
-export type Ticket = { id: string; subject: string; body: string | null; email: string | null; category: string | null; priority: string; status: string; source: string | null; createdAt: string; triage: TicketTriage | null; githubIssueUrl: string | null };
+export type Ticket = {
+  id: string; subject: string; body: string | null; email: string | null; category: string | null;
+  priority: string; status: string; source: string | null; createdAt: string;
+  triage: TicketTriage | null; githubIssueUrl: string | null;
+  ticketNumber: number; piiFlagged: boolean; piiKinds: string[];
+  redactedBody: string | null; attachmentUrl: string | null; videoUrl: string | null;
+  repName: string | null; repPhone: string | null; companyName: string | null;
+  notifiedAt: string | null;
+};
+
+const TICKET_COLS =
+  'id, ticket_number, subject, body, redacted_body, email, category, priority, status, source, created_at, triage, github_issue_url, pii_flagged, pii_kinds, attachment_url, video_url, rep_name, rep_phone, company_name, notified_at';
+
+type TicketRow = {
+  id: string; ticket_number: number; subject: string; body: string | null; redacted_body: string | null;
+  email: string | null; category: string | null; priority: string; status: string; source: string | null;
+  created_at: string; triage: TicketTriage | null; github_issue_url: string | null;
+  pii_flagged: boolean; pii_kinds: string[] | null; attachment_url: string | null; video_url: string | null;
+  rep_name: string | null; rep_phone: string | null; company_name: string | null; notified_at: string | null;
+};
+
+function mapTicket(t: TicketRow): Ticket {
+  return {
+    id: t.id, ticketNumber: t.ticket_number, subject: t.subject, body: t.body,
+    redactedBody: t.redacted_body, email: t.email, category: t.category, priority: t.priority,
+    status: t.status, source: t.source, createdAt: t.created_at, triage: t.triage,
+    githubIssueUrl: t.github_issue_url, piiFlagged: t.pii_flagged, piiKinds: t.pii_kinds ?? [],
+    attachmentUrl: t.attachment_url, videoUrl: t.video_url, repName: t.rep_name,
+    repPhone: t.rep_phone, companyName: t.company_name, notifiedAt: t.notified_at,
+  };
+}
+
+/** One ticket, tenant-scoped so an id from another company cannot be read by guessing it. */
+export async function getTicketDetail(id: string, companyId: string): Promise<Ticket | null> {
+  const sb = createServiceClient();
+  const { data } = await sb.from('support_tickets').select(TICKET_COLS).eq('id', id).eq('company_id', companyId).maybeSingle();
+  return data ? mapTicket(data as TicketRow) : null;
+}
 
 export async function getSupportTickets(companyId: string): Promise<{ tickets: Ticket[]; openCount: number }> {
   const sb = createServiceClient();
   const [{ data }, { count: openCount }] = await Promise.all([
-    sb.from('support_tickets').select('id, subject, body, email, category, priority, status, source, created_at, triage, github_issue_url').eq('company_id', companyId).order('created_at', { ascending: false }).limit(100),
+    sb.from('support_tickets').select(TICKET_COLS).eq('company_id', companyId).order('created_at', { ascending: false }).limit(100),
     sb.from('support_tickets').select('id', { count: 'exact', head: true }).eq('company_id', companyId).in('status', ['open', 'in_progress']),
   ]);
-  const tickets = ((data ?? []) as { id: string; subject: string; body: string | null; email: string | null; category: string | null; priority: string; status: string; source: string | null; created_at: string; triage: TicketTriage | null; github_issue_url: string | null }[]).map((t) => ({
-    id: t.id, subject: t.subject, body: t.body, email: t.email, category: t.category, priority: t.priority, status: t.status, source: t.source, createdAt: t.created_at, triage: t.triage, githubIssueUrl: t.github_issue_url,
-  }));
+  const tickets = ((data ?? []) as TicketRow[]).map(mapTicket);
   return { tickets, openCount: openCount ?? 0 };
 }
 

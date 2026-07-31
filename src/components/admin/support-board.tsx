@@ -110,9 +110,18 @@ export function SupportBoard({ tickets }: { tickets: Ticket[] }): ReactElement {
                     <div className="mt-0.5 pl-4 text-[11px] text-faint">
                       {t.email ?? 'no email'} · {t.priority}
                       {t.category ? ` · ${t.category}` : ''} · {formatWhen(t.createdAt)}
+                      {t.piiFlagged ? ' · contains sensitive info' : ''}
                     </div>
                   </button>
                   <div className="flex shrink-0 items-center gap-2">
+                    {/* The full record. The inline expander shows a preview; anything with an
+                        attachment, a video, or redacted text is only readable on the detail page. */}
+                    <a
+                      href={`/admin/support/${t.id}`}
+                      className="tf-press rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-muted hover:border-ink hover:text-ink"
+                    >
+                      Open
+                    </a>
                     <span className="rounded-full bg-warm px-2 py-0.5 text-[10px] font-semibold uppercase text-soft">{t.status.replace('_', ' ')}</span>
                     <button type="button" onClick={() => advance(t)} disabled={pending} className="tf-press rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-muted hover:border-ink hover:text-ink disabled:opacity-40">
                       → {NEXT[t.status].replace('_', ' ')}
