@@ -1699,7 +1699,15 @@
       "photoLowQualityBoth": "Esta foto está oscura y borrosa.",
       "photoLowQualityHelp": "Una foto con más luz y enfoque será mucho más precisa.",
       "photoLowQualityRetake": "Tomar otra",
-      "photoLowQualityProceed": "Escanear de todos modos"
+      "photoLowQualityProceed": "Escanear de todos modos",
+      "coachMoment": {
+        "proteinPushFood": "Vas en {protein}g de proteína. Una palma más de {food} y llegas a tus {target}g.",
+        "proteinPush": "Vas en {protein}g de proteína. Te faltan {remaining}g para tus {target}g.",
+        "proteinHit": "{protein}g de proteína. Llegaste a tus {target}g de hoy.",
+        "kcalWatch": "Vas en {kcal} calorías y tu meta es {target}. Bueno saberlo antes de tu próxima comida.",
+        "onTrack": "{protein}g de proteína, {kcal} calorías. Justo donde debes estar.",
+        "dismiss": "Entendido"
+      }
     },
     "disclaimer": {
       "title": "Antes de empezar",

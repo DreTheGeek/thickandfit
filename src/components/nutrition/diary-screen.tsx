@@ -7,6 +7,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
 import { PhotoScan } from '@/components/nutrition/photo-scan';
+import { CoachMomentCard } from '@/components/nutrition/coach-moment-card';
+import type { CoachMoment } from '@/lib/nutrition/coach-moment';
 import { searchFoodsAction, getFoodDetailAction, logFoodAction, deleteFoodLogAction, lookupBarcodeAction, toggleFavoriteAction } from '@/lib/nutrition/diary-actions';
 import { MEAL_SLOTS, macrosForGrams, effectiveGrams, dayScore, type DiaryDay, type FoodLite, type FoodPortion, type FoodState, type MealSlot } from '@/lib/nutrition/macros';
 
@@ -87,6 +89,8 @@ export function DiaryScreen({
   const [grams, setGrams] = useState(100);
   const [slot, setSlot] = useState<MealSlot>('breakfast');
   const [busy, setBusy] = useState(false);
+  // Post-log coaching line, returned by the log action itself.
+  const [coachMoment, setCoachMoment] = useState<CoachMoment | null>(null);
   const [portions, setPortions] = useState<FoodPortion[]>([]);
   const [cookedFactor, setCookedFactor] = useState<number | null>(null);
   const [foodState, setFoodState] = useState<FoodState | null>(null);
@@ -153,6 +157,9 @@ export function DiaryScreen({
       setBarcode('');
       setScanState('idle');
       setGrams(100);
+      // Search and barcode logs earn the same coaching line as a photo scan. The moment is about
+      // where her day stands, not about how the food got entered.
+      setCoachMoment(res.coachMoment ?? null);
       router.refresh();
     }
   }
@@ -240,6 +247,9 @@ export function DiaryScreen({
         {diary.targetSource === 'onboarding' && (
           <p className="mt-3 text-[11px] text-faint">{t('onboardingTargetNote')}</p>
         )}
+        {/* Directly under the day's numbers, because the line is about those numbers. Only appears
+            after a log in this session; a fresh page load shows the totals alone. */}
+        <CoachMomentCard moment={coachMoment} />
       </div>
 
       {/* Photo-to-macro: the wedge. Snap a meal, confirm, log. Logs land on the viewed day, not today. */}

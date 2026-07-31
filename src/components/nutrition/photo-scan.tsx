@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
+import { CoachMomentCard } from '@/components/nutrition/coach-moment-card';
+import type { CoachMoment } from '@/lib/nutrition/coach-moment';
 import {
   logPhotoFoodAction,
   parseTextToMacroAction,
@@ -178,6 +180,8 @@ export function PhotoScan({
   const [slot, setSlot] = useState<MealSlot>('lunch');
   const [logged, setLogged] = useState<Record<number, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
+  // The post-log coaching line, returned by the log action itself (no extra round trip).
+  const [coachMoment, setCoachMoment] = useState<CoachMoment | null>(null);
   const [desc, setDesc] = useState('');
   // Barcode / packaged-product result (a single food + a real amount to confirm).
   const [productFood, setProductFood] = useState<FoodLite | null>(null);
@@ -228,6 +232,9 @@ export function PhotoScan({
     setProductBusy(false);
     if (res.ok) {
       setProductLogged(true);
+      // The product/barcode path deserves the same moment as a meal scan: the member logged food,
+      // and how she got there is our implementation detail, not her concern.
+      if (res.coachMoment) setCoachMoment(res.coachMoment);
       router.refresh();
     }
   }
@@ -383,6 +390,9 @@ export function PhotoScan({
     setBusy(null);
     if (res.ok) {
       setLogged((prev) => ({ ...prev, [i]: true }));
+      // Last write wins during a bulk log: each item recomputes today's totals, so the final one
+      // holds the true end-of-log numbers. Showing an intermediate line would understate her day.
+      if (res.coachMoment) setCoachMoment(res.coachMoment);
       router.refresh();
     }
   }
@@ -674,6 +684,9 @@ export function PhotoScan({
                     {t('photoNewPhoto')}
                   </button>
                 </div>
+                {/* Under the confirmation, not over it: the member came here to log a meal, and the
+                    coaching line is the reward for finishing, not an interruption. */}
+                <CoachMomentCard moment={coachMoment} />
               </div>
             )}
 
@@ -763,10 +776,13 @@ export function PhotoScan({
                 </div>
 
                 {productLogged ? (
-                  <div className="flex items-center gap-1.5 text-[13px] font-semibold text-accent-ink">
-                    <Icon name="check" size={16} />
-                    {t('photoLogged')}
-                  </div>
+                  <>
+                    <div className="flex items-center gap-1.5 text-[13px] font-semibold text-accent-ink">
+                      <Icon name="check" size={16} />
+                      {t('photoLogged')}
+                    </div>
+                    <CoachMomentCard moment={coachMoment} />
+                  </>
                 ) : (
                   <div className="flex gap-2">
                     <button

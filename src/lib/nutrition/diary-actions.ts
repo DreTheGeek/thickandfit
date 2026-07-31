@@ -11,6 +11,7 @@ import { analyzeMealText } from '@/lib/nutrition/text-parse';
 import { after } from 'next/server';
 import { recordItemOutcome } from '@/lib/ai/inferences';
 import { emitEvent } from '@/lib/events/emit';
+import { buildCoachMoment, type CoachMoment } from '@/lib/nutrition/coach-moment';
 import { recomputeChallengeProgressForProfile } from '@/lib/community/challenge-progress';
 
 // Live leaderboard refresh for 'logs' challenges after a diary write; after() survives the frozen
@@ -92,7 +93,25 @@ const LogInput = z.object({
   logDate: isoDate.optional(),
 });
 
-export type LogResult = { ok: boolean; error?: string };
+// coachMoment rides the log result rather than a second round trip: the client already awaits this
+// action, and the moment is only meaningful in the same breath as the confirmation.
+export type LogResult = { ok: boolean; error?: string; coachMoment?: CoachMoment };
+
+/**
+ * Build the post-log coaching moment without ever letting it break the log.
+ *
+ * Source-agnostic by construction: photo, search, text and barcode all funnel through the two
+ * actions below, so all four get the same moment for free.
+ */
+async function coachMomentFor(profileId: string, companyId: string | null, mealSlot: string): Promise<CoachMoment | undefined> {
+  try {
+    const moment = await buildCoachMoment(profileId, companyId, mealSlot);
+    return moment.kind === 'none' ? undefined : moment;
+  } catch (e) {
+    console.error('coachMomentFor:', e instanceof Error ? e.message : e);
+    return undefined;
+  }
+}
 
 // The day to write: the viewed date when it is valid and not in the future, else the user's local today.
 function resolveLogDate(viewed: string | undefined, tz: string): string {
@@ -165,7 +184,9 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
     refreshChallenges(ctx.companyId, ctx.userId);
   }
   revalidatePath('/nutrition');
-  return { ok: true };
+  // AFTER the insert, so today's totals already include this meal. Showing the pre-log number would
+  // be worse than showing nothing.
+  return { ok: true, coachMoment: await coachMomentFor(ctx.userId, ctx.companyId, parsed.data.mealSlot) };
 }
 
 // Log a single photo-detected food. The client sends the visible (cooked, as-photographed) grams;
@@ -333,7 +354,8 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
     }
   }
   revalidatePath('/nutrition');
-  return { ok: true };
+  // AFTER the insert, so today's totals already include this meal.
+  return { ok: true, coachMoment: await coachMomentFor(ctx.userId, ctx.companyId, parsed.data.mealSlot) };
 }
 
 export async function deleteFoodLogAction(id: string): Promise<LogResult> {

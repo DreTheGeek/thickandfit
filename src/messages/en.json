@@ -1699,7 +1699,15 @@
       "photoLowQualityBoth": "This photo is dark and blurry.",
       "photoLowQualityHelp": "A brighter, sharper shot will be much more accurate.",
       "photoLowQualityRetake": "Retake",
-      "photoLowQualityProceed": "Scan it anyway"
+      "photoLowQualityProceed": "Scan it anyway",
+      "coachMoment": {
+        "proteinPushFood": "That puts you at {protein}g protein. One more palm of {food} hits your {target}g.",
+        "proteinPush": "That puts you at {protein}g protein. {remaining}g left to hit your {target}g.",
+        "proteinHit": "{protein}g protein. You hit your {target}g today.",
+        "kcalWatch": "You are at {kcal} calories against a {target} target. Worth knowing before your next meal.",
+        "onTrack": "{protein}g protein, {kcal} calories. Right where you should be.",
+        "dismiss": "Got it"
+      }
     },
     "disclaimer": {
       "title": "Before you begin",
