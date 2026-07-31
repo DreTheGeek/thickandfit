@@ -163,6 +163,20 @@ tune a threshold and the metric that measures it in the same change.
 |---|---|---|---|---|---|
 | not yet | openai/gpt-5 | 0.892 | 19% | **n/a, no fat-labeled cases yet** | baseline 2026-07-31, run f7d1d319 |
 
+**Eval run-to-run variance is real. Do not read a single run as a verdict.** Three runs on 2026-07-31,
+same 12 cases, same model, prompt change confined to the clarify string (which meal cases never use):
+
+| run | prompt | F1 | MAPE | pass |
+|---|---|---|---|---|
+| f7d1d319 | v2 | 0.892 | 19% | 11/12 |
+| f8aea2dc | v3 | 0.878 | 21% | 11/12 |
+| f3a321ea | v3 | 0.925 | 18% | 11/12 |
+
+The v2 number sits BETWEEN the two v3 runs, and individual cases moved in both directions, so the
+spread is noise (roughly +/-0.025 F1) rather than signal. Pass rate held at 11/12 throughout, which
+is why it is the metric to trust on a 12-case set. Before attributing an F1 move to a change, run it
+at least twice; a 0.02 swing on this set proves nothing.
+
 Baseline run 2026-07-31 against prod: 11/12 pass (92%), avg score 86, avg 14.5s. F1 0.892 is just under
 the 0.8 bar's comfortable margin and MAPE 19% already clears 25%, so the ONLY thing blocking a decision
 is the fat baseline, and that needs the labeled high-fat gold set (PRD-D D2) which is a human
