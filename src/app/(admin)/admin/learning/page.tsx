@@ -26,7 +26,14 @@ export default async function LearningPage(): Promise<ReactElement> {
           </div>
 
           <Card title="Knowledge base growth (last 30 days)">
-            <VolumeChart data={l.knowledge.growth.map((g) => ({ day: g.day, requests: g.count, errors: 0 }))} />
+            {/* Labelled for what it actually plots. It read "Requests / Errors" here, so corpus
+                growth was presented as API traffic on the one page whose job is to show learning. */}
+            <VolumeChart
+              data={l.knowledge.growth.map((g) => ({ day: g.day, requests: g.count, errors: 0 }))}
+              primaryLabel="Chunks added"
+              showSecondary={false}
+              emptyText="No knowledge added yet. Add sources in the coach Knowledge Base and they appear here."
+            />
             <p className="mt-2 text-[12px] text-soft">
               The AI coach retrieves from this corpus live - {l.knowledge.chunks} chunks across {l.knowledge.sources} sources (incl. Stephanie&apos;s real coaching voice).
               Add sources from the coach Knowledge Base; they&apos;re used on the next chat with no redeploy.

@@ -150,13 +150,21 @@ export async function getLearning(companyId: string): Promise<Learning> {
   const mo = new Date(Date.now() - 30 * 86400000).toISOString();
   // Corrections = food_log rows the member re-portioned (corrected_at set) - the supervised signal that
   // teaches portion estimation (the hardest problem). This is the AI's training data, growing per log.
-  const [{ data: kn }, { count: corrTotal }, { count: corr30 }, { data: corrRows }, { count: scanTotal }, { count: scan7 }, { count: insTotal }, { count: ins7 }] = await Promise.all([
+  const [{ data: kn }, { count: corrTotal }, { count: corr30 }, { data: corrRows }, { count: scanTotal }, { count: scan7 }, { count: scanCorrected }, { count: insTotal }, { count: ins7 }] = await Promise.all([
     sb.from('coach_knowledge').select('source_id, created_at').eq('company_id', companyId).limit(6000),
     sb.from('food_log').select('id', { count: 'exact', head: true }).eq('company_id', companyId).not('corrected_at', 'is', null),
     sb.from('food_log').select('id', { count: 'exact', head: true }).eq('company_id', companyId).not('corrected_at', 'is', null).gte('corrected_at', mo),
     sb.from('food_log').select('name').eq('company_id', companyId).not('corrected_at', 'is', null).limit(2000),
-    sb.from('ai_inferences').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
-    sb.from('ai_inferences').select('id', { count: 'exact', head: true }).eq('company_id', companyId).gte('created_at', wk),
+    // feature='photo-scan' or this is not a scan count. Without the filter it summed EVERY inference
+    // in the table, and the nightly insights cron alone writes ~54 rows against 9 real photo scans,
+    // so the panel read "50 scans processed, 14 this week" while members had scanned 9 photos total.
+    // A dashboard whose job is to prove the system is learning must not inflate its own numbers.
+    sb.from('ai_inferences').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('feature', 'photo-scan'),
+    sb.from('ai_inferences').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('feature', 'photo-scan').gte('created_at', wk),
+    // Scans the member actually corrected. Was reusing the food_log corrected_at count, which is a
+    // different thing measured on a different table: a text-typed macro correction (the only one that
+    // exists) was being displayed under PHOTO-SCAN VOLUME as a corrected scan.
+    sb.from('ai_inferences').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('feature', 'photo-scan').not('correction', 'is', null),
     sb.from('user_insights').select('id', { count: 'exact', head: true }),
     sb.from('user_insights').select('id', { count: 'exact', head: true }).gte('created_at', wk),
   ]);
@@ -172,7 +180,7 @@ export async function getLearning(companyId: string): Promise<Learning> {
   return {
     knowledge: { chunks: knRows.length, sources, addedThisWeek, growth },
     corrections: { total: corrTotal ?? 0, last30: corr30 ?? 0, topFoods },
-    scans: { total: scanTotal ?? 0, last7: scan7 ?? 0, withCorrection: corrTotal ?? 0 },
+    scans: { total: scanTotal ?? 0, last7: scan7 ?? 0, withCorrection: scanCorrected ?? 0 },
     insights: { total: insTotal ?? 0, last7: ins7 ?? 0 },
   };
 }
