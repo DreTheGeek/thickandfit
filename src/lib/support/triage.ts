@@ -107,6 +107,31 @@ function day(iso: string): string {
   return Number.isNaN(d.getTime()) ? 'unknown' : d.toISOString().slice(0, 10);
 }
 
+/**
+ * The REAL module map, so `likely_area` names files that exist.
+ *
+ * Without this the model invented confident, plausible, wrong paths (`src/auth/signup-flow.ts` for a
+ * confirm-link bug, when the actual code is `src/app/auth/callback/route.ts`). A fabricated file list
+ * is worse than none: it sends a developer to a path that does not exist and teaches the team to
+ * distrust the whole triage panel. Keep this in sync when a major area moves.
+ */
+const AREA_MAP = [
+  'src/app/auth/callback/route.ts - email confirm / password reset / OAuth callback',
+  'src/lib/auth/actions.ts - sign up, sign in, password reset actions',
+  'src/lib/auth/guards.ts - route access (requireAuth/requireCoach/requireOperator/requireEntitled)',
+  'src/lib/billing/entitlement.ts - who may use the paid app',
+  'src/lib/billing/stripe.ts + src/app/api/stripe/webhook/route.ts - payments and subscription events',
+  'src/lib/nutrition/smart-scan.ts - food photo scanning',
+  'src/lib/nutrition/photo.ts + foods.ts + external-foods.ts - food matching and macro lookup',
+  'src/lib/nutrition/macros.ts - macro math, cooked/raw conversion',
+  'src/components/onboarding/onboarding-flow.tsx + src/app/api/onboarding/submit/route.ts - onboarding',
+  'src/lib/funnel/service.ts - waitlist signup, confirm, referrals',
+  'src/lib/coach-ai/chat.ts - the coach conversation',
+  'src/lib/email/resend.ts + shell.ts - transactional email and its template',
+  'src/lib/community/ - posts, reports, blocks',
+  'src/app/(app)/dashboard/ - the Today screen',
+].join('\n');
+
 const SYSTEM = [
   'You triage customer support tickets for a fitness coaching app.',
   'Return ONLY JSON matching the requested shape. No prose, no markdown fence.',
@@ -117,7 +142,12 @@ const SYSTEM = [
   '- suggested_reply is a DRAFT a human will read and edit. Write it as the coach would: warm, plain,',
   '  direct, no corporate padding, no apologies for things that did not happen. Never promise a refund,',
   '  a credit, a date, or a fix you cannot verify from the facts.',
-  '- likely_area: repo file paths a developer would open FIRST, only when category is "bug". Otherwise [].',
+  '- likely_area: ONLY when category is "bug". Otherwise [].',
+  '  Choose paths ONLY from the CODE MAP below, copied exactly. Never invent a path. If nothing in the',
+  '  map fits, return [] rather than guessing: a wrong path costs a developer more than an empty list.',
+  '',
+  'CODE MAP:',
+  AREA_MAP,
   '- priority: urgent only for money moving wrongly, a member locked out, or data loss. Not for "it is slow".',
   '- confidence: how sure you are of the category and summary, 0 to 1.',
   '',
@@ -179,9 +209,10 @@ export async function triageTicket(input: {
       summary: str(raw.summary).slice(0, 300) || input.subject,
       memberFound: dossier.found,
       memberContext: dossier.context,
-      // Only a bug ticket gets file paths. A billing question with a confident list of source files
-      // is noise that makes the whole panel less trustworthy.
-      likelyArea: category === 'bug' ? arr(raw.likely_area).slice(0, 5) : [],
+      // Only a bug ticket gets file paths, and only paths that actually exist in this repo. The
+      // prompt asks for map entries; this ENFORCES it, because a prompt instruction is a request and
+      // a filter is a guarantee. Anything invented is dropped rather than shown.
+      likelyArea: category === 'bug' ? keepRealPaths(arr(raw.likely_area)) : [],
       suggestedReply: str(raw.suggested_reply).slice(0, 2000),
       confidence: Math.max(0, Math.min(1, Number(raw.confidence) || 0)),
     };
@@ -200,4 +231,25 @@ function str(v: unknown): string {
 }
 function arr(v: unknown): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : [];
+}
+
+/** Every path the AREA_MAP mentions, so a returned path can be checked against reality. */
+const KNOWN_PATHS: string[] = AREA_MAP.split('\n').flatMap((line) => {
+  const lhs = line.split(' - ')[0] ?? '';
+  return lhs.split('+').map((p) => p.trim()).filter(Boolean);
+});
+
+/**
+ * Keep only paths that appear in the map. Matching is containment-based in both directions so a
+ * model that returns a directory ('src/lib/community/') or a slightly longer path under a listed
+ * directory still passes, while an invented file is dropped.
+ */
+function keepRealPaths(paths: string[]): string[] {
+  const out: string[] = [];
+  for (const p of paths) {
+    const clean = p.trim().replace(/^\.?\//, '');
+    if (!clean) continue;
+    if (KNOWN_PATHS.some((k) => k === clean || k.startsWith(clean) || clean.startsWith(k))) out.push(clean);
+  }
+  return [...new Set(out)].slice(0, 5);
 }
