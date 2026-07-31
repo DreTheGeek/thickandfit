@@ -4,7 +4,9 @@ import { getLocale } from 'next-intl/server';
 import { LegalPage } from '@/components/legal/legal-page';
 import { CONSENT_VERSION } from '@/lib/legal/consent';
 
-const CONTACT_EMAIL = 'hello@teamthickandfit.com';
+// NOT an email address. hello@teamthickandfit.com has no MX record and bounces, so the contact
+// published on our own Terms reached nobody. /support is a form that lands on the support board.
+const CONTACT_PATH = '/support';
 
 export const metadata: Metadata = {
   title: 'Terms of Service, Thick & Fit',
@@ -25,7 +27,8 @@ export default async function TermsPage(): Promise<ReactElement> {
           : 'We are finalizing the full text of our Terms of Service ahead of public launch. In the meantime, by using Thick & Fit you agree to use the service lawfully and responsibly. If you have questions about the terms before the final version is published, please reach out.'
       }
       contactLabel={es ? 'Contacto:' : 'Contact:'}
-      contactEmail={CONTACT_EMAIL}
+      contactHref={es ? `/es${CONTACT_PATH}` : CONTACT_PATH}
+      contactText={es ? 'Escríbenos desde la página de Soporte' : 'Reach us from the Support page'}
       homeLabel={es ? '← Volver al inicio' : '← Back to home'}
     />
   );

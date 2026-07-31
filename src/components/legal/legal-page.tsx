@@ -15,7 +15,8 @@ export function LegalPage({
   version,
   notice,
   contactLabel,
-  contactEmail,
+  contactHref,
+  contactText,
   homeLabel,
   sections,
 }: {
@@ -23,7 +24,9 @@ export function LegalPage({
   version: string;
   notice: string;
   contactLabel: string;
-  contactEmail: string;
+  /** Where a data-subject request actually reaches a human. See the note at the render site. */
+  contactHref: string;
+  contactText: string;
   homeLabel: string;
   sections?: PrivacySection[];
 }): ReactElement {
@@ -74,11 +77,19 @@ export function LegalPage({
           )}
         </section>
       ))}
+      {/*
+        A LINK, not a mailto. These pages named hello@teamthickandfit.com as the legal contact, and
+        that address has no MX record, so a data-subject request sent there bounced silently. A
+        privacy policy whose contact channel does not work is worse than useless: it is a documented
+        promise we could not keep, on the page a regulator or an App Store reviewer reads first.
+        /support is a form that reaches the team's board. Restore an address here once inbound mail
+        is live (see .planning/SUPPORT-TRIAGE-AGENT.md).
+      */}
       <p className="mt-6 text-[15px] text-soft">
         {contactLabel}{' '}
-        <a href={`mailto:${contactEmail}`} className="underline underline-offset-2 hover:text-ink">
-          {contactEmail}
-        </a>
+        <Link href={contactHref} className="underline underline-offset-2 hover:text-ink">
+          {contactText}
+        </Link>
       </p>
       <Link
         href="/"

@@ -110,7 +110,7 @@ export function privacySections(es: boolean): PrivacySection[] {
           'Puedes editar tu perfil de salud cuando quieras en Tú, Perfil de salud.',
           'Puedes darte de baja de los correos de marketing sin perder los correos de tu cuenta.',
           'Puedes retirar tu consentimiento borrando tu cuenta.',
-          'Si quieres saber qué guardamos de ti, escríbenos y te respondemos.',
+          'Si quieres saber qué guardamos de ti, pregúntanos desde la página de Soporte y te respondemos.',
         ],
       },
       {
@@ -182,7 +182,7 @@ export function privacySections(es: boolean): PrivacySection[] {
         'You can edit your health profile any time under You, Health profile.',
         'You can unsubscribe from marketing email without losing account email.',
         'You can withdraw consent by deleting your account.',
-        'If you want to know what we hold about you, email us and we will tell you.',
+        'If you want to know what we hold about you, ask us from the Support page and we will tell you.',
       ],
     },
     {
