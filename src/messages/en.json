@@ -109,7 +109,8 @@
     "shareWhatsApp": "WhatsApp",
     "shareX": "X",
     "shareMore": "More options",
-    "shareLinkLabel": "Your share link"
+    "shareLinkLabel": "Your share link",
+    "unknownLeadTitle": "Let's find you."
   },
   "auth": {
     "signIn": "Sign in",

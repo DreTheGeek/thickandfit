@@ -415,6 +415,11 @@ export type LeadStats = {
   confirmed: boolean; // double-opt-in state; drives the "check your email" banner on /join/thanks
   socialFollows: number;
   position: number | null; // rank by entry_count DESC across the tenant; null if unknown
+  // The share code, read from the lead itself. The thank-you page used to depend on a `funnel_ref`
+  // COOKIE for this and fell back to the unknown-lead page without it, which meant a browser that
+  // had the lead but not the ref cookie lost the share link. Sourcing it here makes the cookie an
+  // optimization rather than a requirement.
+  referralCode: string;
 };
 
 /** Read the numbers the thank-you page renders. Called on every load, kept cheap. */
@@ -423,7 +428,7 @@ export async function getLeadStats(leadId: string): Promise<LeadStats | null> {
   const companyId = await resolveTenantId();
   const { data: lead } = await supabase
     .from('waitlist_leads')
-    .select('id, entry_count, quiz_completed_at, confirmed_at')
+    .select('id, entry_count, quiz_completed_at, confirmed_at, referral_code')
     .eq('id', leadId)
     .maybeSingle();
   if (!lead) return null;
@@ -447,6 +452,7 @@ export async function getLeadStats(leadId: string): Promise<LeadStats | null> {
     confirmed: (lead as { confirmed_at: string | null }).confirmed_at != null,
     socialFollows: followCount ?? 0,
     position: aheadCount == null ? null : aheadCount + 1,
+    referralCode: (lead as { referral_code: string }).referral_code,
   };
 }
 
@@ -457,7 +463,9 @@ export async function getLeadStats(leadId: string): Promise<LeadStats | null> {
  * the pre-confirmation holding audience into the live drip. Bad/unknown token returns ok:false;
  * the caller redirects to /join/thanks?confirmed=0 without leaking token validity.
  */
-export async function confirmLeadByToken(token: string): Promise<{ ok: boolean }> {
+export async function confirmLeadByToken(
+  token: string,
+): Promise<{ ok: boolean; leadId: string | null }> {
   const supabase = createServiceClient();
   const companyId = await resolveTenantId();
   const { data, error } = await supabase
@@ -469,7 +477,7 @@ export async function confirmLeadByToken(token: string): Promise<{ ok: boolean }
     .select('id, email, first_name, last_name');
   if (error) {
     console.error('funnel/service.confirmLeadByToken:', error.message);
-    return { ok: false };
+    return { ok: false, leadId: null };
   }
   const rows = (data ?? []) as { id: string; email: string; first_name: string | null; last_name: string | null }[];
   if (rows.length === 0) {
@@ -479,8 +487,12 @@ export async function confirmLeadByToken(token: string): Promise<{ ok: boolean }
       .select('id, confirmed_at')
       .eq('company_id', companyId)
       .eq('confirm_token', token)
-      .maybeSingle();
-    return { ok: Boolean((existing as { confirmed_at: string | null } | null)?.confirmed_at) };
+      .maybeSingle<{ id: string; confirmed_at: string | null }>();
+    const prior = existing as { id: string; confirmed_at: string | null } | null;
+    // Return the id even on a re-click. The token still identifies the lead, and the caller uses it
+    // to restore the funnel_lead cookie so a second click lands on a populated page, not the
+    // unknown-lead fallback.
+    return { ok: Boolean(prior?.confirmed_at), leadId: prior?.id ?? null };
   }
   const row = rows[0];
   tagContactInBackground(
@@ -488,7 +500,7 @@ export async function confirmLeadByToken(token: string): Promise<{ ok: boolean }
     { email: row.email, firstName: row.first_name, lastName: row.last_name },
     ['confirmed'],
   );
-  return { ok: true };
+  return { ok: true, leadId: row.id };
 }
 
 /**

@@ -47,12 +47,17 @@ export default async function ThanksPage({
 
   const stats = leadId ? await getLeadStats(leadId) : null;
 
-  if (!stats || !refCode) {
+  // Only the LEAD is required. The share code now comes off the lead record, with the cookie as a
+  // fallback, so a browser that knows who she is can never lose her share link.
+  if (!stats) {
     return (
       <main className="min-h-screen bg-[#0e0e0e] text-white">
         <section className="mx-auto max-w-2xl px-5 py-24 sm:px-8">
+          {/* NOT thanksTitle. This branch renders when we do not know who she is, and "You're in."
+              sitting directly above "We couldn't find your waitlist entry" reads as a broken site at
+              the exact moment she is deciding whether to trust one. */}
           <h1 className="text-[36px] font-extrabold uppercase leading-[0.98] tracking-[-0.01em] sm:text-[44px]">
-            {t('thanksTitle')}
+            {t('unknownLeadTitle')}
           </h1>
           <p className="mt-4 text-[16px] leading-snug text-white/85">{t('unknownLead')}</p>
           <Link
@@ -66,7 +71,7 @@ export default async function ThanksPage({
     );
   }
 
-  const shareUrl = await resolveShareUrl(refCode);
+  const shareUrl = await resolveShareUrl(stats.referralCode || (refCode ?? ''));
 
   return (
     <main className="min-h-screen bg-[#0e0e0e] text-white">

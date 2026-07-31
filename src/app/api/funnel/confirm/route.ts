@@ -27,8 +27,30 @@ async function GET_h(req: NextRequest): Promise<Response> {
     return NextResponse.redirect(`${origin}/join/thanks?confirmed=0&r=invalid`);
   }
 
-  const { ok } = await confirmLeadByToken(token.trim().toLowerCase());
-  return NextResponse.redirect(`${origin}/join/thanks?confirmed=${ok ? '1' : '0'}`);
+  const { ok, leadId } = await confirmLeadByToken(token.trim().toLowerCase());
+  const res = NextResponse.redirect(`${origin}/join/thanks?confirmed=${ok ? '1' : '0'}`);
+
+  // Restore the lead identity in THIS browser before handing off to the thank-you page.
+  //
+  // The cookie is written by the signup form's client JS, so it only ever existed in the browser
+  // that submitted the form. Almost nobody confirms there: the link is opened from a mail app, and
+  // Gmail/Outlook on iOS use their own in-app webview with a separate cookie jar. The page then
+  // found no lead and rendered "We couldn't find your waitlist entry" directly under "YOU'RE IN.",
+  // which is the exact moment the member is most engaged and the only place her share link lives.
+  //
+  // We just proved ownership of this lead via a token mailed to that address, so setting the cookie
+  // here is no weaker than the signup path that set it. httpOnly because only the server reads it
+  // (the thanks and quiz pages), unlike the client-set original.
+  if (leadId) {
+    res.cookies.set('funnel_lead', leadId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 60, // 60d, matching the signup form
+    });
+  }
+  return res;
 }
 
 export const GET = withApiLog(GET_h);
