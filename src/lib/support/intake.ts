@@ -9,6 +9,7 @@ import { triageTicket } from '@/lib/support/triage';
 import { openIssueForTicket } from '@/lib/support/github';
 import { scanForPii } from '@/lib/support/pii';
 import { sendTicketAlert } from '@/lib/support/telegram';
+import { ticketKeyboard } from '@/lib/support/telegram-commands';
 
 export type IntakeInput = {
   companyId: string;
@@ -139,6 +140,9 @@ export async function createSupportTicket(input: IntakeInput): Promise<IntakeRes
       piiFlagged: t.pii_flagged,
       hasAttachment: Boolean(t.attachment_url),
       videoUrl: t.video_url,
+      // Action buttons on the alert itself: an operator can move a ticket without leaving the chat,
+      // which is the difference between a notification feed and something that does work.
+      keyboard: ticketKeyboard(t.id),
     });
   };
 

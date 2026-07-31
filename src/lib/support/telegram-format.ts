@@ -34,6 +34,8 @@ export type TicketAlert = {
   piiFlagged: boolean;
   hasAttachment: boolean;
   videoUrl: string | null;
+  /** Optional inline keyboard (Telegram reply_markup). Opaque here; built by telegram-commands. */
+  keyboard?: unknown;
 };
 
 /**

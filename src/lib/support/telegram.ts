@@ -43,6 +43,7 @@ export async function sendTicketAlert(t: TicketAlert): Promise<{ sent: boolean }
         text: buildTicketMessage(t),
         parse_mode: 'HTML',
         disable_web_page_preview: true,
+        ...(t.keyboard ? { reply_markup: t.keyboard } : {}),
       }),
       signal: AbortSignal.timeout(10_000),
     });
