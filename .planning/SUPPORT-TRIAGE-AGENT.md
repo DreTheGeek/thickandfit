@@ -88,30 +88,44 @@ Cost: roughly a cent per ticket on a small model. At launch volume that is noise
 
 ---
 
-## Stage 3: ticket -> code (the honest limits)
+## Stage 3: ticket -> code
 
-This is what "goes to Claude Code" means, and it is worth being precise about why it is not a webhook.
+**Correction to an earlier version of this document.** It said a ticket could not reach Claude Code
+because Claude Code is a local CLI with no inbound endpoint. That is true of the CLI on your laptop
+but wrong as a conclusion: Anthropic ships `anthropics/claude-code-action@v1`, an official GitHub
+Action that runs Claude Code on a GitHub-hosted runner in response to a GitHub event. The hosted
+runner the old 3c described as "a real project" is a supported product.
 
-**Claude Code is a local CLI attached to an interactive session.** There is no inbound endpoint for a
-webhook to hit. A ticket cannot "open Claude Code" any more than it can open your editor. Anyone who
-tells you otherwise is describing a different product.
+**3a. Ticket -> GitHub issue. BUILT.** `src/lib/support/github.ts`. A bug ticket above 0.7 confidence
+opens an issue carrying the member's words, their account facts, and the likely files, then stores
+the URL so a re-triage cannot file a second. The member's email is never sent to GitHub.
 
-What actually works, in increasing order of effort:
+**3b. Batch clustering. NOT BUILT.** Ten reports of one crash are still ten issues. Worth doing when
+volume justifies it; at 5 members it does not.
 
-**3a. Ticket -> GitHub issue (a few hours).** When triage returns `category: 'bug'` and
-`confidence > 0.7`, open a GitHub issue with the summary, member context, and `likely_area`. You
-already use `gh`. Then any coding agent, including this one, can be pointed at the issue by name.
-This gets you 80% of the value: the work arrives pre-diagnosed in the place work lives.
+**3c. Analyze and fix. BUILT, SHIPPED OFF.** `.github/workflows/support-fix.yml`.
 
-**3b. Batch review (a day).** A scheduled job collects the day's bug-tagged tickets and opens one
-issue per cluster, deduped, so ten reports of the same crash are one issue and not ten.
+Trigger: the `support` label landing on an issue that also has `bug`. The agent reads the issue,
+verifies the triage guess against the real code, makes the smallest fix, runs tsc + eslint + build,
+and opens a PR. It is told explicitly that low confidence should produce an analysis COMMENT and no
+PR, because a wrong PR on a live product costs more than an honest "here is what I could not
+determine".
 
-**3c. Autonomous fix (a real project).** A hosted runner with repo access, branch permissions, and a
-test gate picks up the issue, produces a PR, and never merges without review. This needs its own
-security review: an agent with write access to the repo that serves member PII is a production
-system, not a convenience. Do not build this before launch.
+Four independent brakes, because a prompt is a request and only a check is a guarantee:
 
-**Recommendation: 1 -> 2 -> 3a, and stop there until after Sept 27.**
+| brake | what it does |
+|---|---|
+| `AGENT_FIX_ENABLED` repo variable | Kill switch. Absent or `false` = nothing runs. Flipped from the GitHub UI, no deploy. Currently **false**. |
+| label conditions | Only triage-filed `support` + `bug` issues. A human issue never triggers it. |
+| `agent-guard.yml` | FAILS any `claude/*` PR touching migrations, auth, billing, workflows or .env, or changing >25 files. |
+| no merge permission | The action opens PRs. Nothing in this repo merges them. |
+
+**To turn it on:** install the Claude GitHub App, add `ANTHROPIC_API_KEY` to repo secrets, set
+`AGENT_FIX_ENABLED=true`. Costs GitHub Actions minutes plus API tokens per run; `--max-turns 30` and
+a 30-minute job timeout bound a runaway.
+
+**Recommendation: leave 3c off until after Sept 27.** It is built and safe to enable, but launch week
+is not when you want to be reviewing agent PRs. Turn it on when you have volume and calm.
 
 ---
 
