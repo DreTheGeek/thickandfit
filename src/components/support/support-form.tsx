@@ -32,7 +32,9 @@ export function SupportForm({ es }: { es: boolean }): ReactElement {
         send: 'Enviar',
         sending: 'Enviando...',
         sent: 'Recibido. Te respondemos a tu correo lo antes posible.',
-        error: 'No se pudo enviar. Escríbenos directo a hello@teamthickandfit.com.',
+        // NOT "email us instead": hello@ has no MX and bounces, so that would send a member whose
+        // message just failed to a second dead end.
+        error: 'No se pudo enviar. Inténtalo de nuevo en un momento.',
       }
     : {
         h: 'Send us a message',
@@ -44,7 +46,7 @@ export function SupportForm({ es }: { es: boolean }): ReactElement {
         send: 'Send',
         sending: 'Sending...',
         sent: 'Got it. We will reply to your email as soon as we can.',
-        error: 'That did not send. Email us directly at hello@teamthickandfit.com.',
+        error: 'That did not send. Please try again in a moment.',
       };
 
   const canSend = subject.trim().length >= 3 && body.trim().length >= 10 && /\S+@\S+\.\S+/.test(email);

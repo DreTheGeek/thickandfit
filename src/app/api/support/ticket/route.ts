@@ -56,13 +56,13 @@ async function POST_h(req: Request): Promise<Response> {
       source: 'web',
       category: parsed.data.category ?? null,
     });
-    if (!res.ok) return apiError('Could not send your message. Please email us instead.', 500);
+    if (!res.ok) return apiError('Could not send your message. Please try again in a moment.', 500);
     // A duplicate reads as success to the member: they pressed Send twice, which is not an error and
     // must not prompt a third attempt.
     return apiSuccess({ received: true }, 201);
   } catch (e) {
     console.error('support/ticket:', e instanceof Error ? e.message : e);
-    return apiError('Could not send your message. Please email us instead.', 500);
+    return apiError('Could not send your message. Please try again in a moment.', 500);
   }
 }
 

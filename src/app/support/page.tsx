@@ -18,7 +18,10 @@ import { SupportForm } from '@/components/support/support-form';
 
 export const dynamic = 'force-dynamic';
 
-const SUPPORT_EMAIL = 'hello@teamthickandfit.com';
+// Intentionally unused for now. hello@teamthickandfit.com has no MX record, so it BOUNCES; showing
+// it as the support contact pointed members and App Store reviewers at a dead end. Kept here as the
+// address to restore once Resend inbound is configured.
+// const SUPPORT_EMAIL = 'hello@teamthickandfit.com';
 
 export async function generateMetadata(): Promise<Metadata> {
   const es = (await getLocale()) === 'es';
@@ -54,21 +57,23 @@ export default async function SupportPage(): Promise<ReactElement> {
 
       <p className="mt-4 text-[15px] leading-relaxed text-soft">
         {es
-          ? 'Escríbenos y una persona real te responde. Normalmente el mismo día, y siempre dentro de dos días hábiles.'
-          : 'Email us and a real person answers. Usually the same day, and always within two business days.'}
+          ? 'Llena el formulario y una persona real te responde. Normalmente el mismo día, y siempre dentro de dos días hábiles.'
+          : 'Fill in the form and a real person answers. Usually the same day, and always within two business days.'}
       </p>
 
-      <a
-        href={`mailto:${SUPPORT_EMAIL}`}
-        className="tf-press mt-6 inline-block rounded-full bg-ink px-7 py-3.5 text-[13px] font-semibold uppercase tracking-[2px] text-bg"
-      >
-        {SUPPORT_EMAIL}
-      </a>
+      {/*
+        THE FORM IS THE CONTACT PATH, and until inbound email is configured it is the ONLY one.
+        `teamthickandfit.com` has no MX record (verified against Cloudflare + Google DNS on
+        2026-07-31, and port 25 on the A record is closed), so mail to hello@ BOUNCES. This page
+        used to lead with a big mailto button pointing at that address, which meant the published
+        support contact, the one App Store review reads under guideline 1.2, was a dead end.
+        A working form satisfies "published contact information"; a bouncing address does not.
 
-      {/* The form is the actual intake. The mailto above stays because a reviewer and a member who
-          cannot load JS both need a plain address, but a mailto alone put the burden on the member's
-          mail client and landed nothing in the support board. */}
-      <section className="mt-10">
+        RESTORE THE ADDRESS once Resend inbound is live (MX -> Resend, inbound route ->
+        /api/support/inbound, RESEND_WEBHOOK_SECRET set). At that point mail becomes a real second
+        channel and lands in the same board as the form. See .planning/SUPPORT-TRIAGE-AGENT.md.
+      */}
+      <section className="mt-8">
         <SupportForm es={es} />
       </section>
 
@@ -90,8 +95,8 @@ export default async function SupportPage(): Promise<ReactElement> {
         </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-soft">
           {es
-            ? 'Cada publicación tiene un menú con Reportar y Bloquear. Los reportes llegan a una persona del equipo, no a una cola automática. Si alguien está en peligro, escríbenos directamente y lo atendemos primero.'
-            : 'Every post has a menu with Report and Block. Reports go to a person on the team, not an automated queue. If someone is in danger, email us directly and we will handle it first.'}
+            ? 'Cada publicación tiene un menú con Reportar y Bloquear. Los reportes llegan a una persona del equipo, no a una cola automática. Si alguien está en peligro, usa el formulario de arriba y lo atendemos primero.'
+            : 'Every post has a menu with Report and Block. Reports go to a person on the team, not an automated queue. If someone is in danger, use the form above and we will handle it first.'}
         </p>
       </section>
 
@@ -99,8 +104,8 @@ export default async function SupportPage(): Promise<ReactElement> {
         <h2 className="text-[18px] font-semibold">{es ? 'Tus datos' : 'Your data'}</h2>
         <p className="mt-3 text-[15px] leading-relaxed text-soft">
           {es
-            ? 'Puedes descargar o borrar tu cuenta tú misma desde Cuenta dentro de la app. Si quieres saber qué guardamos de ti, escríbenos.'
-            : 'You can export or delete your account yourself from Account inside the app. If you want to know what we hold about you, email us.'}
+            ? 'Puedes descargar o borrar tu cuenta tú misma desde Cuenta dentro de la app. Si quieres saber qué guardamos de ti, pregúntanos con el formulario de arriba.'
+            : 'You can export or delete your account yourself from Account inside the app. If you want to know what we hold about you, ask us using the form above.'}
         </p>
         <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[14px]">
           <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
