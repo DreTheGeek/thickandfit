@@ -158,6 +158,134 @@ function num(v: unknown, d = 0): number {
   return Number.isFinite(n) ? n : d;
 }
 
+/**
+ * Turn a parsed VisionOut into a result, via the DETERMINISTIC half of the pipeline.
+ *
+ * Extracted so the fresh path and the cache-replay path run the SAME code. Duplicating it would
+ * mean a re-scan could diverge from the original scan the first time either copy was edited, which
+ * is the exact failure the cache exists to prevent.
+ *
+ * Deterministic given DB state: the model supplies names + grams, the food tables supply the macros.
+ * So replaying a cached VisionOut yields the same items with FRESH macros, which is what we want if
+ * a food row was corrected between the two scans.
+ */
+async function resolveVisionOut(
+  out: VisionOut,
+  locale: string,
+  visionMs: number | null,
+): Promise<{ result: SmartScanResult; itemCount: number; confidence: number | null }> {
+  let result: SmartScanResult;
+  let itemCount = 0;
+  let confidence: number | null = null;
+
+  if (out.kind === 'product' && out.product) {
+    // --- PRODUCT ---
+    const p = out.product;
+    const name = (p.name ?? '').trim();
+    const clarify = p.clarify?.trim() || null;
+    let food: FoodLite | null = null;
+    if (p.label && typeof p.label.kcal === 'number') {
+      food = await groundFoodFromLabel(
+        {
+          name: name || 'Packaged food',
+          brand: p.brand ?? null,
+          label: {
+            kcal: num(p.label.kcal),
+            protein_g: num(p.label.protein_g),
+            carb_g: num(p.label.carb_g),
+            fat_g: num(p.label.fat_g),
+            serving_grams: p.label.serving_grams ?? null,
+            serving_desc: p.label.serving_desc ?? null,
+          },
+        },
+        locale,
+      );
+    }
+    if (!food && name) food = await groundFoodByName(name, locale);
+    if (food) result = { status: 'product', food, clarify };
+    else if (clarify) result = { status: 'clarify', clarify };
+    else result = { status: 'noFood' };
+  } else {
+    // --- MEAL --- (reuse the grounded resolve pipeline)
+    const items = (out.meal?.items ?? [])
+      .map((it) => {
+        const nm = (it.name ?? '').trim();
+        if (!nm) return null;
+        return {
+          name: nm,
+          grams: Math.min(5000, Math.max(1, Math.round(num(it.grams, 100)))),
+          confidence: Math.min(1, Math.max(0, num(it.confidence, 0.5))),
+          basis: typeof it.basis === 'string' && it.basis.trim() ? it.basis.trim() : undefined,
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null)
+      .slice(0, 12);
+    itemCount = items.length;
+    confidence = items.length ? items.reduce((s, it) => s + it.confidence, 0) / items.length : null;
+
+    const tResolve = Date.now();
+    const resolved = await resolvePredictedItems(items, locale);
+    // Timing split so prod latency is attributable (vision vs food resolution) from the logs.
+    // visionMs is null on a cache replay, where there was no vision call to attribute.
+    console.log(
+      `[smart-scan] vision ${visionMs === null ? 'cached' : `${visionMs}ms`}, resolve ${Date.now() - tResolve}ms, items ${items.length}`,
+    );
+    if (resolved.status === 'ok') result = { status: 'ok', candidates: resolved.candidates, totals: resolved.totals };
+    else {
+      if (resolved.status !== 'noFood') console.error('smart-scan resolve failed:', resolved.status);
+      result = { status: resolved.status === 'noFood' ? 'noFood' : 'error' };
+    }
+  }
+  return { result, itemCount, confidence };
+}
+
+/** How long an identical photo replays without hitting the model. */
+const SCAN_CACHE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Most recent cache-eligible scan of this exact image, for this member, under this prompt version.
+ *
+ * MEMBER-SCOPED on purpose. K1 folds each member's own habits and corrections into the prompt, so
+ * two members photographing the same plate can legitimately get different reads. Serving one
+ * member a result shaped by another's history would be wrong even though it leaks nothing.
+ *
+ * PROMPT_VERSION is part of the key, so bumping it auto-invalidates every cached scan. Model-chain
+ * changes deliberately do NOT invalidate: the cached VisionOut was already accepted output.
+ *
+ * Never throws. A DB blip must not block scanning (same contract as buildScanContext).
+ */
+async function findCachedScan(
+  profileId: string,
+  inputHash: string,
+): Promise<{ id: string; rawOutput: VisionOut; model: string } | null> {
+  try {
+    const svc = createServiceClient();
+    const since = new Date(Date.now() - SCAN_CACHE_WINDOW_MS).toISOString();
+    const { data, error } = await svc
+      .from('ai_inferences')
+      .select('id, raw_output, model')
+      .eq('feature', 'photo-scan')
+      .eq('profile_id', profileId)
+      .eq('input_hash', inputHash)
+      .eq('prompt_version', PROMPT_VERSION)
+      // Only a successful read is worth replaying. A failure re-tries the model, which is the whole
+      // point of keeping the PRD-A failure corpus separate from this.
+      .in('status', ['ok', 'product'])
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    const row = data as { id: string; raw_output: unknown; model: string | null };
+    // raw_output is jsonb. A row written before this shape existed, or a string, is not replayable.
+    if (!row.raw_output || typeof row.raw_output !== 'object') return null;
+    return { id: row.id, rawOutput: row.raw_output as VisionOut, model: row.model ?? 'cached' };
+  } catch (e) {
+    console.error('smart-scan findCachedScan:', e instanceof Error ? e.message : String(e));
+    return null;
+  }
+}
+
 export async function analyzeSmartPhoto(
   image: string,
   locale: string,
@@ -166,6 +294,28 @@ export async function analyzeSmartPhoto(
   if (!aiConfigured()) return { status: 'notConfigured' };
   const tVision = Date.now();
   const inputHash = hashInput(image);
+
+  // Determinism cache. Same plate scanned twice returned different numbers, and re-scan variance
+  // destroys trust faster than being wrong does: an answer that changes reads as guessing.
+  //
+  // ONLY with ctx. A ctx-less call is the eval harness, which must always hit the live model or a
+  // cached row would silently poison the run it is meant to measure.
+  //
+  // A hit writes NO new ai_inferences row: replaying a stored read is not a new inference, and
+  // logging one would double-count it in every accuracy number. It threads the ORIGINAL id back, so
+  // a correction made on the second scan attaches to the inference that actually produced the
+  // prediction.
+  if (ctx) {
+    const cached = await findCachedScan(ctx.profileId, inputHash);
+    if (cached) {
+      const { result } = await resolveVisionOut(cached.rawOutput, locale, null);
+      console.log(`[smart-scan] cache hit ${cached.id}, total ${Date.now() - tVision}ms`);
+      return result.status === 'notConfigured'
+        ? result
+        : { ...result, inferenceId: cached.id, model: cached.model };
+    }
+  }
+
   try {
     // K1 loop-close: retrieve this member's structured history (habits + past corrections) and
     // fold it in as an ADDITIONAL system message. Base PROMPT stays untouched so eval attribution
@@ -240,65 +390,10 @@ export async function analyzeSmartPhoto(
 
     // Build the result first, then write ONE provenance row for the whole scan and thread its id back so
     // a logged food links to the inference that produced it (enables correction capture + replay).
-    let result: SmartScanResult;
-    let itemCount = 0;
-    let confidence: number | null = null;
-
-    if (out.kind === 'product' && out.product) {
-      // --- PRODUCT ---
-      const p = out.product;
-      const name = (p.name ?? '').trim();
-      const clarify = p.clarify?.trim() || null;
-      let food: FoodLite | null = null;
-      if (p.label && typeof p.label.kcal === 'number') {
-        food = await groundFoodFromLabel(
-          {
-            name: name || 'Packaged food',
-            brand: p.brand ?? null,
-            label: {
-              kcal: num(p.label.kcal),
-              protein_g: num(p.label.protein_g),
-              carb_g: num(p.label.carb_g),
-              fat_g: num(p.label.fat_g),
-              serving_grams: p.label.serving_grams ?? null,
-              serving_desc: p.label.serving_desc ?? null,
-            },
-          },
-          locale,
-        );
-      }
-      if (!food && name) food = await groundFoodByName(name, locale);
-      if (food) result = { status: 'product', food, clarify };
-      else if (clarify) result = { status: 'clarify', clarify };
-      else result = { status: 'noFood' };
-    } else {
-      // --- MEAL --- (reuse the grounded resolve pipeline)
-      const items = (out.meal?.items ?? [])
-        .map((it) => {
-          const nm = (it.name ?? '').trim();
-          if (!nm) return null;
-          return {
-            name: nm,
-            grams: Math.min(5000, Math.max(1, Math.round(num(it.grams, 100)))),
-            confidence: Math.min(1, Math.max(0, num(it.confidence, 0.5))),
-            basis: typeof it.basis === 'string' && it.basis.trim() ? it.basis.trim() : undefined,
-          };
-        })
-        .filter((x): x is NonNullable<typeof x> => x !== null)
-        .slice(0, 12);
-      itemCount = items.length;
-      confidence = items.length ? items.reduce((s, it) => s + it.confidence, 0) / items.length : null;
-
-      const tResolve = Date.now();
-      const resolved = await resolvePredictedItems(items, locale);
-      // Timing split so prod latency is attributable (vision vs food resolution) from the logs.
-      console.log(`[smart-scan] vision ${visionMs}ms, resolve ${Date.now() - tResolve}ms, items ${items.length}`);
-      if (resolved.status === 'ok') result = { status: 'ok', candidates: resolved.candidates, totals: resolved.totals };
-      else {
-        if (resolved.status !== 'noFood') console.error('smart-scan resolve failed:', resolved.status);
-        result = { status: resolved.status === 'noFood' ? 'noFood' : 'error' };
-      }
-    }
+    // `result` is reassigned below (model + inferenceId are threaded onto it); the other two are not.
+    const resolvedOut = await resolveVisionOut(out, locale, visionMs);
+    const { itemCount, confidence } = resolvedOut;
+    let result = resolvedOut.result;
 
     // Which model answered, on every outcome (with or without ctx): the eval harness runs ctx-less
     // and must attribute a mid-run fallback (gpt-5 429 -> gemini) to the right model. Applied to
