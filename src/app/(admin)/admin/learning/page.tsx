@@ -47,7 +47,38 @@ export default async function LearningPage(): Promise<ReactElement> {
               <Row left="Corrected by user (learning)" right={<span className="font-semibold text-ink">{l.scans.withCorrection}</span>} />
               <p className="pt-2 text-[11px] text-faint">Every correction becomes supervised training data for portion estimation - the hardest problem in the category, and the moat.</p>
             </Card>
-            <Card title="Most-corrected foods">
+            <Card title="What the engine learned from everyone (K4)">
+            {l.populationBias.length === 0 ? (
+              <p className="text-[13px] text-soft">
+                Nothing yet. A prior only appears once at least 3 different members have corrected the
+                same food 6+ times, so one tester cannot teach the engine a habit. This fills in as
+                beta members correct scans.
+              </p>
+            ) : (
+              <div className="flex flex-col">
+                {l.populationBias.map((b) => (
+                  <Row
+                    key={b.food}
+                    left={b.food}
+                    right={
+                      <span className="font-semibold text-ink">
+                        {b.ratio > 1 ? 'under' : 'over'} by {Math.round(Math.abs(b.ratio - 1) * 100)}%
+                        <span className="ml-2 text-[11px] font-normal text-faint">
+                          n={b.samples} · {b.members} members
+                        </span>
+                      </span>
+                    }
+                  />
+                ))}
+              </div>
+            )}
+            <p className="mt-2 text-[12px] text-soft">
+              Applied as a prior on every scan, for every member, including brand-new ones. It nudges
+              the estimate, never replaces what the photo shows.
+            </p>
+          </Card>
+
+          <Card title="Most-corrected foods">
               {l.corrections.topFoods.length === 0 ? (
                 <p className="py-4 text-center text-[13px] text-faint">No corrections yet. They accumulate as members re-portion scanned foods.</p>
               ) : l.corrections.topFoods.map((f, i) => (

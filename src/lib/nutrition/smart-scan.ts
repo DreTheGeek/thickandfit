@@ -14,6 +14,8 @@ import { AI_MODELS } from '@/lib/ai/models';
 import { aiConfigured, callJson, hashInput } from '@/lib/ai/client';
 import { logInference } from '@/lib/ai/inferences';
 import { buildScanContext, renderScanContextForPrompt } from '@/lib/nutrition/scan-context';
+import { readPopulationBias } from '@/lib/nutrition/population-bias-store';
+import { renderPopulationBiasForPrompt } from '@/lib/nutrition/population-bias';
 
 // Model routing lives in the central router (AI_MODELS), NOT hardcoded here, so the eval harness can
 // A/B models and swap in one place. The scan tries the primary (smartScan = gpt-5, benchmarked faster +
@@ -30,7 +32,11 @@ const SCAN_CHAIN = [AI_MODELS.smartScan, AI_MODELS.smartScanFallback];
 // untouched, so scores should not move; the bump keeps that claim checkable in the trace, and since
 // PROMPT_VERSION is part of the PRD-B cache key it also invalidates cached scans, which is correct
 // because a cached v2 clarify string would still carry the old style.
-export const PROMPT_VERSION = 'smart-scan.v3';
+// v4 (2026-07-31): K4 population-bias injection, added as its own system message BEFORE the member's
+// own context so the member's specific edits remain the last word. Like K1 it only fires when ctx is
+// present, so a ctx-less eval run still exercises the untouched base prompt and the golden-set score
+// cannot move because of this wire.
+export const PROMPT_VERSION = 'smart-scan.v4';
 const FOOD_COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
 
 export type SmartScanResult =
@@ -331,17 +337,27 @@ export async function analyzeSmartPhoto(
     // is clean and a member with no history gets the exact same v1 behavior. Fire-and-forget SQL:
     // a failed context read logs and returns empty rather than blocking the scan.
     let memberContextText: string | null = null;
+    // K4: what EVERY member has taught this engine, not just this one. K1 above only helps someone
+    // who has already corrected scans, so it does nothing on day one and never notices that all
+    // members under-report the same food. Read in parallel with the member's own history; both are
+    // best-effort and a failure in either leaves the base prompt untouched.
+    let populationBiasText: string | null = null;
     if (ctx) {
-      try {
-        const context = await buildScanContext(ctx.profileId, ctx.companyId);
-        memberContextText = renderScanContextForPrompt(context);
-      } catch (e) {
-        console.error('smart-scan buildScanContext:', e instanceof Error ? e.message : String(e));
-      }
+      const [ownRes, popRes] = await Promise.allSettled([
+        buildScanContext(ctx.profileId, ctx.companyId),
+        readPopulationBias(ctx.companyId),
+      ]);
+      if (ownRes.status === 'fulfilled') memberContextText = renderScanContextForPrompt(ownRes.value);
+      else console.error('smart-scan buildScanContext:', ownRes.reason);
+      if (popRes.status === 'fulfilled') populationBiasText = renderPopulationBiasForPrompt(popRes.value);
+      else console.error('smart-scan readPopulationBias:', popRes.reason);
     }
     const messages: { role: string; content: unknown }[] = [
       { role: 'system', content: PROMPT },
     ];
+    // Population first, member second: the member's own edits are the more specific evidence and
+    // should be the last word when the two disagree.
+    if (populationBiasText) messages.push({ role: 'system', content: populationBiasText });
     if (memberContextText) messages.push({ role: 'system', content: memberContextText });
     messages.push({
       role: 'user',

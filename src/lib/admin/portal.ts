@@ -141,6 +141,9 @@ export type Learning = {
   corrections: { total: number; last30: number; topFoods: { name: string; n: number }[] };
   scans: { total: number; last7: number; withCorrection: number };
   insights: { total: number; last7: number };
+  // K4: what the engine has learned from EVERY member, not just one. Empty until enough distinct
+  // members have corrected the same food; that emptiness is the honest state, not a failure.
+  populationBias: { food: string; ratio: number; samples: number; members: number }[];
 };
 
 // The learning loop: knowledge growing, corrections teaching the food matcher, scans + insights.
@@ -150,7 +153,7 @@ export async function getLearning(companyId: string): Promise<Learning> {
   const mo = new Date(Date.now() - 30 * 86400000).toISOString();
   // Corrections = food_log rows the member re-portioned (corrected_at set) - the supervised signal that
   // teaches portion estimation (the hardest problem). This is the AI's training data, growing per log.
-  const [{ data: kn }, { count: corrTotal }, { count: corr30 }, { data: corrRows }, { count: scanTotal }, { count: scan7 }, { count: scanCorrected }, { count: insTotal }, { count: ins7 }] = await Promise.all([
+  const [{ data: kn }, { count: corrTotal }, { count: corr30 }, { data: corrRows }, { count: scanTotal }, { count: scan7 }, { count: scanCorrected }, { count: insTotal }, { count: ins7 }, { data: biasRows }] = await Promise.all([
     sb.from('coach_knowledge').select('source_id, created_at').eq('company_id', companyId).limit(6000),
     sb.from('food_log').select('id', { count: 'exact', head: true }).eq('company_id', companyId).not('corrected_at', 'is', null),
     sb.from('food_log').select('id', { count: 'exact', head: true }).eq('company_id', companyId).not('corrected_at', 'is', null).gte('corrected_at', mo),
@@ -167,6 +170,7 @@ export async function getLearning(companyId: string): Promise<Learning> {
     sb.from('ai_inferences').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('feature', 'photo-scan').not('correction', 'is', null),
     sb.from('user_insights').select('id', { count: 'exact', head: true }),
     sb.from('user_insights').select('id', { count: 'exact', head: true }).gte('created_at', wk),
+    sb.from('scan_population_bias').select('food_key, ratio, sample_count, member_count').eq('company_id', companyId).limit(12),
   ]);
   const knRows = (kn ?? []) as { source_id: string; created_at: string }[];
   const sources = new Set(knRows.map((k) => k.source_id)).size;
@@ -182,6 +186,9 @@ export async function getLearning(companyId: string): Promise<Learning> {
     corrections: { total: corrTotal ?? 0, last30: corr30 ?? 0, topFoods },
     scans: { total: scanTotal ?? 0, last7: scan7 ?? 0, withCorrection: scanCorrected ?? 0 },
     insights: { total: insTotal ?? 0, last7: ins7 ?? 0 },
+    populationBias: ((biasRows ?? []) as { food_key: string; ratio: number; sample_count: number; member_count: number }[])
+      .map((b) => ({ food: b.food_key, ratio: Number(b.ratio), samples: b.sample_count, members: b.member_count }))
+      .sort((a, b) => Math.abs(b.ratio - 1) - Math.abs(a.ratio - 1)),
   };
 }
 
