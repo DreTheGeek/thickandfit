@@ -74,16 +74,19 @@ export async function getCronStatus(): Promise<CronRow[]> {
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export type Ticket = { id: string; subject: string; email: string | null; category: string | null; priority: string; status: string; createdAt: string };
+// `body` and `source` are part of this on purpose. The board could only ever show the subject line,
+// so a ticket was unreadable and therefore unworkable: the column was written on create and never
+// read back anywhere.
+export type Ticket = { id: string; subject: string; body: string | null; email: string | null; category: string | null; priority: string; status: string; source: string | null; createdAt: string };
 
 export async function getSupportTickets(companyId: string): Promise<{ tickets: Ticket[]; openCount: number }> {
   const sb = createServiceClient();
   const [{ data }, { count: openCount }] = await Promise.all([
-    sb.from('support_tickets').select('id, subject, email, category, priority, status, created_at').eq('company_id', companyId).order('created_at', { ascending: false }).limit(100),
+    sb.from('support_tickets').select('id, subject, body, email, category, priority, status, source, created_at').eq('company_id', companyId).order('created_at', { ascending: false }).limit(100),
     sb.from('support_tickets').select('id', { count: 'exact', head: true }).eq('company_id', companyId).in('status', ['open', 'in_progress']),
   ]);
-  const tickets = ((data ?? []) as { id: string; subject: string; email: string | null; category: string | null; priority: string; status: string; created_at: string }[]).map((t) => ({
-    id: t.id, subject: t.subject, email: t.email, category: t.category, priority: t.priority, status: t.status, createdAt: t.created_at,
+  const tickets = ((data ?? []) as { id: string; subject: string; body: string | null; email: string | null; category: string | null; priority: string; status: string; source: string | null; created_at: string }[]).map((t) => ({
+    id: t.id, subject: t.subject, body: t.body, email: t.email, category: t.category, priority: t.priority, status: t.status, source: t.source, createdAt: t.created_at,
   }));
   return { tickets, openCount: openCount ?? 0 };
 }
