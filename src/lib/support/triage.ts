@@ -18,7 +18,7 @@ import { AI_MODELS } from '@/lib/ai/models';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isEntitled } from '@/lib/billing/entitlement';
 
-export const TRIAGE_PROMPT_VERSION = 'support-triage.v1';
+export const TRIAGE_PROMPT_VERSION = 'support-triage.v2'; // v2 (2026-07-31): no-dash rule on the draft reply
 
 export type TriageResult = {
   category: 'billing' | 'account' | 'bug' | 'content' | 'other';
@@ -152,6 +152,8 @@ const SYSTEM = [
   '- confidence: how sure you are of the category and summary, 0 to 1.',
   '',
   'Never use the words "AI" or "artificial intelligence" in suggested_reply. The product is the coach\'s method.',
+  'Never use an em dash or en dash in suggested_reply; use a period, comma, or colon. A human sends',
+  'this text to a member, and nothing else in this product uses those characters.',
 ].join('\n');
 
 /**

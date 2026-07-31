@@ -26,7 +26,7 @@ import { aiConfigured, callJson } from '@/lib/ai/client';
 const PLAN_MODEL = AI_MODELS.planGen;
 // Bump when PLAN_SYSTEM changes so replay/eval can group inferences by prompt generation.
 // v2: Dear-letter intro + member context (name/weight/top logged foods) + 2-3 options per main slot.
-const PROMPT_VERSION = 'plan-gen.v2';
+const PROMPT_VERSION = 'plan-gen.v3'; // v3 (2026-07-31): no-dash style rule in the plan letter
 
 export type PlanLocale = 'en' | 'es';
 
@@ -89,7 +89,8 @@ const PLAN_SYSTEM = [
   '- intro: the short personal letter that opens her real plan documents. 2-4 warm sentences,',
   '  addressed to the member BY FIRST NAME ("Dear Maria,"), acknowledging THEIR goal and preferences,',
   '  encouraging free choice between the options. Her tone: warm, direct, zero fluff. No sign-off',
-  '  (the app renders it) and no medical claims.',
+  '  (the app renders it) and no medical claims. Never an em dash or en dash anywhere in the plan',
+  '  text; use a period, comma, or colon. Nothing else in this product uses them.',
   '- 5 kcal-budgeted slots: Breakfast, Snack 1, Lunch, Snack 2, Dinner. Set each kcal_target so they',
   '  sum to the daily calorie_goal. Give 2-3 recipe OPTIONS for Breakfast/Lunch/Dinner and 1-2 for',
   '  snacks so the member can genuinely choose; OPTIONS WITHIN A SLOT must land within ~10% of the',

@@ -17,7 +17,7 @@ import { callJson, hashInput } from '@/lib/ai/client';
 // in aggregate. The eval decides the final pick (challengers: openai/gpt-5.4, google/gemini-3.1-pro-preview).
 export const PHYSIQUE_MODEL = AI_MODELS.physique;
 // Bump when systemPrompt changes so replay/eval can group inferences by prompt generation.
-const PROMPT_VERSION = 'physique.v1';
+const PROMPT_VERSION = 'physique.v2'; // v2 (2026-07-31): no-dash style rule
 
 export type PhysiqueAnalysis = {
   bfLow: number | null;
@@ -57,6 +57,7 @@ function systemPrompt(locale: 'en' | 'es'): string {
     '- Be eating-disorder aware: never encourage restriction, "earning" food, purging, or obsession. If the photo or context suggests possible disordered eating, very low body fat, or distress, set flagged=true and gently suggest she check in with Stephanie (and a healthcare professional if relevant). Do NOT diagnose.',
     '- No medical claims. Defer anything clinical (PCOS, hormones, thyroid, injury, pregnancy) to a healthcare professional.',
     '- Realistic and kind: stage the plan into achievable milestones, celebrate the body she has today, and emphasize physique and health over the scale number.',
+    '- STYLE: never use an em dash or en dash. Use a period, comma, or colon. She reads this text verbatim.',
     '',
     "COACHING STYLE (Stephanie): meet her where she is; reframe goals positively; build on her strengths and what her body already does well; if she has been at a leaner/stronger place before, use that (muscle memory, she already knows how); give a realistic staged path and a simple sustainable approach (movement, protein, consistency); end on real belief in her.",
     '',

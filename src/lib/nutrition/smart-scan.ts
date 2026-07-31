@@ -25,7 +25,12 @@ const SCAN_CHAIN = [AI_MODELS.smartScan, AI_MODELS.smartScanFallback];
 // v2 (2026-07-24): adds K1 member-context injection when ctx is provided. Base PROMPT unchanged,
 // so a ctx-less eval run (the golden-set harness) hits the exact same v1 behavior and its score
 // cannot regress from this wire. The v2 bump lets the trace show WHICH prompt generation ran.
-export const PROMPT_VERSION = 'smart-scan.v2';
+// v3 (2026-07-31): style rule for "clarify", the one field a member reads verbatim. Prod returned an
+// em dash in it, which nothing else in this product uses. Identification and portion rules are
+// untouched, so scores should not move; the bump keeps that claim checkable in the trace, and since
+// PROMPT_VERSION is part of the PRD-B cache key it also invalidates cached scans, which is correct
+// because a cached v2 clarify string would still carry the old style.
+export const PROMPT_VERSION = 'smart-scan.v3';
 const FOOD_COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
 
 export type SmartScanResult =
@@ -79,6 +84,10 @@ const PROMPT = [
   '"product":{"name":string,"brand":string|null,"label":{"kcal":number,"protein_g":number,"carb_g":number,"fat_g":number,"serving_grams":number|null,"serving_desc":string|null}|null,"clarify":string|null}|null}',
   'MEAL rules: identify each distinct food; estimate edible weight in grams using a size reference (dinner plate ~26cm, fork ~19cm) via area x height x density; add a "cooking oil" item if it looks pan-fried/roasted; state cooked or raw in the name when it matters; use common searchable generic names. Do NOT output calories or macros for meal items - those are looked up.',
   'PRODUCT rules: if a Nutrition Facts panel is legible, TRANSCRIBE the printed per-serving Calories + protein/carbohydrate/fat grams and the serving size into "label" (serving_grams = the gram weight shown in parentheses, e.g. "1 cup (240g)" -> 240; serving_desc = the household measure). Read the printed numbers EXACTLY; never estimate label numbers. If no label is legible, set label=null and give the product name + brand from the packaging. If you cannot tell which specific product it is, put a short question in "clarify" (e.g. "Is this the original or the light version?").',
+  // "clarify" is the ONLY field here shown to a member verbatim, so the house style rule has to reach
+  // the model. Observed on prod 2026-07-31: "The image is unclear-can you retake or specify the
+  // product?" came back with an em dash, which no other copy in this product uses.
+  'STYLE for "clarify" (the only text a person reads): write it in the app\'s voice, warm and direct. NEVER use an em dash or an en dash; use a period, comma, or colon instead. One short sentence.',
 ].join('\n');
 
 // A transcribed Nutrition Facts label -> a per-100g food row, cached. Needs serving_grams to convert.

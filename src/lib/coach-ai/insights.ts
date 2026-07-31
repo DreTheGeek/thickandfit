@@ -22,7 +22,7 @@ import { estimateCostCents } from '@/lib/ai/pricing';
 // Cheap, reliable tier for the nightly batch extraction (runs once a day across all users).
 const INSIGHT_MODEL = AI_MODELS.insights;
 // Bump when EXTRACT_SYSTEM changes so replay/eval can group inferences by prompt generation.
-const PROMPT_VERSION = 'insights.v1';
+const PROMPT_VERSION = 'insights.v2'; // v2 (2026-07-31): no-dash style rule on member-facing notes
 
 const KG_TO_LB = 2.20462;
 const WINDOW_DAYS = 30;
@@ -305,6 +305,9 @@ const EXTRACT_SYSTEM = [
   'projected_goal_date is an ISO date (YYYY-MM-DD) or null. coaching_flags codes are short snake_case',
   '(e.g. low_protein, weekend_overeat, missed_workouts, plateau, strong_adherence). Each note is one',
   'short sentence in the member\'s language. Keep coaching_flags to at most 4, most important first.',
+  // The notes are shown to the member verbatim. House style has to reach the model or it defaults to
+  // its own punctuation habits (a prod scan clarify came back with an em dash on 2026-07-31).
+  'STYLE: never use an em dash or en dash in any text a member reads; use a period, comma, or colon.',
 ].join('\n');
 
 type AiNarrative = {

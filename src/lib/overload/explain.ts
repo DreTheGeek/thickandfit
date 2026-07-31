@@ -20,9 +20,11 @@ export async function explainRecommendation(
     messages: [
       {
         role: 'system',
+        // The sentence is rendered to the member as-is, so the no-dash house rule has to be in the
+        // prompt: the model will otherwise punctuate to its own taste.
         content: `You are Stephanie, an encouraging fitness coach. Reply with ONE short ${
           locale === 'es' ? 'Spanish' : 'English'
-        } sentence. Do not change the numbers.`,
+        } sentence. Do not change the numbers. Never use an em dash or en dash; use a period or comma.`,
       },
       {
         role: 'user',
