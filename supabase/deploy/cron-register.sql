@@ -197,6 +197,45 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
+-- tf-daily-recap-9pm-et: the end-of-day summary to Telegram.
+--
+-- TWO ENTRIES, ONE SEND. pg_cron schedules in UTC and 9pm ET is 01:00 UTC in summer (EDT) and 02:00
+-- UTC in winter (EST). Both are registered; the route checks the actual ET wall clock and only sends
+-- when it reads 21, logging the other as a successful skip. Hardcoding one time would be correct
+-- when built and silently an hour wrong for half the year.
+-- ------------------------------------------------------------------------------------
+do $$
+declare v_job_id bigint;
+begin
+  select jobid into v_job_id from cron.job where jobname = 'tf-daily-recap-edt' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+  perform cron.schedule('tf-daily-recap-edt', '0 1 * * *', $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/daily-recap',
+        headers := jsonb_build_object('Authorization', 'Bearer __CRON_SECRET__', 'Content-Type', 'application/json'),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 120000
+      );
+    $cron$);
+
+  select jobid into v_job_id from cron.job where jobname = 'tf-daily-recap-est' limit 1;
+  if v_job_id is not null then perform cron.unschedule(v_job_id); end if;
+  perform cron.schedule('tf-daily-recap-est', '0 2 * * *', $cron$
+      select net.http_post(
+        url := '__APP_URL__/api/internal/daily-recap',
+        headers := jsonb_build_object('Authorization', 'Bearer __CRON_SECRET__', 'Content-Type', 'application/json'),
+        body := '{}'::jsonb,
+        timeout_milliseconds := 120000
+      );
+    $cron$);
+
+  raise notice 'scheduled tf-daily-recap-edt (01:00 UTC) + tf-daily-recap-est (02:00 UTC)';
+exception
+  when undefined_function then
+    raise notice 'pg_cron/pg_net not installed. Skipping tf-daily-recap.';
+end $$;
+
+-- ------------------------------------------------------------------------------------
 -- tf-refresh-population-bias-nightly (K4): recompute the cross-member portion bias from corrected
 -- photo scans. Runs at 08:45 UTC, AFTER tf-materialize-user-state-nightly, so the day's corrections
 -- are already settled before the aggregate reads them.
