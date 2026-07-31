@@ -2,11 +2,13 @@
 // 1. Refresh the Supabase session so rotated auth cookies are persisted (Server Components
 //    cannot write cookies, so this proxy must; without it sessions break after the
 //    first token rotation and users get bounced back to sign-in).
-// 2. On first visit (no ui_locale cookie), default the interface language from the
-//    visitor's country: LATAM/ES -> Spanish, else English. User-overridable later.
+// 2. On first visit (no ui_locale cookie), default the interface language from the visitor's
+//    BROWSER (Accept-Language) and only then their country. Browser first because it is a stated
+//    preference and the IP is an inference: an English browser on a LATAM-routed IP was getting a
+//    Spanish app. User-overridable later either way.
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { localeForCountry } from '@/lib/i18n/geo';
+import { firstVisitLocale } from '@/lib/i18n/geo';
 import { urlLocaleFor, esPathFor } from '@/lib/seo/locale-alternates';
 import {
   PREVIEW_COOKIE,
@@ -150,8 +152,13 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
       sameSite: 'lax',
     });
   } else if (!req.cookies.get('ui_locale')) {
-    const country = req.headers.get('x-vercel-ip-country');
-    res.cookies.set('ui_locale', localeForCountry(country), {
+    // Browser preference BEFORE geolocation. This read the IP country alone, so an English browser
+    // on a Spanish-defaulting IP got a Spanish app while Accept-Language sat there saying en-US.
+    const firstVisit = firstVisitLocale(
+      req.headers.get('accept-language'),
+      req.headers.get('x-vercel-ip-country'),
+    );
+    res.cookies.set('ui_locale', firstVisit, {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
@@ -162,10 +169,12 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   // Spanish at the English one. Serving a different language at a canonical URL is the thing that
   // confuses crawlers and breaks the hreflang pair. Only fires when no preference exists, so it can
   // never override someone who picked a language.
+  // Same precedence here, or the redirect would drag an English browser onto /es purely on IP and
+  // undo the fix above one line later.
   if (
     urlLocale === 'en' &&
     !req.cookies.get('ui_locale') &&
-    localeForCountry(req.headers.get('x-vercel-ip-country')) === 'es'
+    firstVisitLocale(req.headers.get('accept-language'), req.headers.get('x-vercel-ip-country')) === 'es'
   ) {
     const url = req.nextUrl.clone();
     url.pathname = esPathFor(req.nextUrl.pathname);

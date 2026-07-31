@@ -2,12 +2,18 @@
 // set by the LanguageToggle or the IP-default middleware. Content locale is tracked separately.
 import { getRequestConfig } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
+import { defaultLocale as fallbackLocale, type Locale as GeoLocale } from '@/lib/i18n/geo';
+
+// Locale + defaultLocale are DEFINED in lib/i18n/geo.ts and re-exported here so the many callers
+// that already import from this module keep working. geo.ts owns them because it must stay free of
+// next-intl and next/headers to remain unit-testable in plain Node, and two copies of "what is a
+// locale" is exactly the kind of duplicate that drifts the day a third language is added.
+export type { Locale } from '@/lib/i18n/geo';
+export { defaultLocale } from '@/lib/i18n/geo';
 
 export const locales = ['en', 'es'] as const;
-export type Locale = (typeof locales)[number];
-export const defaultLocale: Locale = 'en';
 
-export function isLocale(value: unknown): value is Locale {
+export function isLocale(value: unknown): value is GeoLocale {
   return value === 'en' || value === 'es';
 }
 
@@ -27,7 +33,7 @@ export default getRequestConfig(async () => {
   }
 
   const cookieLocale = (await cookies()).get('ui_locale')?.value;
-  const locale: Locale = isLocale(cookieLocale) ? cookieLocale : defaultLocale;
+  const locale: GeoLocale = isLocale(cookieLocale) ? cookieLocale : fallbackLocale;
   return {
     locale,
     messages: (await import(`../messages/${locale}.json`)).default,
