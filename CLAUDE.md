@@ -144,6 +144,25 @@ nothing by itself.
 - Verify after flipping either switch: `node .qa-visual/prelaunch-gate-test.mjs` (unit, 139 cases)
   then curl the real matrix on prod. A gate is not proven by the flag being set.
 
+## Scan auto-accept (`NEXT_PUBLIC_SCAN_AUTO_ACCEPT`)
+Confidence-gated auto-logging: a scan where EVERY item is matched and >= 0.9 confidence is logged
+without the confirm screen, with an Undo. Built in PRD-D and shipped **OFF** (absent env var = off).
+No mainstream competitor does this, which is both the opportunity and the reason for the gate.
+
+**Do not flip it on vibes.** Flip only when, for the ACTIVE `AI_MODELS.smartScan` model on the
+expanded gold set: eval F1 >= 0.8, portion MAPE <= 0.25, and the |mean fat bias| baseline is KNOWN
+(not necessarily small, but measured). Record the numbers and the date here when you flip it.
+
+Fat bias is reported by `pnpm eval:scan` as a SIGNED number, overall and for oil plates. Negative
+means underestimating, which is the July 2026 NIH/NIDDK finding (~250-345 kcal/meal missed, ~30g of
+invisible fat). Decision rule for the future prompt-tuning PRD: |mean bias| > 8g on oil plates means
+the mandated "cooking oil" prompt line is not enough. It is deliberately NOT a pass bar yet: never
+tune a threshold and the metric that measures it in the same change.
+
+| flipped | model | F1 | MAPE | mean fat bias (oil) | by |
+|---|---|---|---|---|---|
+| not yet | | | | baseline not run (needs a live OPENROUTER_API_KEY) | |
+
 ## Manual / Post-Deploy Steps
 1. Supabase: project cpwesaeyhklmjbqppeah. Apply migrations. Set auth hooks. Store service role
    key as Postgres GUC for pg_cron (app.service_role_key).

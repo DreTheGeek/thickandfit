@@ -1707,7 +1707,9 @@
         "kcalWatch": "You are at {kcal} calories against a {target} target. Worth knowing before your next meal.",
         "onTrack": "{protein}g protein, {kcal} calories. Right where you should be.",
         "dismiss": "Got it"
-      }
+      },
+      "autoLogged": "Logged: {items}",
+      "autoUndo": "Undo"
     },
     "disclaimer": {
       "title": "Before you begin",

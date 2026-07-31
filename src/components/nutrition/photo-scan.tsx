@@ -11,6 +11,7 @@ import {
   parseTextToMacroAction,
   lookupBarcodeAction,
   logFoodAction,
+  deleteFoodLogAction,
 } from '@/lib/nutrition/diary-actions';
 import {
   MEAL_SLOTS,
@@ -95,6 +96,19 @@ function resizeImage(dataUrl: string, maxDim: number, quality: number): Promise<
 // row that needs eyes.
 const CONF_HIGH = 0.9;
 const CONF_LOW = 0.7;
+
+/**
+ * Confidence-gated auto-accept (PRD-D). DEFAULT OFF: absent env var = today's confirm-first flow,
+ * byte-identical.
+ *
+ * No mainstream competitor ships this (Cal AI logs-then-fix, MacroFactor is review-first), which is
+ * the opportunity AND the reason for the flag: skipping the confirm screen is only defensible once
+ * the eval says high-confidence scans are actually right. It stays off until the fat-bias baseline
+ * and F1/MAPE bars in PRD-D5 are met for the active model.
+ *
+ * Client-readable env is correct here: a UX switch, not a secret.
+ */
+const AUTO_ACCEPT = process.env.NEXT_PUBLIC_SCAN_AUTO_ACCEPT === '1';
 
 function confidenceTone(c: number): string {
   if (c >= CONF_HIGH) return 'text-accent-ink';
@@ -182,6 +196,8 @@ export function PhotoScan({
   const [busy, setBusy] = useState<number | null>(null);
   // The post-log coaching line, returned by the log action itself (no extra round trip).
   const [coachMoment, setCoachMoment] = useState<CoachMoment | null>(null);
+  // Auto-accept (PRD-D): what was logged without a confirm screen, and the ids Undo would remove.
+  const [autoLogged, setAutoLogged] = useState<{ names: string[]; logIds: string[] } | null>(null);
   const [desc, setDesc] = useState('');
   // Barcode / packaged-product result (a single food + a real amount to confirm).
   const [productFood, setProductFood] = useState<FoodLite | null>(null);
@@ -330,6 +346,12 @@ export function PhotoScan({
         setPredictedFoodIds(data.candidates.map((c) => c.food?.id ?? null));
         setInferenceId(data.inferenceId ?? null);
         setPhase('review');
+        // Every item confident AND resolved, or the member reviews it. One unmatched or uncertain
+        // item is enough to fall through: silently logging a guess is exactly the behavior that
+        // makes people stop trusting a tracker.
+        if (AUTO_ACCEPT && data.candidates.length > 0 && data.candidates.every((c) => c.matched && c.confidence >= CONF_HIGH)) {
+          void autoAccept(data.candidates, data.inferenceId ?? null);
+        }
       } else if (data.status === 'product') {
         // The photo was a single packaged product / label -> confirm the amount. Keep the inference
         // id so the log links back to the scan (provenance + correction capture).
@@ -361,6 +383,57 @@ export function PhotoScan({
     const g = Math.max(1, Math.min(5000, Math.round(next || 0)));
     setTouched((prev) => ({ ...prev, [i]: true }));
     setCandidates((prev) => prev.map((c, idx) => (idx === i ? { ...c, grams: g } : c)));
+  }
+
+  /**
+   * Log every item as predicted, with no confirm screen.
+   *
+   * Accepted-as-is flows through the EXISTING correction capture with `fields: []`, which
+   * recordItemOutcome already treats as a confirmed-correct prediction. So auto-accept does not
+   * blind the learning loop; it feeds it the positive signal it was already designed to record.
+   *
+   * predictedFoodId/predictedGrams are the same values being logged, which is what makes that
+   * possible: nothing is invented, so provenance stays intact (AC-4).
+   */
+  async function autoAccept(cands: Candidate[], infId: string | null): Promise<void> {
+    const names: string[] = [];
+    const logIds: string[] = [];
+    let lastMoment: CoachMoment | null = null;
+    for (const c of cands) {
+      if (!c.food) continue;
+      const res = await logPhotoFoodAction({
+        foodId: c.food.id,
+        name: c.food.name,
+        predictedName: c.predictedName,
+        mealSlot: slot,
+        grams: c.grams,
+        predictedGrams: c.grams,
+        predictedFoodId: c.food.id,
+        confidence: c.confidence,
+        aiInferenceId: infId ?? undefined,
+        logDate,
+      });
+      if (res.ok) {
+        names.push(c.food.name);
+        if (res.logId) logIds.push(res.logId);
+        if (res.coachMoment) lastMoment = res.coachMoment;
+      }
+    }
+    if (!names.length) return; // every write failed: leave the confirm UI up rather than lie
+    setLogged(Object.fromEntries(cands.map((_, i) => [i, true])));
+    setAutoLogged({ names, logIds });
+    setCoachMoment(lastMoment);
+    router.refresh();
+  }
+
+  /** Remove everything auto-accept just wrote. The escape hatch that makes skipping confirm fair. */
+  async function undoAutoAccept(): Promise<void> {
+    const ids = autoLogged?.logIds ?? [];
+    setAutoLogged(null);
+    setCoachMoment(null);
+    setLogged({});
+    for (const id of ids) await deleteFoodLogAction(id);
+    router.refresh();
   }
 
   async function logOne(i: number): Promise<void> {
@@ -684,9 +757,31 @@ export function PhotoScan({
                     {t('photoNewPhoto')}
                   </button>
                 </div>
+                {/* Auto-accept summary + Undo. ONE surface: the coach moment renders inside this
+                    block rather than as a second competing toast. Persistent until dismissed, not a
+                    timed disappearance, because the whole bargain of skipping the confirm screen is
+                    that reversing it must be at least as easy as confirming would have been. */}
+                {autoLogged && (
+                  <div className="mt-4 rounded-2xl border border-line bg-surface px-4 py-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="min-w-0 text-[13px] text-ink">
+                        {t('autoLogged', { items: autoLogged.names.join(', ') })}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void undoAutoAccept()}
+                        className="tf-press shrink-0 rounded-full border border-line px-3 py-1 text-[12px] font-semibold text-muted hover:border-ink hover:text-ink"
+                      >
+                        {t('autoUndo')}
+                      </button>
+                    </div>
+                    <CoachMomentCard moment={coachMoment} />
+                  </div>
+                )}
+
                 {/* Under the confirmation, not over it: the member came here to log a meal, and the
                     coaching line is the reward for finishing, not an interruption. */}
-                <CoachMomentCard moment={coachMoment} />
+                {!autoLogged && <CoachMomentCard moment={coachMoment} />}
               </div>
             )}
 

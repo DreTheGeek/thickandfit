@@ -69,6 +69,11 @@ console.log(`avg score ${cur.avgScore}${prev ? delta(cur.avgScore, prev.avgScore
 console.log(`avg F1    ${cur.avgF1}${prev ? delta(cur.avgF1, prev.avgF1) : ''}`);
 console.log(`avg MAPE  ${pct(cur.avgMape)}${prev ? delta(cur.avgMape, prev.avgMape, true) : ''}`);
 console.log(`avg ms    ${cur.avgLatencyMs}${prev ? delta(cur.avgLatencyMs, prev.avgLatencyMs, true) : ''}`);
+// Signed fat error (PRD-D). NEGATIVE = UNDERestimating, which is the NIH/NIDDK finding: every
+// tested competitor misses ~30g/meal of invisible fat (oil, butter, dressing). Reported only; it is
+// deliberately not a pass bar until a baseline exists.
+const fatG = (v) => (v === null || v === undefined ? 'n/a (no fat labels)' : `${v > 0 ? '+' : ''}${v}g`);
+console.log(`fat bias  ${fatG(cur.meanFatBiasG)}   (oil plates ${fatG(cur.meanFatBiasOilG)})`);
 if (prev) {
   console.log(`\n(previous run ${prev.runId.slice(0, 8)}: model ${prev.model}, prompt ${prev.promptVersion}, ${prev.passed}/${prev.cases} passed)`);
 } else {

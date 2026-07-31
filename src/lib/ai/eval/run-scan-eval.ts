@@ -25,7 +25,12 @@ const CaseInput = z.object({
 });
 const CaseExpected = z.object({
   kind: z.enum(['meal', 'product']),
-  items: z.array(z.object({ name: z.string().min(1), grams: z.number().positive() })).min(1),
+  // fat_g is OPTIONAL per item: legacy cases carry none and must keep scoring exactly as before.
+  items: z.array(z.object({ name: z.string().min(1), grams: z.number().positive(), fat_g: z.number().nonnegative().optional() })).min(1),
+  // Whole-plate fat label. Zod STRIPS unknown keys, so these three had to be declared here or the
+  // manifest's fat labels would be silently dropped before scoring ever saw them.
+  total_fat_g: z.number().nonnegative().optional(),
+  oil_used: z.boolean().optional(),
   source: z.string().optional(), // 'manifest' (gold) | 'correction-join' (silver)
 });
 
@@ -39,6 +44,10 @@ export type EvalRunSummary = {
   avgF1: number;
   avgMape: number | null;
   avgLatencyMs: number;
+  /** Mean SIGNED fat error (g) across fat-labeled cases. Negative = underestimating, the NIH bias. */
+  meanFatBiasG: number | null;
+  /** Same, restricted to plates labeled oil_used: where the bias is expected to concentrate. */
+  meanFatBiasOilG: number | null;
 };
 
 export type EvalCaseResult = {
@@ -47,6 +56,7 @@ export type EvalCaseResult = {
   score: number;
   f1: number;
   mape: number | null;
+  fatBiasG: number | null;
   latencyMs: number;
   note: string;
 };
@@ -65,11 +75,15 @@ type RunRow = {
   passed: boolean;
   score: number | null;
   latency_ms: number | null;
-  actual: { f1?: number; mape?: number | null } | null;
+  actual: { f1?: number; mape?: number | null; fat_bias_g?: number | null; oil_used?: boolean | null } | null;
 };
 
 function summarize(runId: string, rows: RunRow[]): EvalRunSummary {
   const mapes = rows.map((r) => r.actual?.mape).filter((m): m is number => typeof m === 'number');
+  // Only fat-LABELED cases contribute. An unlabeled case is absent from the metric, not a zero:
+  // averaging in zeros would drag any real bias toward 'no problem here'.
+  const fatAll = rows.map((r) => r.actual?.fat_bias_g).filter((x): x is number => typeof x === 'number');
+  const fatOil = rows.filter((r) => r.actual?.oil_used === true).map((r) => r.actual?.fat_bias_g).filter((x): x is number => typeof x === 'number');
   const models = new Map<string, number>();
   for (const r of rows) if (r.model) models.set(r.model, (models.get(r.model) ?? 0) + 1);
   const majorityModel = [...models.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'unknown';
@@ -84,6 +98,8 @@ function summarize(runId: string, rows: RunRow[]): EvalRunSummary {
     avgF1: Math.round(avg(rows.map((r) => r.actual?.f1 ?? 0)) * 1000) / 1000,
     avgMape: mapes.length ? Math.round(avg(mapes) * 1000) / 1000 : null,
     avgLatencyMs: Math.round(avg(rows.map((r) => r.latency_ms ?? 0))),
+    meanFatBiasG: fatAll.length ? Math.round(avg(fatAll) * 10) / 10 : null,
+    meanFatBiasOilG: fatOil.length ? Math.round(avg(fatOil) * 10) / 10 : null,
   };
 }
 
@@ -96,12 +112,12 @@ async function runOneCase(
   const input = CaseInput.safeParse(c.input);
   const expected = CaseExpected.safeParse(c.expected);
   if (!input.success || !expected.success) {
-    return { caseId: c.id, passed: false, score: 0, f1: 0, mape: null, latencyMs: 0, note: 'invalid case shape (skipped)' };
+    return { caseId: c.id, passed: false, score: 0, f1: 0, mape: null, fatBiasG: null, latencyMs: 0, note: 'invalid case shape (skipped)' };
   }
 
   const dl = await svc.storage.from(BUCKET).download(input.data.storage_path);
   if (dl.error || !dl.data) {
-    return { caseId: c.id, passed: false, score: 0, f1: 0, mape: null, latencyMs: 0, note: `image download failed: ${dl.error?.message ?? 'no data'}` };
+    return { caseId: c.id, passed: false, score: 0, f1: 0, mape: null, fatBiasG: null, latencyMs: 0, note: `image download failed: ${dl.error?.message ?? 'no data'}` };
   }
   const buf = Buffer.from(await dl.data.arrayBuffer());
   const mime = input.data.storage_path.endsWith('.png')
@@ -126,11 +142,16 @@ async function runOneCase(
       name: cand.predictedName,
       grams: cand.grams,
       confidence: cand.confidence,
+      // Resolved fat, already scaled to the predicted portion by the resolve step. Carried here so
+      // scan-scoring can compute the signed fat bias while staying IO-free: resolution is this
+      // module's job, scoring is that one's.
+      fatG: cand.macros?.fatG ?? null,
     }));
   } else if (result.status === 'product') {
     actualKind = 'product';
     model = result.model ?? 'unknown';
-    predicted = [{ name: result.food.name, grams: 100, confidence: 1 }];
+    // Per-100g row read at a 100g assumption, so its fat is the row's fat as-is.
+    predicted = [{ name: result.food.name, grams: 100, confidence: 1, fatG: result.food.fatG ?? null }];
   }
 
   const s = scoreCase(expected.data as ExpectedCase, actualKind, predicted);
@@ -151,6 +172,11 @@ async function runOneCase(
       items: predicted,
       f1: s.f1,
       mape: s.mape,
+      // Signed grams (predicted minus label). Reported, never part of pass/fail: a bar cannot be
+      // set before a baseline exists. oil_used lets the report split oil plates from dry ones,
+      // which is where the NIH bias concentrates.
+      fat_bias_g: s.fatBiasG,
+      oil_used: (expected.data as ExpectedCase).oil_used ?? null,
       matched_pairs: s.matchedPairs,
       expected_source: expected.data.source ?? 'manifest',
     },
@@ -163,6 +189,7 @@ async function runOneCase(
     score: s.score,
     f1: s.f1,
     mape: s.mape,
+    fatBiasG: s.fatBiasG,
     latencyMs,
     note: s.passed ? 'pass' : `kind=${actualKind} f1=${s.f1} mape=${s.mape ?? 'n/a'}`,
   };
@@ -235,7 +262,7 @@ export async function runSmartScanEval(evalName?: string): Promise<EvalRunResult
       cases: current.cases,
       passed: current.passed,
       score: current.cases ? current.passed / current.cases : 0,
-      metrics: { model: current.model, avgF1: current.avgF1, avgMape: current.avgMape, avgScore: current.avgScore, avgLatencyMs: current.avgLatencyMs },
+      metrics: { model: current.model, avgF1: current.avgF1, avgMape: current.avgMape, avgScore: current.avgScore, avgLatencyMs: current.avgLatencyMs, meanFatBiasG: current.meanFatBiasG, meanFatBiasOilG: current.meanFatBiasOilG },
     });
 
     return { status: 'ok', evalId: evalRow.id, current, previous, perCase };

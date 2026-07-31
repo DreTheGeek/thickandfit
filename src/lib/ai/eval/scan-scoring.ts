@@ -3,9 +3,30 @@
 // mirroring the resolve pipeline's philosophy in photo.ts) + portion MAPE over matched pairs.
 // Thresholds are module constants so tuning is one diff.
 
-export type ExpectedItem = { name: string; grams: number };
-export type ExpectedCase = { kind: 'meal' | 'product'; items: ExpectedItem[] };
-export type PredictedEvalItem = { name: string; grams: number; confidence: number };
+export type ExpectedItem = { name: string; grams: number; fat_g?: number };
+export type ExpectedCase = {
+  kind: 'meal' | 'product';
+  items: ExpectedItem[];
+  /**
+   * Whole-plate label fat. Oily plates are exactly where per-item attribution is hardest (how much
+   * of the pan oil ended up on the chicken vs the vegetables is not knowable), so a plate-level
+   * number is often the only honest label. Takes precedence over summing per-item fat_g.
+   */
+  total_fat_g?: number;
+  /** Whether oil was visibly used, so the report can split oil plates from dry plates. */
+  oil_used?: boolean;
+};
+export type PredictedEvalItem = {
+  name: string;
+  grams: number;
+  confidence: number;
+  /**
+   * Resolved fat grams for this predicted item, scaled to its predicted portion. Supplied by the
+   * RUNNER, which owns the foods-corpus lookup: resolution is IO, and this module stays pure so it
+   * can be reasoned about and unit-tested without a database.
+   */
+  fatG?: number | null;
+};
 
 export type MatchedPair = {
   expected: string;
@@ -21,6 +42,16 @@ export type CaseScore = {
   f1: number; // food-ID detection F1 over expected vs predicted item sets
   matchedPairs: MatchedPair[];
   mape: number | null; // mean absolute portion error over matched pairs; null with no matches
+  /**
+   * SIGNED fat error in grams: predicted total fat minus expected total fat. Null when the case
+   * carries no fat label.
+   *
+   * Signed, not absolute, on purpose. The July 2026 NIH/NIDDK controlled-kitchen result is that
+   * every tested competitor UNDERESTIMATES by ~250-345 kcal/meal, driven by ~30g/meal of invisible
+   * fat (oil, butter, dressing). That is a directional bias, not noise, and an absolute error like
+   * MAPE would average a -20g miss and a +20g miss into "fine". The direction IS the finding.
+   */
+  fatBiasG: number | null;
 };
 
 // Pass bars: kind right, most foods found (F1 >= 0.6), portions within 40% on average.
@@ -126,5 +157,40 @@ export function scoreCase(
   const score = Math.round(
     100 * (WEIGHT_F1 * f1 + WEIGHT_PORTION * (1 - Math.min(1, mape ?? 1))),
   );
-  return { passed, score, kindMatch, f1: Math.round(f1 * 1000) / 1000, matchedPairs: pairs, mape };
+  return {
+    passed,
+    score,
+    kindMatch,
+    f1: Math.round(f1 * 1000) / 1000,
+    matchedPairs: pairs,
+    mape,
+    fatBiasG: fatBias(expected, predicted),
+  };
+}
+
+/**
+ * Signed fat error for a case, or null when it carries no fat label.
+ *
+ * Deliberately NOT part of `passed` or `score`. A baseline has to exist before a bar can be set,
+ * and tuning a threshold in the same change that introduces the metric means neither number can be
+ * trusted afterwards. This reports; a later PRD decides what is acceptable.
+ *
+ * Uses ALL predicted items, not just matched pairs: predicted cooking oil usually has no label to
+ * match against, and excluding it would erase exactly the correction the prompt was written to make.
+ */
+export function fatBias(expected: ExpectedCase, predicted: PredictedEvalItem[]): number | null {
+  const expectedFat =
+    typeof expected.total_fat_g === 'number'
+      ? expected.total_fat_g
+      : expected.items.some((it) => typeof it.fat_g === 'number')
+        ? expected.items.reduce((a, it) => a + (typeof it.fat_g === 'number' ? it.fat_g : 0), 0)
+        : null;
+  if (expectedFat === null) return null;
+
+  // A case labeled with fat but whose predictions carry no resolved macros cannot be scored: 0
+  // would read as "predicted no fat at all", which is a measurement gap masquerading as a finding.
+  if (!predicted.some((p) => typeof p.fatG === 'number')) return null;
+
+  const predictedFat = predicted.reduce((a, p) => a + (typeof p.fatG === 'number' ? p.fatG : 0), 0);
+  return Math.round((predictedFat - expectedFat) * 10) / 10;
 }

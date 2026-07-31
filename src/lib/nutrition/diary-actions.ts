@@ -95,7 +95,9 @@ const LogInput = z.object({
 
 // coachMoment rides the log result rather than a second round trip: the client already awaits this
 // action, and the moment is only meaningful in the same breath as the confirmation.
-export type LogResult = { ok: boolean; error?: string; coachMoment?: CoachMoment };
+// logId is what makes Undo possible: auto-accept (PRD-D) logs without a confirm screen, so the only
+// honest way to offer that is to hand back exactly what was created and let the client delete it.
+export type LogResult = { ok: boolean; error?: string; coachMoment?: CoachMoment; logId?: string };
 
 /**
  * Build the post-log coaching moment without ever letting it break the log.
@@ -186,7 +188,11 @@ export async function logFoodAction(input: unknown): Promise<LogResult> {
   revalidatePath('/nutrition');
   // AFTER the insert, so today's totals already include this meal. Showing the pre-log number would
   // be worse than showing nothing.
-  return { ok: true, coachMoment: await coachMomentFor(ctx.userId, ctx.companyId, parsed.data.mealSlot) };
+  return {
+    ok: true,
+    logId: inserted ? (inserted as { id: string }).id : undefined,
+    coachMoment: await coachMomentFor(ctx.userId, ctx.companyId, parsed.data.mealSlot),
+  };
 }
 
 // Log a single photo-detected food. The client sends the visible (cooked, as-photographed) grams;
@@ -355,7 +361,11 @@ export async function logPhotoFoodAction(input: unknown): Promise<LogResult> {
   }
   revalidatePath('/nutrition');
   // AFTER the insert, so today's totals already include this meal.
-  return { ok: true, coachMoment: await coachMomentFor(ctx.userId, ctx.companyId, parsed.data.mealSlot) };
+  return {
+    ok: true,
+    logId: logId ?? undefined,
+    coachMoment: await coachMomentFor(ctx.userId, ctx.companyId, parsed.data.mealSlot),
+  };
 }
 
 export async function deleteFoodLogAction(id: string): Promise<LogResult> {

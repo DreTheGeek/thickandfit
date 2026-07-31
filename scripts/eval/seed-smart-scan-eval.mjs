@@ -4,7 +4,11 @@
 //      pnpm eval:seed -- --dir "Build/00-research/eval-cases"
 //    manifest.json shape:
 //      [{ "file": "meal-01.jpg", "locale": "en", "kind": "meal",
-//         "items": [{ "name": "cooked white rice", "grams": 250 }, ...] }, ...]
+//         "items": [{ "name": "cooked white rice", "grams": 250, "fat_g": 0.6 }, ...],
+//         "total_fat_g": 31, "oil_used": true }, ...]
+//    total_fat_g / oil_used are OPTIONAL (PRD-D fat-bias axis). total_fat_g is the whole-plate label
+//    and wins over summing per-item fat_g, because on an oily plate attributing pan oil to
+//    individual foods is guesswork. oil_used splits the report into oil vs dry plates.
 //    Photos upload to the private food-photos bucket under ai-evals/smart-scan/<file> (service role;
 //    the reserved top-level folder can never collide with auth.uid() owner folders). Idempotent:
 //    cases whose storage_path already exists are skipped.
@@ -104,7 +108,14 @@ async function seedFromManifest(dir) {
       company_id: ev.company_id,
       ai_eval_id: ev.id,
       input: { storage_path: storagePath, locale: entry.locale === 'es' ? 'es' : 'en' },
-      expected: { kind: entry.kind === 'product' ? 'product' : 'meal', items: entry.items, source: 'manifest' },
+      expected: {
+        kind: entry.kind === 'product' ? 'product' : 'meal',
+        items: entry.items,
+        // Fat labels (PRD-D). Passed through only when present so legacy manifests are untouched.
+        ...(typeof entry.total_fat_g === 'number' ? { total_fat_g: entry.total_fat_g } : {}),
+        ...(typeof entry.oil_used === 'boolean' ? { oil_used: entry.oil_used } : {}),
+        source: 'manifest',
+      },
     });
     if (error) {
       console.error(`case insert failed ${entry.file}: ${error.message}`);

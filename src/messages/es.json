@@ -1707,7 +1707,9 @@
         "kcalWatch": "Vas en {kcal} calorías y tu meta es {target}. Bueno saberlo antes de tu próxima comida.",
         "onTrack": "{protein}g de proteína, {kcal} calorías. Justo donde debes estar.",
         "dismiss": "Entendido"
-      }
+      },
+      "autoLogged": "Registrado: {items}",
+      "autoUndo": "Deshacer"
     },
     "disclaimer": {
       "title": "Antes de empezar",
