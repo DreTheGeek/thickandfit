@@ -161,7 +161,14 @@ tune a threshold and the metric that measures it in the same change.
 
 | flipped | model | F1 | MAPE | mean fat bias (oil) | by |
 |---|---|---|---|---|---|
-| not yet | | | | baseline not run (needs a live OPENROUTER_API_KEY) | |
+| not yet | openai/gpt-5 | 0.892 | 19% | **n/a, no fat-labeled cases yet** | baseline 2026-07-31, run f7d1d319 |
+
+Baseline run 2026-07-31 against prod: 11/12 pass (92%), avg score 86, avg 14.5s. F1 0.892 is just under
+the 0.8 bar's comfortable margin and MAPE 19% already clears 25%, so the ONLY thing blocking a decision
+is the fat baseline, and that needs the labeled high-fat gold set (PRD-D D2) which is a human
+deliverable: 10-15 photos of pan-fried protein, dressed salad, restaurant plates, avocado/nuts and
+visible-oil stir fry, each with a `total_fat_g` and `oil_used` in the manifest. Until those exist the
+eval correctly reports fat bias as n/a rather than a fabricated 0.
 
 ## Manual / Post-Deploy Steps
 1. Supabase: project cpwesaeyhklmjbqppeah. Apply migrations. Set auth hooks. Store service role
