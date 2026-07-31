@@ -51,6 +51,19 @@ const PII_LABEL: Record<string, string> = {
   bank: 'an account number',
 };
 
+/**
+ * "a card", "a card and a DOB", "a card, a DOB and an ID".
+ *
+ * A plain join(', ') shipped "included a payment card, a date of birth" in a real send. Small, but
+ * this sentence is the one telling an operator that a member's private data was involved, and copy
+ * that reads like a machine wrote it undercuts the seriousness of what it is saying.
+ */
+function joinList(items: string[]): string {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
 /** Small uppercase label above a value, matching the app's detail layout. */
 function field(label: string, value: string | null): string {
   if (!value) return '';
@@ -73,7 +86,7 @@ export function buildTicketEmailHtml(t: TicketEmail): string {
   const when = new Date(t.createdAt).toLocaleString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
   });
-  const kinds = t.piiKinds.map((k) => PII_LABEL[k] ?? k).join(', ');
+  const kinds = joinList(t.piiKinds.map((k) => PII_LABEL[k] ?? k));
 
   const parts: string[] = [
     `<div style="font-size:22px;font-weight:700;color:#0f0f0f;">${esc(formatTicketNumber(t.ticketNumber))}</div>`,

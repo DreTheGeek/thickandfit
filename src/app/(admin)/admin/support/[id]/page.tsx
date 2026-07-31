@@ -48,7 +48,12 @@ export default async function TicketDetailPage({
   const submitted = new Date(t.createdAt).toLocaleString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
   });
-  const kinds = t.piiKinds.map((k) => PII_LABEL[k] ?? k).join(', ');
+  // Same list grammar as the email, so the two surfaces read identically.
+  const labels = t.piiKinds.map((k) => PII_LABEL[k] ?? k);
+  const kinds =
+    labels.length <= 1
+      ? (labels[0] ?? '')
+      : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
 
   return (
     <AdminPage title={formatTicketNumber(t.ticketNumber)} subtitle={`Submitted ${submitted}`}>
