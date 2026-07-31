@@ -33,10 +33,14 @@ export type SmartScanResult =
   // contaminate eval attribution). Set on loggable outcomes even without ctx.
   | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals; inferenceId?: string; model?: string } // a MEAL
   | { status: 'product'; food: FoodLite; clarify: string | null; inferenceId?: string; model?: string }
-  | { status: 'clarify'; clarify: string }
+  // inferenceId on the FAILURE variants too (PRD-A). The route stores the scan image keyed by
+  // inference id, and it could only ever see an id on ok/product, so the photos that FAILED were
+  // discarded. Those are precisely the replay set worth keeping: when a better model ships, the
+  // interesting question is what the current one could not read, not what it already got right.
+  | { status: 'clarify'; clarify: string; inferenceId?: string; model?: string }
   | { status: 'notConfigured' }
-  | { status: 'noFood' }
-  | { status: 'error' };
+  | { status: 'noFood'; inferenceId?: string; model?: string }
+  | { status: 'error'; inferenceId?: string; model?: string };
 
 type FoodRow = {
   id: string;
@@ -203,7 +207,33 @@ export async function analyzeSmartPhoto(
       traceFeature: 'photo-scan',
     });
     if (call.status === 'notConfigured') return { status: 'notConfigured' };
-    if (call.status !== 'ok') return { status: 'error' };
+    // PRD-A: a provider outage (every model in the chain failed) used to return here with no
+    // provenance row at all, so the scan left no trace anywhere. Log it, then return. `model: 'none'`
+    // because no chain entry answered; callJson does not surface which one was tried last on the
+    // error path, and inventing an attribution would be worse than recording that none succeeded.
+    if (call.status !== 'ok') {
+      const failed: SmartScanResult = { status: 'error' };
+      if (!ctx) return failed;
+      try {
+        const inferenceId = await logInference({
+          companyId: ctx.companyId,
+          profileId: ctx.profileId,
+          feature: 'photo-scan',
+          model: 'none',
+          promptVersion: PROMPT_VERSION,
+          inputHash,
+          rawOutput: null,
+          confidence: null,
+          latencyMs: Date.now() - tVision,
+          status: 'error',
+          itemCount: 0,
+        });
+        return inferenceId ? { status: 'error', inferenceId } : failed;
+      } catch (e) {
+        console.error('smart-scan call-failed logInference:', e instanceof Error ? e.message : e);
+        return failed;
+      }
+    }
     const usedModel = call.model;
     const out = JSON.parse(call.content) as VisionOut;
     const visionMs = call.latencyMs;
@@ -270,12 +300,14 @@ export async function analyzeSmartPhoto(
       }
     }
 
-    // Which model answered, on every loggable outcome (with or without ctx): the eval harness runs
-    // ctx-less and must attribute a mid-run fallback (gpt-5 429 -> gemini) to the right model.
-    if (result.status === 'ok' || result.status === 'product') result = { ...result, model: usedModel };
+    // Which model answered, on every outcome (with or without ctx): the eval harness runs ctx-less
+    // and must attribute a mid-run fallback (gpt-5 429 -> gemini) to the right model. Applied to
+    // failures too now, so "gemini could not read this photo" is answerable from the row alone.
+    if (result.status !== 'notConfigured') result = { ...result, model: usedModel };
 
     // Provenance: one row per scan (fire-after, needs the final status). Only when we know the
-    // tenant/member (ctx). Thread the id back onto loggable outcomes so a correction can attach to it.
+    // tenant/member (ctx). Thread the id back onto EVERY outcome so a correction can attach to it
+    // and, more importantly, so the route can store the pixels for a failed scan.
     if (ctx) {
       const inferenceId = await logInference({
         companyId: ctx.companyId,
@@ -290,14 +322,37 @@ export async function analyzeSmartPhoto(
         status: result.status,
         itemCount,
       });
-      if (inferenceId) {
-        if (result.status === 'ok') result = { ...result, inferenceId };
-        else if (result.status === 'product') result = { ...result, inferenceId };
-      }
+      // notConfigured is the only variant with no id field: it returns before any model call, so
+      // there is nothing to attribute and no pixels worth keeping.
+      if (inferenceId && result.status !== 'notConfigured') result = { ...result, inferenceId };
     }
     return result;
   } catch (e) {
+    // PRD-A: this catch used to return {status:'error'} with no provenance row, so a scan that threw
+    // (a JSON.parse of model garbage lands here) was invisible: no row, no image, nothing on
+    // /admin/traces. That is the fallback chain's "the model returned nonsense" signal and the eval
+    // wants it. Telemetry never throws, hence the nested try (house contract, see inferences.ts).
     console.error('smart-scan exception:', e instanceof Error ? e.message : String(e));
-    return { status: 'error' };
+    const failed: SmartScanResult = { status: 'error' };
+    if (!ctx) return failed;
+    try {
+      const inferenceId = await logInference({
+        companyId: ctx.companyId,
+        profileId: ctx.profileId,
+        feature: 'photo-scan',
+        model: 'none',
+        promptVersion: PROMPT_VERSION,
+        inputHash,
+        rawOutput: null,
+        confidence: null,
+        latencyMs: Date.now() - tVision,
+        status: 'error',
+        itemCount: 0,
+      });
+      return inferenceId ? { status: 'error', inferenceId } : failed;
+    } catch (logErr) {
+      console.error('smart-scan exception logInference:', logErr instanceof Error ? logErr.message : logErr);
+      return failed;
+    }
   }
 }

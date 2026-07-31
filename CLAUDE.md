@@ -195,6 +195,10 @@ Gemini free-tier limits. Document limits and deferral decisions here as they app
 - Supabase auth email rate limit: 30/hour (raised from the 2/hour default on 2026-07-18 after a
   real user's password reset was silently 429'd). The true ceiling is the Resend plan's daily
   quota; if launch volume approaches it, raise the Resend plan before raising this limit again.
+- Supabase storage `ai-scans/`: as of PRD-A this grows with FAILED scans too (noFood/clarify/error),
+  not just successful ones, because those photos are the replay corpus for the next model. Revisit
+  retention if the bucket approaches the storage tier cap. At client-downscaled JPEG sizes
+  (~200-500KB) and 256 launch clients that is years away, so noting it here is enough.
 
 ## pg_cron Test Procedure
 Each cron in the CRON-REGISTRY: run manually, check cron_job_log for a success row. All crons use

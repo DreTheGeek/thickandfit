@@ -74,7 +74,12 @@ async function POST_h(req: Request): Promise<Response> {
   // function freezes when the response returns; a multi-MB upload started fire-and-forget would
   // silently die mid-flight. after() keeps the instance alive until the upload settles, and the
   // response still goes out first (zero p95 impact).
-  if ((result.status === 'ok' || result.status === 'product') && result.inferenceId) {
+  //
+  // PRD-A: keyed on inferenceId ALONE, not on a successful status. The guard used to also require
+  // ok/product, which threw away the pixels of every scan that failed. Those are the ones worth
+  // keeping: replaying a better model against photos the current one already reads correctly proves
+  // nothing, while the noFood/clarify/error set is exactly the regression corpus.
+  if (result.status !== 'notConfigured' && result.inferenceId) {
     const inferenceId = result.inferenceId;
     after(() => storeScanImage(inferenceId, parsed.data.image));
   }
