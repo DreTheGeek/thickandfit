@@ -10,6 +10,7 @@ import { openIssueForTicket } from '@/lib/support/github';
 import { scanForPii } from '@/lib/support/pii';
 import { sendTicketAlert } from '@/lib/support/telegram';
 import { ticketKeyboard } from '@/lib/support/telegram-commands';
+import { sendTicketEmail } from '@/lib/support/ticket-email';
 
 export type IntakeInput = {
   companyId: string;
@@ -144,6 +145,43 @@ export async function createSupportTicket(input: IntakeInput): Promise<IntakeRes
       // which is the difference between a notification feed and something that does work.
       keyboard: ticketKeyboard(t.id),
     });
+
+    // Email twin, to the ops address. Same content and order as the app view, but carrying the
+    // REDACTED body: email forwards and syncs to phones, so it is the easiest place for a member's
+    // SSN to escape. The unredacted text stays reachable in exactly one place.
+    const opsEmail = process.env.SUPPORT_OPS_EMAIL?.trim();
+    if (opsEmail) {
+      const { data: full } = await svc
+        .from('support_tickets')
+        .select('id, ticket_number, subject, status, category, priority, email, rep_name, rep_phone, company_name, created_at, triage, body, redacted_body, pii_flagged, pii_kinds, attachment_url, video_url')
+        .eq('id', ticketId)
+        .maybeSingle();
+      const f = full as Record<string, unknown> | null;
+      if (f) {
+        await sendTicketEmail(opsEmail, {
+          id: String(f.id),
+          ticketNumber: Number(f.ticket_number),
+          subject: String(f.subject ?? ''),
+          status: String(f.status ?? 'open'),
+          category: (f.category as string | null) ?? null,
+          priority: String(f.priority ?? 'normal'),
+          email: (f.email as string | null) ?? null,
+          repName: (f.rep_name as string | null) ?? null,
+          repPhone: (f.rep_phone as string | null) ?? null,
+          companyName: (f.company_name as string | null) ?? null,
+          createdAt: String(f.created_at),
+          summary: ((f.triage as { summary?: string } | null)?.summary) ?? null,
+          // redacted_body when flagged, plain body otherwise. NEVER f.body on a flagged ticket.
+          bodyForEmail: (f.pii_flagged as boolean)
+            ? ((f.redacted_body as string | null) ?? null)
+            : ((f.body as string | null) ?? null),
+          piiFlagged: Boolean(f.pii_flagged),
+          piiKinds: (f.pii_kinds as string[] | null) ?? [],
+          attachmentUrl: (f.attachment_url as string | null) ?? null,
+          videoUrl: (f.video_url as string | null) ?? null,
+        });
+      }
+    }
   };
 
   // Triage first, then notify: the alert reads back the summary triage just wrote, and awaiting them
