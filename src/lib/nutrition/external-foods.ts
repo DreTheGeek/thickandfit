@@ -9,6 +9,9 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import type { FoodLite } from '@/lib/nutrition/macros';
+// Pure matching rules live in their own module so they can be unit-tested without a network call or
+// a service-role client. See .qa-visual/usda-brand-guard-test.mjs.
+import { brandConflicts, isPlausiblePer100g, usdaBrandOf } from '@/lib/nutrition/usda-match';
 
 const USDA_KEY = process.env.USDA_API_KEY;
 const UA = 'ThickAndFit/1.0 (contact@teamthickandfit.com)';
@@ -47,7 +50,17 @@ function toFoodLite(r: FoodRow, locale: string): FoodLite {
 // USDA FoodData Central (name -> generic food, per-100g macros)
 // ---------------------------------------------------------------------------------------------
 type UsdaNutrient = { nutrientNumber?: string; nutrient?: { number?: string }; value?: number; amount?: number };
-type UsdaFood = { fdcId?: number; description?: string; foodCategory?: string; foodNutrients?: UsdaNutrient[] };
+type UsdaFood = {
+  fdcId?: number;
+  description?: string;
+  foodCategory?: string;
+  foodNutrients?: UsdaNutrient[];
+  // Present on Branded rows. brandOwner is the company ("Chipotle Mexican Grill"), brandName the
+  // label. SR Legacy has neither and instead embeds the chain in description ("TACO BELL, ...").
+  brandOwner?: string | null;
+  brandName?: string | null;
+  dataType?: string | null;
+};
 
 // USDA nutrient numbers (per 100g): 208 kcal, 203 protein, 204 fat, 205 carbs, 291 fiber, 269 sugar, 307 sodium(mg).
 const NUT = { kcal: '208', protein: '203', fat: '204', carbs: '205', fiber: '291', sugar: '269', sodium: '307' } as const;
@@ -97,10 +110,28 @@ function pickBestUsda(query: string, foods: UsdaFood[]): UsdaFood | null {
   for (const f of foods) {
     const desc = (f.description ?? '').toLowerCase();
     if (!desc) continue;
+    // Fail closed BEFORE scoring: a brand mismatch is disqualifying, not a penalty to be outweighed
+    // by enough generic word overlap. That outweighing is exactly how Chipotle became Taco Bell.
+    if (brandConflicts(query, f)) continue;
+    // Macros that cannot be true per 100g are rejected here rather than at insert, so a bad row
+    // cannot beat a good one on score and then vanish, leaving the food unresolved.
+    const kcal = usdaValue(f, NUT.kcal);
+    if (kcal != null) {
+      const ok = isPlausiblePer100g(
+        kcal,
+        usdaValue(f, NUT.protein) ?? 0,
+        usdaValue(f, NUT.carbs) ?? 0,
+        usdaValue(f, NUT.fat) ?? 0,
+      );
+      if (!ok) continue;
+    }
     let s = 0;
     for (const w of qWords) if (desc.includes(w)) s += 2;
     for (const b of USDA_PENALTY) if (desc.includes(b) && !ql.includes(b)) s -= 5;
     s -= desc.length / 200;
+    // Prefer a generic row over a branded one at equal relevance. A member typing "chicken breast"
+    // wants the food, not somebody's frozen entree that happens to share the words.
+    if (usdaBrandOf(f)) s -= 1;
     if (s > bestScore) {
       bestScore = s;
       best = f;
@@ -118,15 +149,37 @@ export async function groundFoodByName(name: string, locale: string): Promise<Fo
   const q = name.trim();
   if (q.length < 2) return null;
   try {
-    const url =
-      `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(q)}` +
-      `&dataType=Foundation,SR%20Legacy&pageSize=8&api_key=${USDA_KEY}`;
-    // Hard cap the external call: unmatched items ground here in parallel, and a slow USDA response
-    // must never drag the whole photo scan toward the function timeout. Miss fast, log locally.
-    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(6000) });
-    if (!res.ok) return null;
-    const json = (await res.json()) as { foods?: UsdaFood[] };
-    const f = pickBestUsda(q, json.foods ?? []);
+    // TWO PASSES, generic first. Branded is NOT merged into the primary query on purpose.
+    //
+    // Branded outnumbers the generic datasets by ~60x on a restaurant-shaped query ("chicken burrito
+    // bowl": 25,931 vs 415). Merged into one call it would dominate the result page by relevance, and
+    // since the brand guard rejects branded rows for a query that names no brand, an ordinary search
+    // for "chicken breast" could come back with a page of branded entrees, have all of them
+    // discarded, and resolve to NOTHING. That would break the common case to fix the rare one.
+    //
+    // Sequencing instead makes this change strictly additive: pass 1 is byte-identical to the
+    // behavior that shipped before today, and pass 2 can only turn a former miss into a hit.
+    const search = async (dataType: string, pageSize: number, timeoutMs: number): Promise<UsdaFood[]> => {
+      const url =
+        `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(q)}` +
+        `&dataType=${dataType}&pageSize=${pageSize}&api_key=${USDA_KEY}`;
+      // Hard cap the external call: unmatched items ground here in parallel, and a slow USDA response
+      // must never drag the whole photo scan toward the function timeout. Miss fast, log locally.
+      const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(timeoutMs) });
+      if (!r.ok) return [];
+      const j = (await r.json()) as { foods?: UsdaFood[] };
+      return j.foods ?? [];
+    };
+
+    let f = pickBestUsda(q, await search('Foundation,SR%20Legacy', 8, 6000));
+    if (!f?.fdcId) {
+      // Only on a miss, and on a tighter budget: this path previously returned null outright, so the
+      // worst case trades a guaranteed no-match for a slower possible match. Restaurant and packaged
+      // items live almost entirely here (SR Legacy carries legacy fast-food rows but was last
+      // refreshed around 2018, so current menus are absent). pageSize is larger because the brand
+      // guard discards most candidates before scoring.
+      f = pickBestUsda(q, await search('Branded', 25, 4000));
+    }
     if (!f?.fdcId || !f.description) return null;
 
     const svc = createServiceClient();
@@ -143,6 +196,19 @@ export async function groundFoodByName(name: string, locale: string): Promise<Fo
     const kcal = usdaValue(f, NUT.kcal);
     if (kcal == null) return null; // no energy -> not loggable
 
+    // Belt and braces. pickBestUsda already filtered on this, but the corpus is permanent: a bad row
+    // cached here is served to every future member, so it is worth paying the check twice.
+    const pProtein = usdaValue(f, NUT.protein) ?? 0;
+    const pCarb = usdaValue(f, NUT.carbs) ?? 0;
+    const pFat = usdaValue(f, NUT.fat) ?? 0;
+    if (!isPlausiblePer100g(kcal, pProtein, pCarb, pFat)) {
+      console.error(`groundFoodByName: implausible macros for fdcId ${f.fdcId}, not caching`);
+      return null;
+    }
+
+    // Keep the brand on the row so the name a member sees says which chain it came from, and so a
+    // later search can tell "Chipotle chicken bowl" from a generic one.
+    const brand = (f.brandOwner ?? f.brandName ?? '').trim() || null;
     const description = String(f.description).slice(0, 300);
     // Race-tolerant via the (source, source_id) unique index (0067): a concurrent scan of the same
     // unknown food no longer inserts a duplicate corpus row - the loser re-reads the winner's row.
@@ -154,11 +220,12 @@ export async function groundFoodByName(name: string, locale: string): Promise<Fo
           source_id: String(f.fdcId),
           source_url: `https://fdc.nal.usda.gov/food-details/${f.fdcId}/nutrients`,
           name_en: description,
+          brand,
           category: f.foodCategory ?? null,
           kcal,
-          protein_g: usdaValue(f, NUT.protein) ?? 0,
-          carb_g: usdaValue(f, NUT.carbs) ?? 0,
-          fat_g: usdaValue(f, NUT.fat) ?? 0,
+          protein_g: pProtein,
+          carb_g: pCarb,
+          fat_g: pFat,
           fiber_g: usdaValue(f, NUT.fiber),
           sugar_g: usdaValue(f, NUT.sugar),
           sodium_mg: usdaValue(f, NUT.sodium),
