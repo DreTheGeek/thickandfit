@@ -5,9 +5,17 @@ import 'server-only';
 // buttons. Her wordmark sits at the top with a text alt for clients that block images.
 
 // Served from public/brand/. Points at the live app origin; falls back to the known-good host.
+//
+// PNG, NOT the logo-black.svg this used to load. Two independent reasons, both observed in a real
+// Gmail iOS inbox on 2026-07-30:
+//   1. Gmail blocks SVG in email outright. Several other clients do too.
+//   2. Dark mode. Clients invert CSS colors but never image PIXELS, so the white card below turned
+//      dark while the black wordmark stayed black, and the logo vanished into the background.
+// logo-email.png is the dark-mode-safe asset built for exactly this: the mark sits on an OPAQUE
+// WHITE PLATE, so it stays legible no matter what the client does to the surrounding card.
 const LOGO_URL =
   (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.teamthickandfit.com').replace(/\/+$/, '') +
-  '/brand/logo-black.svg';
+  '/brand/logo-email.png';
 
 const FONT =
   "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -26,7 +34,9 @@ export function emailShell(opts: { bodyHtml: string; preheader?: string }): stri
     '<tr><td align="center">',
     '<table role="presentation" width="480" cellpadding="0" cellspacing="0" style="width:480px;max-width:92%;background:#ffffff;border-radius:16px;overflow:hidden;">',
     '<tr><td style="padding:28px 32px 8px 32px;">',
-    `<img src="${LOGO_URL}" width="150" alt="Thick &amp; Fit" style="display:block;border:0;width:150px;height:auto;">`,
+    // background:#ffffff on the image itself so the plate survives even if a client ever serves a
+    // transparent variant; without it a transparent PNG would reintroduce the vanishing-logo bug.
+    `<img src="${LOGO_URL}" width="150" alt="Thick &amp; Fit" style="display:block;border:0;width:150px;height:auto;background:#ffffff;">`,
     '</td></tr>',
     `<tr><td style="padding:8px 32px 28px 32px;font-family:${FONT};font-size:16px;line-height:1.6;color:#0f0f0f;">`,
     opts.bodyHtml,
