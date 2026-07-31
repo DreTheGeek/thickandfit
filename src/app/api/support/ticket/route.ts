@@ -11,6 +11,7 @@ import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 import { verifyTurnstileToken } from '@/lib/security/turnstile';
 import { createSupportTicket } from '@/lib/support/intake';
 import { resolveTenantId } from '@/lib/tenant';
+import { storeAttachment } from '@/lib/support/attachment';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -20,6 +21,10 @@ const schema = z.object({
   body: z.string().trim().min(10).max(5000),
   email: z.string().trim().toLowerCase().email().max(200),
   category: z.enum(['billing', 'account', 'bug', 'content', 'other']).optional(),
+  // A screenshot OF THE PROBLEM, as a data URL. ~14MB of base64 covers the bucket's 10MB binary cap
+  // plus encoding overhead; storeAttachment enforces the real limit and the mime allowlist, so this
+  // bound exists only to stop an oversized body reaching the parser.
+  attachment: z.string().max(14_000_000).optional(),
   turnstile_token: z.string().max(2048).optional(),
 });
 
@@ -48,6 +53,12 @@ async function POST_h(req: Request): Promise<Response> {
 
   try {
     const companyId = await resolveTenantId();
+    // Stored before the ticket so its path goes in with the row. A failed upload yields null and the
+    // ticket is still created: a bug report without its screenshot beats no bug report.
+    const attachmentPath = parsed.data.attachment
+      ? await storeAttachment(parsed.data.attachment, 'web')
+      : null;
+
     const res = await createSupportTicket({
       companyId,
       subject: parsed.data.subject,
@@ -55,6 +66,7 @@ async function POST_h(req: Request): Promise<Response> {
       email: parsed.data.email,
       source: 'web',
       category: parsed.data.category ?? null,
+      attachmentUrl: attachmentPath,
     });
     if (!res.ok) return apiError('Could not send your message. Please try again in a moment.', 500);
     // A duplicate reads as success to the member: they pressed Send twice, which is not an error and

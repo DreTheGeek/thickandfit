@@ -17,7 +17,9 @@ export type IntakeInput = {
   subject: string;
   body: string | null;
   email: string | null;
-  source: 'web' | 'email' | 'manual';
+  // 'app' = a logged-in member using the in-app form; 'web' = the public /support page. Worth
+  // distinguishing: an app ticket carries a profile and its account facts, a web one may not.
+  source: 'web' | 'app' | 'email' | 'manual';
   /** Stable per-source identity (email Message-ID, or a content hash for the form). */
   dedupeKey?: string | null;
   priority?: 'low' | 'normal' | 'high' | 'urgent';
@@ -28,6 +30,8 @@ export type IntakeInput = {
   companyName?: string | null;
   attachmentUrl?: string | null;
   videoUrl?: string | null;
+  /** The member who filed it, when they were logged in. Links the ticket to an account. */
+  profileId?: string | null;
 };
 
 export type IntakeResult = { ok: boolean; ticketId?: string; duplicate?: boolean };
@@ -65,6 +69,7 @@ export async function createSupportTicket(input: IntakeInput): Promise<IntakeRes
     .from('support_tickets')
     .insert({
       company_id: input.companyId,
+      profile_id: input.profileId ?? null,
       subject,
       body,
       redacted_body: pii.flagged ? pii.redacted : body,

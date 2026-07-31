@@ -14,6 +14,7 @@ import { requireOperator } from '@/lib/auth/guards';
 import { getTicketDetail } from '@/lib/admin/portal';
 import { AdminPage, Card } from '@/components/admin/ui';
 import { formatTicketNumber } from '@/lib/support/telegram';
+import { signedAttachmentUrl } from '@/lib/support/attachment';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,11 @@ export default async function TicketDetailPage({
     labels.length <= 1
       ? (labels[0] ?? '')
       : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+
+  // Attachments live in a PRIVATE bucket: a bug screenshot shows the member's own screen, often with
+  // their name and macros on it, and a public URL would stay reachable by anyone who ever saw it.
+  // Signed at render time, valid for an hour.
+  const attachmentUrl = await signedAttachmentUrl(t.attachmentUrl);
 
   return (
     <AdminPage title={formatTicketNumber(t.ticketNumber)} subtitle={`Submitted ${submitted}`}>
@@ -104,14 +110,28 @@ export default async function TicketDetailPage({
             </Card>
           )}
 
-          {(t.attachmentUrl || t.videoUrl) && (
-            <Card title="Attachments">
-              {t.attachmentUrl && (
-                /* eslint-disable-next-line @next/next/no-img-element --
-                   Reporter-supplied URL on an arbitrary host. next/image would require every such
-                   host in remotePatterns, which is impossible for user-submitted links, and would
-                   proxy third-party images through our own optimizer. A plain img is correct here. */
-                <img src={t.attachmentUrl} alt="Ticket attachment" className="max-h-[420px] rounded-[10px] border border-line object-contain" />
+          {(attachmentUrl || t.videoUrl) && (
+            <Card title="Attachment">
+              {attachmentUrl && (
+                /* Wrapped in a link, and NOT height-capped tightly. This is a screenshot of the bug,
+                   so the error text on it is the payload; a small thumbnail of an error message is
+                   useless. Click opens the full-resolution original in a new tab.
+                   eslint-disable-next-line @next/next/no-img-element --
+                   Signed, expiring storage URL. next/image would need it in remotePatterns and would
+                   proxy it through our optimizer, defeating the signature. */
+                <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" title="Open full size">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={attachmentUrl}
+                    alt="Screenshot the reporter attached"
+                    className="w-full rounded-[10px] border border-line object-contain"
+                  />
+                </a>
+              )}
+              {attachmentUrl && (
+                <p className="mt-2 text-[12px] text-faint">
+                  Click the image to open it full size. The link expires in an hour.
+                </p>
               )}
               {t.videoUrl && (
                 <a
