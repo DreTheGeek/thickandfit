@@ -100,8 +100,13 @@ export function OnboardingFlow({
   const [heightCm, setHeightCm] = useState('168');
   const [heightFt, setHeightFt] = useState('5');
   const [heightIn, setHeightIn] = useState('6');
-  const [weightVal, setWeightVal] = useState(locale === 'es' ? '75' : '165'); // in the selected unit
-  const [goalVal, setGoalVal] = useState(locale === 'es' ? '64' : '140');
+  // Weight and goal weight start EMPTY, unlike age and height. Every macro number downstream is
+  // computed from these two, so a prefilled 165 -> 140 meant anyone who tapped through got a plan
+  // built on a stranger's body. Age and height keep defaults because they move the result far less
+  // and asking for everything at once costs completion. Empty fails the bounds check below, so
+  // Continue stays disabled until the member actually answers.
+  const [weightVal, setWeightVal] = useState('');
+  const [goalVal, setGoalVal] = useState('');
   const [activity, setActivity] = useState<Activity>('moderate');
   const [tier, setTier] = useState<Tier>('self');
   // Body fat as a free-text string, not a number: an empty box must stay empty. Binding a number
@@ -114,6 +119,10 @@ export function OnboardingFlow({
   const [conditions, setConditions] = useState<string[]>([]);
   const [pregnancy, setPregnancy] = useState<string>('none');
   const [safety, setSafety] = useState<string[]>([]);
+  // Free text. Chips only capture what we thought to ask; real intake is "c-section in March, left
+  // shoulder clicks overhead, allergic to shellfish". The raw text is the record and the server
+  // extracts structure from it; nothing here replaces her words.
+  const [notes, setNotes] = useState('');
   // Training experience + where they train. On the About step rather than the health step: they are
   // TRAINING questions, and both decide whether the plan preview two screens later is executable.
   // One tap each, and both are already asked in the waitlist quiz, so a lead answers nothing new.
@@ -146,13 +155,17 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
   // Convert displayed values when switching units so nothing is lost or misread.
   function switchUnits(next: 'imperial' | 'metric'): void {
     if (next === units) return;
+    // convert() keeps an empty box empty: converting '' would write '0' and reintroduce exactly the
+    // self-repairing field this step just fixed.
+    const convert = (v: string, f: (n: number) => number): string =>
+      v.trim() === '' ? '' : String(Math.round(f(num(v))));
     if (next === 'metric') {
-      setWeightVal(String(Math.round(num(weightVal) / LB_PER_KG)));
-      setGoalVal(String(Math.round(num(goalVal) / LB_PER_KG)));
+      setWeightVal(convert(weightVal, (n) => n / LB_PER_KG));
+      setGoalVal(convert(goalVal, (n) => n / LB_PER_KG));
       setHeightCm(String(Math.round((num(heightFt) * 12 + num(heightIn)) * 2.54)));
     } else {
-      setWeightVal(String(Math.round(num(weightVal) * LB_PER_KG)));
-      setGoalVal(String(Math.round(num(goalVal) * LB_PER_KG)));
+      setWeightVal(convert(weightVal, (n) => n * LB_PER_KG));
+      setGoalVal(convert(goalVal, (n) => n * LB_PER_KG));
       const totalIn = Math.round(num(heightCm) / 2.54);
       setHeightFt(String(Math.floor(totalIn / 12)));
       setHeightIn(String(totalIn % 12));
@@ -234,6 +247,7 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
             conditions,
             pregnancy,
             safety,
+            notes: notes.trim() || undefined,
             trainingExperience: experience,
             trainingLocation,
           },
@@ -358,10 +372,10 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
                 </Field>
               )}
               <Field label={units === 'metric' ? t('weightKg') : t('weightLbs')}>
-                <input type="number" className={numCls} value={weightVal} onChange={(e) => setWeightVal(e.target.value)} />
+                <input type="number" inputMode="decimal" placeholder={units === 'metric' ? '70' : '155'} className={numCls} value={weightVal} onChange={(e) => setWeightVal(e.target.value)} />
               </Field>
               <Field label={units === 'metric' ? t('goalWeightKg') : t('goalWeightLbs')}>
-                <input type="number" className={numCls} value={goalVal} onChange={(e) => setGoalVal(e.target.value)} />
+                <input type="number" inputMode="decimal" placeholder={units === 'metric' ? '64' : '140'} className={numCls} value={goalVal} onChange={(e) => setGoalVal(e.target.value)} />
               </Field>
               <Field label={t('bodyFat')}>
                 <input
@@ -475,6 +489,18 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
                   {th('sec.safety.note')}
                 </p>
               )}
+            </HealthSection>
+
+            <HealthSection title={t('notesQ')} why={t('notesWhy')}>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                maxLength={2000}
+                placeholder={t('notesPlaceholder')}
+                className="w-full resize-y rounded-[12px] border border-line bg-surface px-3.5 py-3 text-[15px] leading-[1.55] outline-none focus:border-ink"
+              />
+              <p className="mt-1 text-[12px] text-faint">{notes.length}/2000</p>
             </HealthSection>
           </div>
         </>

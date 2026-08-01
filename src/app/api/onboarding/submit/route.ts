@@ -11,6 +11,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { ensureCrmContact } from '@/lib/crm/ensure-contact';
 import { upsertGhlContact } from '@/lib/ghl/client';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
+import { extractIntakeNotes, mergeSlugs } from '@/lib/onboarding/intake-notes';
 import {
   INJURIES,
   CONDITIONS,
@@ -48,6 +49,8 @@ const submitSchema = onboardingInputSchema.extend({
       safety: z.array(z.enum(SAFETY)).max(SAFETY.length).default([]),
       trainingExperience: z.enum(EXPERIENCE).optional(),
       trainingLocation: z.enum(TRAINING_LOCATION).optional(),
+      // Free text, in the member's own words. Capped generously; the extractor truncates further.
+      notes: z.string().trim().max(2000).optional(),
     })
     .optional(),
 });
@@ -143,6 +146,44 @@ async function POST_h(req: Request) {
           trainingLocation: health.trainingLocation ?? existing.trainingLocation,
         });
         if (!saved.ok) console.error('onboarding saveHealthProfile: write failed');
+
+        // Free-text intake. The RAW TEXT is written immediately and synchronously, because it is the
+        // record: if extraction never runs, or the model is down, the member's own words are still
+        // on the row for a human to read. Extraction is an index over it, added afterwards.
+        const note = health.notes?.trim();
+        if (note) {
+          const { error: noteErr } = await supabase
+            .from('client_intake')
+            .update({ intake_notes: note })
+            .eq('company_id', ctx.companyId)
+            .eq('profile_id', ctx.userId);
+          if (noteErr) console.error('onboarding intake_notes:', noteErr.message);
+
+          // Behind the response: a model call must not make a member wait on the last screen of a
+          // wizard they have already finished.
+          // Captured as consts: the `if (!ctx.companyId) return` guard above narrows in this scope
+          // but not inside a closure created later, where TS widens the property back to string|null.
+          const companyId = ctx.companyId;
+          const profileId = ctx.userId;
+          const runExtraction = async (): Promise<void> => {
+            const x = await extractIntakeNotes(note, { companyId, profileId });
+            // ADD-ONLY. Union with what she ticked, never replace: "no mention" is not "no", and a
+            // model that can clear an injury she selected is one that can get her hurt.
+            const merged = await loadHealthProfile(profileId, companyId);
+            await saveHealthProfile(profileId, companyId, {
+              ...merged,
+              injuries: mergeSlugs(merged.injuries ?? [], x.injuries, INJURIES),
+              conditions: mergeSlugs(merged.conditions ?? [], x.conditions, CONDITIONS),
+              safety: mergeSlugs(merged.safety ?? [], x.safety, SAFETY),
+            });
+            await supabase
+              .from('client_intake')
+              .update({ intake_extraction: x, needs_coach_review: x.needsCoachReview })
+              .eq('company_id', companyId)
+              .eq('profile_id', profileId);
+          };
+          after(() => runExtraction().catch((e: unknown) => console.error('intake extraction:', e)));
+        }
       } catch (e) {
         // Best-effort: the plan is already persisted, so a health-mirror failure must not fail
         // onboarding and strand the member in the wizard. /you/health can capture it later.
