@@ -88,14 +88,20 @@ export function OnboardingFlow({
   // Multi-select. The calorie direction is derived from it below, never asked separately.
   const [primaryGoals, setPrimaryGoals] = useState<PrimaryGoal[]>(['lose_fat']);
   const [sex, setSex] = useState<OnboardingInput['sex']>('female');
-  const [age, setAge] = useState(30);
+  // Every numeric field is a STRING, not a number, and that is the whole fix for a real bug:
+  // binding a number input to numeric state and parsing with Number(e.target.value) means clearing
+  // the box yields Number('') === 0, which React writes straight back as "0". The field then looks
+  // hard-coded, because deleting the value instantly restores it and typing appends to a leading
+  // zero. Reported on the inches field 2026-07-31; it affected age, height, weight and goal weight
+  // identically. Strings let a box be genuinely empty; parsing happens once, below.
+  const [age, setAge] = useState('30');
   // Units: imperial (lb + ft/in) or metric (kg + cm). Default from locale; ES -> metric.
   const [units, setUnits] = useState<'imperial' | 'metric'>(locale === 'es' ? 'metric' : 'imperial');
-  const [heightCm, setHeightCm] = useState(168);
-  const [heightFt, setHeightFt] = useState(5);
-  const [heightIn, setHeightIn] = useState(6);
-  const [weightVal, setWeightVal] = useState(locale === 'es' ? 75 : 165); // in the selected unit
-  const [goalVal, setGoalVal] = useState(locale === 'es' ? 64 : 140);
+  const [heightCm, setHeightCm] = useState('168');
+  const [heightFt, setHeightFt] = useState('5');
+  const [heightIn, setHeightIn] = useState('6');
+  const [weightVal, setWeightVal] = useState(locale === 'es' ? '75' : '165'); // in the selected unit
+  const [goalVal, setGoalVal] = useState(locale === 'es' ? '64' : '140');
   const [activity, setActivity] = useState<Activity>('moderate');
   const [tier, setTier] = useState<Tier>('self');
   // Body fat as a free-text string, not a number: an empty box must stay empty. Binding a number
@@ -118,7 +124,17 @@ export function OnboardingFlow({
   // Functional updater, NOT `set(list.filter(...))`. React batches updates, so two chip taps inside
   // one batch would both read the same stale array and the second would silently discard the first.
   // Caught in prod QA: tapping Knees then Lower back fast persisted only Lower back.
-  function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
+  /**
+ * Parse a numeric text field. An empty or half-typed box ("", "-", ".") reads as 0 here, which the
+ * validity bounds below then reject, so Continue stays disabled rather than the field silently
+ * repairing itself to a number the member never chose.
+ */
+function num(v: string): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
     set((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
   }
   function toggleGoal(value: PrimaryGoal): void {
@@ -131,27 +147,29 @@ export function OnboardingFlow({
   function switchUnits(next: 'imperial' | 'metric'): void {
     if (next === units) return;
     if (next === 'metric') {
-      setWeightVal(Math.round(weightVal / LB_PER_KG));
-      setGoalVal(Math.round(goalVal / LB_PER_KG));
-      setHeightCm(Math.round((heightFt * 12 + heightIn) * 2.54));
+      setWeightVal(String(Math.round(num(weightVal) / LB_PER_KG)));
+      setGoalVal(String(Math.round(num(goalVal) / LB_PER_KG)));
+      setHeightCm(String(Math.round((num(heightFt) * 12 + num(heightIn)) * 2.54)));
     } else {
-      setWeightVal(Math.round(weightVal * LB_PER_KG));
-      setGoalVal(Math.round(goalVal * LB_PER_KG));
-      const totalIn = Math.round(heightCm / 2.54);
-      setHeightFt(Math.floor(totalIn / 12));
-      setHeightIn(totalIn % 12);
+      setWeightVal(String(Math.round(num(weightVal) * LB_PER_KG)));
+      setGoalVal(String(Math.round(num(goalVal) * LB_PER_KG)));
+      const totalIn = Math.round(num(heightCm) / 2.54);
+      setHeightFt(String(Math.floor(totalIn / 12)));
+      setHeightIn(String(totalIn % 12));
     }
     setUnits(next);
   }
 
-  const heightCmCanonical = units === 'metric' ? heightCm : Math.round((heightFt * 12 + heightIn) * 2.54);
-  const weightKg = units === 'metric' ? weightVal : weightVal / LB_PER_KG;
-  const goalKg = units === 'metric' ? goalVal : goalVal / LB_PER_KG;
+  const ageNum = num(age);
+  const heightCmCanonical =
+    units === 'metric' ? num(heightCm) : Math.round((num(heightFt) * 12 + num(heightIn)) * 2.54);
+  const weightKg = units === 'metric' ? num(weightVal) : num(weightVal) / LB_PER_KG;
+  const goalKg = units === 'metric' ? num(goalVal) : num(goalVal) / LB_PER_KG;
 
   // Client-side bounds mirroring onboardingInputSchema, so a plan is never computed from impossible
   // numbers (a mistyped height/weight/age). Step 1 collects name + these body fields.
   const bodyValid =
-    age >= 13 && age <= 100 &&
+    ageNum >= 13 && ageNum <= 100 &&
     heightCmCanonical >= 100 && heightCmCanonical <= 250 &&
     weightKg >= 30 && weightKg <= 300;
   // Body fat: blank is fine, but a typed value must be in range or the submit would 400 after the
@@ -172,7 +190,7 @@ export function OnboardingFlow({
   const input: OnboardingInput = useMemo(
     () => ({
       sex,
-      age,
+      age: ageNum,
       heightCm: heightCmCanonical,
       weightKg: Math.round(weightKg),
       goalWeightKg: Math.round(goalKg),
@@ -180,7 +198,7 @@ export function OnboardingFlow({
       goal,
       ...(bodyFatNum !== null && bodyFatValid ? { bodyFatPct: bodyFatNum } : {}),
     }),
-    [sex, age, heightCmCanonical, weightKg, goalKg, activity, goal, bodyFatNum, bodyFatValid],
+    [sex, ageNum, heightCmCanonical, weightKg, goalKg, activity, goal, bodyFatNum, bodyFatValid],
   );
   const plan = useMemo(() => computePlan(input), [input]);
   // Chart points in the user's display unit.
@@ -325,25 +343,25 @@ export function OnboardingFlow({
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('age')}>
-                <input type="number" className={numCls} value={age} onChange={(e) => setAge(Number(e.target.value))} />
+                <input type="number" className={numCls} value={age} onChange={(e) => setAge(e.target.value)} />
               </Field>
               {units === 'metric' ? (
                 <Field label={t('heightCm')}>
-                  <input type="number" className={numCls} value={heightCm} onChange={(e) => setHeightCm(Number(e.target.value))} />
+                  <input type="number" className={numCls} value={heightCm} onChange={(e) => setHeightCm(e.target.value)} />
                 </Field>
               ) : (
                 <Field label={t('heightFtIn')}>
                   <div className="flex gap-2">
-                    <input type="number" aria-label="ft" className={numCls} value={heightFt} onChange={(e) => setHeightFt(Number(e.target.value))} />
-                    <input type="number" aria-label="in" className={numCls} value={heightIn} onChange={(e) => setHeightIn(Number(e.target.value))} />
+                    <input type="number" aria-label="ft" className={numCls} value={heightFt} onChange={(e) => setHeightFt(e.target.value)} />
+                    <input type="number" aria-label="in" className={numCls} value={heightIn} onChange={(e) => setHeightIn(e.target.value)} />
                   </div>
                 </Field>
               )}
               <Field label={units === 'metric' ? t('weightKg') : t('weightLbs')}>
-                <input type="number" className={numCls} value={weightVal} onChange={(e) => setWeightVal(Number(e.target.value))} />
+                <input type="number" className={numCls} value={weightVal} onChange={(e) => setWeightVal(e.target.value)} />
               </Field>
               <Field label={units === 'metric' ? t('goalWeightKg') : t('goalWeightLbs')}>
-                <input type="number" className={numCls} value={goalVal} onChange={(e) => setGoalVal(Number(e.target.value))} />
+                <input type="number" className={numCls} value={goalVal} onChange={(e) => setGoalVal(e.target.value)} />
               </Field>
               <Field label={t('bodyFat')}>
                 <input
@@ -468,14 +486,14 @@ export function OnboardingFlow({
           <h2 className="tf-display mb-5 text-[34px]">{t('predictTitle')}</h2>
           <div className="rounded-[18px] bg-warm p-[22px]">
             <div className="w-full">
-              <PredictionChart data={chart} goal={Math.round(goalVal)} unit={unitLabel} />
+              <PredictionChart data={chart} goal={Math.round(num(goalVal))} unit={unitLabel} />
             </div>
             <div className="mt-1.5 flex justify-between text-[12px] text-muted">
               <span>
-                {t('now')} · {Math.round(weightVal)} {unitLabel}
+                {t('now')} · {Math.round(num(weightVal))} {unitLabel}
               </span>
               <span>
-                {t('goal')} · {Math.round(goalVal)} {unitLabel}
+                {t('goal')} · {Math.round(num(goalVal))} {unitLabel}
               </span>
             </div>
           </div>
