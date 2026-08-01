@@ -568,7 +568,19 @@
       "predictRecompNote": "You picked losing fat AND building muscle, so we hold your calories at maintenance and change what your body is made of. Expect the scale to stay flatter than you think while your shape changes. That is the plan working, not stalling.",
       "notesQ": "Anything else I should know?",
       "notesWhy": "Write it however you want. Injuries, surgeries, foods you avoid, what your week looks like. I read all of it.",
-      "notesPlaceholder": "For example: c-section in March, left shoulder clicks overhead, allergic to shellfish, I only have dumbbells at home."
+      "notesPlaceholder": "For example: c-section in March, left shoulder clicks overhead, allergic to shellfish, I only have dumbbells at home.",
+      "statRate": "Per week",
+      "statRateSub": "Steady, not a crash",
+      "statTotal": "To go",
+      "statTotalSub": "From where you are now",
+      "statEta": "On track for",
+      "statEtaSub": "About {weeks} weeks at this pace",
+      "statEtaUnknown": "Steady",
+      "statEtaUnknownSub": "Your goal is a long way out. We will re-check as you go.",
+      "statTwelve": "In 12 weeks",
+      "statTwelveSub": "If you stay consistent",
+      "statDaily": "Your daily target",
+      "macroLine": "{p}g protein · {c}g carbs · {f}g fat"
     },
     "exercise": {
       "back": "Back",

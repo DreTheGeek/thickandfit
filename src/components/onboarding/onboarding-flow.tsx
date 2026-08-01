@@ -46,6 +46,39 @@ type Activity = OnboardingInput['activity'];
 // Coaching tier chosen at onboarding (call 2026-07-01). Captured as intent; checkout maps it to a
 // Stripe price once billing is live. 'team' = coached by Steph's team (Dani), not Steph one-on-one.
 type Tier = 'self' | 'team' | 'steph';
+/**
+ * Parse a numeric text field. An empty or half-typed box ("", "-", ".") reads as 0 here, which the
+ * validity bounds below then reject, so Continue stays disabled rather than the field silently
+ * repairing itself to a number the member never chose.
+ */
+function num(v: string): number {
+const n = Number(v);
+return Number.isFinite(n) ? n : 0;
+}
+
+/** One number with a caption. Four of these carry the projection step. */
+function StatTile({ label, value, sub }: { label: string; value: string; sub: string }): ReactElement {
+return (
+  <div className="rounded-[14px] border border-line px-4 py-3">
+    <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-faint">{label}</p>
+    <p className="mt-1 font-display text-[20px] leading-none">{value}</p>
+    <p className="mt-1 text-[11px] leading-snug text-soft">{sub}</p>
+  </div>
+);
+}
+
+/**
+ * "March 2027" from a week count.
+ *
+ * A month and year, deliberately not a day. The projection is a straight-line energy-balance
+ * estimate, and printing "March 14, 2027" would claim a precision the model does not have.
+ */
+function goalDateLabel(weeks: number, locale: string): string {
+const d = new Date();
+d.setDate(d.getDate() + weeks * 7);
+return d.toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', { month: 'long', year: 'numeric' });
+}
+
 
 export function OnboardingFlow({
   initialFirstName = '',
@@ -130,19 +163,9 @@ export function OnboardingFlow({
   const [trainingLocation, setTrainingLocation] = useState<string>('both');
   const safetyFlagged = safety.length > 0;
 
-  // Functional updater, NOT `set(list.filter(...))`. React batches updates, so two chip taps inside
-  // one batch would both read the same stale array and the second would silently discard the first.
-  // Caught in prod QA: tapping Knees then Lower back fast persisted only Lower back.
-  /**
- * Parse a numeric text field. An empty or half-typed box ("", "-", ".") reads as 0 here, which the
- * validity bounds below then reject, so Continue stays disabled rather than the field silently
- * repairing itself to a number the member never chose.
- */
-function num(v: string): number {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-}
-
+// Functional updater, NOT `set(list.filter(...))`. React batches updates, so two chip taps inside
+// one batch would both read the same stale array and the second would silently discard the first.
+// Caught in prod QA: tapping Knees then Lower back fast persisted only Lower back.
 function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
     set((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
   }
@@ -522,6 +545,59 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
                 {t('goal')} · {Math.round(num(goalVal))} {unitLabel}
               </span>
             </div>
+          </div>
+
+          {/* The numbers behind the line. The chart alone was the blandest screen in the wizard: it
+              drew a 12-week window against a goal that is often much further out, so the line stopped
+              short of the goal marker and nothing explained why. Someone reading it saw a target
+              their own path visibly misses. These four facts are what she actually wants to know. */}
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
+            <StatTile
+              label={t('statRate')}
+              value={`${Math.abs(Math.round(plan.weeklyKg * (units === 'metric' ? 1 : LB_PER_KG) * 10) / 10)} ${unitLabel}`}
+              sub={t('statRateSub')}
+            />
+            <StatTile
+              label={t('statTotal')}
+              value={`${Math.round(plan.totalKg * (units === 'metric' ? 1 : LB_PER_KG))} ${unitLabel}`}
+              sub={t('statTotalSub')}
+            />
+            <StatTile
+              label={t('statEta')}
+              value={
+                plan.weeksToGoal === null
+                  ? t('statEtaUnknown')
+                  : goalDateLabel(plan.weeksToGoal, locale)
+              }
+              sub={
+                plan.weeksToGoal === null
+                  ? t('statEtaUnknownSub')
+                  : t('statEtaSub', { weeks: plan.weeksToGoal })
+              }
+            />
+            <StatTile
+              label={t('statTwelve')}
+              value={`${Math.round(plan.projectedKg * (units === 'metric' ? 1 : LB_PER_KG))} ${unitLabel}`}
+              sub={t('statTwelveSub')}
+            />
+          </div>
+
+          {/* Daily targets. She is about to be asked to trust a number she will see every single day,
+              so show it here rather than revealing it after payment. */}
+          <div className="mt-3 rounded-[18px] border border-line px-5 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[1.3px] text-faint">
+              {t('statDaily')}
+            </p>
+            <p className="mt-1.5 font-display text-[26px] leading-none">
+              {plan.calories} <span className="text-[15px] text-soft">kcal</span>
+            </p>
+            <p className="mt-2 text-[13px] text-soft">
+              {t('macroLine', {
+                p: plan.macros.protein_g,
+                c: plan.macros.carbs_g,
+                f: plan.macros.fat_g,
+              })}
+            </p>
           </div>
           {/* Recomposition needs saying out loud. Someone who picked BOTH lose fat and build muscle
               derives to `maintain`, so the projection line is deliberately FLAT while their goal

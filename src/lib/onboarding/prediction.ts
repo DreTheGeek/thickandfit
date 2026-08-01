@@ -43,7 +43,23 @@ export type Plan = {
   macros: { protein_g: number; carbs_g: number; fat_g: number };
   weeklyKg: number;
   curve: { week: number; weightKg: number }[];
+  /**
+   * Weeks to actually REACH the goal at this rate, or null when it will not happen: the member is
+   * already there, the rate is effectively zero, or it runs past the horizon below.
+   *
+   * The curve is capped at 12 weeks, so a 45 lb goal drew a chart that stopped well short of the
+   * goal line and said nothing about it. Showing someone a target their own path visibly misses,
+   * with no explanation, is the quiet letdown this exists to prevent.
+   */
+  weeksToGoal: number | null;
+  /** Total change still to make, in kg. Always positive. */
+  totalKg: number;
+  /** Where the 12-week curve actually ends, so the UI can be honest about the horizon. */
+  projectedKg: number;
 };
+
+/** Beyond this the projection is fiction: adherence, adaptation and life all dominate. */
+const MAX_PROJECTION_WEEKS = 104;
 
 export function computePlan(input: OnboardingInput): Plan {
   const bmr = bmrMifflinStJeor(input.sex, input.weightKg, input.heightCm, input.age);
@@ -72,6 +88,15 @@ export function computePlan(input: OnboardingInput): Plan {
     w = overshoot ? input.goalWeightKg : next;
   }
 
+  // How long the goal ACTUALLY takes, independent of the 12-week drawing window.
+  const remainingKg = input.goalWeightKg - input.weightKg;
+  const movingTowardGoal = Math.sign(weeklyKg) === Math.sign(remainingKg) && Math.abs(weeklyKg) > 0.01;
+  const rawWeeks = movingTowardGoal ? Math.ceil(Math.abs(remainingKg / weeklyKg)) : null;
+  const weeksToGoal =
+    rawWeeks === null || rawWeeks > MAX_PROJECTION_WEEKS
+      ? null
+      : Math.max(1, rawWeeks);
+
   return {
     bmr: Math.round(bmr),
     tdee: Math.round(tdee),
@@ -79,5 +104,8 @@ export function computePlan(input: OnboardingInput): Plan {
     macros: { protein_g, carbs_g, fat_g },
     weeklyKg,
     curve,
+    weeksToGoal,
+    totalKg: Math.round(Math.abs(remainingKg) * 10) / 10,
+    projectedKg: curve[curve.length - 1]?.weightKg ?? input.weightKg,
   };
 }

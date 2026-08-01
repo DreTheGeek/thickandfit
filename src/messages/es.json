@@ -568,7 +568,19 @@
       "predictRecompNote": "Elegiste bajar grasa Y ganar músculo, así que mantenemos tus calorías y cambiamos de qué está hecho tu cuerpo. La báscula se va a mover menos de lo que esperas mientras tu figura cambia. Así se ve el plan funcionando, no estancado.",
       "notesQ": "¿Algo más que deba saber?",
       "notesWhy": "Escríbelo como quieras. Lesiones, cirugías, comidas que evitas, cómo es tu semana. Yo leo todo.",
-      "notesPlaceholder": "Por ejemplo: cesárea en marzo, me truena el hombro izquierdo, soy alérgica a los mariscos, solo tengo mancuernas en casa."
+      "notesPlaceholder": "Por ejemplo: cesárea en marzo, me truena el hombro izquierdo, soy alérgica a los mariscos, solo tengo mancuernas en casa.",
+      "statRate": "Por semana",
+      "statRateSub": "Constante, sin extremos",
+      "statTotal": "Te faltan",
+      "statTotalSub": "Desde donde estás hoy",
+      "statEta": "Vas para",
+      "statEtaSub": "Unas {weeks} semanas a este ritmo",
+      "statEtaUnknown": "Constante",
+      "statEtaUnknownSub": "Tu meta está lejos. Lo revisamos juntas en el camino.",
+      "statTwelve": "En 12 semanas",
+      "statTwelveSub": "Si te mantienes constante",
+      "statDaily": "Tu meta diaria",
+      "macroLine": "{p}g proteína · {c}g carbohidratos · {f}g grasa"
     },
     "exercise": {
       "back": "Espalda",
