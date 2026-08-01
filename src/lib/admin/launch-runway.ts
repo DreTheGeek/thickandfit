@@ -54,9 +54,15 @@ export const BLOCKERS: readonly Blocker[] = [
     title: 'Turnstile bot defense on /api/funnel/signup',
     milestone: 'aug4',
     owner: 'LaSean',
-    status: 'done',
-    detail: 'Server-side verify + client widget, lazy-gated on TURNSTILE_SECRET_KEY. Arm by adding site key + secret to Vercel prod.',
-    notes: 'commit 8aa4131',
+    // COMPUTED, not asserted. This read 'done' because the CODE shipped, while the control itself was
+    // inert: verifyTurnstileToken lazy-gates on TURNSTILE_SECRET_KEY and skips silently when unset, so
+    // the board claimed bot defense was live while the signup endpoint had none. A security control
+    // reported as active while inactive is worse than one honestly marked pending, so this one asks
+    // the environment instead of trusting a hand-edited string.
+    status: process.env.TURNSTILE_SECRET_KEY ? 'done' : 'pending',
+    detail:
+      'Server-side verify + client widget, lazy-gated on TURNSTILE_SECRET_KEY. Until that secret is in Vercel prod the verify SKIPS and the only guard on signup is the 5/min IP limit.',
+    notes: 'commit 8aa4131 (code). Arms itself the moment the secret lands.',
   },
   {
     id: 'aug4-double-opt-in',
@@ -72,9 +78,9 @@ export const BLOCKERS: readonly Blocker[] = [
     title: 'Resend teamthickandfit.com domain verify + SPF/DKIM/DMARC',
     milestone: 'aug4',
     owner: 'LaSean',
-    status: 'blocked',
+    status: 'done',
     detail: 'Composio Resend connect link awaiting click. Once connected: register domain, fetch DNS records, publish at DNS provider, verify.',
-    notes: 'Without this, every reset/confirm/drip email lands in spam or bounces.',
+    notes: 'Domain teamthickandfit.com verified 2026-07-30. Confirmation, support and recap mail all observed delivering 2026-08-01. DMARC on _dmarc still outstanding.',
   },
   {
     id: 'aug4-ghl-workflow',
@@ -151,7 +157,8 @@ export const BLOCKERS: readonly Blocker[] = [
     title: 'D: onboarding pre/post-paywall split',
     milestone: 'sept27',
     owner: 'LaSean',
-    status: 'pending',
+    status: 'done',
+    notes: 'Walked end to end on prod 2026-08-01.',
     detail: 'Per 2026-07-23 call: name/email/phone/goals stay pre-paywall; weight/pictures/body-fat move post-paywall so we do not waste tokens on non-converters.',
   },
   {
@@ -194,7 +201,8 @@ export const BLOCKERS: readonly Blocker[] = [
     title: 'Community moderation queue (/admin/community/reports)',
     milestone: 'ongoing',
     owner: 'LaSean',
-    status: 'pending',
+    status: 'done',
+    notes: '/admin/community/reports is live.',
     detail: 'Launch-day risk: one bad post + no admin queue means it lives until Stephanie sees it manually.',
   },
 ];
