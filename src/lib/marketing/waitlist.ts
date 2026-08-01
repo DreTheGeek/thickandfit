@@ -10,6 +10,10 @@ export const waitlistSchema = z.object({
   email: z.string().email(),
   locale: z.enum(['en', 'es']).default('en'),
   source: z.string().max(120).optional(),
+  // Turnstile challenge response from the widget. Optional in the SCHEMA so an existing caller or a
+  // server-side script stays valid; the route's verify is the actual gate, exactly as on
+  // /api/funnel/signup.
+  turnstile_token: z.string().max(2048).optional(),
 });
 export type WaitlistInput = z.infer<typeof waitlistSchema>;
 
