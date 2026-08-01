@@ -1433,7 +1433,8 @@
       "msgSent": "Enviado.",
       "formEmptyAnswer": "-",
       "formYes": "Sí",
-      "formNo": "No"
+      "formNo": "No",
+      "navIntake": "Registros por revisar"
     },
     "you": {
       "title": "Tú",

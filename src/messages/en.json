@@ -1433,7 +1433,8 @@
       "msgSent": "Sent.",
       "formEmptyAnswer": "-",
       "formYes": "Yes",
-      "formNo": "No"
+      "formNo": "No",
+      "navIntake": "Intake to review"
     },
     "you": {
       "title": "You",

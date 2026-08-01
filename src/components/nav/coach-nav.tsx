@@ -28,6 +28,9 @@ const SECTIONS: NavSection[] = [
     headerKey: 'navClients',
     items: [
       { key: 'navClients', href: '/coach/clients', icon: 'user' },
+      // Sits directly under Clients on purpose: it is a queue about specific new members, and the
+      // whole point of over-flagging in the extractor is that a human passes by here.
+      { key: 'navIntake', href: '/coach/intake', icon: 'clipboard' },
       { key: 'navLeads', href: '/coach/leads', icon: 'funnel' },
       { key: 'navInbox', href: '/coach/inbox', icon: 'chat' },
       { key: 'navCommunity', href: '/coach/community', icon: 'community' },
