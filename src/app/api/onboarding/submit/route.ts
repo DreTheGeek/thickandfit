@@ -34,6 +34,9 @@ const submitSchema = onboardingInputSchema.extend({
   // Coaching tier chosen at onboarding (call 2026-07-01). Stored as intent; checkout maps it to a
   // Stripe price when billing goes live. 'team' = coached by Steph's team, not Steph 1-on-1.
   tier: z.enum(['self', 'team', 'steph']).optional(),
+  // The date SHE chose to hit her goal weight. Stored as intent: the coach and the prediction engine
+  // both want to know what she is aiming at, separately from what the model projects.
+  targetDateIso: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // Pre-paywall additions (2026-07-23 call). All optional so an older client build, or a member who
   // skips the health step, still onboards instead of hitting a 422 at the last screen.
   //
@@ -77,6 +80,7 @@ async function POST_h(req: Request) {
       profile_id: ctx.userId,
       answers: parsed.data,
       predicted_goal: parsed.data.goal,
+      goal_target_date: parsed.data.targetDateIso ?? null,
       computed_targets: plan,
       completed_at: new Date().toISOString(),
     },

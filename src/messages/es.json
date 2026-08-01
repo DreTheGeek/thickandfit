@@ -580,7 +580,14 @@
       "statTwelve": "En 12 semanas",
       "statTwelveSub": "Si te mantienes constante",
       "statDaily": "Tu meta diaria",
-      "macroLine": "{p}g proteína · {c}g carbohidratos · {f}g grasa"
+      "macroLine": "{p}g proteína · {c}g carbohidratos · {f}g grasa",
+      "deadlineLabel": "¿Quieres una fecha meta?",
+      "deadlineWhy": "Opcional. Si tienes una fecha en mente, te digo con honestidad si se puede.",
+      "deadlineOk": "Se puede. Como {rate} {unit} por semana, un ritmo que sí puedes sostener.",
+      "deadlineHard": "Serían como {rate} {unit} por semana. Se puede, pero va apretado. El {date} sería más fácil de sostener.",
+      "deadlineTooFast": "Serían como {rate} {unit} por semana, más rápido de lo que yo recomendaría. Mejor apunta al {date} y lo vas a mantener.",
+      "deadlinePast": "Esa fecha ya pasó. Elige una después de hoy.",
+      "planTarget": "Tu fecha meta"
     },
     "exercise": {
       "back": "Espalda",

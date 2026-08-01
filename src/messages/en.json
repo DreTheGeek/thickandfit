@@ -580,7 +580,14 @@
       "statTwelve": "In 12 weeks",
       "statTwelveSub": "If you stay consistent",
       "statDaily": "Your daily target",
-      "macroLine": "{p}g protein · {c}g carbs · {f}g fat"
+      "macroLine": "{p}g protein · {c}g carbs · {f}g fat",
+      "deadlineLabel": "Want a target date?",
+      "deadlineWhy": "Optional. If you have a date in mind, I will tell you straight whether it is doable.",
+      "deadlineOk": "That works. About {rate} {unit} a week, which is a pace you can actually hold.",
+      "deadlineHard": "That is about {rate} {unit} a week. Doable, but it will be tight. {date} would be easier to hold on to.",
+      "deadlineTooFast": "That is about {rate} {unit} a week, faster than I would coach anyone. I would aim for {date} instead, and you will keep it.",
+      "deadlinePast": "That date has already passed. Pick one ahead of today.",
+      "planTarget": "Your target date"
     },
     "exercise": {
       "back": "Back",

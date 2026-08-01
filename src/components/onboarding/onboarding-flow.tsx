@@ -17,6 +17,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import type { Dispatch, ReactElement, ReactNode, SetStateAction } from 'react';
 import { setUiLocaleAction, setContentLocaleAction } from '@/lib/i18n/actions';
 import { computePlan, type OnboardingInput } from '@/lib/onboarding/prediction';
+import { assessGoalPace, minTargetDateIso, maxTargetDateIso } from '@/lib/onboarding/goal-pace';
 import { PRIMARY_GOALS, deriveGoalDirection, type PrimaryGoal } from '@/lib/onboarding/goals';
 import {
   INJURIES,
@@ -65,6 +66,14 @@ return (
     <p className="mt-1 text-[11px] leading-snug text-soft">{sub}</p>
   </div>
 );
+}
+
+/** "March 14, 2027" from an ISO day. Used for a date the MEMBER chose, so the day is real. */
+function prettyDate(iso: string, locale: string): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return d.toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
+    month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+  });
 }
 
 /**
@@ -142,6 +151,9 @@ export function OnboardingFlow({
   const [goalVal, setGoalVal] = useState('');
   const [activity, setActivity] = useState<Activity>('moderate');
   const [tier, setTier] = useState<Tier>('self');
+  // Optional target date. Empty by default: a deadline is a real commitment and pre-filling one would
+  // put a date in her mouth, which is the same mistake the prefilled weight made.
+  const [targetDate, setTargetDate] = useState('');
   // Body fat as a free-text string, not a number: an empty box must stay empty. Binding a number
   // input to 0 would show a "0" the member has to delete, and 0 is a value the schema would reject.
   const [bodyFat, setBodyFat] = useState('');
@@ -237,6 +249,12 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
     [sex, ageNum, heightCmCanonical, weightKg, goalKg, activity, goal, bodyFatNum, bodyFatValid],
   );
   const plan = useMemo(() => computePlan(input), [input]);
+  // Assessed against the CHOSEN date, not the plan's own projection: the point is to compare what she
+  // wants with what is sustainable, and tell her honestly when those differ.
+  const pace = useMemo(
+    () => assessGoalPace({ currentKg: weightKg, goalKg: goalKg, targetDateIso: targetDate || null, now: new Date() }),
+    [weightKg, goalKg, targetDate],
+  );
   // Chart points in the user's display unit.
   const unitLabel = units === 'metric' ? 'kg' : 'lb';
   const chart = useMemo<CurvePoint[]>(
@@ -261,6 +279,7 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
           lastName: lastName.trim(),
           language,
           tier,
+          targetDateIso: targetDate || undefined,
           primaryGoals,
           phone: phone.trim() || undefined,
           // Health & safety. Sent as one object so the route can hand it straight to
@@ -582,6 +601,44 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
             />
           </div>
 
+          {/* Target date. Optional, and deliberately AFTER the projection so she sets a date knowing
+              what the sustainable pace actually is, rather than anchoring on a wish first. */}
+          <div className="mt-3 rounded-[18px] border border-line px-5 py-4">
+            <label className="block text-[10px] font-semibold uppercase tracking-[1.3px] text-faint">
+              {t('deadlineLabel')}
+            </label>
+            <input
+              type="date"
+              value={targetDate}
+              min={minTargetDateIso(new Date())}
+              max={maxTargetDateIso(new Date())}
+              onChange={(e) => setTargetDate(e.target.value)}
+              className="mt-2 w-full rounded-[12px] border border-line bg-surface px-3.5 py-2.5 text-[15px] outline-none focus:border-ink"
+            />
+            <p className="mt-1.5 text-[12px] text-soft">{t('deadlineWhy')}</p>
+
+            {pace.verdict !== 'none' && pace.verdict !== 'done' && (
+              <p
+                className={`mt-2.5 rounded-[12px] px-3.5 py-2.5 text-[13px] leading-snug ${
+                  pace.verdict === 'comfortable' ? 'bg-warm text-soft' : 'bg-alert text-alert-ink'
+                }`}
+              >
+                {pace.verdict === 'past'
+                  ? t('deadlinePast')
+                  : pace.verdict === 'comfortable'
+                    ? t('deadlineOk', {
+                        rate: Math.abs(Math.round(pace.weeklyKg * (units === 'metric' ? 1 : LB_PER_KG) * 10) / 10),
+                        unit: unitLabel,
+                      })
+                    : t(pace.verdict === 'aggressive' ? 'deadlineHard' : 'deadlineTooFast', {
+                        rate: Math.abs(Math.round(pace.weeklyKg * (units === 'metric' ? 1 : LB_PER_KG) * 10) / 10),
+                        unit: unitLabel,
+                        date: pace.suggestedDateIso ? prettyDate(pace.suggestedDateIso, locale) : '',
+                      })}
+              </p>
+            )}
+          </div>
+
           {/* Daily targets. She is about to be asked to trust a number she will see every single day,
               so show it here rather than revealing it after payment. */}
           <div className="mt-3 rounded-[18px] border border-line px-5 py-4">
@@ -658,20 +715,28 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
           </div>
           <div className="mt-5 flex flex-col gap-px overflow-hidden rounded-2xl border border-divider bg-divider">
             <PlanRow label={t('planProgram')} value={t('planProgramV')} />
-            <PlanRow label={t('planMacros')} value={`${plan.calories} kcal · P${plan.macros.protein_g}`} />
+            {/* Was "2614 kcal · P208", repeating the headline directly above it and dropping carbs
+                and fat entirely. The full split is the part the headline does not already say. */}
+            <PlanRow
+              label={t('planMacros')}
+              value={`P${plan.macros.protein_g} · C${plan.macros.carbs_g} · F${plan.macros.fat_g} g`}
+            />
             <PlanRow label={t('planCheck')} value={t('planCheckV')} />
+            {targetDate && <PlanRow label={t('planTarget')} value={prettyDate(targetDate, locale)} />}
           </div>
-          {/* Hand-off into the POST-paywall half of the intake. Injuries, conditions, pregnancy and
-              the safety screen are already captured above, so this CTA is for what is left: foods
-              avoided, equipment, meds, sleep/stress, relationship with food. Skippable (the footer
-              still goes straight to the dashboard). */}
+          {/* Hand-off into the POST-paywall half of the intake: foods avoided, equipment, meds,
+              sleep/stress, relationship with food.
+              SECONDARY on purpose. This and the footer button were both size="block" primaries, which
+              read as two competing "main" actions on the last screen of a six-step wizard. She just
+              answered a lot of questions; the win now is getting her INTO the app to see the plan, and
+              the deeper intake can be prompted from the dashboard. One solid button, one outline. */}
           <div className="mt-6 rounded-[16px] border border-line p-[18px]">
             <div className="flex items-center gap-2">
               <span className="text-ink"><Icon name="heart" size={16} strokeWidth={2.2} /></span>
               <h3 className="text-[15px] font-semibold">{t('healthCtaTitle')}</h3>
             </div>
             <p className="mb-4 mt-1.5 text-[13px] leading-[1.5] text-soft">{t('healthCtaBody')}</p>
-            <ButtonLink href="/you/health" size="block">
+            <ButtonLink href="/you/health" size="block" variant="outline">
               {t('healthCtaBtn')}
             </ButtonLink>
           </div>
