@@ -149,7 +149,8 @@
       "passwordMismatch": "Las contraseñas no coinciden.",
       "resetLinkExpired": "Tu enlace de restablecimiento expiró. Pide uno nuevo."
     },
-    "emailConfirmed": "Tu correo está confirmado. Inicia sesión para empezar."
+    "emailConfirmed": "Tu correo está confirmado. Inicia sesión para empezar.",
+    "signUpPromise": "Seis preguntas y vas a tener tus calorías, tus macros y un plan hecho para tu cuerpo. Toma como dos minutos."
   },
   "pwa": {
     "iosInstall": "Instala Thick & Fit: toca <b>Compartir</b>, luego <b>Añadir a pantalla de inicio</b>.",

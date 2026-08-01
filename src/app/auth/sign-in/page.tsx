@@ -29,10 +29,12 @@ export default async function SignInPage({
           {error === 'oauth' ? t('oauthError') : t('authError')}
         </p>
       )}
+      {/* OAuthButtons owns its own gate; see sign-up for why the second flag was removed. */}
+      <OAuthButtons />
       <AuthForm mode="sign-in" />
       {/* Config-flip social login: renders only once the Google provider is enabled in Supabase and
           the flag is set, so we never show a button that errors. */}
-      {process.env.NEXT_PUBLIC_OAUTH_GOOGLE === '1' && <OAuthButtons />}
+
       <Link
         href="/auth/forgot-password"
         className="mt-3 inline-block text-sm text-muted underline-offset-4 transition hover:text-ink hover:underline"
