@@ -212,6 +212,27 @@ eval correctly reports fat bias as n/a rather than a fabricated 0.
 | CRON_SECRET | 2026-07-03 | Claude (launch hardening) | rotated to align Vercel prod + pg_cron registrations; old value unrecoverable (encrypted) |
 | Supabase `smtp_pass` (Resend key) | 2026-07-30 | Claude (email restore) | new sending-only key `supabase-smtp-2026-07-30`; the previous value was cleared by a partial auth-config PATCH and is unrecoverable (the Management API returns it masked) |
 
+## Supabase auth security posture (audited 2026-08-01)
+Enabled via the Management API, verified by observed behaviour, not by the flag reading true:
+- `password_hibp_enabled: true` - rejects passwords found in known breaches (HaveIBeenPwned,
+  k-anonymity so the password never leaves Supabase). Verified: "Password123!" -> 422 weak_password,
+  a strong unique password -> 200. Credential stuffing is the realistic attack on a consumer app, and
+  this beats complexity rules, which is also current NIST guidance. `password_required_characters`
+  is deliberately left null for the same reason.
+- `security_update_password_require_reauthentication: true` - the current password is required before
+  it can be changed. Without it, a hijacked session changes the password and locks the real owner out.
+- `mfa_totp_enroll_enabled` / `verify` already true. Worth turning on for OPERATOR accounts before
+  launch: those four accounts can see all revenue and all member PII.
+
+STILL OFF, and it needs a Cloudflare secret: `security_captcha_enabled`. Supabase-native captcha
+protects the AUTH endpoints (signup, signin, password reset, OTP), which the route-level Turnstile in
+`/api/funnel/signup`, `/api/waitlist` and `/api/support/ticket` does NOT cover, because those are our
+own Next.js routes. Once TURNSTILE_SECRET_KEY exists, set `security_captcha_enabled: true` +
+`security_captcha_provider: 'turnstile'` + `security_captcha_secret` to close the auth surface too.
+
+**Any auth-config PATCH: re-assert `rate_limit_email_sent: 30` in the same call and diff the SMTP
+group afterwards.** See the two traps below.
+
 ## Auth email: two config traps that cause outages
 1. **A partial PATCH to `/config/auth` CLEARS the rest of the SMTP group.** Sending only
    `smtp_admin_email` nulled `smtp_host`/`smtp_port`/`smtp_user`/`smtp_pass` and took email down. Always
