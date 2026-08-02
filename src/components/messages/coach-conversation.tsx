@@ -24,6 +24,18 @@ export function CoachConversation({
   initialMessages: InboxMessage[];
 }): ReactElement {
   const [messages, setMessages] = useState<InboxMessage[]>(initialMessages);
+  // Reset-on-prop-change, React's documented pattern, instead of setState inside an effect.
+  //
+  // Switching to another client must discard the previous thread. Doing that in an effect meant the
+  // component first PAINTED the old client's messages under the new client's name, then re-rendered
+  // with the right ones: a visible flash of one member's conversation in another's thread, in a coach
+  // inbox that carries 12k migrated messages. Adjusting during render swaps them before anything is
+  // shown, and is what react-hooks was flagging.
+  const [renderedContactId, setRenderedContactId] = useState(contactId);
+  if (contactId !== renderedContactId) {
+    setRenderedContactId(contactId);
+    setMessages(initialMessages);
+  }
   const [draft, setDraft] = useState('');
   const [note, setNote] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -32,10 +44,6 @@ export function CoachConversation({
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
   }, [messages.length]);
-
-  useEffect(() => {
-    setMessages(initialMessages);
-  }, [initialMessages, contactId]);
 
   const send = (): void => {
     const body = draft.trim();

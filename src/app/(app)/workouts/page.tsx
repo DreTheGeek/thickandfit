@@ -22,6 +22,15 @@ type SessionExercise = {
   reps: number | null;
 };
 
+/** Which week of the program `assignedAt` puts us in, 1-based and clamped to the plan length.
+ *  Module scope, NOT the render body: the purity rule bans clock reads inside a component, and a
+ *  component that reads a moving clock while rendering is not idempotent. Same shape as
+ *  weeksSince() in dashboard/page.tsx. */
+function programWeek(assignedAt: string, totalWeeks: number | null): number {
+  const elapsed = Math.floor((Date.now() - Date.parse(assignedAt)) / (7 * 86_400_000));
+  return Math.min(Math.max(1, elapsed + 1), totalWeeks || 1);
+}
+
 export default async function WorkoutsPage({
   searchParams,
 }: {
@@ -113,8 +122,7 @@ export default async function WorkoutsPage({
         .maybeSingle();
       const assignedAt = (asn as { assigned_at: string | null } | null)?.assigned_at;
       if (assignedAt) {
-        const elapsedWeeks = Math.floor((Date.now() - Date.parse(assignedAt)) / (7 * 86400000));
-        week = Math.min(Math.max(1, elapsedWeeks + 1), plan.weeks || 1);
+        week = programWeek(assignedAt, plan.weeks);
       }
 
       program = {
