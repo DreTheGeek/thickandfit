@@ -11,6 +11,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { ensureCrmContact } from '@/lib/crm/ensure-contact';
 import { upsertGhlContact } from '@/lib/ghl/client';
 import { sendWelcomeEmail } from '@/lib/email/welcome';
+import { seedIntroMessage } from '@/lib/coach/intro-message';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
 import { extractIntakeNotes, mergeSlugs } from '@/lib/onboarding/intake-notes';
 import {
@@ -239,6 +240,20 @@ async function POST_h(req: Request) {
           fatG: Math.round(Number(m.fat_g ?? 0)),
         },
         locale: language === 'es' ? 'es' : 'en',
+      });
+
+      // Steph's first message, waiting in the inbox before she ever writes one. The premise of this
+      // product is her voice; an empty thread on day one makes the coach feel absent on the day the
+      // member is most willing to engage. Idempotent, so this cannot double up.
+      const nowKg = Number(parsed.data.weightKg ?? 0);
+      const goalKg = Number(parsed.data.goalWeightKg ?? 0);
+      const toLb = (kg: number): number => Math.round(kg * 2.20462);
+      await seedIntroMessage({
+        companyId,
+        profileId: userId,
+        firstName,
+        locale: language === 'es' ? 'es' : 'en',
+        goalLb: nowKg && goalKg ? { from: toLb(nowKg), to: toLb(goalKg) } : null,
       });
 
       // goal:* tags use the same vocabulary as the waitlist quiz, so a lead who said "lose_fat" at the
