@@ -1,134 +1,163 @@
-# Filming shot list, 50 exercises
+# Filming shot list
 
-Every name below is an exact match to a row already in the library, so a filmed clip attaches to the
-exercise members actually open. All 50 verified against `exercises.name_en` on 2026-08-03.
+Generated from `exercises.is_core` on 2026-08-03. **Do not hand-edit.** Regenerate with:
 
----
+```bash
+node .qa-visual/shot-list.mjs
+```
 
-## How this list was built
+**76 movements, 0 filmed.** Every name matches a live row exactly, so a clip
+attaches to the exercise members actually open.
 
-Not by opinion. The in-app program builder has only 4 exercise rows in it, so there was no usage data
-there. What there IS: **4,182 real workout sessions** her Lenus clients completed, and the session
-names say exactly what she programs.
+## Why this list, and this order
 
-| what she actually programs | sessions | share |
-|---|---|---|
-| Legs and glutes (5 named variants) | 1,383 | 33% |
-| Shoulders / chest / triceps + full upper body | 627 | 15% |
-| Back and biceps | 548 | 13% |
-| Full body HIIT | 269 | 6% |
-| Post-workout stretch | 231 | 6% |
-| Cardio and core | 133 | 3% |
+Not opinion. The in-app program builder held 4 exercise rows, so there was no usage data there.
+What there is: **4,182 real sessions** her Lenus clients completed, whose names say exactly what she
+programs. Blocks are ordered by their share of those sessions.
 
-The 50 slots below are allocated in those proportions. Legs and glutes get a third of the list because
-they are a third of her coaching.
-
-Filming order is top to bottom: if she only gets through the first 20, those 20 cover the sessions her
-clients do most.
+The glute block is the largest because a third of her sessions name glutes, and because **26 of these
+movements did not exist in the library before the 2026-08-03 curation**: no clamshells, no frog pumps,
+no curtsy lunges, no Bulgarian split squats, and exactly one hip thrust.
 
 ---
 
-## Block 1, legs and glutes (17) — her biggest block by far
+## Glutes and hinge (37)
 
-| # | exercise | equipment |
-|---|---|---|
-| 1 | Barbell Squat | barbell |
-| 2 | Bodyweight Squat | body only |
-| 3 | Romanian Deadlift | barbell |
-| 4 | Barbell Deadlift | barbell |
-| 5 | Barbell Lunge | barbell |
-| 6 | Barbell Walking Lunge | barbell |
-| 7 | Split Squats | body only |
-| 8 | Barbell Step Ups | barbell |
-| 9 | Butt Lift (Bridge) | body only |
-| 10 | Single Leg Glute Bridge | body only |
-| 11 | Glute Kickback | body only |
-| 12 | Step-up with Knee Raise | body only |
-| 13 | One-Legged Cable Kickback | cable |
-| 14 | Stiff-Legged Dumbbell Deadlift | dumbbell |
-| 15 | Lying Leg Curls | machine |
-| 16 | Seated Leg Curl | machine |
-| 17 | Front Barbell Squat | barbell |
+A third of her 4,182 real sessions name glutes. 26 of these did not exist in the library before 2026-08-03.
 
-## Block 2, shoulders / chest / triceps (10)
+| # | exercise | Spanish | equipment |
+|---|---|---|---|
+| 1 | Banded Donkey Kick | Patada de burro con banda | bands |
+| 2 | Banded Fire Hydrant | Hidrante con banda | bands |
+| 3 | Banded Glute Bridge | Puente de glúteos con banda | bands |
+| 4 | Banded Hip Thrust | Empuje de cadera con banda | bands |
+| 5 | Banded Lateral Walk | Caminata lateral con banda | bands |
+| 6 | Banded Pull-Through | Jalón entre piernas con banda | bands |
+| 7 | Banded Side-Lying Clam | Almeja de lado con banda | bands |
+| 8 | Banded Standing Kickback | Patada de glúteo de pie con banda | bands |
+| 9 | Seated Banded Hip Abduction | Abducción de cadera sentada con banda | bands |
+| 10 | Barbell Deadlift | Peso Muerto con Barra | barbell |
+| 11 | Barbell Lunge | Zancada con Barra | barbell |
+| 12 | Barbell Step Ups | Subidas al cajón con barra | barbell |
+| 13 | Barbell Walking Lunge | Zancada Caminando con Barra | barbell |
+| 14 | Romanian Deadlift | Peso Muerto Rumano | barbell |
+| 15 | 45-Degree Back Extension | Extensión de espalda a 45 grados | body only |
+| 16 | Butt Lift (Bridge) | Elevación de Glúteos (Puente) | body only |
+| 17 | Glute Kickback | Patada de Glúteo | body only |
+| 18 | Side Plank with Hip Abduction | Plancha lateral con abducción de cadera | body only |
+| 19 | Side-Lying Hip Abduction | Abducción de cadera acostada de lado | body only |
+| 20 | Single Leg Glute Bridge | Puente de glúteos a una pierna | body only |
+| 21 | Single-Leg Hip Thrust | Empuje de cadera a una pierna | body only |
+| 22 | Step-up with Knee Raise | Subida al cajón con elevación de rodilla | body only |
+| 23 | One-Legged Cable Kickback | Patada de glúteo a una pierna en polea | cable |
+| 24 | Standing Cable Hip Abduction | Abducción de cadera de pie en polea | cable |
+| 25 | B-Stance Hip Thrust | Empuje de cadera escalonado | dumbbell |
+| 26 | Bulgarian Split Squat | Sentadilla búlgara | dumbbell |
+| 27 | Curtsy Lunge | Zancada cruzada | dumbbell |
+| 28 | Dumbbell Hip Thrust | Empuje de cadera con mancuerna | dumbbell |
+| 29 | Dumbbell Romanian Deadlift | Peso muerto rumano con mancuernas | dumbbell |
+| 30 | Frog Pump | Puente de rana | dumbbell |
+| 31 | Goblet Squat | Sentadilla con mancuerna al pecho | dumbbell |
+| 32 | Lateral Lunge | Zancada lateral | dumbbell |
+| 33 | Lateral Step-Up | Subida lateral al cajón | dumbbell |
+| 34 | Reverse Lunge | Zancada hacia atrás | dumbbell |
+| 35 | Single-Leg Romanian Deadlift | Peso muerto rumano a una pierna | dumbbell |
+| 36 | Stiff-Legged Dumbbell Deadlift | Peso muerto rígido con mancuernas | dumbbell |
+| 37 | Machine Hip Thrust | Empuje de cadera en máquina | machine |
 
-| # | exercise | equipment |
-|---|---|---|
-| 18 | Barbell Shoulder Press | barbell |
-| 19 | Arnold Dumbbell Press | dumbbell |
-| 20 | Alternating Deltoid Raise | dumbbell |
-| 21 | Face Pull | cable |
-| 22 | Dumbbell Bench Press | dumbbell |
-| 23 | Barbell Bench Press - Medium Grip | barbell |
-| 24 | Pushups | body only |
-| 25 | Cable Crossover | cable |
-| 26 | Triceps Pushdown - Rope Attachment | cable |
-| 27 | Bench Dips | body only |
+## Shoulders, chest, triceps (10)
 
-## Block 3, back and biceps (8)
+Shoulders, chest and triceps plus full upper body: 627 sessions, 15%.
 
-| # | exercise | equipment |
-|---|---|---|
-| 28 | Bent Over Barbell Row | barbell |
-| 29 | One-Arm Dumbbell Row | dumbbell |
-| 30 | Seated Cable Rows | cable |
-| 31 | Wide-Grip Lat Pulldown | cable |
-| 32 | Pullups | body only |
-| 33 | Dumbbell Bicep Curl | dumbbell |
-| 34 | Hammer Curls | dumbbell |
-| 35 | Barbell Curl | barbell |
+| # | exercise | Spanish | equipment |
+|---|---|---|---|
+| 38 | Barbell Bench Press - Medium Grip | Press de Banca con Barra con Agarre Medio | barbell |
+| 39 | Barbell Shoulder Press | Press de Hombros con Barra | barbell |
+| 40 | Bench Dips | Fondos en Banco | body only |
+| 41 | Pushups | Flexiones | body only |
+| 42 | Cable Crossover | Cruce en Polea | cable |
+| 43 | Face Pull | Jalón a la Cara | cable |
+| 44 | Triceps Pushdown - Rope Attachment | Extensión de Tríceps en Polea con Accesorio con Cuerda | cable |
+| 45 | Alternating Deltoid Raise | Elevación de Deltoides Alterno | dumbbell |
+| 46 | Arnold Dumbbell Press | Press Arnold con Mancuerna | dumbbell |
+| 47 | Dumbbell Bench Press | Press de Banca con Mancuerna | dumbbell |
 
-## Block 4, full body HIIT (5)
+## Back and biceps (8)
 
-| # | exercise | equipment |
-|---|---|---|
-| 36 | One-Arm Kettlebell Swings | kettlebells |
-| 37 | Freehand Jump Squat | body only |
-| 38 | Plyo Push-up | body only |
-| 39 | Star Jump | body only |
-| 40 | Inchworm | body only |
+548 sessions, 13%. Her single most-programmed named session.
 
-## Block 5, core (4)
+| # | exercise | Spanish | equipment |
+|---|---|---|---|
+| 48 | Barbell Curl | Curl con Barra | barbell |
+| 49 | Bent Over Barbell Row | Remo Inclinado con Barra | barbell |
+| 50 | Pullups | Dominadas | body only |
+| 51 | Seated Cable Rows | Remos Sentado en Polea | cable |
+| 52 | Wide-Grip Lat Pulldown | Jalón al Pecho con Agarre Abierto | cable |
+| 53 | Dumbbell Bicep Curl | Curl de Bíceps con Mancuerna | dumbbell |
+| 54 | Hammer Curls | Curls Martillo | dumbbell |
+| 55 | One-Arm Dumbbell Row | Remo con Mancuerna a Un Brazo | dumbbell |
 
-| # | exercise | equipment |
-|---|---|---|
-| 41 | Plank | body only |
-| 42 | Russian Twist | body only |
-| 43 | Dead Bug | body only |
-| 44 | Hanging Leg Raise | body only |
+## Legs (7)
 
-## Block 6, post-workout stretch (6)
+Quad and hamstring work not already counted under glutes.
 
-| # | exercise | equipment |
-|---|---|---|
-| 45 | Child's Pose | body only |
-| 46 | Cat Stretch | body only |
-| 47 | Hamstring Stretch | body only |
-| 48 | Runner's Stretch | body only |
-| 49 | All Fours Quad Stretch | body only |
-| 50 | Upper Back Stretch | body only |
+| # | exercise | Spanish | equipment |
+|---|---|---|---|
+| 56 | Barbell Squat | Sentadilla con Barra | barbell |
+| 57 | Front Barbell Squat | Sentadilla Frontal con Barra | barbell |
+| 58 | Bodyweight Squat | Sentadilla con Peso Corporal | body only |
+| 59 | Freehand Jump Squat | Sentadilla con salto sin peso | body only |
+| 60 | One-Arm Kettlebell Swings | Balanceos con Pesa Rusa a Un Brazo | kettlebells |
+| 61 | Lying Leg Curls | Curls de Piernas Acostado | machine |
+| 62 | Seated Leg Curl | Curl Femoral Sentado | machine |
 
-**28 of the 50 need no equipment beyond a bench or a bar**, which means most of this can be shot in
-one location in one session.
+## Core (4)
+
+Cardio and core: 133 sessions.
+
+| # | exercise | Spanish | equipment |
+|---|---|---|---|
+| 63 | Dead Bug | Bicho Muerto (Dead Bug) | body only |
+| 64 | Hanging Leg Raise | Elevación de Piernas Colgado | body only |
+| 65 | Plank | Plancha | body only |
+| 66 | Russian Twist | Giro Ruso | body only |
+
+## Conditioning (2)
+
+Full body HIIT: 269 sessions, 6%.
+
+| # | exercise | Spanish | equipment |
+|---|---|---|---|
+| 67 | Plyo Push-up | Flexión Plyo | body only |
+| 68 | Star Jump | Salto Estrella | body only |
+
+## Mobility and stretch (8)
+
+Post-workout stretch: 231 sessions, 6%. More programmed than core, so do not skip it.
+
+| # | exercise | Spanish | equipment |
+|---|---|---|---|
+| 69 | All Fours Quad Stretch | Estiramiento de Cuádriceps en Cuatro Apoyos | body only |
+| 70 | Cat Stretch | Estiramiento del Gato | body only |
+| 71 | Child's Pose | Postura del niño | body only |
+| 72 | Hamstring Stretch | Estiramiento Isquiotibial | body only |
+| 73 | Inchworm | Gusano (Inchworm) | body only |
+| 74 | Runner's Stretch | Estiramiento del corredor | body only |
+| 75 | Split Squats | Sentadillas divididas | body only |
+| 76 | Upper Back Stretch | Estiramiento Superior de Espalda | body only |
 
 ---
 
-## Read this before booking the shoot
+## Before booking the shoot
 
-**The library is not hers.** It is a generic imported exercise database, and it shows. It contains
-Zercher Squats, Jefferson Squats, Barbell Ab Rollout, olympic lifts and strongman movements her
-clients will never be programmed. Meanwhile it holds **14 glute exercises** while glutes appear in
-four of her five most-programmed session types.
+**36 of the 76 need nothing but a mat and a band**, so most of this shoots in one location.
 
-There is no hip thrust in it. No Bulgarian split squat by that name. For a coach whose audience comes
-to her for glutes, that is the wrong shape of library, and the gap is not something filming fixes.
+The library was curated on 2026-08-03: 899 rows, 250 assignable, 76 core. Nothing was deleted, because
+the `set_logs` foreign key cascades and holds real member history. See
+`.planning/EXERCISE-LIBRARY-CURATION-PLAN.md`.
 
-**Recommendation: spend 20 minutes curating before spending a day filming.** Two questions for her:
+Two things still need Stephanie, not us:
 
-1. **What is missing?** Specifically the glute and hamstring work she actually programs that is not in
-   the list above. Those should be added to the library and filmed, and they may well displace some of
-   Block 1.
-2. **What should be deleted?** Cutting the olympic lifting, strongman and powerlifting sections makes
-   the library feel like hers instead of like a database, and it costs nothing to do.
-
-Filming 50 demos into a library that is not hers gets a worse result than filming 40 into one that is.
+1. **Does she program all 26 of the new movements?** If she does not coach it she will not film it,
+   and an unfilmed core row is worse than an absent one.
+2. **Filming order inside each block.** The blocks are evidence. The order within them is hers.
