@@ -60,6 +60,10 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
   const planName = Array.isArray(plan) ? plan[0]?.name_en : plan?.name_en;
 
   // Latest nightly insight: surface an active plateau for the dismissible dashboard banner.
+  // Strictly 'plateau'. A member whose plan holds her at maintenance is recorded as 'holding', which
+  // is the same flat weight meaning the opposite thing, and the banner ("we can adjust your plan to
+  // get you moving again") would contradict what onboarding promised her. Do not loosen this to a
+  // truthy check on plateau.
   const { data: insight } = await supabase
     .from('user_insights')
     .select('payload')

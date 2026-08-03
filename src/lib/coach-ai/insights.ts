@@ -17,6 +17,7 @@ import { aiConfigured, callJson } from '@/lib/ai/client';
 import { emitEvent } from '@/lib/events/emit';
 import { localDay } from '@/lib/datetime/local-day';
 import { fetchScanQuality, type ScanQuality } from '@/lib/coach-ai/scan-quality';
+import { detectPlateau, type PlateauInsight } from './plateau';
 import { estimateCostCents } from '@/lib/ai/pricing';
 
 // Cheap, reliable tier for the nightly batch extraction (runs once a day across all users).
@@ -27,16 +28,6 @@ const PROMPT_VERSION = 'insights.v2'; // v2 (2026-07-31): no-dash style rule on 
 const KG_TO_LB = 2.20462;
 const WINDOW_DAYS = 30;
 
-// --- Plateau detection thresholds ------------------------------------------------------------
-// A plateau = weight flat (|delta| < band) over a span of at least MIN_DAYS, backed by at least
-// MIN_ENTRIES weigh-ins, while the member is still active (logging food or workouts). Tuned to be
-// conservative so we never nag someone who is genuinely still trending.
-const PLATEAU_BAND_KG = 0.5; // |newest - oldest| must be under this to count as "flat"
-const PLATEAU_MIN_DAYS = 14; // the flat window must span at least this many days
-const PLATEAU_MIN_ENTRIES = 4; // ...with at least this many weigh-ins inside it
-const PLATEAU_LOOKBACK_DAYS = 21; // we evaluate the most recent ~3 weeks of weigh-ins
-const PLATEAU_MIN_ACTIVITY = 4; // member must have >= this many logged-or-workout days recently to count as "active"
-
 export type CoachingFlag = {
   // A short machine-stable code (e.g. 'low_protein', 'missed_workouts', 'plateau') the UI/coach
   // can branch on, plus a one-line bilingual-neutral human note for display.
@@ -44,20 +35,12 @@ export type CoachingFlag = {
   note: string;
 };
 
-// Deterministic weight-plateau detection result. Stored as a structured field in the payload so
-// the dashboard banner + the coach context can both read it without re-deriving. status === 'plateau'
-// means the member's weight has been flat (within PLATEAU_BAND_KG) over >= PLATEAU_MIN_DAYS days
-// with >= PLATEAU_MIN_ENTRIES weigh-ins while still active. No AI needed; pure math over weight_entries.
-export type PlateauStatus = 'none' | 'plateau';
-
-export type PlateauInsight = {
-  status: PlateauStatus;
-  days_flat: number; // span in days between the oldest + newest entry in the flat window (0 when none)
-  delta_kg: number | null; // newest minus oldest over the flat window (null when none)
-  entries: number; // number of weigh-ins in the flat window
-  // A short machine-stable suggestion code the UI/coach can branch on (e.g. 'refeed_or_recompute').
-  suggestion: string | null;
-};
+// Deterministic weight-plateau detection. Lives in ./plateau (pure, no imports, unit-tested by
+// .qa-visual/plateau-detect-test.mjs). Re-exported here because this module is where callers already
+// look for it. Stored as a structured field in the payload so the dashboard banner + the coach
+// context can both read it without re-deriving. No AI needed; pure math over weight_entries.
+export type { PlateauStatus } from './plateau';
+export type { PlateauInsight };
 
 // The open-shaped insight payload stored in user_insights.payload. buildCoachContext reads this
 // JSON straight into the coach context, so keep keys stable and additive.
@@ -215,53 +198,6 @@ function rollUp(food: FoodLogRow[], weight: WeightRow[], completions: Completion
     weightRows: weightSorted,
   };
 }
-
-// --- Deterministic plateau detection ---------------------------------------------------------
-// No AI: pure math over the rollup. Evaluates the 14-day and 21-day windows; flags a plateau when
-// the most recent window is flat (|delta| < band) over >= MIN_DAYS, has >= MIN_ENTRIES weigh-ins,
-// and the member is still active (>= MIN_ACTIVITY of logged days + workout days). We prefer the
-// 14-day window and widen to 21 days if 14 alone lacks enough entries.
-function detectPlateau(roll: Rollup): PlateauInsight {
-  const none: PlateauInsight = { status: 'none', days_flat: 0, delta_kg: null, entries: 0, suggestion: null };
-
-  // Newest-first weigh-ins, normalized to {date, kg}. rollUp already sorted weightRows newest-first.
-  const entries = roll.weightRows
-    .map((w) => ({ date: w.recorded_on.slice(0, 10), kg: num(w.weight_kg) }))
-    .filter((w) => w.date && Number.isFinite(w.kg));
-  if (entries.length < PLATEAU_MIN_ENTRIES) return none;
-
-  // Member must still be active; a plateau on someone who stopped logging is not a coaching moment.
-  const active = roll.loggedDays30 + roll.workoutDays30 >= PLATEAU_MIN_ACTIVITY;
-  if (!active) return none;
-
-  const evaluateWindow = (cutDays: number): PlateauInsight | null => {
-    const cut = isoDaysAgo(cutDays);
-    const inWindow = entries.filter((w) => w.date >= cut);
-    if (inWindow.length < PLATEAU_MIN_ENTRIES) return null;
-
-    const newest = inWindow[0]; // newest first
-    const oldest = inWindow[inWindow.length - 1];
-    const daysFlat = Math.round(
-      (Date.parse(`${newest.date}T00:00:00Z`) - Date.parse(`${oldest.date}T00:00:00Z`)) / 86_400_000,
-    );
-    if (daysFlat < PLATEAU_MIN_DAYS) return null;
-
-    const delta = Math.round((newest.kg - oldest.kg) * 10) / 10;
-    if (Math.abs(delta) >= PLATEAU_BAND_KG) return null;
-
-    return {
-      status: 'plateau',
-      days_flat: daysFlat,
-      delta_kg: delta,
-      entries: inWindow.length,
-      suggestion: 'refeed_or_recompute',
-    };
-  };
-
-  // Prefer the tighter 14-day signal; fall back to the 21-day window if 14 lacks enough entries.
-  return evaluateWindow(PLATEAU_MIN_DAYS) ?? evaluateWindow(PLATEAU_LOOKBACK_DAYS) ?? none;
-}
-
 // Read the member's most recent insight snapshot from a PRIOR day and report whether it already had
 // an active plateau. Used to fire the nudge only on the transition into a plateau (not every night).
 // Excludes today's row (we may have already upserted it). Returns false on any error/no data.
@@ -650,7 +586,9 @@ export async function generateInsightForSubscriber(sub: ActiveSubscriber): Promi
   const targets = onbRes.data?.computed_targets ?? null;
 
   // Deterministic plateau detection (no AI). Computed before the AI call so it is always present.
-  const plateau = detectPlateau(roll);
+  // sub.goal is the calorie direction from onboarding_responses.predicted_goal; it decides whether a
+  // flat month is a stall or the plan doing its job.
+  const plateau = detectPlateau(roll, sub.goal);
 
   const ai = await extractNarrative(sub, roll, targets);
   if (ai) void logUsage(sub, ai.usage);
