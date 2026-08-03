@@ -1,13 +1,19 @@
-// The signup alert is sent with parse_mode: 'HTML', so a member's own name is untrusted input that
-// goes straight into markup. "Ben & Jerry <test>" unescaped makes Telegram reject the whole message
-// with "can't parse entities", and the alert silently never arrives for that person only, which is
-// the sort of bug that shows up as "it works for everyone except her".
+// The signup alert is sent with parse_mode: 'HTML', so member-supplied values (name, email, phone,
+// plan label, referral code, coach name) go straight into markup. "Ben & Jerry <test>" unescaped
+// makes Telegram reject the whole message with "can't parse entities", and the alert silently never
+// arrives for that person only, which is the sort of bug that shows up as "it works for everyone
+// except her".
 //
-// This asserts the escaping locally AND then asks Telegram itself to parse the real message, using a
-// chat id that does not exist. The distinction in the reply is the whole test:
+// WHAT THIS TESTS: the ESCAPING SURFACE, not the exact layout. It deliberately does not mirror
+// signup.ts field for field, because a copy of a message builder drifts from the builder the first
+// time either is touched and then quietly tests nothing. The live send is the authority on layout:
+// reply() returns false when Telegram rejects the markup, so a `sent: true` in cron_job_log is
+// itself proof the real message parsed.
+//
+// It asserts escaping locally, then asks Telegram to parse each case against a chat id that cannot
+// exist. The distinction in the reply is the point:
 //   "chat not found"        -> the markup parsed fine, only the destination was wrong
 //   "can't parse entities"  -> the markup is broken
-// That lets the format be verified for real without a live chat to post into.
 import fs from 'node:fs';
 
 const env = {};
@@ -23,20 +29,26 @@ const TOKEN = env.TELEGRAM_BOT_TOKEN;
 // Mirrors esc() in supabase/functions/ops-bot/telegram.ts.
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-// Mirrors sendSignupAlert() in supabase/functions/ops-bot/signup.ts.
-function buildSignupMessage({ name, email, provider, role, todayCount, appUrl }) {
+// Every member-supplied value the alert can interpolate, run through the same esc() and wrapped in
+// the same tag vocabulary signup.ts uses (<b>, <i>, <code>). Layout is representative, not a mirror.
+function buildSignupMessage({ name, email, provider, role, todayCount, appUrl, phone, plan, referredBy, coach }) {
   const isStaff = role !== 'subscriber' && role !== 'free';
   const lines = [
     isStaff ? '👤 <b>NEW TEAM ACCOUNT</b>' : '🎉 <b>NEW SIGNUP</b>',
     '',
     `<b>${esc(name)}</b>`,
     esc(email),
-    '',
-    `<b>Signed up with:</b> ${esc(provider)}`,
-    `<b>Role:</b> ${esc(role)}`,
   ];
+  if (phone) lines.push(esc(phone));
   if (!isStaff) {
-    lines.push('', todayCount > 1 ? `${todayCount} signups in the last 24h.` : 'First signup in the last 24h.', '', `${appUrl}/coach/clients`);
+    lines.push('', '<b>PLAN</b>', plan ? `${esc(plan)} (selected)` : 'No plan selected', '<i>No payment on file yet</i>');
+    lines.push('', '<b>ORIGIN</b>');
+    if (referredBy) lines.push(`Referred by <code>${esc(referredBy)}</code>`);
+    if (coach) lines.push(`Coach: ${esc(coach)}`);
+  }
+  lines.push('', '<b>ACCOUNT</b>', `Signed up with ${esc(provider)}`, `Role: ${esc(role)}`);
+  if (!isStaff) {
+    lines.push('', todayCount > 1 ? `<b>${todayCount} signups in the last 24h.</b>` : 'First signup in the last 24h.', '', `${appUrl}/coach/clients`);
   } else {
     lines.push('', `${appUrl}/admin/team`);
   }
