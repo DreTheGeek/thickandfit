@@ -94,6 +94,10 @@ export function renderPredictionForPrompt(p: MemberPrediction, locale: 'en' | 'e
     lines.push(`${L.projected} ${p.goal.goalDateIso} (${p.goal.weeksToGo} ${L.weeks}${p.goal.window === '7d' ? ` · ${L.fromShort}` : ''}).`);
   } else if (p.goal.reason === 'plateau' && p.goal.weeklyKg != null) {
     lines.push(`${L.plateau} (${formatRate(p.goal.weeklyKg, locale)}).`);
+  } else if (p.goal.reason === 'maintaining' && p.goal.weeklyKg != null) {
+    // Said out loud so the coach does not read a flat month as a stall and start troubleshooting a
+    // plan that is doing exactly what it was set up to do.
+    lines.push(`${L.holding} (${formatRate(p.goal.weeklyKg, locale)}).`);
   } else if (p.goal.reason === 'wrong_direction' && p.goal.weeklyKg != null) {
     lines.push(`${L.wrongDir} (${formatRate(p.goal.weeklyKg, locale)}).`);
   }
@@ -110,7 +114,7 @@ export function renderPredictionForPrompt(p: MemberPrediction, locale: 'en' | 'e
   return [header, ...lines].join('\n');
 }
 
-type Labels = { header: string; headerStale: string; projected: string; weeks: string; fromShort: string; plateau: string; wrongDir: string; pace: string; lowConf: string; perWeek: string };
+type Labels = { header: string; headerStale: string; projected: string; weeks: string; fromShort: string; plateau: string; holding: string; wrongDir: string; pace: string; lowConf: string; perWeek: string };
 const LABELS: Record<'en' | 'es', Labels> = {
   en: {
     header: 'PREDICTION (deterministic; use when the member asks about pace or projection):',
@@ -119,6 +123,7 @@ const LABELS: Record<'en' | 'es', Labels> = {
     weeks: 'weeks',
     fromShort: 'from 7d trend',
     plateau: 'Plateau (weight essentially flat in the last month)',
+    holding: 'Holding steady at maintenance, which is what her plan intends (not a plateau)',
     wrongDir: 'Trend is moving away from the goal',
     pace: 'This-month pace',
     lowConf: 'low confidence, few logging days',
@@ -131,6 +136,7 @@ const LABELS: Record<'en' | 'es', Labels> = {
     weeks: 'semanas',
     fromShort: 'basado en 7 días',
     plateau: 'Meseta (peso prácticamente estable el último mes)',
+    holding: 'Se mantiene estable en mantenimiento, que es lo que su plan busca (no es una meseta)',
     wrongDir: 'La tendencia va en contra de la meta',
     pace: 'Ritmo del mes',
     lowConf: 'baja confianza, pocos días registrados',

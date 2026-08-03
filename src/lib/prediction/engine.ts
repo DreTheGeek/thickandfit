@@ -11,6 +11,9 @@
 //   - Trend prefers 30-day (more stable) but falls back to 7d when the 30d datapoint is missing.
 //   - "wrong-direction" is a first-class outcome: a fat-loss goal with a positive trend is NOT
 //     the same as a plateau. Coach language should differ, so the engine names it explicitly.
+//   - "holding" is the same idea for maintenance: a member the plan deliberately holds at her TDEE
+//     is SUPPOSED to be flat, so flat is the plan working, not a stall. Direction comes from
+//     primary_goal (the calorie direction derived at onboarding), never from the goal weight alone.
 //   - Plateau band = ±0.15 kg/week — anything inside is "flat" (any smaller shows as noise week
 //     to week). Matches the plateau band used by the nightly insight engine (0.5 kg / 14 days
 //     ≈ 0.25 kg/wk); a bit tighter here because we sit closer to the daily surface.
@@ -21,21 +24,28 @@ const KG_PER_LB = 0.453592;
 const PLATEAU_WEEKLY_KG = 0.15;
 const MAX_PROJECTION_WEEKS = 52; // over a year is not a useful projection; return null
 
-export type Direction = 'losing' | 'gaining' | 'flat' | 'wrong-direction';
+export type Direction = 'losing' | 'gaining' | 'flat' | 'holding' | 'wrong-direction';
 
 export type GoalPrediction = {
-  /** ISO date (yyyy-mm-dd, UTC) the member is on pace to hit goal. null when unknown/plateau/too-far-out. */
+  /**
+   * ISO date (yyyy-mm-dd, UTC) the member is on pace to hit goal. null when
+   * unknown/plateau/maintaining/too-far-out: a plan that is not chasing a number on the scale has no
+   * honest date to give.
+   */
   goalDateIso: string | null;
   /** Weeks to goal at current pace; null when unknown. */
   weeksToGo: number | null;
-  /** Direction of the trend in the goal's frame. 'wrong-direction' fires when trend fights the goal. */
+  /**
+   * Direction of the trend in the goal's frame. 'wrong-direction' fires when trend fights the goal;
+   * 'holding' fires when the trend is flat and the plan INTENDED it to be flat.
+   */
   direction: Direction;
   /** Signed weekly kg change actually observed. 30d-preferred, 7d fallback. null when no data. */
   weeklyKg: number | null;
   /** Which window fed the projection ('30d' preferred). null when neither was available. */
   window: '30d' | '7d' | null;
   /** Human-readable why-null when goalDateIso is null (for the UI + coach-chat renderer). */
-  reason: 'ok' | 'no_trend' | 'no_goal' | 'plateau' | 'wrong_direction' | 'too_far_out';
+  reason: 'ok' | 'no_trend' | 'no_goal' | 'plateau' | 'maintaining' | 'wrong_direction' | 'too_far_out';
 };
 
 export type PaceStatus = 'ahead' | 'on_pace' | 'behind' | 'unknown';
@@ -94,9 +104,23 @@ export function projectGoalDate(s: UserStateForPrediction): GoalPrediction {
   const direction = classifyDirection(weeklyKg, goalIsLose);
 
   if (direction === 'flat') {
+    // A member the plan deliberately holds at maintenance is SUPPOSED to be flat, so calling that a
+    // plateau tells her the plan is failing at the exact moment it is working. Onboarding already
+    // promised her the opposite ("expect the scale to stay flatter than you think ... that is the
+    // plan working, not stalling"), and this is the line that used to contradict it: `primaryGoal`
+    // carries that decision, it was passed in from user_state, and nothing here read it. Direction
+    // was inferred from the goal WEIGHT alone, which is how someone who chose lose_fat +
+    // build_muscle (derived to 'maintain', goal weight still below current) got read as a stalled
+    // fat-loss member every single night.
+    if (s.primaryGoal === 'maintain') {
+      return baseGoal({ reason: 'maintaining', direction: 'holding', weeklyKg, window });
+    }
     return baseGoal({ reason: 'plateau', direction, weeklyKg, window });
   }
   if (direction === 'wrong-direction') {
+    // Deliberately NOT special-cased for maintenance. A member held at maintenance who is actually
+    // drifting is real signal a coach should see, and whether a gain is muscle or fat is not
+    // something this function can know. Only the FLAT case above is unambiguous enough to reclassify.
     return baseGoal({ reason: 'wrong_direction', direction, weeklyKg, window });
   }
 
