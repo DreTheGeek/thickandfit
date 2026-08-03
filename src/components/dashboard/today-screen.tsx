@@ -275,10 +275,13 @@ export function TodayScreen({
     });
   }
 
-  const workoutTitle = summary.todaysWorkout?.name ?? t('today.morningWorkout');
+  // The THIRD place that told her to wait. With no program assigned this row read "Morning Workout /
+  // Your program's on the way", which is a to-do item she cannot do, sitting in a list called Things
+  // To Do. Point her at the tab that now has three things she CAN do instead.
+  const workoutTitle = summary.todaysWorkout?.name ?? t('activities.noProgram');
   const workoutSub = summary.todaysWorkout
     ? t('activities.todaysWorkout')
-    : t('activities.noProgram');
+    : t('firstSteps.title');
 
   // Personalized macro status for the hero: how far from "closing" today, then a coaching nudge.
   let heroMessage: string = t('today.checkinBody');

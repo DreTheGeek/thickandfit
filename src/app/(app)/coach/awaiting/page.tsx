@@ -1,0 +1,120 @@
+// Members waiting on the training plan the app told them was being written.
+//
+// The member-facing copy now says "Steph writes your plan by hand, she will message you when it is
+// ready." This page is what keeps that sentence honest. Without it the promise lived nowhere: the
+// signup alert scrolls out of Telegram the same evening and nothing else remembers.
+import type { ReactElement } from 'react';
+import Link from 'next/link';
+import { requireCoach } from '@/lib/auth/guards';
+import { listAwaitingProgram, OVERDUE_DAYS } from '@/lib/coach/awaiting-program';
+import { AdminPage } from '@/components/admin/ui';
+
+export const dynamic = 'force-dynamic';
+
+function waited(days: number): string {
+  if (days < 1) return 'today';
+  if (days === 1) return '1 day';
+  return `${days} days`;
+}
+
+export default async function CoachAwaitingPage(): Promise<ReactElement> {
+  const ctx = await requireCoach();
+  const items = ctx.companyId ? await listAwaitingProgram(ctx.companyId) : [];
+  const overdue = items.filter((i) => i.waitingDays >= OVERDUE_DAYS).length;
+
+  return (
+    <AdminPage
+      title="Waiting on a program"
+      subtitle="Finished onboarding, no training plan assigned yet. Oldest first, because a queue sorted newest-first starves its own bottom."
+    >
+      {items.length === 0 ? (
+        <div className="rounded-[14px] border border-line px-5 py-8 text-center">
+          <p className="text-[15px] text-ink">Nobody is waiting.</p>
+          <p className="mt-1 text-[13px] text-soft">
+            Everyone who finished onboarding has a program assigned.
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="mb-4 text-[13px] text-soft">
+            <b className="text-ink">{items.length}</b> waiting
+            {overdue > 0 ? (
+              <>
+                {' · '}
+                <b className="text-alert-ink">{overdue} over {OVERDUE_DAYS} days</b>
+              </>
+            ) : null}
+          </p>
+          <div className="flex flex-col gap-3">
+            {items.map((i) => {
+              const late = i.waitingDays >= OVERDUE_DAYS;
+              return (
+                <article
+                  key={i.profileId}
+                  className="rounded-[14px] border border-line bg-surface px-5 py-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-semibold text-ink">{i.name}</h3>
+                      <p className="text-[12px] text-faint">
+                        {i.email ?? 'no email'}
+                        {i.tier ? ` · ${i.tier}` : ''}
+                      </p>
+                    </div>
+                    {/* The age is the only number on the card that should ever raise a pulse. */}
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        late ? 'bg-alert text-alert-ink' : 'bg-warm text-soft'
+                      }`}
+                    >
+                      waiting {waited(i.waitingDays)}
+                    </span>
+                  </div>
+
+                  {i.goalSummary && (
+                    <p className="mt-2.5 text-[13px] text-soft">{i.goalSummary}</p>
+                  )}
+
+                  {/* Injuries sit on the card, not behind a click. A program cannot responsibly be
+                      written without them, and making the coach open a record to find out is how a
+                      bad lower back ends up with a deadlift in week one. */}
+                  {(i.injuries.length > 0 || i.conditions.length > 0) && (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                      {i.injuries.map((v) => (
+                        <span key={`inj-${v}`} className="rounded-full bg-alert px-2.5 py-0.5 text-[11px] text-alert-ink">
+                          {v}
+                        </span>
+                      ))}
+                      {i.conditions.map((v) => (
+                        <span key={`con-${v}`} className="rounded-full bg-warm px-2.5 py-0.5 text-[11px] text-soft">
+                          {v}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-3.5 flex flex-wrap gap-2">
+                    <Link
+                      href="/coach/programs"
+                      className="tf-press rounded-full bg-ink px-3.5 py-1.5 text-[12px] font-semibold text-surface"
+                    >
+                      Build her program
+                    </Link>
+                    {i.contactId && (
+                      <Link
+                        href={`/coach/clients/${i.contactId}`}
+                        className="tf-press rounded-full border border-line px-3.5 py-1.5 text-[12px] font-semibold text-muted hover:border-ink hover:text-ink"
+                      >
+                        Open her record
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </AdminPage>
+  );
+}

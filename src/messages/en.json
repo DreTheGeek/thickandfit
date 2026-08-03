@@ -453,7 +453,7 @@
       "weekOf": "Week {week} of {total}",
       "dayOf": "Day {day} of {total}",
       "todaysWorkout": "Today's Workout",
-      "noProgram": "Your program’s on the way",
+      "noProgram": "No program yet",
       "noProgramBody": "Your coach will assign your program soon.",
       "noHistory": "No workouts logged yet. Your first one’s waiting for you.",
       "startWorkout": "Start Workout",
@@ -1447,7 +1447,8 @@
       "formEmptyAnswer": "-",
       "formYes": "Yes",
       "formNo": "No",
-      "navIntake": "Intake to review"
+      "navIntake": "Intake to review",
+      "navAwaiting": "Waiting on a program"
     },
     "you": {
       "title": "You",

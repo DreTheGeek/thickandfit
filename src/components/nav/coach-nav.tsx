@@ -31,6 +31,10 @@ const SECTIONS: NavSection[] = [
       // Sits directly under Clients on purpose: it is a queue about specific new members, and the
       // whole point of over-flagging in the extractor is that a human passes by here.
       { key: 'navIntake', href: '/coach/intake', icon: 'clipboard' },
+      // The other half of the same promise. Intake is "read what she wrote"; this is "she is still
+      // waiting on the plan we told her you were writing". Adjacent because they are the same member
+      // on the same day, and separating them by three sections is how one of them gets forgotten.
+      { key: 'navAwaiting', href: '/coach/awaiting', icon: 'clipboard' },
       { key: 'navLeads', href: '/coach/leads', icon: 'funnel' },
       { key: 'navInbox', href: '/coach/inbox', icon: 'chat' },
       { key: 'navCommunity', href: '/coach/community', icon: 'community' },

@@ -453,7 +453,7 @@
       "weekOf": "Semana {week} de {total}",
       "dayOf": "Día {day} de {total}",
       "todaysWorkout": "Entreno de hoy",
-      "noProgram": "Tu programa viene en camino",
+      "noProgram": "Aún no tienes plan",
       "noProgramBody": "Tu coach asignará tu programa pronto.",
       "noHistory": "Sin entrenamientos registrados aún. Tu primero te está esperando.",
       "startWorkout": "Empezar entreno",
@@ -1447,7 +1447,8 @@
       "formEmptyAnswer": "-",
       "formYes": "Sí",
       "formNo": "No",
-      "navIntake": "Registros por revisar"
+      "navIntake": "Registros por revisar",
+      "navAwaiting": "Esperan su plan"
     },
     "you": {
       "title": "Tú",
