@@ -1605,8 +1605,8 @@
     "nutrition": {
       "title": "Nutrition",
       "mpBack": "Nutrition",
-      "mpEmpty": "Your meal plan’s on the way",
-      "mpEmptyHint": "Your coach will build your meal plan soon.",
+      "mpEmpty": "You can start eating to your numbers today",
+      "mpEmptyHint": "Steph builds your meal plan by hand, so it lands in a few days. Meanwhile your calories and macros are already set, and logging what you eat is what makes the plan she writes actually fit you.",
       "mpTargets": "Daily targets",
       "mpKcalDay": "kcal / day",
       "mpProtein": "Protein",
@@ -1738,7 +1738,8 @@
         "dismiss": "Got it"
       },
       "autoLogged": "Logged: {items}",
-      "autoUndo": "Undo"
+      "autoUndo": "Undo",
+      "mpEmptyCta": "Log a meal"
     },
     "disclaimer": {
       "title": "Before you begin",
@@ -2131,6 +2132,17 @@
         "on_pace": "Protein is on target",
         "behind": "Protein is running behind"
       }
+    },
+    "firstSteps": {
+      "title": "Start here",
+      "subtitle": "Your training plan is being written for you. These three take about ten minutes and they matter more than waiting.",
+      "stepFoodTitle": "Log what you eat today",
+      "stepFoodBody": "Take a photo and it does the rest. One day is enough to start learning how you eat.",
+      "stepBaselineTitle": "Take your starting point",
+      "stepBaselineBody": "Weight and your first photos. You will want these in six weeks.",
+      "stepCommunityTitle": "Say hi in the community",
+      "stepCommunityBody": "The women in here are doing the same thing you are.",
+      "programNote": "Steph writes your plan by hand from your answers, so it lands within a few days rather than instantly. She will message you when it is ready."
     }
   },
   "faq": {

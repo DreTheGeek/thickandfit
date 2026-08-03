@@ -1605,8 +1605,8 @@
     "nutrition": {
       "title": "Nutrición",
       "mpBack": "Nutrición",
-      "mpEmpty": "Tu plan de comidas viene en camino",
-      "mpEmptyHint": "Tu coach creará tu plan de comidas pronto.",
+      "mpEmpty": "Ya puedes empezar a comer con tus números",
+      "mpEmptyHint": "Steph arma tu plan de comidas a mano, así que llega en unos días. Mientras tanto tus calorías y macros ya están listos, y registrar lo que comes es lo que hace que el plan que ella te escriba de verdad te quede.",
       "mpTargets": "Metas diarias",
       "mpKcalDay": "kcal / día",
       "mpProtein": "Proteína",
@@ -1738,7 +1738,8 @@
         "dismiss": "Entendido"
       },
       "autoLogged": "Registrado: {items}",
-      "autoUndo": "Deshacer"
+      "autoUndo": "Deshacer",
+      "mpEmptyCta": "Registrar una comida"
     },
     "disclaimer": {
       "title": "Antes de empezar",
@@ -2131,6 +2132,17 @@
         "on_pace": "Vas justo en tu proteína",
         "behind": "Vas por debajo de tu proteína"
       }
+    },
+    "firstSteps": {
+      "title": "Empieza por aquí",
+      "subtitle": "Tu plan de entrenamiento se está armando. Estas tres cosas toman unos diez minutos y valen más que esperar.",
+      "stepFoodTitle": "Registra lo que comas hoy",
+      "stepFoodBody": "Tómale foto y la app hace el resto. Con un día ya empieza a aprender cómo comes.",
+      "stepBaselineTitle": "Toma tu punto de partida",
+      "stepBaselineBody": "Tu peso y tus primeras fotos. Las vas a querer en seis semanas.",
+      "stepCommunityTitle": "Saluda en la comunidad",
+      "stepCommunityBody": "Las mujeres de aquí van en lo mismo que tú.",
+      "programNote": "Steph arma tu plan a mano con tus respuestas, así que llega en unos días, no al instante. Ella te avisa cuando esté listo."
     }
   },
   "faq": {

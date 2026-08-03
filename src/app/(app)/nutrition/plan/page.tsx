@@ -55,10 +55,19 @@ export default async function ClientMealPlanPage(): Promise<ReactElement> {
       </div>
 
       {!plan ? (
-        <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
+        // Was "Your meal plan's on the way" with no mechanism behind it. She already HAS calories
+        // and macros from onboarding, so there is a real thing to do today; the written plan is the
+        // refinement, not the prerequisite. The CTA is what turns this from a notice into a door.
+        <div className="flex min-h-[50vh] flex-col items-center justify-center px-6 text-center">
           <Icon name="nutrition" size={36} className="mb-3 text-line" />
           <div className="font-display text-[20px]">{t('mpEmpty')}</div>
-          <p className="mt-1 max-w-[260px] text-[13px] text-faint">{t('mpEmptyHint')}</p>
+          <p className="mt-1.5 max-w-[42ch] text-[13px] leading-relaxed text-faint">{t('mpEmptyHint')}</p>
+          <Link
+            href="/nutrition"
+            className="tf-press mt-5 rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-bg"
+          >
+            {t('mpEmptyCta')}
+          </Link>
         </div>
       ) : (
         <>

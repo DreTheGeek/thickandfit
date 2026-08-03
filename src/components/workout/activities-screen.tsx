@@ -14,6 +14,7 @@ import { ProgressBar } from '@/components/ui/ring';
 import { ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
 import { EmptyState } from '@/components/states/empty-state';
+import { FirstSteps } from '@/components/states/first-steps';
 import { PlayIcon } from '@/components/ui/icons';
 import { ExerciseBrowser } from '@/components/exercises/exercise-browser';
 
@@ -70,7 +71,9 @@ export function ActivitiesScreen({
 
       {tab === 'program' &&
         (program == null ? (
-          <EmptyState title={t('noProgram')} message={t('noProgramBody')} />
+          // Not an empty state. "Your program's on the way" was a promise nothing in the system
+          // kept, and it made waiting the activity on the one day she is most likely to leave.
+          <FirstSteps />
         ) : (
           <>
             <HeroCard
