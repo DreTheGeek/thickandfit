@@ -262,8 +262,48 @@ Gemini free-tier limits. Document limits and deferral decisions here as they app
   (~200-500KB) and 256 launch clients that is years away, so noting it here is enough.
 
 ## pg_cron Test Procedure
-Each cron in the CRON-REGISTRY: run manually, check cron_job_log for a success row. All crons use
-GUC-stored service key + --no-verify-jwt on hosted Supabase.
+Each cron in the CRON-REGISTRY: run manually, check cron_job_log for a success row.
+
+**Correction (2026-08-03): the GUC pattern this file used to describe was never in place and cannot
+be.** `alter database postgres set app.service_role_key = ...` returns `42501 permission denied to
+set parameter`, because the role available on hosted Supabase is not superuser. 13 of 14 cron bodies
+were carrying the CRON_SECRET as a literal in `cron.job.command`, readable by anything with DB access
+and needing a 13-place edit to rotate.
+
+**Use Supabase Vault instead** (`supabase_vault` 0.3.1, already installed):
+
+```sql
+'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')
+```
+
+The secret is stored once under `vault.secrets`; rotation is one `vault.update_secret` call. The two
+recap crons use this. The remaining 10 still inline the literal and should move the next time each is
+touched.
+
+## The ops bot runs in Supabase, not Vercel
+`supabase/functions/ops-bot/` holds the 9pm ET recap, the Telegram webhook, and the `/open /ticket
+/resolve /progress /today /waitlist /scan /health` commands. Deployed `--no-verify-jwt` because
+Telegram cannot present a Supabase JWT; each route authenticates itself instead, and adding a route
+that skips that is the one way to break this.
+
+**Why it moved.** On 2026-08-01 Vercel soft-blocked the project for a fluid-compute overage. pg_cron
+fired 60 times, every call returned 402, the recap never sent, and `cron_job_log` recorded nothing at
+all because the route that writes it never ran. The bot went silent exactly when something was wrong,
+and silence reads identically to a clean night. A monitor must not share a failure domain with the
+thing it monitors.
+
+- Secrets live in Supabase function secrets (`supabase secrets set`), NOT Vercel. Vercel's copies are
+  encrypted and `vercel env pull` returns them BLANK, so they cannot be migrated: budget on rotating
+  any secret you need on both sides.
+- `/health` reports integrations from real traffic (`ai_usage_log`, `ai_inferences`, `email_send_log`,
+  `webhook_events`), not from env vars. A literal port of the old env-var check would have shown six
+  red crosses, since those variables are in Vercel and this function cannot see them. It distinguishes
+  quiet (normal pre-launch) from failed from never-seen.
+- `sendTicketAlert` deliberately STAYS in the app: it fires in the request path of a ticket
+  submission, so it is correctly in Vercel's failure domain. A ticket cannot be filed while the app is
+  down, so there is nothing to announce.
+- The DST arithmetic is covered by `.qa-visual/et-bounds-parity-test.mjs` (every hour of a year,
+  against ground truth, not just against the old code). Getting it wrong is invisible until November.
 
 ---
 
