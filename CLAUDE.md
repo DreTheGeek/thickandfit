@@ -304,6 +304,20 @@ thing it monitors.
   down, so there is nothing to announce.
 - The DST arithmetic is covered by `.qa-visual/et-bounds-parity-test.mjs` (every hour of a year,
   against ground truth, not just against the old code). Getting it wrong is invisible until November.
+- **Telegram group privacy mode hides plain text from the bot.** In a group a bot only receives
+  messages starting with `/`, replies to it, or @mentions. A plain "hi" is dropped by Telegram BEFORE
+  the webhook, and `getWebhookInfo` still reports a clean delivery with no error, so from the server
+  side it is indistinguishable from nobody having sent anything. Cost a round trip on 2026-08-03 while
+  bootstrapping the chat id. Always test with `/start`, never with plain text.
+- A signup announces itself from a DB trigger (`notify_new_signup`, 0104), not from the signup code
+  path, because a profile row can be created four ways and wiring it into one is how the next one goes
+  silent. It swallows every error: it runs inside the account-creation transaction, so a fault there
+  does not lose a message, it stops people signing up.
+
+**Chat id `-5030283896`** (the ops group), stored as a Supabase function secret and mirrored in
+`.env.local`. It is NOT recoverable from Vercel: encrypted vars there read back blank, and the Bot API
+has no method to list a bot's chats. If it is ever lost again, the only route is the bootstrap branch
+in `ops-bot/index.ts` plus a `/start` in the group.
 
 ---
 
