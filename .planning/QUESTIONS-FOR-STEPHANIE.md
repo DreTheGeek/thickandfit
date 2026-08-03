@@ -40,6 +40,28 @@ exact combination is what triggers this. A large share of the launch cohort woul
 number that cannot move them toward the target they set, follow it for eight weeks, not lose weight,
 and conclude the app does not work.
 
+We cannot yet put a number on "a large share" from our own data: only 4 people have onboarded (all
+test accounts), and 1 of the 4 hit this exact state. The waitlist quiz table is empty. So the size of
+the problem is a reasoned guess, not a measurement.
+
+### What her own 265 Lenus clients say (checked 2026-08-03)
+
+Her real coached client base is the closest thing we have to evidence, and it points one way:
+
+| what she actually coached | clients |
+|---|---|
+| deficit | 225 (84%) |
+| maintenance | 17 (6%) |
+| not recorded | 25 (9%) |
+
+**And 0 of 267 have a target weight recorded.** Lenus never captured a goal weight at all. She coached
+on a calorie number, not on a number on the scale.
+
+Two things follow. First, a deficit is overwhelmingly her default, so option A is closer to how she
+already works. Second, the goal-weight field is **our invention, not hers**, which is worth saying out
+loud before we let it override anything. If she has never needed it to coach, option B's "stop asking
+for a goal weight in this case" is a smaller loss than it sounds.
+
 ### The question for Stephanie
 
 **When a client says she wants to lose fat AND build muscle, and she also gives you a goal weight
@@ -68,6 +90,31 @@ Four reasons.
 has no plan to reach. If we are not going to chase her goal weight, onboarding has to say so in her
 words. This repo already took that exact position for target dates, in `goal-pace.ts`: *"an app that
 silently accepts it has agreed to something it cannot deliver."*
+
+### What he is shown afterwards, traced 2026-08-03
+
+Onboarding itself is honest. The prediction screen already detects this case (`isRecomp`) and shows
+him: *"we hold your calories at maintenance and change what your body is made of. Expect the scale to
+stay flatter than you think... That is the plan working, not stalling."* That copy is good and it is
+in both languages.
+
+**Every screen after onboarding then contradicts it.** He is told flat is the plan, and then the app
+spends the next eight weeks telling him flat is a problem:
+
+| where | what he sees | for how long |
+|---|---|---|
+| dashboard goal card | start 194, current 194, goal 174, **0%** | forever |
+| `/you` goal card | **20 lb to go**, progress bar empty | forever |
+| plateau banner | *"Looks like a plateau... we can adjust your plan to get you moving again"* | from day 14 |
+| goal ETA chip | hidden, no reason given | forever |
+
+The plateau banner is the sharp one. It fires after 14 days of flat weight on an active member, which
+for a recomp member is **exactly what we told him success looks like**. The app congratulates him at
+signup and nags him a fortnight later, for the same number.
+
+This is not a separate decision, it resolves with hers. Under **A** he is in a deficit, the scale
+moves, and all four rows fix themselves. Under **B** we would stop showing him a goal weight he is not
+chasing and stop calling his intended maintenance a plateau.
 
 ### Also worth asking while we are here
 
