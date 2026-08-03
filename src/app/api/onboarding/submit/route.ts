@@ -10,6 +10,7 @@ import { PRIMARY_GOALS } from '@/lib/onboarding/goals';
 import { createServiceClient } from '@/lib/supabase/service';
 import { ensureCrmContact } from '@/lib/crm/ensure-contact';
 import { upsertGhlContact } from '@/lib/ghl/client';
+import { sendWelcomeEmail } from '@/lib/email/welcome';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
 import { extractIntakeNotes, mergeSlugs } from '@/lib/onboarding/intake-notes';
 import {
@@ -221,6 +222,25 @@ async function POST_h(req: Request) {
         .maybeSingle();
       const email = (prof as { email?: string | null } | null)?.email;
       if (!email) return;
+
+      // THE WELCOME EMAIL. Before this, absolutely nothing fired when onboarding completed: a member
+      // answered every question, landed on a dashboard, and heard nothing from anyone. Sent here
+      // rather than before the response because it must never delay or fail her submit, and it rides
+      // the email lookup this block already does.
+      const m = (plan.macros ?? {}) as { protein_g?: number; carbs_g?: number; fat_g?: number };
+      await sendWelcomeEmail({
+        companyId,
+        to: email,
+        firstName,
+        targets: {
+          calories: Math.round(Number(plan.calories ?? 0)),
+          proteinG: Math.round(Number(m.protein_g ?? 0)),
+          carbsG: Math.round(Number(m.carbs_g ?? 0)),
+          fatG: Math.round(Number(m.fat_g ?? 0)),
+        },
+        locale: language === 'es' ? 'es' : 'en',
+      });
+
       // goal:* tags use the same vocabulary as the waitlist quiz, so a lead who said "lose_fat" at the
       // giveaway lands in the same GHL segment after they become a member.
       const tags = [
