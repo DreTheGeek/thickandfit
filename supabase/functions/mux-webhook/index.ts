@@ -120,6 +120,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // Write the playback id (idempotent: re-delivery overwrites with the same value).
   const { error: upErr } = await supabase
+    // Resolves a COMMITTED exercise by id. NEVER add .is('archived_at', null) here:
+    // curation (0105) must not erase history, and filtering this fails SILENTLY as an
+    // untitled card with no demo rather than throwing.
     .from('exercises')
     .update({ video_mux_id: playbackId, is_own_demo: true })
     .eq('id', staged.target_id);

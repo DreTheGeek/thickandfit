@@ -52,6 +52,9 @@ export async function resolveSubstitutions(companyId: string, exerciseId: string
 
   if (!subs || subs.length === 0) {
     const { data: original } = await supabase
+      // Resolves a COMMITTED exercise by id. NEVER add .is('archived_at', null) here:
+      // curation (0105) must not erase history, and filtering this fails SILENTLY as an
+      // untitled card with no demo rather than throwing.
       .from('exercises')
       .select('id, name_en, name_es, muscle_group, equipment')
       .eq('id', exerciseId)

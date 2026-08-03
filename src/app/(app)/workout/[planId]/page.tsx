@@ -62,6 +62,9 @@ export default async function WorkoutPage({
 
   const [{ data: exs }, { data: muscles }] = await Promise.all([
     supabase
+      // Resolves a COMMITTED exercise by id. NEVER add .is('archived_at', null) here:
+      // curation (0105) must not erase history, and filtering this fails SILENTLY as an
+      // untitled card with no demo rather than throwing.
       .from('exercises')
       .select('id, name_en, name_es, cues_en, cues_es, muscle_group, video_mux_id')
       .in('id', ids),

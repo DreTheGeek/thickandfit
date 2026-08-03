@@ -88,6 +88,10 @@ async function loadExercises(companyId: string, locale: string): Promise<Exercis
     .from('exercises')
     .select('id, company_id, name_en, name_es, muscle_group, equipment, difficulty, category, is_own_demo')
     .or(`company_id.is.null,company_id.eq.${companyId}`)
+    // Curated out (0105). This is the coach's BROWSE surface, so archived rows must not be offerable.
+    // getExercise() below deliberately does NOT filter: it resolves a committed exercise by id and
+    // must keep returning archived rows or history renders as "untitled" with no demo.
+    .is('archived_at', null)
     .limit(2000);
   if (error) throw new Error(`loadExercises: ${error.message}`);
   return ((data ?? []) as ExerciseRaw[]).map((r) => mapRow(r, locale));

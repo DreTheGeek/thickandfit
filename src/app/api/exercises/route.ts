@@ -20,7 +20,10 @@ async function GET_h(req: Request) {
   const supabase = createServiceClient();
   let query = supabase
     .from('exercises')
-    .select('id, name_en, name_es, muscle_group, equipment, difficulty, video_mux_id, is_own_demo');
+    .select('id, name_en, name_es, muscle_group, equipment, difficulty, video_mux_id, is_own_demo')
+    // Curated out (0105). The single door behind the program builder and the exercise browser, so
+    // one filter here covers both pickers.
+    .is('archived_at', null);
 
   query = ctx.companyId
     ? query.or(`company_id.is.null,company_id.eq.${ctx.companyId}`)
