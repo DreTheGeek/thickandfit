@@ -1779,7 +1779,10 @@
       "pri_low": "Baja",
       "pri_medium": "Media",
       "pri_high": "Alta",
-      "pri_urgent": "Urgente"
+      "pri_urgent": "Urgente",
+      "attach": "📷 Adjuntar una captura de pantalla (opcional)",
+      "attachTooBig": "Esa imagen pesa más de 10MB. Intenta con una captura más pequeña.",
+      "attachReadFail": "No se pudo leer esa imagen. Intenta con otra."
     },
     "account": {
       "dangerZone": "Zona de peligro",

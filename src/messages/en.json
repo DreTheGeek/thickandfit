@@ -1779,7 +1779,10 @@
       "pri_low": "Low",
       "pri_medium": "Medium",
       "pri_high": "High",
-      "pri_urgent": "Urgent"
+      "pri_urgent": "Urgent",
+      "attach": "📷 Attach a screenshot (optional)",
+      "attachTooBig": "That image is over 10MB. Try a smaller screenshot.",
+      "attachReadFail": "Could not read that image. Try another one."
     },
     "account": {
       "dangerZone": "Danger zone",

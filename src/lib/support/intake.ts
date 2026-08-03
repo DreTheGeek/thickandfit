@@ -117,21 +117,72 @@ export async function createSupportTicket(input: IntakeInput): Promise<IntakeRes
     await openIssueForTicket({ ticketId, companyId: input.companyId, subject, body, email, triage });
   };
 
+  /**
+   * One line of "who is this", assembled from system fields.
+   *
+   * The alert already answered what the ticket says. It never answered who it is from, and that is
+   * what decides HOW you reply: a paying member of eight months on her fourth ticket is a different
+   * conversation from a free account an hour old.
+   *
+   * Returns null on any failure. A missing context line is a worse alert; a thrown error is no alert.
+   */
+  async function describeMember(
+    client: ReturnType<typeof createServiceClient>,
+    profileId: string,
+    currentTicketId: string,
+  ): Promise<string | null> {
+    try {
+      const [{ data: prof }, { data: sub }, { count: priorTickets }] = await Promise.all([
+        client.from('profiles').select('role, created_at, is_legacy_client').eq('id', profileId).maybeSingle(),
+        client.from('subscriptions').select('status, price_cents').eq('profile_id', profileId)
+          .order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        client.from('support_tickets').select('id', { count: 'exact', head: true })
+          .eq('profile_id', profileId).neq('id', currentTicketId),
+      ]);
+      const p = prof as { role: string | null; created_at: string | null; is_legacy_client: boolean | null } | null;
+      if (!p) return null;
+
+      const bits: string[] = [];
+      const s = sub as { status: string | null; price_cents: number | null } | null;
+      if (s?.status === 'active' || s?.status === 'trialing') {
+        bits.push(`paying ($${((s.price_cents ?? 0) / 100).toFixed(2)}${s.status === 'trialing' ? ', trialing' : ''})`);
+      } else {
+        bits.push(p.role === 'free' ? 'free account' : 'not paying');
+      }
+      if (p.is_legacy_client) bits.push('returning client');
+      if (p.created_at) {
+        const days = Math.max(0, Math.floor((Date.now() - Date.parse(p.created_at)) / 86_400_000));
+        bits.push(days < 1 ? 'joined today' : days === 1 ? 'joined yesterday' : `member ${days}d`);
+      }
+      // A repeat reporter is a signal in itself, so the count is worth a word even at zero.
+      bits.push(priorTickets ? `${priorTickets} prior ticket${priorTickets === 1 ? '' : 's'}` : 'first ticket');
+      return bits.join(' · ');
+    } catch (e) {
+      console.error('describeMember:', e instanceof Error ? e.message : e);
+      return null;
+    }
+  }
+
   // Telegram alert. Scheduled SEPARATELY from triage on purpose: triage makes a model call and can be
   // slow or fail, and an operator finding out a ticket exists must not depend on that succeeding.
   // The summary is best-effort, so the alert waits briefly for triage and sends regardless.
   const notify = async (): Promise<void> => {
     const { data: fresh } = await svc
       .from('support_tickets')
-      .select('id, ticket_number, rep_name, company_name, category, email, triage, pii_flagged, attachment_url, video_url')
+      .select('id, ticket_number, rep_name, company_name, category, priority, email, triage, pii_flagged, attachment_url, video_url, profile_id')
       .eq('id', ticketId)
       .maybeSingle();
     const t = fresh as {
       id: string; ticket_number: number; rep_name: string | null; company_name: string | null;
-      category: string | null; email: string | null; triage: { summary?: string } | null;
-      pii_flagged: boolean; attachment_url: string | null; video_url: string | null;
+      category: string | null; priority: string | null; email: string | null; triage: { summary?: string } | null;
+      pii_flagged: boolean; attachment_url: string | null; video_url: string | null; profile_id: string | null;
     } | null;
     if (!t) return;
+
+    // Who is this, from COLUMNS only. Never from anything she typed: the rule that the raw body
+    // cannot reach a chat has to hold for everything derived from it, or it erodes one exception at
+    // a time. Best-effort, because a missing context line is not worth losing the alert over.
+    const memberContext = t.profile_id ? await describeMember(svc, t.profile_id, ticketId) : null;
     await sendTicketAlert({
       id: t.id,
       ticketNumber: t.ticket_number,
@@ -141,6 +192,8 @@ export async function createSupportTicket(input: IntakeInput): Promise<IntakeRes
       email: t.email,
       // The generated summary, never the body. See telegram.ts for why that line is load-bearing.
       summary: t.triage?.summary ?? null,
+      priority: t.priority,
+      memberContext,
       piiFlagged: t.pii_flagged,
       hasAttachment: Boolean(t.attachment_url),
       videoUrl: t.video_url,

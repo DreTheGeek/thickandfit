@@ -27,6 +27,14 @@ export function ticketKeyboard(ticketId: string): unknown {
   };
 }
 
+/** urgent reads louder than "urgent". The mark is the point: this list is scanned, not read. */
+const PRIORITY_LABEL: Record<string, string> = {
+  urgent: '🔴 Urgent',
+  high: '🟠 High',
+  normal: 'Normal',
+  low: 'Low',
+};
+
 /** TKT-00000006. Stable width so the numbers line up in a chat transcript. */
 export function formatTicketNumber(n: number | bigint | null | undefined): string {
   const v = Number(n ?? 0);
@@ -51,6 +59,16 @@ export type TicketAlert = {
   email: string | null;
   /** The generated summary. PII-free by construction; never the raw body. */
   summary: string | null;
+  /** low | normal | high | urgent. The first thing that decides whether to stop what you are doing. */
+  priority: string | null;
+  /**
+   * Who this member is to the business, in system fields only: role, whether they are paying, how
+   * long they have been here, how many tickets they have filed before.
+   *
+   * Deliberately NOT free text she wrote. The rule that the raw body never reaches a chat holds for
+   * everything derived from it too, so this is assembled from columns, not from her words.
+   */
+  memberContext: string | null;
   piiFlagged: boolean;
   hasAttachment: boolean;
   videoUrl: string | null;
@@ -70,6 +88,9 @@ export function buildTicketMessage(t: TicketAlert): string {
     who ? `${esc(who)} just submitted a ticket.` : 'A new ticket was submitted.',
     '',
     `<b>Category:</b> ${esc(t.category ?? 'Uncategorized')}`,
+    // Priority decides whether this interrupts the day. It was computed and stored from the first
+    // ticket onward and simply never made it into the message.
+    `<b>Priority:</b> ${esc(PRIORITY_LABEL[t.priority ?? ''] ?? t.priority ?? 'normal')}`,
     `<b>POC Email:</b> ${esc(t.email ?? 'not given')}`,
     '',
     `<b>Summary:</b> ${esc(t.summary?.trim() || 'Not summarized yet.')}`,
@@ -80,6 +101,10 @@ export function buildTicketMessage(t: TicketAlert): string {
     `<b>PII Flagged:</b> ${t.piiFlagged ? 'True' : 'False'}`,
     `<b>Attachment:</b> ${t.hasAttachment ? 'True' : 'False'}`,
   ];
+  // "Who is this" sits at the bottom, because it changes HOW you reply rather than WHETHER you do.
+  // A paying member of eight months on her fourth ticket is a different conversation from a free
+  // account that signed up an hour ago.
+  if (t.memberContext?.trim()) lines.push('', `<b>Member:</b> ${esc(t.memberContext.trim())}`);
   if (t.videoUrl) lines.push(`<b>Video:</b> ${esc(t.videoUrl)}`);
   if (t.piiFlagged) {
     lines.push('', '<i>The reported text contained sensitive details. They were kept out of this message; open the ticket to see them.</i>');

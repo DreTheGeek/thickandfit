@@ -18,16 +18,39 @@ export function SupportWidget(): ReactElement {
   const [body, setBody] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  // A screenshot OF THE PROBLEM. The public support form has had this since it shipped and the
+  // server action has always accepted it; only this modal never offered the control, so a member
+  // reporting a visual bug from inside the app had no way to show it. Reported by Rodney on
+  // 2026-08-03: "I don't see a spot to upload an image".
+  const [shot, setShot] = useState<string | null>(null);
+  const [shotName, setShotName] = useState('');
+  const [shotErr, setShotErr] = useState('');
 
-  const close = (): void => { setOpen(false); setDone(false); setSubject(''); setBody(''); setErr(null); };
+  const close = (): void => {
+    setOpen(false); setDone(false); setSubject(''); setBody(''); setErr(null);
+    setShot(null); setShotName(''); setShotErr('');
+  };
   const submit = (): void => {
     if (!subject.trim() || pending) return;
     setErr(null);
     start(async () => {
-      const res = await submitSupportTicketAction({ subject, body, category, priority });
+      const res = await submitSupportTicketAction({ subject, body, category, priority, attachment: shot ?? undefined });
       if (res.ok) setDone(true);
       else setErr(res.error === 'rate_limited' ? t('rateLimited') : t('failed'));
     });
+  };
+
+  const pickFile = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const f = e.target.files?.[0];
+    setShotErr('');
+    if (!f) { setShot(null); setShotName(''); return; }
+    // 10MB matches the bucket limit. Checked here so a member on a phone learns instantly instead of
+    // waiting out a long upload the server was always going to reject.
+    if (f.size > 10 * 1024 * 1024) { setShotErr(t('attachTooBig')); setShot(null); setShotName(''); return; }
+    const r = new FileReader();
+    r.onload = () => { setShot(String(r.result)); setShotName(f.name); };
+    r.onerror = () => setShotErr(t('attachReadFail'));
+    r.readAsDataURL(f);
   };
 
   return (
@@ -84,6 +107,24 @@ export function SupportWidget(): ReactElement {
                   {t('description')}
                   <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} placeholder={t('descriptionPlaceholder')} className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2 text-[13px] outline-none focus:border-ink" />
                 </label>
+                <div className="mt-3">
+                  <label className="block cursor-pointer rounded-xl border border-dashed border-line px-3 py-2.5 text-[13px] text-soft hover:border-ink hover:text-ink">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/heic,image/heif,image/gif"
+                      className="hidden"
+                      onChange={pickFile}
+                    />
+                    {shotName ? `📎 ${shotName}` : t('attach')}
+                  </label>
+                  {shot && (
+                    // Show it back. A member who attached the wrong screenshot should find that out
+                    // here, not after support replies asking for a different one.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={shot} alt="" className="mt-2 max-h-32 rounded-lg border border-line object-contain" />
+                  )}
+                  {shotErr && <p className="mt-1 text-[12px] text-alert-ink">{shotErr}</p>}
+                </div>
                 {err && <p className="mt-2 text-[12px] text-alert-ink">{err}</p>}
                 <button type="button" onClick={submit} disabled={pending || !subject.trim()} className="tf-press mt-4 w-full rounded-xl bg-ink px-4 py-3 text-[14px] font-semibold text-surface disabled:opacity-40">
                   {pending ? t('sending') : t('submit')}
