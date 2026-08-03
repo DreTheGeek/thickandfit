@@ -17,6 +17,7 @@ import { serviceClient } from '../_shared/api.ts';
 import { isAuthorizedChat, safeEqual, telegramConfigured } from './telegram.ts';
 import { handleCommand, handleCallback } from './commands.ts';
 import { sendDailyRecap, etDayBounds } from './recap.ts';
+import { sendSignupAlert } from './signup.ts';
 
 const TENANT_SLUG = 'thick-and-fit';
 const SEND_AT_ET_HOUR = 21;
@@ -154,6 +155,28 @@ async function handleWebhook(req: Request): Promise<Response> {
   return ok;
 }
 
+/**
+ * "Someone signed up." Called by the notify_new_signup trigger (0104), not by the app.
+ *
+ * Takes only a profile id and looks the rest up itself, so the trigger stays a one-liner and the
+ * message format lives in exactly one place.
+ */
+async function handleSignup(req: Request): Promise<Response> {
+  const secret = Deno.env.get('CRON_SECRET');
+  if (!secret || !safeEqual(req.headers.get('authorization'), `Bearer ${secret}`)) {
+    return json({ error: 'unauthorized' }, 401);
+  }
+  const body = (await req.json().catch(() => null)) as { profile_id?: string } | null;
+  const id = body?.profile_id;
+  if (!id) return json({ error: 'profile_id required' }, 400);
+
+  const svc = serviceClient();
+  const sent = await sendSignupAlert(svc, id);
+  // Logged like a cron so /health and the recap can see whether announcements are actually landing.
+  await logCronRun(svc, 'signup-alert', sent ? 'success' : 'error', { profile_id: id, sent });
+  return json({ ok: true, sent });
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   // Supabase serves this at /functions/v1/ops-bot/<action>; the last segment is the action.
   const path = new URL(req.url).pathname.replace(/\/+$/, '');
@@ -162,6 +185,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     if (action === 'recap') return await handleRecap(req);
     if (action === 'webhook') return await handleWebhook(req);
+    if (action === 'signup') return await handleSignup(req);
     // Cheap liveness for a human with curl. Deliberately says nothing about configuration beyond
     // whether the bot could speak at all, since this route has no authentication.
     if (action === 'ping') return json({ ok: true, telegram: telegramConfigured() });
