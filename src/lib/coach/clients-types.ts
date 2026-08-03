@@ -217,7 +217,13 @@ function toArr(v: string | string[] | undefined): string[] {
 /** Parse + sanitize raw searchParams into typed filters. Strips junk, caps pageSize, defaults. */
 export function parseClientFilters(raw: Record<string, string | string[] | undefined>): ClientFilters {
   const sortRaw = typeof raw.sort === 'string' ? raw.sort : '';
-  const sort = SORTS.includes(sortRaw as SortField) ? (sortRaw as SortField) : 'name';
+  // NEWEST JOINED FIRST, not alphabetical.
+  //
+  // 269 clients arrived from the Lenus import, so an A-Z default buries everyone who signed up in
+  // the app somewhere in the middle of a list nobody scrolls. Reported 2026-08-03 as "I created
+  // accounts and none of them appeared": they had all appeared, three pages down. The one question a
+  // coach opens this page to answer is who just joined.
+  const sort = SORTS.includes(sortRaw as SortField) ? (sortRaw as SortField) : 'started';
   const legacyRaw = typeof raw.legacy === 'string' ? raw.legacy : '';
   return {
     q: typeof raw.q === 'string' ? raw.q.trim().slice(0, 80) : '',
@@ -231,7 +237,9 @@ export function parseClientFilters(raw: Record<string, string | string[] | undef
     cohort: toArr(raw.cohort),
     legacy: legacyRaw === '1' || legacyRaw === 'true' ? true : legacyRaw === '0' || legacyRaw === 'false' ? false : null,
     sort,
-    dir: raw.dir === 'desc' ? 'desc' : 'asc',
+    // Descending unless asked otherwise, so the default pairs with `started` to put the most recent
+    // signup on the first row. An explicit ?dir=asc still wins.
+    dir: raw.dir === 'asc' ? 'asc' : 'desc',
     page: Math.max(1, Math.floor(Number(raw.page)) || 1),
     pageSize: Math.min(100, Math.max(10, Math.floor(Number(raw.pageSize)) || 50)),
     segment: typeof raw.segment === 'string' ? raw.segment : null,

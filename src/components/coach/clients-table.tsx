@@ -20,7 +20,13 @@ function planLabel(t: (k: string) => string, p: string | null): string {
 
 function fmtDate(value: string | null, locale: string): string {
   if (!value) return '-';
-  const d = new Date(`${value}T00:00:00`);
+  // TWO SHAPES REACH HERE. A subscription's started_at is a plain date ('2024-03-13'), but an app
+  // signup falls back to the contact's created_at, which is a full timestamptz
+  // ('2026-08-03T19:07:37.817+00:00'). Appending T00:00:00 unconditionally turned the second into
+  // '...+00:00T00:00:00', an Invalid Date, so the Joined column read '-' for every member who
+  // signed up in the app. The midnight suffix stays for the date-only shape, where dropping it
+  // would parse as UTC and shift the date back a day for anyone west of Greenwich.
+  const d = new Date(value.length > 10 ? value : `${value}T00:00:00`);
   if (Number.isNaN(d.getTime())) return '-';
   return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(d);
 }

@@ -21,6 +21,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { homePathForUser, type Role } from '@/lib/auth/session';
 import { isSignupEnabled } from '@/lib/admin/settings';
 import { resolveTenantId } from '@/lib/tenant';
+import { ensureCrmContactFromProfile } from '@/lib/crm/ensure-contact';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,10 +84,22 @@ async function resolveDestination(
   origin: string,
   next: string | null,
 ): Promise<string> {
-  if (next) return `${origin}${next}`;
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Bridge the member into the Clients CRM here, not only at onboarding.
+  //
+  // /coach/clients reads `contacts`, and the only writers were signUpAction (email signup only),
+  // onboarding submit, and the health profile. So a member who signed up with Google and stopped
+  // before finishing onboarding existed in `profiles` and appeared NOWHERE in the coach's view. That
+  // is exactly the person worth chasing, and she was the one who could not be seen.
+  //
+  // Idempotent and role-filtered (staff go to /admin/team, never the clients list), so running it on
+  // every callback, including ordinary returning sign-ins, is safe and self-healing.
+  if (user) await ensureCrmContactFromProfile(user.id);
+
+  if (next) return `${origin}${next}`;
   if (!user) return `${origin}/dashboard`;
   const { data: profile } = await supabase
     .from('profiles')

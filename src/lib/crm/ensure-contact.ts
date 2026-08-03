@@ -89,3 +89,49 @@ export async function ensureCrmContact(input: EnsureContactInput): Promise<void>
   });
   if (error) throw new Error(`ensureCrmContact insert: ${error.message}`);
 }
+
+/** Staff are not clients. A coach or operator belongs in /admin/team, never in the clients list. */
+const MEMBER_ROLES = ['subscriber', 'free'];
+
+/**
+ * Same bridge, but sourced entirely from the profile: reads the name and language itself.
+ *
+ * Exists because the callers that need it at the EARLIEST moment (an OAuth callback, a health
+ * profile opened before onboarding) do not have first/last name in hand, and each was separately
+ * reimplementing "read full_name, split on whitespace, fall back to Member/-".
+ *
+ * Best-effort and never throws: it runs on paths whose actual job is to land a signed-in member
+ * somewhere, and a CRM row failing to appear must not cost them their session.
+ */
+export async function ensureCrmContactFromProfile(profileId: string): Promise<void> {
+  try {
+    const svc = createServiceClient();
+    const { data } = await svc
+      .from('profiles')
+      .select('full_name, company_id, role, content_locale, ui_locale')
+      .eq('id', profileId)
+      .maybeSingle();
+    const p = data as {
+      full_name?: string | null;
+      company_id?: string | null;
+      role?: string | null;
+      content_locale?: string | null;
+      ui_locale?: string | null;
+    } | null;
+    if (!p?.company_id) return;
+    if (!MEMBER_ROLES.includes(p.role ?? '')) return;
+
+    const parts = (p.full_name ?? '').trim().split(/\s+/).filter(Boolean);
+    const lang = p.content_locale ?? p.ui_locale ?? null;
+    await ensureCrmContact({
+      profileId,
+      companyId: p.company_id,
+      // A Google signup may arrive with no name at all; the insert needs non-empty strings.
+      firstName: parts[0] || 'Member',
+      lastName: parts.slice(1).join(' ') || '-',
+      language: lang === 'es' ? 'es' : lang === 'en' ? 'en' : null,
+    });
+  } catch (e) {
+    console.error('ensureCrmContactFromProfile:', e instanceof Error ? e.message : e);
+  }
+}
