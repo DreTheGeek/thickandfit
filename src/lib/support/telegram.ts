@@ -15,7 +15,7 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { buildTicketMessage, type TicketAlert } from '@/lib/support/telegram-format';
 
-export { buildTicketMessage, formatTicketNumber } from '@/lib/support/telegram-format';
+export { buildTicketMessage, formatTicketNumber, ticketKeyboard } from '@/lib/support/telegram-format';
 export type { TicketAlert } from '@/lib/support/telegram-format';
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;

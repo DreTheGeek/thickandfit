@@ -8,8 +8,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { triageTicket } from '@/lib/support/triage';
 import { openIssueForTicket } from '@/lib/support/github';
 import { scanForPii } from '@/lib/support/pii';
-import { sendTicketAlert } from '@/lib/support/telegram';
-import { ticketKeyboard } from '@/lib/support/telegram-commands';
+import { sendTicketAlert, ticketKeyboard } from '@/lib/support/telegram';
 
 export type IntakeInput = {
   companyId: string;

@@ -7,6 +7,26 @@
 // a future edit to reach for.
 const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.teamthickandfit.com').replace(/\/+$/, '');
 
+/**
+ * Action buttons attached to a ticket alert. Callback data is `act:<status>:<ticketId>`.
+ *
+ * The taps are HANDLED in the Supabase edge function (supabase/functions/ops-bot/), which is where
+ * the bot now lives. Only the button definition stays here, because the alert that carries it is
+ * sent by the app the moment a ticket is submitted. Keep the callback_data format in step with
+ * handleCallback() over there: this side writes it, that side parses it.
+ */
+export function ticketKeyboard(ticketId: string): unknown {
+  return {
+    inline_keyboard: [
+      [
+        { text: '▶ In progress', callback_data: `act:in_progress:${ticketId}` },
+        { text: '✓ Resolve', callback_data: `act:resolved:${ticketId}` },
+      ],
+      [{ text: 'Open in app', url: `${APP_URL}/admin/support/${ticketId}` }],
+    ],
+  };
+}
+
 /** TKT-00000006. Stable width so the numbers line up in a chat transcript. */
 export function formatTicketNumber(n: number | bigint | null | undefined): string {
   const v = Number(n ?? 0);
@@ -34,7 +54,7 @@ export type TicketAlert = {
   piiFlagged: boolean;
   hasAttachment: boolean;
   videoUrl: string | null;
-  /** Optional inline keyboard (Telegram reply_markup). Opaque here; built by telegram-commands. */
+  /** Optional inline keyboard (Telegram reply_markup). Built by ticketKeyboard() above. */
   keyboard?: unknown;
 };
 

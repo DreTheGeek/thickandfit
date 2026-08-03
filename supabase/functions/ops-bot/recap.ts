@@ -1,21 +1,60 @@
-import 'server-only';
 // The 9pm ET daily recap: everything happening in the software, in one message.
 //
-// Structured after the reference Dre shared, and the part worth copying is the ENDING. A digest of
-// pure metrics trains you to skim past it. This one closes with "needs you", derived from the same
-// numbers, so the message is only long when something is actually wrong. On a quiet day it says so
-// in two lines.
+// The part worth preserving from the original is the ENDING. A digest of pure metrics trains you to
+// skim past it. This one closes with "needs you", derived from the same numbers, so the message is
+// only long when something is actually wrong. On a quiet day it says so in two lines.
 //
 // Every section is best-effort and independent: one failing query must not cost the whole recap, so
 // counts resolve to 0 rather than throwing and the message still sends.
-import { createServiceClient } from '@/lib/supabase/service';
-import { reply } from '@/lib/support/telegram-commands';
-import { formatTicketNumber } from '@/lib/support/telegram-format';
-
-const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.teamthickandfit.com').replace(/\/+$/, '');
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { formatTicketNumber, reply, APP_URL } from './telegram.ts';
 
 /**
- * "Since midnight ET" as a UTC instant, and today's ET date.
+ * The ET offset at a given instant, in milliseconds (negative: ET is behind UTC).
+ *
+ * MEASURED rather than hardcoded, so this is correct on both sides of the DST boundary without a
+ * table of rules. Getting it wrong is invisible in July and silently shifts every recap by an hour
+ * from November, which is the sort of bug that only surfaces months later.
+ *
+ * The Vercel original measured the offset by round-tripping through `toLocaleString` and re-parsing
+ * the result with `new Date()`. That works but leans on a runtime parsing its own localized output,
+ * which is exactly the kind of assumption not worth carrying into a different JS runtime. This reads
+ * the fields directly instead. `.qa-visual/et-bounds-parity-test.mjs` asserts the two agree on every
+ * hour across a full year, including both 2026 DST transitions.
+ */
+function etOffsetMs(at: Date): number {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/New_York',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    })
+      .formatToParts(at)
+      .map((x) => [x.type, x.value]),
+  );
+  // '24' is how en-CA renders hour 0 with hour12:false.
+  const asIfUtc = Date.UTC(
+    Number(p.year), Number(p.month) - 1, Number(p.day),
+    Number(p.hour) % 24, Number(p.minute), Number(p.second),
+  );
+  return asIfUtc - at.getTime();
+}
+
+/**
+ * Midnight of an ET calendar date, as a UTC instant.
+ *
+ * Solved by one fixed-point step: the offset depends on the instant, and the instant depends on the
+ * offset. Measuring at the naive guess and again at the corrected instant converges everywhere
+ * except exactly on a transition, which midnight never is in US rules (they move at 2am).
+ */
+function etMidnightAsUtc(etDate: string): Date {
+  const guess = new Date(`${etDate}T00:00:00Z`).getTime();
+  const once = guess - etOffsetMs(new Date(guess));
+  return new Date(guess - etOffsetMs(new Date(once)));
+}
+
+/**
+ * "Since midnight ET" as a UTC instant, plus today's ET date and the current ET hour.
  *
  * Deliberately computed from the ET wall clock rather than UTC midnight: a member logging dinner at
  * 8pm ET must land in the same day as the 9pm recap that reports it. Using UTC midnight would push
@@ -32,25 +71,8 @@ export function etDayBounds(now: Date): { sinceIso: string; etDate: string; etHo
       .map((p) => [p.type, p.value]),
   );
   const etDate = `${parts.year}-${parts.month}-${parts.day}`;
-  // '24' is how en-CA renders hour 0 with hour12:false. Left unmapped it would read as hour 24 and
-  // never equal the 21 the cron gate compares against.
   const etHour = Number(parts.hour) % 24;
   return { sinceIso: etMidnightAsUtc(etDate).toISOString(), etDate, etHour };
-}
-
-/**
- * Midnight of an ET calendar date, as a UTC instant.
- *
- * The offset is MEASURED at that date rather than hardcoded, so this is correct on both sides of the
- * DST boundary without a table of rules: format the naive instant in both zones and take the
- * difference. Getting this wrong is invisible in July and silently shifts every recap by an hour in
- * November, which is the sort of bug that only surfaces months later.
- */
-function etMidnightAsUtc(etDate: string): Date {
-  const naive = new Date(`${etDate}T00:00:00Z`);
-  const asEt = new Date(naive.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  const asUtc = new Date(naive.toLocaleString('en-US', { timeZone: 'UTC' }));
-  return new Date(naive.getTime() + (asUtc.getTime() - asEt.getTime()));
 }
 
 async function count(q: PromiseLike<{ count: number | null }>): Promise<number> {
@@ -64,8 +86,11 @@ async function count(q: PromiseLike<{ count: number | null }>): Promise<number> 
 
 export type Recap = { text: string; etDate: string };
 
-export async function buildDailyRecap(companyId: string, now = new Date()): Promise<Recap> {
-  const svc = createServiceClient();
+export async function buildDailyRecap(
+  svc: SupabaseClient,
+  companyId: string,
+  now = new Date(),
+): Promise<Recap> {
   const { sinceIso, etDate } = etDayBounds(now);
   const day = sinceIso.slice(0, 10);
 
@@ -168,9 +193,13 @@ export async function buildDailyRecap(companyId: string, now = new Date()): Prom
 }
 
 /** Build and send. Returns what happened so the cron log is useful. */
-export async function sendDailyRecap(companyId: string, now = new Date()): Promise<{ ok: boolean; etDate: string; sent: boolean }> {
+export async function sendDailyRecap(
+  svc: SupabaseClient,
+  companyId: string,
+  now = new Date(),
+): Promise<{ ok: boolean; etDate: string; sent: boolean }> {
   try {
-    const { text, etDate } = await buildDailyRecap(companyId, now);
+    const { text, etDate } = await buildDailyRecap(svc, companyId, now);
     const sent = await reply(text);
     return { ok: true, etDate, sent };
   } catch (e) {
