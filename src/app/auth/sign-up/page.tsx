@@ -4,8 +4,14 @@ import { getTranslations } from 'next-intl/server';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { AuthForm } from '@/components/auth/auth-form';
 import { OAuthButtons } from '@/components/auth/oauth-buttons';
+import { isSignupEnabled } from '@/lib/admin/settings';
+import { resolveTenantId } from '@/lib/tenant';
 import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Create account' };
+
+// The switch is read per request. Caching this page would serve a form that the server action then
+// refuses, which is a worse experience than either honest state.
+export const dynamic = 'force-dynamic';
 
 export default async function SignUpPage({
   searchParams,
@@ -15,6 +21,31 @@ export default async function SignUpPage({
   const t = await getTranslations('auth');
   // OAuth failures redirect back here with ?error=oauth (mirrors sign-in); dropping it was silent.
   const { error } = await searchParams;
+
+  // Operator switch (admin_settings.signup_enabled). This hides the form; signUpAction and the OAuth
+  // callback enforce it for real. Showing a form that cannot succeed is how people conclude the app
+  // is broken rather than closed.
+  const open = await isSignupEnabled(await resolveTenantId().catch(() => null));
+  if (!open) {
+    return (
+      <AuthShell title={t('signupClosedTitle')}>
+        <p className="mb-6 text-[14px] leading-[1.55] text-soft">{t('errors.signupClosed')}</p>
+        <Link
+          href="/join"
+          className="tf-press inline-flex rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-bg"
+        >
+          {t('joinWaitlist')}
+        </Link>
+        <p className="mt-8 text-sm text-soft">
+          {t('haveAccount')}{' '}
+          <Link href="/auth/sign-in" className="font-semibold text-ink underline-offset-4 hover:underline">
+            {t('signIn')}
+          </Link>
+        </p>
+      </AuthShell>
+    );
+  }
+
   return (
     <AuthShell title={t('signUp')}>
       {/* WHAT SHE GETS, before she is asked to commit.

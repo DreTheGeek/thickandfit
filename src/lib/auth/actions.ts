@@ -12,6 +12,8 @@ import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 import { recordSignupConsent } from '@/lib/legal/consent';
 import { upsertGhlContact } from '@/lib/ghl/client';
 import { ensureCrmContact } from '@/lib/crm/ensure-contact';
+import { isSignupEnabled } from '@/lib/admin/settings';
+import { resolveTenantId } from '@/lib/tenant';
 
 export type AuthState = { error?: string; sent?: boolean };
 
@@ -29,6 +31,9 @@ async function authErrors(): Promise<Record<string, string>> {
     invalidPassword: t('invalidPassword'),
     signinFailed: t('signinFailed'),
     signupFailed: t('signupFailed'),
+    weakPassword: t('weakPassword'),
+    emailSendFailed: t('emailSendFailed'),
+    signupClosed: t('signupClosed'),
     alreadyRegistered: t('alreadyRegistered'),
     updatePasswordFailed: t('updatePasswordFailed'),
     passwordMismatch: t('passwordMismatch'),
@@ -45,6 +50,41 @@ const signUpSchema = credentialsSchema.extend({
   firstName: z.string().trim().min(1).max(60),
   lastName: z.string().trim().min(1).max(60),
 });
+
+/**
+ * Turn a Supabase auth failure into something the person can act on.
+ *
+ * WHY THIS EXISTS. Every signUp() failure used to collapse into "Could not complete sign-up. Please
+ * try again." The most common failure by far is `weak_password`: HIBP breach-checking is on, so a
+ * password found in a known breach is rejected. "Please try again" is precisely wrong advice for
+ * that, because trying again with the same password fails forever and nothing on screen says why.
+ * Observed 2026-08-03 during real testing.
+ *
+ * Everything unrecognized still falls back to the generic string: a message we cannot vouch for is
+ * worse than one that admits nothing.
+ */
+function signUpErrorFor(
+  err: { code?: string; message?: string; status?: number },
+  strings: Record<string, string>,
+): string {
+  const code = err.code ?? '';
+  const msg = (err.message ?? '').toLowerCase();
+  if (code === 'weak_password' || msg.includes('known to be weak') || msg.includes('pwned')) {
+    return strings.weakPassword;
+  }
+  if (code === 'over_email_send_rate_limit' || msg.includes('email rate limit')) {
+    return strings.tooMany;
+  }
+  // The address is fine and the password is fine, but the confirmation email could not be sent, so
+  // no account is usable. Telling someone to "try again" here is right, unlike the weak-password
+  // case, but they should know it was our side that failed and not their input.
+  if (msg.includes('error sending') || msg.includes('confirmation email')) {
+    return strings.emailSendFailed;
+  }
+  if (code === 'email_address_invalid' || msg.includes('invalid email')) return strings.invalidEmail;
+  if (code === 'user_already_exists' || msg.includes('already registered')) return strings.alreadyRegistered;
+  return strings.signupFailed;
+}
 
 const emailSchema = z.object({ email: z.string().email() });
 const passwordSchema = z.object({ password: z.string().min(8) });
@@ -138,6 +178,11 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   });
   if (!parsed.success) return { error: err.invalidSignup };
   if (!(await checkRateLimit(await clientIp(), 'auth-signup', 3, 60, { failClosed: true }))) return { error: err.tooMany };
+  // The operator switch, enforced HERE and not only in the page that renders the form. Hiding a form
+  // is a suggestion; this is the boundary. Anyone can POST this action directly.
+  if (!(await isSignupEnabled(await resolveTenantId().catch(() => null)))) {
+    return { error: err.signupClosed };
+  }
   const { email, password, firstName, lastName } = parsed.data;
   const fullName = `${firstName} ${lastName}`;
   const supabase = await createClient();
@@ -151,8 +196,8 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     },
   });
   if (error) {
-    console.error('signUpAction:', error.message);
-    return { error: err.signupFailed };
+    console.error('signUpAction:', error.code ?? '(no code)', error.message);
+    return { error: signUpErrorFor(error, err) };
   }
   // Supabase enumeration protection: signing up with an already-registered email "succeeds" with a
   // fake user carrying zero identities, and NO email is ever sent. Without this check the UI shows

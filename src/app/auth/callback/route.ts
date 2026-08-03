@@ -17,9 +17,57 @@
 // Failure lands on /auth/sign-in?error=auth without leaking details (log-only server-side).
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { homePathForUser, type Role } from '@/lib/auth/session';
+import { isSignupEnabled } from '@/lib/admin/settings';
+import { resolveTenantId } from '@/lib/tenant';
 
 export const dynamic = 'force-dynamic';
+
+/** A Google sign-in that just minted a brand-new account counts as a signup, not a sign-in. */
+const NEW_ACCOUNT_WINDOW_MS = 120_000;
+
+/**
+ * Enforce the operator signup switch on the OAuth path.
+ *
+ * Without this the switch is decorative: blocking the email form while "Continue with Google" still
+ * creates accounts is not a closed door. Google hands us a session for an account Supabase has
+ * ALREADY created by the time this route runs, so the only honest options are to reject and remove
+ * it, or to let it stand.
+ *
+ * It is removed. The row is seconds old, carries nothing but what the profile trigger just copied,
+ * and leaving it would quietly re-open the gate: the account would exist, so the next Google click
+ * reads as a returning sign-in and sails through.
+ *
+ * The age window is a heuristic, and deliberately a narrow one. This is a business gate, not a
+ * security boundary: the cost of missing a signup by a few seconds is that one account gets in, and
+ * the cost of a false positive is bounded to accounts created inside the last two minutes while the
+ * operator had signups switched off.
+ */
+async function rejectClosedSignup(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.created_at) return false;
+  const age = Date.now() - new Date(user.created_at).getTime();
+  if (!Number.isFinite(age) || age > NEW_ACCOUNT_WINDOW_MS) return false;
+
+  const companyId = await resolveTenantId().catch(() => null);
+  if (await isSignupEnabled(companyId)) return false;
+
+  console.warn('callback: new account rejected, signups are closed:', user.id);
+  await supabase.auth.signOut();
+  try {
+    await createServiceClient().auth.admin.deleteUser(user.id);
+  } catch (e) {
+    // Signing them out already blocked entry; a leftover row is recoverable by hand, so this must
+    // not turn into a 500 on a path whose whole job is to land the person somewhere sensible.
+    console.error('callback: could not remove rejected account:', e instanceof Error ? e.message : e);
+  }
+  return true;
+}
 
 // Only allow same-origin relative paths (e.g. "/dashboard"). Rejects "//evil.com",
 // "https://evil.com", and any non-root-relative value to block open redirects.
@@ -63,6 +111,11 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (!error) {
+      // Magic link can mint an account too, so the switch is checked here as well. A `signup` type
+      // confirming an account signUpAction already created is older than the window and unaffected.
+      if (await rejectClosedSignup(supabase)) {
+        return NextResponse.redirect(`${origin}/auth/sign-up`);
+      }
       const dest = await resolveDestination(supabase, origin, next);
       return NextResponse.redirect(dest);
     }
@@ -99,6 +152,10 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // This is the Google path, so it is the one the signup switch has to hold.
+      if (await rejectClosedSignup(supabase)) {
+        return NextResponse.redirect(`${origin}/auth/sign-up`);
+      }
       const dest = await resolveDestination(supabase, origin, next);
       return NextResponse.redirect(dest);
     }

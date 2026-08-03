@@ -14,6 +14,9 @@ const schema = z.object({
   supportPhone: z.string().trim().max(40).optional(),
   supportHours: z.string().trim().max(120).optional(),
   maintenanceNote: z.string().trim().max(500).optional(),
+  // Defaults to true when the form omits it, so a caller that predates this field cannot close
+  // signups by accident.
+  signupEnabled: z.boolean().default(true),
 });
 
 export async function saveAdminSettingsAction(input: unknown): Promise<SettingsResult> {
@@ -30,6 +33,7 @@ export async function saveAdminSettingsAction(input: unknown): Promise<SettingsR
       support_phone: parsed.data.supportPhone || null,
       support_hours: parsed.data.supportHours || null,
       maintenance_note: parsed.data.maintenanceNote || null,
+      signup_enabled: parsed.data.signupEnabled,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'company_id' },
@@ -46,6 +50,17 @@ export async function saveAdminSettingsAction(input: unknown): Promise<SettingsR
     entityId: ctx.companyId,
     action: 'admin.save_settings',
   });
+  // Closing the front door is worth its own audit line, separate from the support-details save it
+  // rides along with. "Who turned signups off and when" is the question someone will actually ask.
+  logCoachAction(svc, {
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    entityType: 'admin_settings',
+    entityId: ctx.companyId,
+    action: parsed.data.signupEnabled ? 'admin.signup_opened' : 'admin.signup_closed',
+  });
   revalidatePath('/admin/settings');
+  // The sign-up page reads this to decide whether to render the form at all.
+  revalidatePath('/auth/sign-up');
   return { ok: true };
 }

@@ -147,10 +147,15 @@
       "alreadyRegistered": "An account with this email already exists. Sign in instead, or use \"Forgot password?\" to reset your password.",
       "updatePasswordFailed": "Could not update your password. Please try again.",
       "passwordMismatch": "Passwords do not match.",
-      "resetLinkExpired": "Your reset link has expired. Request a new one."
+      "resetLinkExpired": "Your reset link has expired. Request a new one.",
+      "weakPassword": "That password shows up in a known data breach, so it is not safe to use. Pick a different one and you are good to go.",
+      "emailSendFailed": "We could not send your confirmation email just now. Give it a minute and try again.",
+      "signupClosed": "New sign-ups are closed right now. Join the waitlist and you will be first in when doors open."
     },
     "emailConfirmed": "Your email is confirmed. Sign in to get started.",
-    "signUpPromise": "Six questions and you will have your calories, your macros, and a plan built around your body. Takes about two minutes."
+    "signUpPromise": "Six questions and you will have your calories, your macros, and a plan built around your body. Takes about two minutes.",
+    "signupClosedTitle": "Sign-ups are closed",
+    "joinWaitlist": "Join the waitlist"
   },
   "pwa": {
     "iosInstall": "Install Thick & Fit: tap <b>Share</b>, then <b>Add to Home Screen</b>.",
