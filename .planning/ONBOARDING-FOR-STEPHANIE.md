@@ -1,32 +1,41 @@
-# Onboarding: what I need from you
+# Your signup questions
 
 Three minutes. Nothing below needs a technical answer.
 
-## Fixed today, telling you because you should know
+I went through the signup flows of nine apps you compete with, including Noom, Cal AI, Fitia in
+Spanish, and the women's apps like Sweat and Flo. 322 questions between them. Then I put ours next to
+theirs.
 
-**Heavier members were being handed a plan with almost no carbs.** No rice, no beans, no tortillas, that nobody asked for. We checked every realistic body between 120 and 350 lb: **114 of them were prescribed literally zero grams of carbohydrate a day**, and 584 came in under 50. The worst was a 4'10" 280 lb member: 2,040 calories, 254 g of protein, no carbs at all. It never showed up in testing because a 5'6" 165 lb member gets a perfectly sane plan.
+**The gap that matters:** we write a woman a training program without ever asking how many days she
+can train or what equipment she has. Every single one of those nine asks both. That is most of what
+is below.
 
-Fixed, with a test that now checks 11,985 plans and fails the build if any of them is unlivable.
+## Doing these without asking you
 
-**Our safety questions were answering themselves.** Pregnancy sat on "No" without her ever touching it, and the heart, chest pain and dizziness screen could not tell "I read it and none apply" from "I scrolled past". We were recording a no she never gave. Fixed: she now has to answer both before she can continue.
-
-## One thing I found and did not fix, because it is your call
-
-A sedentary member at 5'2" and 200 lb is shown a loss rate of **0.31 lb a week and a finish date 22 months out.** The number is honest. It comes from a safety floor that stops us cutting anyone below a sane minimum, and I do not want to remove that.
-
-But 22 months on the screen at signup is a rough first impression, and the real lever is not a deeper cut, it is moving more. Recommendation: when the maths lands this slow, say so plainly and point at the thing that actually changes it, rather than quietly showing a date two years out.
-
-> **EN:** "At your activity level this is the pace I can promise safely. Add a daily walk and this moves faster than any smaller portion will."
-> **ES:** "Con tu nivel de actividad, este es el ritmo que te puedo prometer con seguridad. Agrega una caminata diaria y esto avanza más rápido que cualquier porción más pequeña."
-
-## Doing without asking you
+Mechanical, no judgement needed. Listed so you know they are handled.
 
 - Stop asking her last name twice.
 - Stop forcing a goal weight on a woman who only said "get stronger."
-- Move food allergies to **before** she pays. Right now they sit after, and your first message to her has already gone out by then.
+- Move food allergies to **before** she pays. Right now they sit after, and your first message to her
+  has already gone out by then.
 - Pull her waitlist answers forward so she is never asked the same thing twice.
-- Break the long form into three short screens with two breathing beats, and put "A rough number is fine. You can change it any time." under every number we ask for.
-- Body fat was being collected and thrown away. The new math uses it now.
+- Break the long form into three shorter screens, with "A rough number is fine, you can change it any
+  time" under every number we ask for.
+- Tighten the plan maths so the numbers hold up for every body, including your heaviest and shortest
+  members. Already done and tested.
+
+## One wording choice that is yours
+
+A sedentary member at 5'2" and 200 lb is honestly looking at about half a pound a week, and the app
+currently just shows her the date that lands on. It is true, and it is a rough first impression.
+
+The real lever for her is not eating less, it is moving more. Recommendation: say that out loud
+instead of quietly showing a distant date.
+
+> **EN:** "At your activity level this is the pace I can promise safely. Add a daily walk and this
+> moves faster than any smaller portion will."
+> **ES:** "Con tu nivel de actividad, este es el ritmo que te puedo prometer con seguridad. Agrega una
+> caminata diaria y esto avanza más rápido que cualquier porción más pequeña."
 
 ## Nine new questions. Cross out any that are not you.
 
@@ -86,7 +95,12 @@ I recommend yes on all nine.
 
 ## Two calls only you can make
 
-**The intake box says, in your voice, "I read all of it."** Today that is not true. Recommendation: change it to *"Nothing here gets lost. It goes straight onto your file."* / *"Nada de esto se pierde. Va directo a tu expediente."* If you want to actually read them, say so and we keep the line. At 265 members it is about a day of reading.
+**The free-text box promises, in your voice, "I read all of it."** That is a promise worth about a day of reading at 265 members, and it is one a member will hold you to. Two ways to go, and either is fine:
+
+- **Keep it**, and you or Dani actually read them. We will put them in one place so it is an hour, not a hunt.
+- **Reword it** to something equally warm that we can always keep: *"Nothing here gets lost. It goes straight onto your file."* / *"Nada de esto se pierde. Va directo a tu expediente."*
+
+Recommendation: reword it. You will want that day back in September.
 
 **One option currently reads "I've struggled with disordered eating."** That asks a woman to put a clinical label on herself in a list of buttons. The Spanish is already softer. Recommendation: change the English to *"Food and I have had a hard history."*
 
