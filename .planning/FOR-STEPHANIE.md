@@ -270,10 +270,17 @@ You do not need to do anything with these. They are done.
 | 12 | Send me your offers, so I can check them against pricing | you | before launch |
 | 13 | D-U-N-S, then the Apple developer account | waiting on Apple | out of our hands |
 
-**On number 13:** the D-U-N-S number unlocks the developer account. That is the first step of several,
-not the last one. **There is no iPhone app yet**, and there will not be one in September. The app works
-in a phone browser and can be added to a home screen, which is what your clients will use at launch.
-I would rather you know that now than in six weeks.
+**On number 13:** Apple's side is quick, usually days once the D-U-N-S number lands. The part that is
+not done is ours: nobody has built the iPhone wrapper yet. The app is already built as a phone app
+(it installs to a home screen and runs full screen), so wrapping it for the App Store is a few days of
+work, not a phase. **September is achievable if we start it.**
+
+Two real things to decide, neither of which is about time:
+
+1. **Building and submitting needs a Mac with Xcode.** Whoever does it needs one.
+2. **Apple takes a cut of subscriptions sold inside an iPhone app**, 15 to 30 percent. On $19.97 a
+   month that is real money. There are legitimate ways to handle it, and it is worth deciding
+   deliberately rather than discovering it at submission.
 
 ---
 

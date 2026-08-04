@@ -100,11 +100,23 @@ two voice notes and a text.**
 She and Rodney submitted for the D-U-N-S number, which she needs before she can register as a
 **business** developer rather than a personal one.
 
-Nothing we can do until it arrives. Typical turnaround is a few business days, occasionally longer.
+**Correction, 2026-08-03.** I previously wrote that an App Store listing was far off and would not
+happen in September. That was wrong, and Dre corrected it: he shipped an app through review in three
+days. Apple's side is fast.
 
-**Worth knowing:** there is **no iOS app yet.** The D-U-N-S unblocks the developer account, which is
-the first of several steps, not the last one. If she is expecting an App Store listing soon, that
-expectation needs correcting now rather than in September.
+**The real position.** Nothing about the timeline is the blocker. The blocker is that WE have not
+started the wrapper: there is no capacitor.config, no ios/ directory, and Capacitor is not in
+package.json. What we DO have is a working PWA already (public/manifest.json, public/sw.js, wired in
+layout.tsx:68), which is the hard prerequisite. Wrapping an existing PWA is a few days, not a phase.
+
+**September is achievable.** Three things to line up:
+
+1. **D-U-N-S, then Apple Developer Program enrolment** ($99/yr, business entity).
+2. **A Mac with Xcode**, to build and submit. Nothing else can do it.
+3. **Decide the subscription question BEFORE submitting.** Apple takes 15 to 30 percent of
+   subscriptions sold inside an iOS app. On $19.97/mo that is material, and guideline 3.1.1 is the
+   most common reason a subscription app gets rejected. There are legitimate routes; the point is to
+   choose one deliberately rather than find out at review.
 
 ---
 

@@ -125,9 +125,9 @@ So nothing surprises you on the call.
 
 - **Your demo videos are not filmed.** 76 movements are on your shot list and 0 are shot. Members see
   the exercise name and written instructions, no video.
-- **There is no iPhone app.** It works in a phone browser and can be saved to the home screen, which is
-  what your clients will use. The App Store version is a later project and it is waiting on the D-U-N-S
-  number.
+- **The iPhone App Store version is not built yet.** The app already installs to your home screen and
+  runs full screen, which is what your clients will use at launch. The App Store wrapper is a few days
+  of work once the D-U-N-S number lands, so it can happen before September if we decide to do it.
 - **Payments are not switched on yet.** Nothing charges anyone today.
 - **43 of your clients have no payment history in the export**, so their payment type is blank. We need
   to know from you whether they were comped or whether the export was incomplete.
