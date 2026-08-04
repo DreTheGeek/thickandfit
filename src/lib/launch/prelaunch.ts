@@ -25,7 +25,15 @@ const GATED_PATHS: RegExp[] = [
   /^\/about$/,
   /^\/faq$/,
   /^\/pricing$/,
-  /^\/vs(\/|$)/, // competitor comparison pages (/vs/myfitnesspal, /vs/fitia, ...)
+  // Competitor comparison pages: /vs/myfitnesspal, /vs/cal-ai, /vs/fitia.
+  //
+  // This ONE entry also covers the Spanish twins added 2026-08-04 (/es/vs/myfitnesspal,
+  // /es/vs/cal-ai, /es/vs/fitia). isGatedPath runs stripLocale FIRST, so /es/vs/cal-ai is tested as
+  // /vs/cal-ai and matches here. Do not add a separate /^\/es\/vs/ pattern: by the time these
+  // regexes run the /es prefix is already gone, so such a rule would never match anything and would
+  // read as coverage that does not exist. Verified against the gate test, which asserts the /es
+  // twin of every gated path.
+  /^\/vs(\/|$)/,
 ];
 
 /**

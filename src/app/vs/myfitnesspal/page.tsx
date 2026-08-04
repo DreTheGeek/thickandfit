@@ -13,8 +13,19 @@
 // database; a tracker without coaching or programming; a translated interface over a US food
 // database), not contestable specific stats.
 //
-// English first, matching the current homepage. An ES twin with hreflang is the immediate follow-up
-// (the winnable Spanish query is "alternativa a MyFitnessPal en espanol / para comida latina").
+// English first, matching the current homepage. The ES twin now exists at /es/vs/myfitnesspal and
+// carries reciprocal hreflang (the winnable Spanish query is "alternativa a MyFitnessPal en espanol
+// / para comida latina").
+//
+// CLAIM CORRECTIONS, 2026-08-04, each verified against MyFitnessPal's OWN pages before writing:
+//   - Workouts: they DO ship a routine builder ("Workout Routines", support.myfitnesspal.com
+//     /hc/en-us/articles/360036071232). The old "None" was simply false. The true and stronger line
+//     is that a builder is not a coach.
+//   - Canceling: "Buried in settings" was a characterization we cannot back. Their own help article
+//     (360032625371) says cancellation happens where you paid: the App Store, Google Play, or the
+//     web account. That is a fact, it is checkable, and it still loses to one tap.
+//   - Cooked-to-raw is scoped. The ratio table covers meats, rice and beans today, so the page says
+//     meats, rice and beans. Claiming every food was a promise the app does not keep.
 import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
 import Link from 'next/link';
@@ -29,14 +40,21 @@ export const dynamic = 'force-dynamic';
 const TITLE = 'MyFitnessPal alternative for Latin food | Thick & Fit';
 const DESCRIPTION =
   'MyFitnessPal counts calories from a crowd-sourced database. Thick & Fit coaches you: nutrition ' +
-  'that gets Latin home cooking right, cooked or raw, in English and Spanish, with real workouts and ' +
-  "a coach in Stephanie's corner.";
+  'that gets Latin home cooking right, cooked back to raw on meats, rice and beans, in English and ' +
+  "Spanish, with real workouts and a coach in Stephanie's corner.";
 
 export function generateMetadata(): Metadata {
   return {
     title: TITLE,
     description: DESCRIPTION,
-    alternates: { canonical: '/vs/myfitnesspal' },
+    alternates: {
+      canonical: '/vs/myfitnesspal',
+      languages: {
+        en: '/vs/myfitnesspal',
+        es: '/es/vs/myfitnesspal',
+        'x-default': '/vs/myfitnesspal',
+      },
+    },
     openGraph: {
       url: '/vs/myfitnesspal',
       title: TITLE,
@@ -50,14 +68,14 @@ type Row = { label: string; them: string; us: string };
 const ROWS: readonly Row[] = [
   { label: 'Food data', them: 'Crowd-sourced, user-submitted entries', us: 'Grounded in USDA + Open Food Facts' },
   { label: 'Latin home cooking', them: 'Generic or Americanized', us: 'Reads your dishes, in Spanish' },
-  { label: 'Cooked vs raw', them: 'You do the math', us: 'Converted for you, automatically' },
+  { label: 'Cooked vs raw', them: 'You do the math', us: 'Meats, rice and beans, converted for you' },
   { label: 'Log your meal', them: 'Search and type', us: 'Photo, barcode, or a quick line of text' },
   { label: 'Language', them: 'A translated interface', us: 'Bilingual by design, EN and ES' },
-  { label: 'Workouts', them: 'None', us: "Filmed demos, built around your equipment" },
+  { label: 'Workouts', them: 'A routine builder, no one behind it.', us: "Filmed demos, built around your equipment" },
   { label: 'Coaching', them: 'None', us: "Stephanie's method, plus real human coaches" },
   { label: 'Community', them: 'A feed', us: 'Challenges and a coach who shows up' },
   { label: 'Your progress', them: 'A weight graph', us: 'A full transformation timeline' },
-  { label: 'Canceling', them: 'Buried in settings', us: 'One tap. No phone call.' },
+  { label: 'Canceling', them: 'Wherever you paid: Apple, Google, or the web', us: 'One tap. No phone call.' },
 ];
 
 const FAQ: readonly { question: string; answer: string }[] = [
@@ -67,14 +85,15 @@ const FAQ: readonly { question: string; answer: string }[] = [
       'Yes. MyFitnessPal leans on a crowd-sourced database that was built mostly by US users, so ' +
       'logging arroz con pollo, tamales, arepas or pupusas often means no entry, ten conflicting ones, ' +
       'or an Americanized guess. Thick & Fit grounds every food in validated sources (USDA FoodData ' +
-      'Central and Open Food Facts) and is built to read Latin home cooking, cooked or raw, in Spanish.',
+      'Central and Open Food Facts) and is built to read Latin home cooking in Spanish.',
   },
   {
     question: 'Does Thick & Fit handle cooked vs raw weight?',
     answer:
-      'Yes, and this is where most trackers leave you guessing. When you log a photo of your plate, ' +
-      'Thick & Fit takes the visible cooked portion and converts it to the raw-equivalent grams so the ' +
-      'macros are right, without you having to weigh anything twice or do the conversion in your head.',
+      'Yes, on the three that throw your numbers off the most: meats, rice and beans. When you log a ' +
+      'photo of your plate, Thick & Fit takes the cooked portion it can see and converts it back to ' +
+      'the raw-equivalent grams, so you are not weighing anything twice or doing the math in your ' +
+      'head. That list grows as Stephanie adds more of her foods to it.',
   },
   {
     question: 'Is MyFitnessPal actually in Spanish?',
@@ -86,7 +105,8 @@ const FAQ: readonly { question: string; answer: string }[] = [
   {
     question: 'How is this different from just a calorie counter?',
     answer:
-      'MyFitnessPal is a food tracker. Thick & Fit is a coaching system: nutrition, workouts with ' +
+      'MyFitnessPal is a tracker. It logs your food and it will let you build a workout routine, but ' +
+      'nobody is on the other end of it. Thick & Fit is a coaching system: nutrition, workouts with ' +
       "filmed demos built around the equipment you have, a coach in Stephanie's voice, a community " +
       'with challenges, and a transformation timeline that shows you changing over time. The tracking ' +
       'is one piece, not the whole thing.',
@@ -109,6 +129,36 @@ function Cell({ children, kind }: { children: string; kind: 'them' | 'us' }): Re
         <span className={kind === 'us' ? 'font-semibold text-white' : 'text-white/60'}>{children}</span>
       </span>
     </td>
+  );
+}
+
+/**
+ * Sibling links. Nothing in the nav or footer points into the /vs cluster yet, so the three pages
+ * link to each other and to their Spanish twin: once the sitemap gets a crawler to any one of them,
+ * the other five are reachable by following links, which is what indexing actually needs.
+ */
+function MoreComparisons(): ReactElement {
+  const links: readonly { href: string; label: string }[] = [
+    { href: '/vs/cal-ai', label: 'Thick & Fit vs Cal AI' },
+    { href: '/vs/fitia', label: 'Thick & Fit vs Fitia' },
+    { href: '/es/vs/myfitnesspal', label: 'Esta página en español' },
+  ];
+  return (
+    <LSection tone="raised">
+      <LEyebrow className="text-white">Keep looking</LEyebrow>
+      <LH2 className="mt-1 text-white">Compare the rest</LH2>
+      <div className="mt-8 flex flex-wrap gap-3">
+        {links.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="rounded-full border border-white/20 px-6 py-3 text-[14px] font-semibold text-white transition-colors hover:border-white/50"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </div>
+    </LSection>
   );
 }
 
@@ -136,7 +186,8 @@ export default function VsMyFitnessPalPage(): ReactElement {
           </h1>
           <p className="mx-auto mt-6 max-w-[54ch] text-[17px] leading-[1.5] text-white/75 sm:text-[19px]">
             MyFitnessPal is a food log built on a stranger&apos;s guesses. Thick &amp; Fit gets your
-            food right, cooked or raw, in both your languages, and puts a coach in your corner.
+            food right, converts your meats, rice and beans back to raw, speaks both your languages,
+            and puts a coach in your corner.
           </p>
           <div className="mt-8">
             <Link
@@ -190,8 +241,9 @@ export default function VsMyFitnessPalPage(): ReactElement {
             <LBody className="mt-5 text-[#4a4a4a]">
               MyFitnessPal&apos;s database is built by strangers, mostly in English, so your dishes come
               back wrong or not at all. Thick &amp; Fit grounds every food in validated nutrition data
-              and reads Latin home cooking the way you actually eat it, then converts cooked to raw so
-              the numbers are honest without you weighing anything twice.
+              and reads Latin home cooking the way you actually eat it, then converts your meats, rice
+              and beans from cooked back to raw so the numbers are honest without you weighing
+              anything twice.
             </LBody>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -221,9 +273,20 @@ export default function VsMyFitnessPalPage(): ReactElement {
               every day, a community that notices when you disappear, and a timeline that shows you
               changing, week by week. You are not doing this alone anymore.
             </LBody>
+            {/* Mid-page CTA. The other two /vs pages close their second section with one and this
+                page was the only one asking a reader to scroll all the way back to convert. */}
+            <Link
+              href="/join"
+              className="mt-8 inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
+            >
+              Start today
+            </Link>
           </div>
         </div>
       </LSection>
+
+      <MoreComparisons />
+
 
       {/* FAQ */}
       <LSection tone="dark" id="faq">
@@ -259,7 +322,8 @@ export default function VsMyFitnessPalPage(): ReactElement {
               Start today
             </Link>
             <p className="mt-3 text-[13px] text-white/50">
-              $19.97 a month. Cancel anytime, no contract.
+              $19.97 a month founding price, $24.97 after the founding window. Cancel anytime, no
+              contract.
             </p>
           </div>
         </div>

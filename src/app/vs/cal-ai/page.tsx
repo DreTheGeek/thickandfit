@@ -12,7 +12,20 @@
 //   - The Cal AI column stays on category-documented, defensible facts: it is a photo-estimation
 //     app; photo portion estimation is unreliable on mixed/regional meals; short trial. No
 //     unverified ownership claim, no invented specifics.
-//   - BRAND RULE: our scan is "Stephanie's method, automated" - never called "AI" in copy.
+//   - BRAND RULE: our scan is "Stephanie's method, automated" - never called "AI" in copy. "Cal AI"
+//     appears only as the competitor's registered product name, which is the search term itself.
+//
+// CLAIM CORRECTIONS, 2026-08-04, verified against calai.app itself before writing:
+//   - Accuracy. The old row said they make "big promises". Their own site says "CalAI is about 80%
+//     accurate. No food tracking app is perfect", which is a hedge, not a promise, so the row was
+//     both unbackable and wrong. It now quotes their published number and contrasts the SOURCE of
+//     ours: verified data, not an estimate off a depth reading.
+//   - The trial. The old row called it "short, easy to forget". Ours is also three days, so that was
+//     hypocrisy on top of a characterization. Their site says "CLAIM YOUR 3-DAY FREE TRIAL" and
+//     "Cancel anytime", so the row states the length and the renewal, both checkable.
+//   - Cooked vs raw. "Not handled" is a negative we cannot prove about someone else's product. The
+//     row now describes who does the work, and scopes OUR side to what actually ships: meats, rice
+//     and beans.
 import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
 import Link from 'next/link';
@@ -27,14 +40,17 @@ export const dynamic = 'force-dynamic';
 const TITLE = 'Cal AI alternative that gets Latin food right | Thick & Fit';
 const DESCRIPTION =
   'A photo alone is a guess, and it guesses worst on mixed, saucy, home-cooked Latin dishes. Thick ' +
-  '& Fit grounds every food in verified data, handles cooked or raw, in English and Spanish, with ' +
-  'workouts and a real coach behind it.';
+  '& Fit grounds every food in verified data, converts meats, rice and beans from cooked back to ' +
+  'raw, in English and Spanish, with workouts and a real coach behind it.';
 
 export function generateMetadata(): Metadata {
   return {
     title: TITLE,
     description: DESCRIPTION,
-    alternates: { canonical: '/vs/cal-ai' },
+    alternates: {
+      canonical: '/vs/cal-ai',
+      languages: { en: '/vs/cal-ai', es: '/es/vs/cal-ai', 'x-default': '/vs/cal-ai' },
+    },
     openGraph: {
       url: '/vs/cal-ai',
       title: TITLE,
@@ -48,11 +64,11 @@ type Row = { label: string; them: string; us: string };
 const ROWS: readonly Row[] = [
   { label: 'How it works', them: 'A photo, then an estimate', us: 'A photo, grounded in verified data' },
   { label: 'Mixed and saucy dishes', them: 'Where photo estimates break down', us: 'Read component by component' },
-  { label: 'Cooked vs raw', them: 'Not handled', us: 'Converted for you, automatically' },
+  { label: 'Cooked vs raw', them: 'You do the conversion', us: 'Meats, rice and beans, converted for you' },
   { label: 'Latin home cooking', them: 'Not what it was built for', us: 'Built for your food, in Spanish' },
   { label: 'More than a number', them: 'Just a counter', us: 'Workouts, a coach, and a community' },
-  { label: 'Accuracy claims', them: 'Big promises', us: 'Honest: right on the food you actually eat' },
-  { label: 'The trial', them: 'Short, easy to forget', us: '3 days, cancel in one tap, price shown first' },
+  { label: 'Accuracy', them: 'About 80%, by their own published number', us: 'Verified data behind the grams, not a guess' },
+  { label: 'The trial', them: '3 days free, then it renews on its own', us: '3 days, cancel in one tap, price shown first' },
 ];
 
 const FAQ: readonly { question: string; answer: string }[] = [
@@ -68,15 +84,16 @@ const FAQ: readonly { question: string; answer: string }[] = [
     answer:
       "Thick & Fit uses a photo to identify the food and the portion, then pulls the macros from " +
       'validated sources (USDA FoodData Central and Open Food Facts) rather than guessing the numbers. ' +
-      'It also converts cooked weight to raw so the total is honest. We do not claim to be perfect on ' +
-      'everything, we claim to be right on the food you actually eat.',
+      'On meats, rice and beans it also converts the cooked weight back to raw, which is where the ' +
+      'biggest errors hide. We do not claim to be perfect on everything, we claim to be right on the ' +
+      'food you actually eat.',
   },
   {
     question: 'Does it handle Latin dishes and cooked vs raw?',
     answer:
       'Yes. Thick & Fit is built to read Latin home cooking such as arroz con pollo, tamales, arepas ' +
-      'and pupusas, in Spanish, and it converts cooked portions to raw-equivalent grams so your macros ' +
-      'are right without weighing anything twice.',
+      'and pupusas, in Spanish. Cooked-to-raw conversion covers meats, rice and beans today, the three ' +
+      'that move your numbers the most, and that list grows as Stephanie adds more of her foods to it.',
   },
   {
     question: 'Is this just another calorie scanner?',
@@ -106,6 +123,36 @@ function Cell({ children, kind }: { children: string; kind: 'them' | 'us' }): Re
   );
 }
 
+/**
+ * Sibling links. Nothing in the nav or footer points into the /vs cluster yet, so the three pages
+ * link to each other and to their Spanish twin: once the sitemap gets a crawler to any one of them,
+ * the other five are reachable by following links, which is what indexing actually needs.
+ */
+function MoreComparisons(): ReactElement {
+  const links: readonly { href: string; label: string }[] = [
+    { href: '/vs/myfitnesspal', label: 'Thick & Fit vs MyFitnessPal' },
+    { href: '/vs/fitia', label: 'Thick & Fit vs Fitia' },
+    { href: '/es/vs/cal-ai', label: 'Esta página en español' },
+  ];
+  return (
+    <LSection tone="raised">
+      <LEyebrow className="text-white">Keep looking</LEyebrow>
+      <LH2 className="mt-1 text-white">Compare the rest</LH2>
+      <div className="mt-8 flex flex-wrap gap-3">
+        {links.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="rounded-full border border-white/20 px-6 py-3 text-[14px] font-semibold text-white transition-colors hover:border-white/50"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </div>
+    </LSection>
+  );
+}
+
 export default function VsCalAiPage(): ReactElement {
   const nodes = [
     faqPageNode([...FAQ]),
@@ -130,8 +177,8 @@ export default function VsCalAiPage(): ReactElement {
           </h1>
           <p className="mx-auto mt-6 max-w-[54ch] text-[17px] leading-[1.5] text-white/75 sm:text-[19px]">
             Snap-a-photo apps guess worst on the food you actually eat: mixed plates, sauces, your
-            mom&apos;s cooking. Thick &amp; Fit grounds the number in real data, cooked or raw, and
-            puts a coach behind it.
+            mom&apos;s cooking. Thick &amp; Fit grounds the number in real data, converts your meats,
+            rice and beans back to raw, and puts a coach behind it.
           </p>
           <div className="mt-8">
             <Link
@@ -186,7 +233,8 @@ export default function VsCalAiPage(): ReactElement {
               It cannot see the butter under the rice or how deep the bowl is. So a photo-only app
               guesses, and it guesses worst on the mixed, home-cooked plates that make up most of your
               week. Thick &amp; Fit uses the photo to know what and how much, then pulls the real
-              numbers from validated data and fixes cooked versus raw. Honest beats impressive.
+              numbers from validated data and converts your meats, rice and beans back to raw. Honest
+              beats impressive.
             </LBody>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -226,6 +274,8 @@ export default function VsCalAiPage(): ReactElement {
         </div>
       </LSection>
 
+      <MoreComparisons />
+
       {/* FAQ */}
       <LSection tone="dark" id="faq">
         <LH2 className="text-white">Questions</LH2>
@@ -260,7 +310,8 @@ export default function VsCalAiPage(): ReactElement {
               Start 3 days free
             </Link>
             <p className="mt-3 text-[13px] text-white/50">
-              No card to start. Founders lock in $19.97 for life. Cancel any time, one tap.
+              No card to start. $19.97 a month founding price, $24.97 after the founding window.
+              Cancel any time, one tap.
             </p>
           </div>
         </div>

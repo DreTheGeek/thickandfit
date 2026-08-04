@@ -108,13 +108,20 @@ type FooterLinkDef = { labelKey: string; href: string };
 // Resolved shape handed to FooterColumn: label already translated, href already locale-prefixed.
 type FooterLink = { label: string; href: string };
 
-// Public offer surface is ONE tier (Foundation founding pricing) — mid/high-ticket ships as a
+// Public offer surface is ONE tier (Foundation founding pricing): mid/high-ticket ships as a
 // private-application flow post-launch, not as a public program. So the footer drops the
 // "Programs" column entirely; Pricing lives in the Pages column and that's enough.
 const PAGE_LINKS: readonly FooterLinkDef[] = [
   { labelKey: 'linkPricing', href: '/pricing' },
   { labelKey: 'linkFaq', href: '/faq' },
   { labelKey: 'linkAbout', href: '/about' },
+  // The /vs comparison set was reachable only from itself: the sitemap listed the three pages and
+  // each linked its two siblings, but no page a human lands on pointed in. One footer link is the
+  // entry, and /vs/myfitnesspal is the head of the chain (it carries the links to Cal AI and Fitia),
+  // so linking the head reaches all three without a column of near-identical rows. It localizes
+  // because /vs/* is now in BILINGUAL_PATHS; without that entry lp() would leave a Spanish reader
+  // on the English page.
+  { labelKey: 'linkCompare', href: '/vs/myfitnesspal' },
   { labelKey: 'linkPrivacy', href: '/privacy' },
   { labelKey: 'linkTerms', href: '/terms' },
   { labelKey: 'linkSupport', href: '/support' },
@@ -178,11 +185,15 @@ export async function SiteFooter(): Promise<ReactElement> {
         </div>
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-[13px] text-white/50">{t('footerCopyright')}</p>
+          {/* Locale-prefixed like every other footer link. These two were the exception and it was a
+              bug you could only see in Spanish: the strip read "Privacidad" and "Terminos" and
+              dropped the reader onto the English legal pages. /privacy and /terms are in
+              BILINGUAL_PATHS, so withLocalePrefix resolves the real Spanish twins. */}
           <div className="flex gap-5">
-            <Link href="/privacy" className="text-[13px] text-white/50 hover:text-white">
+            <Link href={lp('/privacy')} className="text-[13px] text-white/50 hover:text-white">
               {t('linkPrivacy')}
             </Link>
-            <Link href="/terms" className="text-[13px] text-white/50 hover:text-white">
+            <Link href={lp('/terms')} className="text-[13px] text-white/50 hover:text-white">
               {t('linkTerms')}
             </Link>
           </div>

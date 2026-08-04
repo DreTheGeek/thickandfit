@@ -18,7 +18,11 @@ export function esPathFor(enPath: string): string {
 /** Marketing routes that exist in both languages. */
 // /privacy and /terms are here because App Store Connect takes ONE privacy-policy URL and Spanish
 // speakers need a stable Spanish one to land on, rather than depending on whatever the cookie says.
-const BILINGUAL_PATHS = ['/', '/pricing', '/faq', '/about', '/join', '/join/thanks', '/join/quiz', '/disclaimer', '/privacy', '/terms', '/support'] as const;
+// The /vs comparison pages are here because their Spanish twins are real routes (/es/vs/*). Left
+// out, twinPathFor returned null for every comparison page, so the nav language switch did not
+// render on any of them and withLocalePrefix dropped a Spanish reader following a footer link onto
+// the English page.
+const BILINGUAL_PATHS = ['/', '/pricing', '/faq', '/about', '/join', '/join/thanks', '/join/quiz', '/disclaimer', '/privacy', '/terms', '/support', '/vs/myfitnesspal', '/vs/cal-ai', '/vs/fitia'] as const;
 
 /**
  * Which language a marketing URL IS, as opposed to which language the visitor last picked.

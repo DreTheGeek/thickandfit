@@ -14,6 +14,16 @@
 //     full training + coaching system.
 //   - Every T&F line is verified against the code. BRAND RULE: our coach is Stephanie / her method,
 //     never "AI"; and we frame Fitia's coach as "an app", not by attacking it.
+//
+// CLAIM CORRECTIONS, 2026-08-04, verified against fitia.app before writing:
+//   - The community row said "a feed of strangers". Fitia's own features page names Fitia Teams:
+//     "Join teams and challenges, chat with others, and stay motivated with a nutrition community."
+//     So the row now says what they actually ship. Our edge was never that they have nothing there,
+//     it is that Stephanie is IN ours, and that still wins stated honestly.
+//   - Added a trial row from their own help centre ("Fitia Premium tiene prueba gratis"): 3 days,
+//     available only on the annual plan, and the annual subscription activates when it ends. That is
+//     checkable and it is a real difference, unlike a characterization.
+//   - Cooked-to-raw is scoped to what ships: meats, rice and beans.
 import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
 import Link from 'next/link';
@@ -34,7 +44,10 @@ export function generateMetadata(): Metadata {
   return {
     title: TITLE,
     description: DESCRIPTION,
-    alternates: { canonical: '/vs/fitia' },
+    alternates: {
+      canonical: '/vs/fitia',
+      languages: { en: '/vs/fitia', es: '/es/vs/fitia', 'x-default': '/vs/fitia' },
+    },
     openGraph: {
       url: '/vs/fitia',
       title: TITLE,
@@ -46,36 +59,40 @@ export function generateMetadata(): Metadata {
 
 type Row = { label: string; them: string; us: string };
 const ROWS: readonly Row[] = [
-  { label: 'What it is', them: 'A nutrition tracker', us: 'A full coaching system' },
+  { label: 'What it is', them: 'A nutrition tracker and meal planner', us: 'A full coaching system' },
   { label: 'Who coaches you', them: 'An app', us: 'Stephanie, a real person, and her team' },
   { label: 'Training', them: 'Built for food', us: 'Workouts with filmed demos, your equipment' },
-  { label: 'Accountability', them: 'You and the app', us: 'Her team checks in every week' },
-  { label: 'The community', them: 'A feed of strangers', us: 'These women, with Stephanie in it' },
-  { label: 'The method', them: 'Generic and automated', us: "Stephanie's own, in her voice" },
-  { label: 'Nutrition', them: 'A strong food database', us: 'Grounded data, cooked or raw' },
+  { label: 'Accountability', them: 'Other users', us: 'Her team checks in every week' },
+  { label: 'The community', them: 'Teams, challenges and chat', us: 'These women, with Stephanie in it' },
+  { label: 'The method', them: 'A plan the app generates', us: "Stephanie's own, in her voice" },
+  { label: 'Nutrition', them: 'A strong food database', us: 'Grounded data, plus cooked back to raw on meats, rice and beans' },
+  { label: 'The trial', them: '3 days, annual plan only, then the year starts', us: '3 days, cancel in one tap, price shown first' },
 ];
 
 const FAQ: readonly { question: string; answer: string }[] = [
   {
     question: 'Is Thick & Fit a good alternative to Fitia?',
     answer:
-      'It depends on what you want. Fitia is a strong, self-serve food tracker. If you only want to ' +
-      'log calories on your own, it does that well. If you want someone in your corner, a real coach, ' +
-      'her method, workouts and a community, that is a different thing, and that is Thick & Fit.',
+      'It depends on what you want. Fitia is a strong, self-serve food tracker and meal planner. If ' +
+      'you only want to log calories on your own, it does that well. If you want someone in your ' +
+      'corner, a real coach, her method, workouts and a community, that is a different thing, and ' +
+      'that is Thick & Fit.',
   },
   {
     question: 'What does Thick & Fit have that a tracker does not?',
     answer:
       'A person. Thick & Fit is Stephanie coaching you: her training built around the equipment you ' +
-      'have, her team checking in every week, her actual method rather than a generic plan, and a ' +
-      'community she is part of. An app can count your food. It cannot notice when you go quiet.',
+      'have, her team checking in every week, her actual method rather than a plan an app generated. ' +
+      'Fitia has teams and challenges. What it does not have is her in the room with you. An app can ' +
+      'count your food. It cannot notice when you go quiet.',
   },
   {
     question: 'Does Thick & Fit track Latin food and cooked vs raw too?',
     answer:
-      'Yes. It reads Latin home cooking in Spanish, grounds the macros in validated data, and converts ' +
-      'cooked portions to raw so the numbers are honest. The tracking is solid. The difference is that ' +
-      'the tracking sits inside real coaching, not on its own.',
+      'Yes. It reads Latin home cooking in Spanish and grounds the macros in validated data. Cooked ' +
+      'portions get converted back to raw on meats, rice and beans, the three that throw the numbers ' +
+      'off the most, and that list grows as Stephanie adds more of her foods. The tracking is solid. ' +
+      'The difference is that it sits inside real coaching, not on its own.',
   },
   {
     question: 'Is it in Spanish?',
@@ -101,6 +118,36 @@ function Cell({ children, kind }: { children: string; kind: 'them' | 'us' }): Re
         <span className={kind === 'us' ? 'font-semibold text-white' : 'text-white/60'}>{children}</span>
       </span>
     </td>
+  );
+}
+
+/**
+ * Sibling links. Nothing in the nav or footer points into the /vs cluster yet, so the three pages
+ * link to each other and to their Spanish twin: once the sitemap gets a crawler to any one of them,
+ * the other five are reachable by following links, which is what indexing actually needs.
+ */
+function MoreComparisons(): ReactElement {
+  const links: readonly { href: string; label: string }[] = [
+    { href: '/vs/myfitnesspal', label: 'Thick & Fit vs MyFitnessPal' },
+    { href: '/vs/cal-ai', label: 'Thick & Fit vs Cal AI' },
+    { href: '/es/vs/fitia', label: 'Esta página en español' },
+  ];
+  return (
+    <LSection tone="raised">
+      <LEyebrow className="text-white">Keep looking</LEyebrow>
+      <LH2 className="mt-1 text-white">Compare the rest</LH2>
+      <div className="mt-8 flex flex-wrap gap-3">
+        {links.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="rounded-full border border-white/20 px-6 py-3 text-[14px] font-semibold text-white transition-colors hover:border-white/50"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </div>
+    </LSection>
   );
 }
 
@@ -221,6 +268,8 @@ export default function VsFitiaPage(): ReactElement {
         </div>
       </LSection>
 
+      <MoreComparisons />
+
       {/* FAQ */}
       <LSection tone="dark" id="faq">
         <LH2 className="text-white">Questions</LH2>
@@ -255,7 +304,8 @@ export default function VsFitiaPage(): ReactElement {
               Start 3 days free
             </Link>
             <p className="mt-3 text-[13px] text-white/50">
-              No card to start. Founders lock in $19.97 for life. Cancel any time, one tap.
+              No card to start. $19.97 a month founding price, $24.97 after the founding window.
+              Cancel any time, one tap.
             </p>
           </div>
         </div>

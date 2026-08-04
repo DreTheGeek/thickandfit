@@ -23,8 +23,20 @@ const ROUTES: Entry[] = [
   { path: '/pricing', changeFrequency: 'monthly', priority: 0.9, bilingual: true },
   // About is the entity/authority surface: it is what an engine reads to decide who Stephanie is.
   { path: '/about', changeFrequency: 'monthly', priority: 0.6, bilingual: true },
-  { path: '/terms', changeFrequency: 'yearly', priority: 0.3, bilingual: false },
-  { path: '/privacy', changeFrequency: 'yearly', priority: 0.3, bilingual: false },
+  // Both legal pages DO have real /es twins (src/app/es/terms, src/app/es/privacy) and are in
+  // BILINGUAL_PATHS. Flagged false, the Spanish legal URLs were never advertised and never carried
+  // an alternates map, which matters beyond SEO: App Store Connect takes one privacy-policy URL and
+  // a Spanish reviewer needs the Spanish page to be a discoverable URL, not a cookie state.
+  { path: '/terms', changeFrequency: 'yearly', priority: 0.3, bilingual: true },
+  { path: '/privacy', changeFrequency: 'yearly', priority: 0.3, bilingual: true },
+  // The /vs comparison pages exist to win searches for a competitor's name, which is the highest
+  // intent traffic on the site: someone typing "MyFitnessPal alternative" is already shopping. They
+  // were absent here AND unlinked from the nav and footer, so nothing on the internet pointed at
+  // them and no crawler had a route in. The sitemap is that route, and each page links to its two
+  // siblings and its Spanish twin, so discovering one discovers all six.
+  { path: '/vs/myfitnesspal', changeFrequency: 'monthly', priority: 0.7, bilingual: true },
+  { path: '/vs/cal-ai', changeFrequency: 'monthly', priority: 0.7, bilingual: true },
+  { path: '/vs/fitia', changeFrequency: 'monthly', priority: 0.7, bilingual: true },
 ];
 
 /**
