@@ -1,118 +1,110 @@
-# For Stephanie
+# Thick & Fit: where we are, and what I need from you
 
-Everything that needs you, written so you never have to ask what a word means. Nothing here needs
-you to understand how any of it works, only what you want it to do.
+Everything in one place, written plainly. Nothing here needs you to understand how any of it works,
+only what you want it to do.
 
-There are **4 things**. Two are quick decisions. Two are things only you can make.
+**Read part 1 first.** It may change your launch date, and it needs an answer this week. The rest can
+wait a few days.
 
 Last updated: 3 August 2026
 
 ---
 
-## 1. A calorie decision, and it affects almost everyone
+# Part 1. The one that changes the schedule
 
-**Time to answer: 2 minutes. This is the most important one on the page.**
+You said your contract "with Lena" ends at the end of the month, and asked when your clients get
+moved into the app so you can keep serving them.
 
-### What is happening
+**If that means Lenus, we have a problem with the calendar, and I would rather raise it now than in
+three weeks.**
 
-When a woman signs up, she answers about fifteen questions. Two of them matter here:
+- Your current platform goes away around **31 August**.
+- The app was planned to open to the public on **27 September**.
+- That is roughly **four weeks where you have 265 paying clients and nowhere to serve them.**
 
-- She ticks boxes for what she wants. Most women tick **both "lose fat" and "build muscle."**
-- She types in a **goal weight.**
+### Where your clients actually are right now
 
-Right now, if she ticks both boxes, the app decides she wants **body recomposition** (losing fat and
-building muscle at the same time), so it gives her **maintenance calories**. That means the number of
-calories that keeps her exactly where she is.
-
-Then it also saves the goal weight she typed in, and builds a plan that will never reach it.
-
-### A real example from this week
-
-Rodney signed up and told the app:
-
-| what he entered | |
+| | |
 |---|---|
-| his weight now | 194 lb |
-| his goal weight | 174 lb |
-| his goals | lose fat, build muscle |
+| clients whose history is already in the app | **265** |
+| clients who can actually log in today | **1** |
 
-The app gave him **2,701 calories a day, which is exactly what keeps him at 194 lb.** He asked to lose
-20 pounds. The app said yes to the goal, then made a plan that cannot get him there, and never
-mentioned the contradiction to him.
+Everything of theirs moved across in July: their weights, their photos, your message history with
+them, their intake answers. **What has not happened is the invitations.** Nobody has been emailed and
+told the app exists.
 
-### Why this matters for the launch
+That is a deliberate pause, not an oversight. Once those emails go out, 264 women start arriving, and
+I do not want that happening before you have seen the app and know how to answer them.
 
-"I want to lose fat and tone up" is probably the most common way a woman describes what she wants.
-That exact combination is what triggers this. So a large share of the women joining in September could
-get a calorie number that will not move them toward the goal they typed in, follow it for eight weeks,
-not lose weight, and decide the app does not work.
+### What I need from you, in order
 
-### What your own client history says
+1. **Confirm the date.** Is it Lenus, and is it 31 August? Everything below depends on that one fact
+   and I am currently going off a voice note.
+2. **A walkthrough with me before then.** You said it yourself: you need to be coached through this.
+   I would rather spend an hour with you than have you find out how it works while a client is
+   waiting on a reply. Recorded, so you can go back to it.
+3. **Then we invite them,** in batches, not all at once, so the first day is not overwhelming.
 
-We looked at all 265 of your Lenus clients:
-
-| what you actually coached them on | clients |
-|---|---|
-| a calorie deficit (eating less to lose) | **225 (84%)** |
-| maintenance (eating to stay the same) | 17 (6%) |
-| not recorded | 25 (9%) |
-
-**And none of your 267 client records has a goal weight in it.** Lenus never asked for one. You have
-always coached on a calorie number, not on a number on the scale.
-
-That tells us two useful things. A deficit is overwhelmingly your default. And the goal-weight
-question is something **we added, not something you have ever needed.**
-
-### The question
-
-**When a client tells you she wants to lose fat AND build muscle, and she also says she wants to be
-20 lb lighter, what do you actually do with her?**
-
-**Option A. Put her in a deficit.** The goal weight is the real instruction. "Build muscle" means you
-keep her protein high and keep her lifting so she holds onto her muscle while the fat comes off.
-
-**Option B. Keep her at maintenance.** Recomposition is the right call for her. Her weight may barely
-move, and the goal weight is the wrong thing to be measuring her against, so we should stop asking
-for it in that case.
-
-### What we would do, and why
-
-**We recommend Option A.** Four reasons:
-
-1. **A typed goal weight is a specific promise. A checkbox is a mood.** She thought about "174." She
-   tapped two goal buttons in three seconds. When they disagree, the one she thought about should win.
-2. **For your audience, "build muscle" usually means "look toned,"** not "weigh the same and add
-   muscle." Very few of your clients are asking for that.
-3. **The app puts the scale in her face** every week with weigh-ins and charts. If the number does not
-   move, she experiences failure every week no matter what her body is actually doing.
-4. **A moderate deficit with high protein and lifting IS recomposition for most people,** and it moves
-   the scale too. Eating at true maintenance is a specialist approach for women who are already lean
-   and experienced.
-
-### Two smaller questions while you are thinking about it
-
-- If someone picks "build muscle" and types a goal weight **higher** than she is now, is that just a
-  gain plan? Or do you still want a limit on how fast?
-- **Is there a client you would genuinely coach at true maintenance?** If yes, describe her, so the app
-  can spot her instead of guessing.
-
-### What we already fixed without waiting for you
-
-The app used to also **nag** these women. After 14 days of a flat scale it showed a banner saying
-"Looks like a plateau, we can adjust your plan to get you moving again," which is the opposite of what
-onboarding told her two weeks earlier. That contradiction is now gone: if the plan is deliberately
-holding her weight steady, the app no longer calls it a plateau. That was our mistake to fix, not your
-decision to make.
-
-**If you do not answer:** we ship what the code does today, which is Option B, without telling anyone.
+**Nothing gets sent to your clients until you say go.**
 
 ---
 
-## 2. Filming your demo videos
+# Part 2. Four decisions only you can make
 
-**Time: one to three filming days. This is the biggest gap between your app and every competitor.**
+## Decision 1: a calorie question that affects almost everyone
 
-### Where it stands
+**Two minutes. This is the most important thing on the page after part 1.**
+
+When a woman signs up she answers about fifteen questions. Two of them matter here: she ticks what she
+wants, and she types a goal weight.
+
+Right now, if she ticks **both "lose fat" and "build muscle"**, the app reads that as body
+recomposition and gives her **maintenance calories**, which is the number that keeps her exactly where
+she is. Then it also saves the goal weight she typed, and builds a plan that will never reach it.
+
+**A real example from this week.** Rodney signed up and entered 194 lb now, 174 lb goal, lose fat and
+build muscle. The app gave him **2,701 calories, which is exactly what keeps him at 194.** He asked to
+lose 20 pounds. The app said yes, then made a plan that cannot get him there, and told him nothing.
+
+"I want to lose fat and tone up" is probably the most common way a woman describes her goal, so this
+will hit a large share of the women joining in September.
+
+**Your own history points one way.** Of your 265 Lenus clients:
+
+| what you actually coached | clients |
+|---|---|
+| a calorie deficit | **225 (84%)** |
+| maintenance | 17 (6%) |
+| not recorded | 25 (9%) |
+
+**And none of your 267 client records has a goal weight in it.** Lenus never asked for one. You have
+always coached on a calorie number, not a number on the scale. The goal-weight question is something
+**we added, not something you have ever needed.**
+
+### The question
+
+**When a client says she wants to lose fat AND build muscle, and also says she wants to be 20 lb
+lighter, what do you actually do with her?**
+
+- **A. Put her in a deficit.** The goal weight is the real instruction. "Build muscle" means keep her
+  protein high and keep her lifting so she holds her muscle while the fat comes off.
+- **B. Keep her at maintenance.** Recomposition is right for her, her weight may barely move, and we
+  should stop asking for a goal weight in that case.
+
+**We recommend A**, for four reasons: a typed goal weight is a specific promise while a checkbox is a
+mood; for your audience "build muscle" usually means "look toned"; the app puts the scale in her face
+every week so a number that never moves reads as failure; and a moderate deficit with high protein and
+lifting **is** recomposition for most people, and it moves the scale too.
+
+**Already fixed without waiting for you:** the app used to congratulate her at signup for a flat scale
+and then nag her about it 14 days later with a "looks like a plateau" banner. Same number, opposite
+verdict, from the same app. That contradiction is gone.
+
+---
+
+## Decision 2: your demo videos
+
+**One to three filming days. This is the biggest gap between your app and every competitor.**
 
 ```
 exercises in the app        899
@@ -120,127 +112,173 @@ that have any video           2
 filmed by you                 0
 ```
 
-The whole promise of this app is **your** workouts with **your** demos, in your voice. Right now a
-member opens almost any exercise and gets a name and a paragraph of text, and nothing to watch. Every
-competitor has video. This is the thing that makes it feel unfinished.
+The whole promise is **your** workouts with **your** demos in your voice. Right now a member opens
+almost any exercise and gets text and nothing to watch.
 
-### What we did so you do not have to film 899 things
+**What we did so you do not film 899 things.** The exercise list you inherited was a generic
+bodybuilding list somebody imported in one go. It had Conan's Wheel, atlas stones and 66 different
+bicep curls, and almost no glute work. We cut it to **250 useful ones** and **added 26 that were
+completely missing**: there were **zero** clamshells, **zero** frog pumps, **zero** curtsy lunges,
+**zero** Bulgarian split squats, and exactly **one** hip thrust. For a business built on glutes, those
+absences were the real problem. Nothing was deleted, only hidden, so no client's history was touched.
 
-The exercise list you inherited was a generic bodybuilding list somebody imported in one go. It had
-Conan's Wheel, atlas stones, and 66 different bicep curls, while having almost no glute work. We
-cleaned it up:
+**Your shot list is 76 movements**, in `FILMING-SHOT-LIST.md`, with Spanish names and equipment. It is
+ordered by what you actually program, taken from **4,182 real workouts your clients completed**:
 
-- **899 exercises, cut down to 250** that a coach can actually assign.
-- **We added 26 movements that were completely missing.** There were **zero** clamshells, **zero** frog
-  pumps, **zero** curtsy lunges, **zero** Bulgarian split squats, and exactly **one** hip thrust. For a
-  business built on glutes, those absences were the real problem.
-- **Nothing was deleted.** Everything is hidden but recoverable, so no client's workout history was
-  touched and anything can come back.
+| block | movements |
+|---|---|
+| Glutes and hinge | **37** |
+| Shoulders, chest, triceps | 10 |
+| Back and biceps | 8 |
+| Legs | 7 |
+| Mobility and stretch | 8 |
+| Core | 4 |
+| Conditioning | 2 |
 
-### Your shot list: 76 movements
+**36 of the 76 need nothing but a mat and a band.** Film top to bottom; the first twenty cover the
+sessions your clients do most.
 
-The full list is in `FILMING-SHOT-LIST.md`, with the Spanish name and the equipment for each one.
-It is ordered by what you actually program, taken from **4,182 real workouts your Lenus clients
-completed**:
-
-| block | movements | why it is this size |
-|---|---|---|
-| Glutes and hinge | **37** | a third of your real sessions name glutes |
-| Shoulders, chest, triceps | 10 | 15% of your sessions |
-| Back and biceps | 8 | 13%, your single most-programmed session |
-| Legs | 7 | quad and hamstring work not already counted above |
-| Mobility and stretch | 8 | 6%, more than core, so please do not skip it |
-| Core | 4 | 3% |
-| Conditioning | 2 | full body HIIT, 6% |
-
-**36 of the 76 need nothing but a mat and a band**, so most of this can be shot in one place in one
-go. Film top to bottom: if you only get through the first twenty, those twenty cover the sessions your
-clients do most.
-
-### What we need from you
-
-1. **Look at the 26 new movements and tell us if you actually program them.** If you would never coach
-   a B-Stance Hip Thrust or a Frog Pump, say so and we will remove it. An exercise on the list that you
-   will not film is worse than one that was never there.
-2. **The order inside each block is yours.** The blocks come from your data. The order within them is
-   your judgement.
-3. **Do you want the demos in Spanish too,** or English demos with Spanish text? The names and
-   instructions are already fully bilingual, so the only gap would be your voice.
+**What I need:** look at the 26 new ones and tell me if you actually program them. If you would never
+coach a B-Stance Hip Thrust, say so and it comes off. An exercise on the list you will not film is
+worse than one that was never there.
 
 ---
 
-## 3. Ten to fifteen food photos, and one feature turns on
+## Decision 3: ten to fifteen food photos
 
-**Time: about 20 minutes, spread over a few normal meals.**
+**About 20 minutes, spread across normal meals.**
 
-### What this unlocks
+When a member photographs her food she has to confirm what the app found before it saves. We built a
+faster version where a confident photo just logs itself with an undo. **No major competitor does
+this.** It is finished and switched off.
 
-Right now, when a member photographs her food, she has to confirm what the app found before it saves.
-We have built a faster version where a photo the app is confident about just logs itself, with an
-undo button. **No major competitor does this.** It is built and it is finished. It is switched off.
+It stays off until we can prove the app is not undercounting fat. A July 2026 study found photo
+estimates commonly miss 250 to 345 calories a meal, mostly from cooking oil you cannot see. We measure
+that against photos where we already know the answer, and **we do not have any**. So the test honestly
+reports "unknown" instead of inventing a pass and turning on a feature that quietly undercounts
+everyone.
 
-### Why it is switched off
-
-It stays off until we can prove the app is not underestimating fat. There is a real study from July
-2026 showing photo-based estimates commonly miss 250 to 345 calories per meal, mostly from cooking oil
-you cannot see in a picture.
-
-We measure that with a set of photos where we already know the true answer. **We do not have one.** So
-the test honestly reports "unknown" rather than inventing a passing grade and turning on a feature that
-quietly undercounts everyone's food.
-
-### What we need
-
-**Ten to fifteen photos of real meals, and a note of what was actually in each one.** Specifically the
-meals where a photo lies:
-
-- pan-fried chicken or steak (and roughly how much oil went in the pan)
-- a salad with dressing
-- a restaurant plate
-- something with avocado or nuts
-- a stir fry with visible oil
-
-For each: the photo, the total grams of fat, and how much oil was used. **Your own meals are perfect.**
-Take the picture before you eat, note what went in it, send them over.
-
-**If you do not:** nothing breaks. The feature just stays off, and it is one of the few places this app
-is plainly better than Cal AI.
+**What I need:** photos of real meals plus what was actually in them. The ones where a photo lies:
+pan-fried protein (and how much oil), a dressed salad, a restaurant plate, avocado or nuts, an oily
+stir fry. Your own meals are perfect.
 
 ---
 
-## 4. Two quick sanity checks on your own copy
+## Decision 4: cycle-based workouts
 
-**Time: 5 minutes.**
+You asked for workouts that change based on where a woman is in her cycle. **Half of this already
+exists, and I want to talk you out of the other half.**
 
-We wrote coaching instructions for the 26 new exercises in your voice, in English and Spanish. They are
-short, three to five lines, meant to be read on a phone between sets. The last line of each is always
-the mistake to avoid, phrased as a fix rather than a telling-off. For example:
+### What is already built
 
-> "If your front knee is shooting way past your toes, your foot is too close to the bench; step it
-> further out before the next rep."
+Logging her period, working out which phase she is in, and coaching that changes with it. The coaching
+side already tells the app things like *"luteal phase: appetite and cravings commonly rise, perceived
+effort goes up, expect the scale to hold from water, treat that as normal rather than a setback."*
 
-**Please read a handful and tell us if that sounds like you.** If the voice is off we would rather
-rewrite 26 than have your name on words you would not say.
+**What does not exist is the workout itself changing.**
 
-Second: we rewrote about 31 Spanish exercise names that were badly machine-translated. "Barbell Step
-Ups" had become "de Paso con Barra," which is not a sentence. "Child's Pose" was showing as
-"Child'S Pose." If you or anyone on your team reads Spanish, a quick skim of the shot list would catch
-anything we got wrong.
+### What we found when we researched it properly
+
+1. **The performance effect is not really there.** Recent reviews find the strength difference across
+   a cycle is trivial and the evidence is poor quality. A 2025 review is literally titled *"Evidence
+   for Periodizing Strength Training According to Menstrual Cycle Phases Is Lacking."* The careful
+   studies find nothing; the positive ones do not replicate.
+2. **Most of your audience cannot be modelled.** Hormonal birth control, PCOS, postpartum,
+   perimenopause and ordinary irregularity. **Probably fewer than half your paying members have a
+   cycle regular enough to program around, and the app cannot tell which half.**
+3. **This is the part that decided it.** Research on cycle-tracking apps found women who get a
+   prediction that does not match how they feel **blame their own bodies rather than the app**. An app
+   that says "you should be strong this week" to a woman having a terrible week does real harm.
+4. **But ignoring cycles is also wrong.** Painful periods affect around 70% of active women. If the
+   app pretends it does not exist, women in pain quietly skip sessions and drift away.
+
+### What we recommend instead
+
+**Respond to what she tells you today, not to a prediction about her.**
+
+If she logs cramps, bad sleep, low energy or heavy soreness, the app offers **one optional, easily
+undone swap**: same movement, less demand. Drop the top set, swap the barbell hip thrust for the
+dumbbell version. **Not** replacing her workout with yoga, and **never** applied automatically.
+
+That works identically for a woman on the injectable, a woman with PCOS, a woman four months
+postpartum and a woman in perimenopause, because it never has to guess where she is in a cycle.
+
+Phase stays visible if she wants it, framed as *"you logged low energy around this time the last two
+months"*, which is true, rather than *"you are in your luteal phase so expect to be weaker"*, which is
+a prediction that can make her feel broken.
+
+**And one thing nobody else offers: an honest page saying symptoms are real, the evidence that phase
+changes what your muscles can build is weak, and consistency beats timing.** Every competitor is
+selling the opposite. That page is a credibility position your brand can own.
+
+**The question for you:** do you want the app to **tell her** it might be a harder week, or **decide
+for her** that it is a lighter one? We strongly recommend the first.
 
 ---
 
-## What you do NOT need to worry about
+# Part 3. What we built for you that you have not seen
 
-We handled these. They are listed only so you know they were dealt with:
+You do not need to do anything with these. They are done.
 
-- **New signups now get a welcome email from you** with their calories and macros and three things to
-  do on day one. Before this, someone could finish signing up and hear absolutely nothing.
-- **The app no longer tells a new member to sit and wait.** It used to say "your program is on the way"
-  with nothing behind it. Now it gives her things she can do today.
-- **You get a message thread with her already open**, in your voice, before you have written anything.
-- **You get a list of who is waiting on a program**, oldest first. Right now four people are on it, and
-  one has been waiting 15 days without anyone knowing.
-- **You get a Telegram alert the moment anyone signs up**, with her goal, her injuries and whether she
-  has paid.
-- **The exercise library was cleaned, the Spanish was repaired, and the app's daily report now runs
-  somewhere it cannot go down with the website.**
+- **New members get a welcome email from you** with their calories and macros and three things to do
+  on day one. Before this, a woman could finish signing up and hear nothing at all.
+- **The app stopped telling new members to wait.** It used to say "your program is on the way" with
+  nothing behind it. Now it gives her things she can do today.
+- **You have a message thread already open with her**, in your voice, before you have written a word.
+- **A list of who is waiting on a program**, oldest first. Four people are on it now. One has been
+  waiting **15 days** and nobody knew.
+- **A phone alert the second anyone signs up**, with her goal, her injuries and whether she has paid.
+- **Your client list now shows monthly versus paid in full**, which you asked for. The screen could
+  not answer that for three quarters of your business, because the export only carried billing for 67
+  people. We found your real payment history in the raw import: **1,539 charges, $297,716, since March
+  2024**, and matched 226 clients to it.
+
+  | | clients | average paid |
+  |---|---|---|
+  | One payment | 139 | $136 |
+  | Instalments, finished | 65 | $817 |
+  | Monthly, active | 14 | $844 |
+  | Monthly, long-term | 8 | $3,056 |
+  | not in the payment export | 43 | |
+
+  **A question on that last row:** 43 clients have no charges at all in the export. Were they comped,
+  or is the export incomplete?
+
+- **A draft intake form** is in `INTAKE-FORM-TEMPLATE.md`, which you have asked for three times. 42
+  questions, 9 of which the app already asks, so really 33. Edit it freely.
+- **The exercise library was cleaned and the Spanish was repaired.** 31 exercise names were badly
+  machine-translated and visible to Spanish-speaking members. "Barbell Step Ups" read as "de Paso con
+  Barra," which is not a sentence. "Child's Pose" read "Child'S Pose."
+
+---
+
+# Part 4. Everything on one page, in order
+
+| # | what | who | when |
+|---|---|---|---|
+| 1 | **Confirm the Lenus end date** | you | this week |
+| 2 | **Walkthrough call, recorded** | you and me | before that date |
+| 3 | Invite your clients, in batches | me, only when you say go | after the walkthrough |
+| 4 | The calorie decision | you | 2 minutes |
+| 5 | Review the intake form draft | you | 15 minutes |
+| 6 | Tell me about the 43 clients with no payments | you | 5 minutes |
+| 7 | Cycle: "tell her" or "decide for her" | you | 5 minutes |
+| 8 | Check the 26 new exercises are ones you coach | you | 10 minutes |
+| 9 | Filming, 76 movements | you | 1 to 3 days |
+| 10 | Ten to fifteen labelled food photos | you | 20 minutes |
+| 11 | Send me your website changes | you | whenever |
+| 12 | Send me your offers, so I can check them against pricing | you | before launch |
+| 13 | D-U-N-S, then the Apple developer account | waiting on Apple | out of our hands |
+
+**On number 13:** the D-U-N-S number unlocks the developer account. That is the first step of several,
+not the last one. **There is no iPhone app yet**, and there will not be one in September. The app works
+in a phone browser and can be added to a home screen, which is what your clients will use at launch.
+I would rather you know that now than in six weeks.
+
+---
+
+## The companion documents
+
+- `FILMING-SHOT-LIST.md`: your 76 movements, Spanish names, equipment
+- `INTAKE-FORM-TEMPLATE.md`: the intake form draft
+- `STEPHANIE-REQUESTS-AUDIT.md`: everything you have asked for and where each one stands
