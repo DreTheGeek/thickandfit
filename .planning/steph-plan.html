@@ -365,16 +365,25 @@
     <tr><td>Monthly, long-term</td><td class="n">8</td><td class="n">$3,056</td></tr>
     <tr><td>not in the export</td><td class="n"><b>43</b></td><td class="n">?</td></tr>
   </table></div>
+  <p class="tiny"><b>We looked into the 43.</b> They are three groups: <b>15</b> were marked unpaid in Lenus and never active, so they never paid. <b>11</b> are not in your client export at all, and we will send you those names. The other <b>17</b> are marked <i>active</i> on personal coaching with no charges on record, which almost always means they pay you directly by cash, Zelle or Venmo.</p>
   <div class="choices two" data-q="unpaid">
-    <button class="choice" type="button" data-v="They were comped"><b>They were comped or free</b><small>No charges because they never paid.</small></button>
-    <button class="choice" type="button" data-v="Export is incomplete"><b>The export is missing data</b><small>They did pay and it did not come across.</small></button>
+    <button class="choice" type="button" data-v="Go ahead"><b>Go ahead <span class="rec">we recommend</span></b><small>Tag the 17 as paying outside the app so they stop showing as free, mark the 15 lapsed, send me the 11 names.</small></button>
+    <button class="choice" type="button" data-v="Wait, let me look"><b>Hold on, let me look first</b><small>We send you all 43 before changing anything.</small></button>
   </div>
 
   <h3 style="margin-top:24px">Your website changes</h3>
-  <p class="tiny">You said the site looks good and there are adjustments you want. Send them whenever, or we walk the site together on the same call.</p>
+  <p class="tiny"><b>You do not have to write that list.</b> We will do a pass over every page and bring you one, page by page, with what we would change and why. You tick what you agree with and add anything we missed. Easier to react to a list than to build one from a blank page.</p>
 
-  <h3 style="margin-top:20px">Your offers</h3>
-  <p class="tiny">You mentioned sending your offers for the pricing section. Worth knowing before you do: pricing is currently locked at <b>$19.97 founding</b> for a five day window, then <b>$24.97 standard</b>. If your offers say something different we should reconcile them before either goes live.</p>
+  <h3 style="margin-top:20px">Your offers, and something worth seeing first</h3>
+  <p class="tiny">Before you send them, here is what your own 1,539 charges say you have actually been selling:</p>
+  <div class="scroll"><table><tr><th>what you sold</th><th>typical price</th><th class="n">people</th></tr><tr><td>Bootcamp and challenges</td><td><b>$59 and $129</b>, one time</td><td class="n">222</td></tr><tr><td>Personal coaching</td><td><b>$200 to $299 a month</b>, usually $275</td><td class="n">~230</td></tr></table></div>
+  <p class="tiny">The app is priced at <b>$19.97 founding, then $24.97</b>. That is not a mistake, it is a different product: self-guided, no one-on-one time with you. But it sits about ten times below what your coaching clients pay, and 265 of them are about to be invited into it.</p>
+  <p class="tiny"><b>So the real question is where your current clients land.</b> Pick one and we write it up:</p>
+  <div class="choices" data-q="pricing">
+    <button class="choice" type="button" data-v="Keep current clients where they are"><b>Keep them where they are <span class="rec">we recommend</span></b><small>Your $275 clients stay $275 and just get a better tool. The app price is for new self-guided members. Nobody gets a price change in the same month their platform moves, which is the month you are most likely to lose them.</small></button>
+    <button class="choice" type="button" data-v="Three tiers"><b>Three tiers</b><small>Self-guided at $24.97, a middle group tier, and one-on-one at your current rate. Your $59 and $129 buyers suggest there is a real middle you already serve.</small></button>
+    <button class="choice" type="button" data-v="Move everyone to app pricing"><b>Move everyone to the app price</b><small>Simplest to explain, and it walks away from most of your revenue. We would not.</small></button>
+  </div>
 </div>
 
 <!-- ============ WALKTHROUGH ============ -->
@@ -437,12 +446,21 @@
 
 <!-- ============ NOT READY ============ -->
 <div class="card">
+  <div class="eyebrow">New today</div>
+  <h2 class="disp">Your iPhone app is built</h2>
+  <p class="lede">It went from nothing to ready today. It is the same app your members already use, wrapped so it installs from the App Store.</p>
+  <p>It also does two things the website cannot: it opens your phone&rsquo;s <b>real camera</b> for meal photos, and it sends <b>proper push notifications</b> rather than the unreliable web kind.</p>
+  <p><b>It is ready to submit the moment the D-U-N-S number arrives.</b> This is on track for September.</p>
+  <details><summary>One business decision before we submit</summary><div class="body"><p class="tiny">Apple takes 15 to 30 percent of any subscription sold <i>inside</i> an iPhone app. On $19.97 a month that adds up fast. The simple answer, and what most coaching apps do, is to keep selling on the website and let the app be for members who have already joined. Two minute conversation, not a problem.</p></div></details>
+</div>
+
+<div class="card">
   <div class="eyebrow">Straight with you</div>
   <h2 class="disp">What is not ready</h2>
   <p class="muted">So nothing surprises you.</p>
   <p class="tiny">
     <b>Your demo videos are not filmed.</b> 76 on the list, 0 shot.<br><br>
-    <b>The App Store version is not built yet, but it can be ready for September.</b> Apple is quick, usually days once the D-U-N-S number lands. The part that is not done is ours: nobody has built the iPhone wrapper. The app already installs to your home screen and runs full screen, which is the hard part, so wrapping it is a few days of work.<br><br>
+
     <b>Payments are not switched on yet.</b> Nothing charges anyone today.
   </p>
 </div>
@@ -503,7 +521,7 @@
     ['website', 'Send your website change list', 'you, whenever'],
     ['offers', 'Send your offers so we can check them against pricing', 'you, before launch'],
     ['invites', 'Invite your clients, in batches', 'Dre, only when you say go'],
-    ['duns', 'D-U-N-S, developer account, then build the App Store version', 'Dre, a few days once D-U-N-S lands']
+    ['duns', 'Submit to the App Store', 'Dre, as soon as the D-U-N-S number lands']
   ];
 
   var host = document.getElementById('tasks');
@@ -558,7 +576,8 @@
     exercises: 'The 26 new exercises',
     photos: 'Food photos for the fat check',
     cycle: 'Cycle-based workouts',
-    unpaid: 'The 43 clients with no payment history'
+    unpaid: 'The 43 clients with no payment history',
+    pricing: 'Where current clients land on price'
   };
   document.getElementById('make').addEventListener('click', function () {
     var out = document.getElementById('out');

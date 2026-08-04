@@ -241,8 +241,19 @@ You do not need to do anything with these. They are done.
   | Monthly, long-term | 8 | $3,056 |
   | not in the payment export | 43 | |
 
-  **A question on that last row:** 43 clients have no charges at all in the export. Were they comped,
-  or is the export incomplete?
+  **That last row: we looked into it, and they are three different groups.**
+
+  | who they are | how many | what we will do |
+  |---|---|---|
+  | marked unpaid in Lenus, not active. Signed up, never paid | 15 | mark them lapsed |
+  | **active** personal coaching, no charges on record | 17 | see below |
+  | not in your client export at all | 11 | we send you the names |
+
+  The 17 are the interesting ones: marked active on personal coaching with no charge history, which
+  almost always means **they pay you directly**, by cash, Zelle or Venmo, outside the platform.
+
+  **Unless you say otherwise we will** tag those 17 as paying outside the app so they stop showing as
+  free, mark the 15 lapsed, and send you the 11 names. Nothing for you to build.
 
 - **A draft intake form** is in `INTAKE-FORM-TEMPLATE.md`, which you have asked for three times. 42
   questions, 9 of which the app already asks, so really 33. Edit it freely.
@@ -261,13 +272,13 @@ You do not need to do anything with these. They are done.
 | 3 | Invite your clients, in batches | me, only when you say go | after the walkthrough |
 | 4 | The calorie decision | you | 2 minutes |
 | 5 | Review the intake form draft | you | 15 minutes |
-| 6 | Tell me about the 43 clients with no payments | you | 5 minutes |
+| 6 | Say yes to how we handle the 43 unpaid clients | you | 1 minute |
 | 7 | Cycle: "tell her" or "decide for her" | you | 5 minutes |
 | 8 | Check the 26 new exercises are ones you coach | you | 10 minutes |
 | 9 | Filming, 76 movements | you | 1 to 3 days |
 | 10 | Ten to fifteen labelled food photos | you | 20 minutes |
-| 11 | Send me your website changes | you | whenever |
-| 12 | Send me your offers, so I can check them against pricing | you | before launch |
+| 11 | Approve our website change list | we bring it, you approve | whenever |
+| 12 | Pick where your current clients land on price | you | 5 minutes |
 | 13 | App Store submission | Dre, once the D-U-N-S lands | built, ready to submit |
 
 **On number 13: the iPhone app is built.** It was built today. It is the same app your members already
