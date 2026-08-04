@@ -7,12 +7,17 @@
 // re-exports this file.
 import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
-import { cookies } from 'next/headers';
+import Link from 'next/link';
+import { cookies, headers } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
 import { getUiLocale } from '@/lib/i18n/locale';
-import { localeAlternates } from '@/lib/seo/locale-alternates';
+import { localeAlternates, withLocalePrefix } from '@/lib/seo/locale-alternates';
 import { findLeadByReferralCode } from '@/lib/funnel/service';
 import { WaitlistFunnelForm } from '@/components/funnel/waitlist-funnel-form';
+
+// The registered entity behind Thick & Fit. A legal entity name is a proper noun: it is deliberately
+// NOT in the message files, because a translated company name identifies nobody.
+const LEGAL_ENTITY = 'Thick Fit Coaching LLC';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +45,12 @@ export default async function JoinPage({
   const locale = await getUiLocale();
   const sp = await searchParams;
 
+  // Keep the legal links in the language the visitor is actually reading. On /es/join a link to
+  // /privacy would drop a Spanish reader onto the English canonical URL.
+  const pathname = (await headers()).get('x-pathname');
+  const lp = (target: string): string => withLocalePrefix(pathname, target);
+  const year = new Date().getFullYear();
+
   // Prefer the URL param (a fresh referral click) over the cookie (a returning visitor); if only
   // the cookie is set, still credit them. Downcase for the DB lookup (referral_code is lower).
   const cookieRef = (await cookies()).get('funnel_ref_incoming')?.value ?? null;
@@ -50,6 +61,9 @@ export default async function JoinPage({
   // A stale/typo'd code just falls through; we still let the form load.
   const referrer = code ? await findLeadByReferralCode(code) : null;
   const invalidReferral = code !== null && referrer === null;
+  // A referrer with no first name used to render a dash where the name goes, which read as broken.
+  // The credit still counts server-side; it just does not get a sentence that names nobody.
+  const referrerName = (referrer?.first_name ?? '').trim();
 
   return (
     <main className="min-h-screen bg-[#0e0e0e] text-white">
@@ -90,9 +104,9 @@ export default async function JoinPage({
             <p className="mt-5 max-w-[52ch] text-[16px] leading-snug text-white/85 sm:text-[18px]">
               {t('landingSubhead')}
             </p>
-            {referrer && (
+            {referrer && referrerName.length > 0 && (
               <p className="mt-6 rounded-md border border-white/15 bg-black/40 px-4 py-3 text-[14px] leading-snug text-white">
-                {t('referredBy', { name: (referrer.first_name ?? '').trim() || '—' })}
+                {t('referredBy', { name: referrerName })}
               </p>
             )}
             {invalidReferral && (
@@ -108,6 +122,70 @@ export default async function JoinPage({
           </div>
         </div>
       </section>
+
+      {/* Official rules, published on the entry page itself.
+          A sweepstakes has to make its rules reachable from where people enter, and Meta will not
+          run ads to a promotion page that has no rules and no disclaimer naming them. This lives on
+          the page rather than behind a link because no rules route exists yet; when one ships, point
+          the footer link at it and this can collapse to a summary. Everything here is a fact already
+          locked in the funnel (entry math, Instagram requirement, sponsor). Prize and drawing dates
+          are deliberately absent rather than invented: they belong in the full rules. */}
+      <section
+        id="giveaway-rules"
+        aria-labelledby="giveaway-rules-title"
+        className="scroll-mt-16 border-t border-white/10 bg-black"
+      >
+        <div className="mx-auto w-full max-w-[1340px] px-5 py-12 sm:px-8">
+          <h2
+            id="giveaway-rules-title"
+            className="text-[13px] font-bold uppercase tracking-[0.16em] text-white/70"
+          >
+            {t('rulesTitle')}
+          </h2>
+          <div className="mt-4 grid max-w-[100ch] gap-3 text-[12px] leading-relaxed text-white/55 sm:grid-cols-2">
+            <p>{t('rulesEntry')}</p>
+            <p>{t('rulesEligibility')}</p>
+            <p>{t('rulesWinners')}</p>
+            <p>{t('rulesSponsor', { entity: LEGAL_ENTITY })}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Who is on the other end of the form. The page asked for a name and a phone number while
+          naming nobody, which is both a trust gap and a Meta ad rejection. */}
+      <footer className="border-t border-white/10 bg-black">
+        <div className="mx-auto w-full max-w-[1340px] px-5 py-10 sm:px-8">
+          <p className="text-[13px] font-semibold text-white/85">{LEGAL_ENTITY}</p>
+          <p className="mt-2 max-w-[70ch] text-[12px] leading-relaxed text-white/50">
+            {t('footerWhoWeAre', { entity: LEGAL_ENTITY })}
+          </p>
+          <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[12px] text-white/65">
+            <li>
+              <Link href={lp('/privacy')} className="underline underline-offset-4 hover:text-white">
+                {t('footerPrivacy')}
+              </Link>
+            </li>
+            <li>
+              <Link href={lp('/terms')} className="underline underline-offset-4 hover:text-white">
+                {t('footerTerms')}
+              </Link>
+            </li>
+            <li>
+              <a href="#giveaway-rules" className="underline underline-offset-4 hover:text-white">
+                {t('rulesTitle')}
+              </a>
+            </li>
+            <li>
+              <Link href={lp('/support')} className="underline underline-offset-4 hover:text-white">
+                {t('footerSupport')}
+              </Link>
+            </li>
+          </ul>
+          <p className="mt-6 text-[11px] leading-relaxed text-white/35">
+            &copy; {year} {LEGAL_ENTITY}. {t('footerRights')}
+          </p>
+        </div>
+      </footer>
     </main>
   );
 }

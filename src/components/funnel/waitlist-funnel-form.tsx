@@ -7,9 +7,14 @@
 // server-side without needing the id in the URL, then redirects to /join/thanks. IG handle is
 // required per the launch spec ("must have Instagram to enter"); every other field validates on
 // blur so the CTA is not a mystery box of errors.
-import { useMemo, useState, type FormEvent, type ReactElement } from 'react';
+import { useMemo, useState, useCallback, type FormEvent, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { TurnstileWidget } from '@/components/funnel/turnstile-widget';
+
+// Public site key baked at build time. Absent = no widget rendered (server verify also skips,
+// the two are kept in sync via the same "unset means bypass" convention across the app).
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 type Status = 'idle' | 'submitting' | 'error';
 
@@ -18,7 +23,7 @@ function normalizeInstagram(raw: string): string {
   return raw.trim().replace(/^@+/, '').replace(/\s+/g, '');
 }
 
-// Minimal IG validator: letters, digits, dot, underscore, 1–30 chars per IG's own rule.
+// Minimal IG validator: letters, digits, dot, underscore, 1 to 30 chars per IG's own rule.
 function isValidInstagram(raw: string): boolean {
   const h = normalizeInstagram(raw);
   return /^[A-Za-z0-9._]{1,30}$/.test(h);
@@ -42,15 +47,24 @@ export function WaitlistFunnelForm({
   const [lang, setLang] = useState<'en' | 'es'>(locale);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Turnstile challenge response. Null when the widget hasn't solved yet OR when Turnstile isn't
+  // configured (site key unset: widget renders nothing and the server verify layer skips too).
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const onTurnstileToken = useCallback((t: string | null) => setTurnstileToken(t), []);
+  const turnstileConfigured = TURNSTILE_SITE_KEY.length > 0;
 
   const canSubmit = useMemo(() => {
-    return (
+    const baseValid =
       status !== 'submitting' &&
       firstName.trim().length > 0 &&
       email.trim().length > 3 &&
-      isValidInstagram(instagram)
-    );
-  }, [status, firstName, email, instagram]);
+      isValidInstagram(instagram);
+    // Only gate on the Turnstile token when Turnstile is actually enabled; otherwise a pre-config
+    // deploy would strand every user with a permanently-disabled CTA.
+    if (!baseValid) return false;
+    if (turnstileConfigured && !turnstileToken) return false;
+    return true;
+  }, [status, firstName, email, instagram, turnstileConfigured, turnstileToken]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -70,6 +84,7 @@ export function WaitlistFunnelForm({
           locale: lang,
           referred_by_code: referredByCode || undefined,
           source: 'waitlist-form',
+          turnstile_token: turnstileToken || undefined,
         }),
       });
       const body = (await res.json().catch(() => null)) as
@@ -89,7 +104,7 @@ export function WaitlistFunnelForm({
       }
 
       // Persist the lead identity in a first-party cookie so the thank-you page renders without
-      // exposing the leadId in the URL. 60 days is generous — the campaign is ~8 weeks.
+      // exposing the leadId in the URL. 60 days is generous: the campaign is ~8 weeks.
       const maxAge = 60 * 60 * 24 * 60; // 60d
       document.cookie = `funnel_lead=${encodeURIComponent(body.data.leadId)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
       document.cookie = `funnel_ref=${encodeURIComponent(body.data.referralCode)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
@@ -104,6 +119,11 @@ export function WaitlistFunnelForm({
   const inputCls =
     'w-full rounded-md border border-white/15 bg-black/40 px-4 py-3 text-[15px] text-white placeholder:text-white/40 outline-none focus:border-[#ff2d55]';
   const labelCls = 'block text-[12px] font-semibold uppercase tracking-[0.14em] text-white/70';
+  // Optional fields carried no marker at all, so next to three fields ending in "*" they read as
+  // required and people bounced rather than leave one blank. The badge is the counterpart to the "*".
+  const optionalCls =
+    'ml-2 text-[10px] font-medium normal-case tracking-[0.06em] text-white/45';
+  const helpCls = 'text-[12px] leading-relaxed text-white/55';
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} noValidate className="mx-auto w-full max-w-[560px]">
@@ -124,7 +144,10 @@ export function WaitlistFunnelForm({
           />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className={labelCls}>{t('lastName')}</span>
+          <span className={labelCls}>
+            {t('lastName')}
+            <span className={optionalCls}>{t('optional')}</span>
+          </span>
           <input
             type="text"
             autoComplete="family-name"
@@ -148,8 +171,15 @@ export function WaitlistFunnelForm({
         />
       </label>
 
+      {/* TCPA: we cannot text a number collected without disclosed consent. The line has to be at
+          the point of collection, has to say the number is optional and not a condition of joining,
+          has to name the message types and that rates apply, and has to publish the STOP keyword.
+          Moving or trimming it is a legal change, not a copy change. */}
       <label className="mt-4 flex flex-col gap-1.5">
-        <span className={labelCls}>{t('phone')}</span>
+        <span className={labelCls}>
+          {t('phone')}
+          <span className={optionalCls}>{t('optional')}</span>
+        </span>
         <input
           type="tel"
           inputMode="tel"
@@ -158,6 +188,7 @@ export function WaitlistFunnelForm({
           onChange={(e) => setPhone(e.target.value)}
           className={inputCls}
         />
+        <span className={helpCls}>{t('phoneConsent')}</span>
       </label>
 
       <label className="mt-4 flex flex-col gap-1.5">
@@ -180,7 +211,7 @@ export function WaitlistFunnelForm({
             className={`${inputCls} pl-9`}
           />
         </div>
-        <span className="text-[12px] text-white/55">{t('instagramHelp')}</span>
+        <span className={helpCls}>{t('instagramHelp')}</span>
       </label>
 
       <fieldset className="mt-5">
@@ -205,6 +236,10 @@ export function WaitlistFunnelForm({
         </div>
       </fieldset>
 
+      {turnstileConfigured && (
+        <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} locale={lang} onToken={onTurnstileToken} />
+      )}
+
       {status === 'error' && errorMessage && (
         <p
           role="alert"
@@ -214,16 +249,24 @@ export function WaitlistFunnelForm({
         </p>
       )}
 
+      {/* The page sells a $19.97 founding price, so the button reads like a checkout unless we say
+          otherwise right where the thumb is. Free, no card, no charge today. */}
+      <p className="mt-6 text-center text-[13px] leading-relaxed text-white/75">
+        {t('freeReassurance')}
+      </p>
+
       <button
         type="submit"
         disabled={!canSubmit}
-        className="mt-6 block w-full rounded-full bg-[#ff2d55] px-9 py-4 text-center text-[15px] font-bold uppercase tracking-[0.02em] text-[#0e0e0e] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-3 block w-full rounded-full bg-[#ff2d55] px-9 py-4 text-center text-[15px] font-bold uppercase tracking-[0.02em] text-[#0e0e0e] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {status === 'submitting' ? t('submitting') : t('cta')}
       </button>
 
       <p className="mt-4 text-[12px] leading-relaxed text-white/60">{t('fineprint')}</p>
-      <p className="mt-3 text-[11px] leading-relaxed text-white/40">{t('footerLegal')}</p>
+      {/* Replaces the old `footerLegal`, which put "US residents 18+" on the WAITLIST and told half
+          the audience (Latin America) they were not invited. Only the giveaway is restricted. */}
+      <p className="mt-3 text-[11px] leading-relaxed text-white/40">{t('giveawayEligibility')}</p>
     </form>
   );
 }

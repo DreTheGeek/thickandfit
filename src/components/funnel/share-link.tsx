@@ -1,5 +1,5 @@
 'use client';
-// The share block on the thank-you page — the single highest-leverage element in the funnel per
+// The share block on the thank-you page: the single highest-leverage element in the funnel per
 // kb-funnels doctrine 1. Two rows:
 //   1) Copy input + Copy button (works everywhere; falls back to selection-copy on old browsers)
 //   2) Per-channel share row: iMessage / WhatsApp / X / native share sheet (on mobile)
@@ -37,7 +37,7 @@ export function ShareLink({ url }: Props): ReactElement {
         await nav.share({ title: 'Thick & Fit', text: shareText, url });
         return;
       } catch {
-        // user dismissed — fall through to copy
+        // user dismissed: fall through to copy
       }
     }
     void doCopy();

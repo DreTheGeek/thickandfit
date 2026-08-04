@@ -88,7 +88,7 @@ export function QuizForm({ leadId, locale }: { leadId: string; locale: 'en' | 'e
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="mx-auto w-full max-w-[640px]">
-      {/* Goal — multi-select */}
+      {/* Goal: multi-select */}
       <fieldset className="mt-2">
         <legend className={labelCls}>{t('quizGoal')} *</legend>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -106,7 +106,7 @@ export function QuizForm({ leadId, locale }: { leadId: string; locale: 'en' | 'e
         </div>
       </fieldset>
 
-      {/* Where — single-select */}
+      {/* Where: single-select */}
       <fieldset className="mt-7">
         <legend className={labelCls}>{t('quizWhere')} *</legend>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -124,7 +124,7 @@ export function QuizForm({ leadId, locale }: { leadId: string; locale: 'en' | 'e
         </div>
       </fieldset>
 
-      {/* Days per week — 2 through 6 */}
+      {/* Days per week: 2 through 6 */}
       <fieldset className="mt-7">
         <legend className={labelCls}>{t('quizDays')} *</legend>
         <div className="mt-3 flex flex-wrap gap-2">
