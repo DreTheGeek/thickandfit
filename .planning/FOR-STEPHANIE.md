@@ -12,10 +12,10 @@ Last updated: 3 August 2026
 
 # Part 1. The one that changes the schedule
 
-You said your contract "with Lena" ends at the end of the month, and asked when your clients get
+You said your contract with Lenus ends at the end of the month, and asked when your clients get
 moved into the app so you can keep serving them.
 
-**If that means Lenus, we have a problem with the calendar, and I would rather raise it now than in
+**We have a problem with the calendar, and I would rather raise it now than in
 three weeks.**
 
 - Your current platform goes away around **31 August**.

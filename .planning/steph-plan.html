@@ -1,0 +1,588 @@
+<title>Thick &amp; Fit: your plan</title>
+
+<style>
+  /* Palette lifted verbatim from the app's own globals.css so this reads as the same product.
+     Green is a FUNCTIONAL signal only (done, progress), never decoration. */
+  :root {
+    --ink:#0f0f0f; --bg:#e7e5df; --surface:#ffffff; --warm:#dddbd3;
+    --line:#ddd9d0; --divider:#eae7e0; --muted:#636363; --soft:#5c5c5c; --faint:#757575;
+    --accent:#5ebe62; --accent-ink:#053b07;
+    --pending:#fbe6a2; --pending-ink:#6b5200;
+    --alert:#f3c0c0; --alert-ink:#7a1f1f;
+    --shadow:0 1px 2px rgba(15,15,15,.05), 0 8px 24px rgba(15,15,15,.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:#f4f4f5; --bg:#0c0c0e; --surface:#18181b; --warm:#232328;
+      --line:#2c2c32; --divider:#232328; --muted:#a1a1aa; --soft:#c6c6cd; --faint:#71717a;
+      --accent:#5ebe62; --accent-ink:#bff0c1;
+      --pending:#3a3214; --pending-ink:#fbe6a2;
+      --alert:#3d1c1c; --alert-ink:#f3c0c0;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#f4f4f5; --bg:#0c0c0e; --surface:#18181b; --warm:#232328;
+    --line:#2c2c32; --divider:#232328; --muted:#a1a1aa; --soft:#c6c6cd; --faint:#71717a;
+    --accent:#5ebe62; --accent-ink:#bff0c1;
+    --pending:#3a3214; --pending-ink:#fbe6a2;
+    --alert:#3d1c1c; --alert-ink:#f3c0c0;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  }
+  :root[data-theme="light"] {
+    --ink:#0f0f0f; --bg:#e7e5df; --surface:#ffffff; --warm:#dddbd3;
+    --line:#ddd9d0; --divider:#eae7e0; --muted:#636363; --soft:#5c5c5c; --faint:#757575;
+    --accent:#5ebe62; --accent-ink:#053b07;
+    --pending:#fbe6a2; --pending-ink:#6b5200;
+    --alert:#f3c0c0; --alert-ink:#7a1f1f;
+    --shadow:0 1px 2px rgba(15,15,15,.05), 0 8px 24px rgba(15,15,15,.04);
+  }
+
+  /* The app pairs a condensed display face with a plain UI face. Webfont CDNs are blocked here, so
+     these degrade to the nearest condensed and system stacks rather than silently loading nothing. */
+  --disp: 'Oswald','Bebas Neue','Arial Narrow',system-ui,sans-serif;
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:760px; margin:0 auto; padding:0 20px 80px; }
+
+  .disp { font-family:'Oswald','Bebas Neue','Arial Narrow',system-ui,sans-serif;
+          text-transform:uppercase; letter-spacing:.5px; font-weight:700; text-wrap:balance; }
+
+  /* ---- header ---- */
+  header { padding:36px 0 18px; }
+  .brand { font-size:12px; letter-spacing:2.4px; color:var(--faint); text-transform:uppercase; font-weight:700; }
+  h1 { margin:10px 0 6px; font-size:clamp(30px,6vw,44px); line-height:1.05; }
+  .sub { color:var(--soft); font-size:15px; max-width:56ch; margin:0; }
+
+  /* ---- sticky progress ---- */
+  .bar {
+    position:sticky; top:0; z-index:20; background:var(--bg);
+    padding:12px 0; border-bottom:1px solid var(--line); margin-bottom:26px;
+  }
+  .bar-row { display:flex; align-items:center; gap:12px; }
+  .track { flex:1; height:8px; background:var(--warm); border-radius:99px; overflow:hidden; }
+  .fill { height:100%; width:0%; background:var(--accent); border-radius:99px; transition:width .35s ease; }
+  .count { font-size:13px; color:var(--soft); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .theme-btn {
+    border:1px solid var(--line); background:var(--surface); color:var(--soft);
+    border-radius:99px; padding:5px 11px; font-size:12px; cursor:pointer;
+  }
+
+  /* ---- cards ---- */
+  .card {
+    background:var(--surface); border-radius:16px; padding:22px; margin-bottom:16px;
+    box-shadow:var(--shadow);
+  }
+  .card.urgent { border-left:4px solid var(--alert-ink); }
+  .eyebrow {
+    font-size:11px; letter-spacing:1.6px; text-transform:uppercase; font-weight:700;
+    color:var(--faint); margin-bottom:8px;
+  }
+  .eyebrow.hot { color:var(--alert-ink); }
+  h2 { margin:0 0 10px; font-size:clamp(20px,3.6vw,26px); line-height:1.15; }
+  h3 { margin:22px 0 8px; font-size:16px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:17px; color:var(--ink); }
+  .muted { color:var(--soft); }
+  .tiny { font-size:13px; color:var(--faint); }
+
+  .pill {
+    display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700;
+    letter-spacing:.6px; text-transform:uppercase;
+  }
+  .pill.time { background:var(--warm); color:var(--soft); }
+  .pill.hot { background:var(--alert); color:var(--alert-ink); }
+  .pill.wait { background:var(--pending); color:var(--pending-ink); }
+  .pill.ok { background:var(--accent); color:var(--accent-ink); }
+
+  /* ---- stats ---- */
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin:16px 0; }
+  .stat { background:var(--warm); border-radius:12px; padding:12px 14px; }
+  .stat b { display:block; font-size:26px; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .stat span { font-size:12px; color:var(--soft); }
+  .stat.bad b { color:var(--alert-ink); }
+
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:14px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--divider); }
+  th { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--faint); font-weight:700; }
+  td.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .scroll { overflow-x:auto; }
+
+  /* ---- decisions ---- */
+  .choices { display:grid; gap:10px; margin:14px 0 6px; }
+  @media (min-width:620px){ .choices.two { grid-template-columns:1fr 1fr; } }
+  .choice {
+    text-align:left; background:var(--surface); border:1.5px solid var(--line); border-radius:14px;
+    padding:14px 16px; cursor:pointer; font:inherit; color:inherit; transition:border-color .15s, background .15s;
+  }
+  .choice:hover { border-color:var(--ink); }
+  .choice:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+  .choice[aria-pressed="true"] { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+  .choice b { display:block; margin-bottom:3px; }
+  .choice small { color:var(--soft); font-size:13px; line-height:1.45; display:block; }
+  .rec { font-size:12px; color:var(--accent-ink); background:var(--accent); padding:2px 7px; border-radius:99px; margin-left:6px; }
+
+  /* ---- checklist ---- */
+  .task {
+    display:flex; gap:13px; align-items:flex-start; padding:13px 0; border-bottom:1px solid var(--divider);
+  }
+  .task:last-child { border-bottom:0; }
+  .task input { margin-top:3px; width:19px; height:19px; accent-color:var(--accent); flex:none; cursor:pointer; }
+  .task label { cursor:pointer; }
+  .task .who { font-size:12px; color:var(--faint); }
+  .task.done label > b { text-decoration:line-through; opacity:.5; }
+
+  details { border-top:1px solid var(--divider); margin-top:14px; padding-top:12px; }
+  details summary {
+    cursor:pointer; font-size:14px; font-weight:600; color:var(--soft); list-style:none;
+  }
+  details summary::-webkit-details-marker { display:none; }
+  details summary::before { content:'+ '; color:var(--faint); }
+  details[open] summary::before { content:'– '; }
+  details .body { padding-top:10px; }
+
+  blockquote {
+    margin:12px 0; padding:10px 14px; border-left:3px solid var(--line);
+    color:var(--soft); font-style:italic; font-size:14px;
+  }
+
+  .send {
+    position:sticky; bottom:16px; margin-top:26px;
+  }
+  .send-inner {
+    background:var(--ink); color:var(--bg); border-radius:16px; padding:18px 20px; box-shadow:var(--shadow);
+  }
+  .send-inner h2 { color:var(--bg); margin-bottom:6px; }
+  .send-inner p { color:var(--bg); opacity:.75; font-size:14px; }
+  .btn {
+    background:var(--bg); color:var(--ink); border:0; border-radius:99px; padding:12px 22px;
+    font:inherit; font-weight:700; font-size:14px; cursor:pointer; margin-top:6px;
+  }
+  .btn:focus-visible { outline:2px solid var(--bg); outline-offset:3px; }
+  .out {
+    margin-top:12px; width:100%; min-height:150px; border-radius:12px; border:0; padding:12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; line-height:1.55;
+    background:var(--surface); color:var(--ink); display:none;
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="brand">Thick &amp; Fit</div>
+  <h1 class="disp">Your plan, and what I need from you</h1>
+  <p class="sub">Everything in one place. Tap your answers as you read, then hit the button at the bottom to send them back to me. Nothing here needs you to understand how any of it works.</p>
+</header>
+
+<div class="bar">
+  <div class="bar-row">
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="count" id="count">0 of 13</div>
+    <button class="theme-btn" id="theme" type="button">Dark</button>
+  </div>
+</div>
+
+<!-- ============ URGENT ============ -->
+<div class="card urgent">
+  <div class="eyebrow hot">Read this first</div>
+  <h2 class="disp">Your Lenus contract ends before we open</h2>
+  <p class="lede">You said your Lenus contract ends at the end of the month. If that is right, there is a gap I would rather flag now than in three weeks.</p>
+
+  <div class="stats">
+    <div class="stat"><b>31 Aug</b><span>Lenus ends</span></div>
+    <div class="stat"><b>27 Sep</b><span>doors were planned</span></div>
+    <div class="stat bad"><b>4 weeks</b><span>with nowhere to serve clients</span></div>
+  </div>
+
+  <h3>Where your clients actually are</h3>
+  <div class="stats">
+    <div class="stat"><b>265</b><span>have their history in the app</span></div>
+    <div class="stat bad"><b>1</b><span>can actually log in today</span></div>
+  </div>
+
+  <p>Everything of theirs moved across in July: weights, photos, your message history, their intake answers. <b>What has not happened is the invitations.</b> Nobody has been emailed yet.</p>
+  <p class="muted">That pause is deliberate. The moment those go out, 264 women start arriving, and I do not want that before you have seen the app and know how to answer them. <b>Nothing goes to your clients until you say go.</b></p>
+
+  <details>
+    <summary>What happens after you confirm the date</summary>
+    <div class="body">
+      <p class="tiny">1. We do the walkthrough, recorded, about an hour.<br>
+      2. You get a test client account so you can see what your members see.<br>
+      3. We invite your clients in batches, not all 264 at once, so day one is a handful of people rather than a wave.</p>
+    </div>
+  </details>
+</div>
+
+<!-- ============ DECISIONS ============ -->
+<div class="card">
+  <div class="eyebrow">Decision 1 of 4</div>
+  <h2 class="disp">A calorie question that affects almost everyone</h2>
+  <span class="pill time">2 minutes</span> <span class="pill hot">most important</span>
+
+  <p style="margin-top:14px">When a woman signs up she ticks what she wants and types a goal weight. If she ticks <b>both "lose fat" and "build muscle"</b>, the app reads that as body recomposition and gives her <b>maintenance calories</b>, the number that keeps her exactly where she is. Then it saves the goal weight anyway and builds a plan that will never reach it.</p>
+
+  <blockquote>Rodney signed up this week: 194 lb now, 174 lb goal, lose fat and build muscle. The app gave him 2,701 calories, which is exactly what keeps him at 194. He asked to lose 20 pounds. The app said yes, then made a plan that cannot get him there.</blockquote>
+
+  <p>"I want to lose fat and tone up" is probably the most common way a woman describes her goal, so this will hit a lot of the women joining in September.</p>
+
+  <h3>Your own history points one way</h3>
+  <div class="scroll"><table>
+    <tr><th>what you actually coached</th><th class="n">clients</th></tr>
+    <tr><td>a calorie deficit</td><td class="n"><b>225 (84%)</b></td></tr>
+    <tr><td>maintenance</td><td class="n">17 (6%)</td></tr>
+    <tr><td>not recorded</td><td class="n">25 (9%)</td></tr>
+  </table></div>
+  <p class="tiny">And none of your 267 client records has a goal weight in it. Lenus never asked for one. The goal-weight question is something we added, not something you have ever needed.</p>
+
+  <h3>So what do you do with her?</h3>
+  <div class="choices two" data-q="calories">
+    <button class="choice" type="button" data-v="Deficit">
+      <b>Put her in a deficit <span class="rec">we recommend</span></b>
+      <small>The goal weight is the real instruction. "Build muscle" means keep her protein high and keep her lifting so she holds her muscle while the fat comes off.</small>
+    </button>
+    <button class="choice" type="button" data-v="Maintenance">
+      <b>Keep her at maintenance</b>
+      <small>Recomposition is right for her, her weight may barely move, and we stop asking for a goal weight in that case.</small>
+    </button>
+  </div>
+
+  <details>
+    <summary>Why we lean toward a deficit</summary>
+    <div class="body">
+      <p class="tiny">A typed goal weight is a specific promise; a checkbox is a mood. For your audience "build muscle" usually means "look toned". The app puts the scale in her face every week, so a number that never moves reads as failure. And a moderate deficit with high protein and lifting <b>is</b> recomposition for most people, and it moves the scale too.</p>
+      <p class="tiny"><b>Already fixed either way:</b> the app used to congratulate her at signup for a flat scale, then nag her about it 14 days later with a "looks like a plateau" banner. Same number, opposite verdict. That contradiction is gone.</p>
+    </div>
+  </details>
+</div>
+
+<div class="card">
+  <div class="eyebrow">Decision 2 of 4</div>
+  <h2 class="disp">Your demo videos</h2>
+  <span class="pill time">1 to 3 filming days</span>
+
+  <p style="margin-top:14px">The whole promise is <b>your</b> workouts with <b>your</b> demos in your voice. Right now a member opens almost any exercise and gets text and nothing to watch.</p>
+
+  <div class="stats">
+    <div class="stat"><b>899</b><span>exercises in the app</span></div>
+    <div class="stat bad"><b>2</b><span>have any video</span></div>
+    <div class="stat bad"><b>0</b><span>filmed by you</span></div>
+  </div>
+
+  <p>So you do not film 899 things: the list you inherited was a generic bodybuilding list somebody imported in one go. Conan's Wheel, atlas stones, 66 different bicep curls, and almost no glute work. <b>We cut it to 250 useful ones and added 26 that were completely missing.</b></p>
+
+  <blockquote>There were zero clamshells, zero frog pumps, zero curtsy lunges, zero Bulgarian split squats, and exactly one hip thrust. For a business built on glutes, those absences were the real problem.</blockquote>
+
+  <p><b>Your shot list is 76 movements</b>, ordered by what you actually program, taken from 4,182 real workouts your clients completed. <b>36 of them need nothing but a mat and a band.</b></p>
+
+  <div class="scroll"><table>
+    <tr><th>block</th><th class="n">movements</th></tr>
+    <tr><td>Glutes and hinge</td><td class="n"><b>37</b></td></tr>
+    <tr><td>Shoulders, chest, triceps</td><td class="n">10</td></tr>
+    <tr><td>Back and biceps</td><td class="n">8</td></tr>
+    <tr><td>Legs</td><td class="n">7</td></tr>
+    <tr><td>Mobility and stretch</td><td class="n">8</td></tr>
+    <tr><td>Core</td><td class="n">4</td></tr>
+    <tr><td>Conditioning</td><td class="n">2</td></tr>
+  </table></div>
+
+  <h3>Do you actually program the 26 new ones?</h3>
+  <div class="choices two" data-q="exercises">
+    <button class="choice" type="button" data-v="Yes, film all 76"><b>Yes, they all look right</b><small>Film the full list top to bottom.</small></button>
+    <button class="choice" type="button" data-v="I'll mark some to remove"><b>Some I would never coach</b><small>You send the ones to cut and they come off the list.</small></button>
+  </div>
+  <p class="tiny">An exercise on the list you will not film is worse than one that was never there.</p>
+</div>
+
+<div class="card">
+  <div class="eyebrow">Decision 3 of 4</div>
+  <h2 class="disp">Ten to fifteen food photos</h2>
+  <span class="pill time">20 minutes, across normal meals</span>
+
+  <p style="margin-top:14px">When a member photographs her food she has to confirm it before it saves. We built a faster version where a confident photo just logs itself, with an undo. <b>No major competitor does this.</b> It is finished and switched off.</p>
+
+  <p>It stays off until we can prove the app is not undercounting fat. A recent study found photo estimates commonly miss 250 to 345 calories a meal, mostly from cooking oil you cannot see. We check that against photos where we already know the answer, and <b>we do not have any</b>, so the test honestly reports "unknown" rather than inventing a pass.</p>
+
+  <h3>Can you send them?</h3>
+  <div class="choices two" data-q="photos">
+    <button class="choice" type="button" data-v="Yes, I'll send photos"><b>Yes, I can do that</b><small>Pan-fried protein and how much oil, a dressed salad, a restaurant plate, avocado or nuts, an oily stir fry.</small></button>
+    <button class="choice" type="button" data-v="Not right now"><b>Not right now</b><small>Nothing breaks. The feature stays off until later.</small></button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="eyebrow">Decision 4 of 4</div>
+  <h2 class="disp">Workouts that change with her cycle</h2>
+  <span class="pill time">5 minutes</span>
+
+  <p style="margin-top:14px">You asked for this. <b>Half of it already exists, and I want to talk you out of the other half.</b></p>
+
+  <p>Already built: logging her period, working out which phase she is in, and coaching that changes with it. The coaching side already knows things like <i>"luteal phase: cravings rise, perceived effort goes up, expect the scale to hold from water, treat that as normal rather than a setback."</i> <b>What does not exist is the workout itself changing.</b></p>
+
+  <h3>What we found when we researched it</h3>
+  <p class="tiny"><b>1.</b> The performance effect is barely there. A 2025 review is literally titled <i>"Evidence for Periodizing Strength Training According to Menstrual Cycle Phases Is Lacking."</i><br>
+  <b>2.</b> Probably <b>fewer than half your members</b> have a cycle regular enough to program around, between birth control, PCOS, postpartum and perimenopause, and the app cannot tell which half.<br>
+  <b>3.</b> This is what decided it: research on cycle apps found women given a prediction that does not match how they feel <b>blame their own bodies, not the app</b>.<br>
+  <b>4.</b> But ignoring cycles is also wrong. Painful periods affect around 70% of active women, and an app that pretends otherwise loses them quietly.</p>
+
+  <h3>So which do you want?</h3>
+  <div class="choices two" data-q="cycle">
+    <button class="choice" type="button" data-v="Offer, don't decide">
+      <b>Offer her a lighter option <span class="rec">we recommend</span></b>
+      <small>When she logs cramps, bad sleep or low energy, the app offers one easy swap she can take or ignore. Same movement, less demand. Never applied automatically. Works the same for a woman on birth control, with PCOS, or postpartum, because it never has to guess.</small>
+    </button>
+    <button class="choice" type="button" data-v="Change it automatically">
+      <b>Change her program automatically</b>
+      <small>Heavy weeks and lighter weeks assigned by predicted phase. This is what Wild.AI does. It is also where the risk above sits.</small>
+    </button>
+  </div>
+
+  <details>
+    <summary>The bit that could set you apart</summary>
+    <div class="body">
+      <p class="tiny">One honest page saying: symptoms are real, the evidence that your cycle changes what your muscles can build is weak, and consistency beats timing. <b>Every competitor sells the opposite.</b> That is a credibility position your brand can own, and it heads off the "my other app says I should rest this week" question before it arrives.</p>
+    </div>
+  </details>
+</div>
+
+<!-- ============ QUICK QUESTIONS ============ -->
+<div class="card">
+  <div class="eyebrow">Three quick ones</div>
+  <h2 class="disp">Short answers, no thinking required</h2>
+
+  <h3>43 clients have no payments in the export</h3>
+  <p class="tiny">We found your real payment history in the old data: <b>1,539 charges, $297,716, going back to March 2024</b>, and matched 226 clients to it. That is what now powers the monthly-versus-paid-in-full column you asked for.</p>
+  <div class="scroll"><table>
+    <tr><th>payment type</th><th class="n">clients</th><th class="n">average paid</th></tr>
+    <tr><td>One payment</td><td class="n">139</td><td class="n">$136</td></tr>
+    <tr><td>Instalments, finished</td><td class="n">65</td><td class="n">$817</td></tr>
+    <tr><td>Monthly, active</td><td class="n">14</td><td class="n">$844</td></tr>
+    <tr><td>Monthly, long-term</td><td class="n">8</td><td class="n">$3,056</td></tr>
+    <tr><td>not in the export</td><td class="n"><b>43</b></td><td class="n">?</td></tr>
+  </table></div>
+  <div class="choices two" data-q="unpaid">
+    <button class="choice" type="button" data-v="They were comped"><b>They were comped or free</b><small>No charges because they never paid.</small></button>
+    <button class="choice" type="button" data-v="Export is incomplete"><b>The export is missing data</b><small>They did pay and it did not come across.</small></button>
+  </div>
+
+  <h3 style="margin-top:24px">Your website changes</h3>
+  <p class="tiny">You said the site looks good and there are adjustments you want. Send them whenever, or we walk the site together on the same call.</p>
+
+  <h3 style="margin-top:20px">Your offers</h3>
+  <p class="tiny">You mentioned sending your offers for the pricing section. Worth knowing before you do: pricing is currently locked at <b>$19.97 founding</b> for a five day window, then <b>$24.97 standard</b>. If your offers say something different we should reconcile them before either goes live.</p>
+</div>
+
+<!-- ============ WALKTHROUGH ============ -->
+<div class="card">
+  <div class="eyebrow">The walkthrough</div>
+  <h2 class="disp">About an hour, recorded</h2>
+  <p>The goal is not to learn the whole app. It is to run a normal day without calling anyone. <b>There are about twenty screens and you need six.</b></p>
+
+  <div class="scroll"><table>
+    <tr><th>screen</th><th>what it is for</th><th>how often</th></tr>
+    <tr><td><b>Clients</b></td><td>everyone you coach and their whole history</td><td>daily</td></tr>
+    <tr><td><b>Waiting on a program</b></td><td>who signed up and is waiting on you</td><td>daily</td></tr>
+    <tr><td><b>Inbox</b></td><td>messages from members</td><td>daily</td></tr>
+    <tr><td><b>Programs</b></td><td>build a workout plan and assign it</td><td>few times a week</td></tr>
+    <tr><td><b>Meal plans</b></td><td>build and send a meal plan</td><td>few times a week</td></tr>
+    <tr><td><b>Intake to review</b></td><td>anyone who wrote something worth reading</td><td>when it has a number</td></tr>
+  </table></div>
+  <p class="tiny">The rest is reporting, settings and admin. You are not expected to touch it.</p>
+
+  <details>
+    <summary>What we do on the call, in order</summary>
+    <div class="body">
+      <p class="tiny"><b>1. Logging in and where you land (5 min).</b> We also save the site to your phone home screen so it opens like an app.<br><br>
+      <b>2. Your Clients list (15 min).</b> The screen you will live in. We find a real client by name, open her, read her history back.<br><br>
+      <b>3. Who is waiting on you (5 min).</b> A short list, oldest first. Anything over three days turns red.<br><br>
+      <b>4. Writing a program (15 min).</b> The part that matters most, so we go slowly. We build one together and assign it to a test account so you see exactly what she sees.<br><br>
+      <b>5. Meal plans (10 min).</b> Same shape. Your 158 recipes came across.<br><br>
+      <b>6. Messages (5 min).</b> Every new member already has a thread open with a first message from you.<br><br>
+      <b>7. Questions (5 min).</b> Usually the most useful part.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Things worth knowing before you start</summary>
+    <div class="body">
+      <p class="tiny"><b>Your clients keep everything.</b> When a client accepts her invitation, her weight history, photos and your old conversations are already there.<br><br>
+      <b>Nothing you do is destructive.</b> No button deletes a client or wipes a history. Wrong plan? Reassign it.<br><br>
+      <b>You cannot break it by clicking around.</b> Worst case you land on a screen you did not mean to open. The logo top left always takes you home.<br><br>
+      <b>If something looks wrong, screenshot it.</b> There is a Support button inside the app that attaches the screenshot and sends it straight to us.</p>
+    </div>
+  </details>
+</div>
+
+<!-- ============ DONE FOR YOU ============ -->
+<div class="card">
+  <div class="eyebrow">Already done</div>
+  <h2 class="disp">You do not need to do anything with these</h2>
+  <p class="muted">Listed so you know they happened.</p>
+  <p class="tiny">
+    <b>New members get a welcome email from you</b> with their calories and macros and three things to do on day one. Before this, a woman could finish signing up and hear nothing at all.<br><br>
+    <b>The app stopped telling new members to wait.</b> It used to say "your program is on the way" with nothing behind it.<br><br>
+    <b>You have a message thread already open with her</b>, in your voice, before you have written a word.<br><br>
+    <b>A list of who is waiting on a program</b>, oldest first. One person has been waiting 15 days and nobody knew.<br><br>
+    <b>A phone alert the second anyone signs up</b>, with her goal, her injuries and whether she has paid.<br><br>
+    <b>Your client list now shows monthly versus paid in full.</b><br><br>
+    <b>A draft intake form</b>, which you asked for three times. 42 questions, 9 of which the app already asks, so really 33.<br><br>
+    <b>The Spanish was repaired.</b> 31 exercise names were badly machine-translated and visible to Spanish-speaking members. "Barbell Step Ups" read as "de Paso con Barra", which is not a sentence.
+  </p>
+</div>
+
+<!-- ============ NOT READY ============ -->
+<div class="card">
+  <div class="eyebrow">Straight with you</div>
+  <h2 class="disp">What is not ready</h2>
+  <p class="muted">So nothing surprises you.</p>
+  <p class="tiny">
+    <b>Your demo videos are not filmed.</b> 76 on the list, 0 shot.<br><br>
+    <b>There is no iPhone app, and there will not be one in September.</b> The D-U-N-S number unlocks the developer account, which is the first of several steps, not the last. At launch it works in a phone browser saved to the home screen, which is what your clients will use.<br><br>
+    <b>Payments are not switched on yet.</b> Nothing charges anyone today.
+  </p>
+</div>
+
+<!-- ============ CHECKLIST ============ -->
+<div class="card">
+  <div class="eyebrow">Everything, in order</div>
+  <h2 class="disp">Tick as you go</h2>
+  <div id="tasks"></div>
+</div>
+
+<!-- ============ SEND ============ -->
+<div class="send">
+  <div class="send-inner">
+    <h2 class="disp" style="font-size:20px">Send me your answers</h2>
+    <p>Tap the button and it writes up everything you picked. Copy it into a text to me.</p>
+    <button class="btn" id="make" type="button">Write up my answers</button>
+    <textarea class="out" id="out" readonly></textarea>
+  </div>
+</div>
+
+</div>
+
+<script>
+(function () {
+  var KEY = 'tf-steph-plan-v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  /* ---- theme ---- */
+  var tbtn = document.getElementById('theme');
+  function applyTheme(t) {
+    if (t) document.documentElement.setAttribute('data-theme', t);
+    var dark = t ? t === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    tbtn.textContent = dark ? 'Light' : 'Dark';
+  }
+  applyTheme(state.theme);
+  tbtn.addEventListener('click', function () {
+    var cur = document.documentElement.getAttribute('data-theme');
+    var isDark = cur ? cur === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    state.theme = isDark ? 'light' : 'dark';
+    applyTheme(state.theme); save();
+  });
+
+  /* ---- the ordered checklist ---- */
+  var TASKS = [
+    ['confirm-date', 'Confirm your Lenus end date', 'you, this week'],
+    ['walkthrough', 'Book the walkthrough call', 'you and Dre'],
+    ['calories', 'Answer the calorie question', 'you, 2 min'],
+    ['intake', 'Read the intake form draft and edit it', 'you, 15 min'],
+    ['unpaid', 'Tell me about the 43 clients with no payments', 'you, 5 min'],
+    ['cycle', 'Cycle: offer, or decide for her', 'you, 5 min'],
+    ['exercises', 'Check the 26 new exercises are ones you coach', 'you, 10 min'],
+    ['filming', 'Film your 76 movements', 'you, 1 to 3 days'],
+    ['photos', 'Send 10 to 15 labelled food photos', 'you, 20 min'],
+    ['website', 'Send your website change list', 'you, whenever'],
+    ['offers', 'Send your offers so we can check them against pricing', 'you, before launch'],
+    ['invites', 'Invite your clients, in batches', 'Dre, only when you say go'],
+    ['duns', 'D-U-N-S number, then the Apple developer account', 'waiting on Apple']
+  ];
+
+  var host = document.getElementById('tasks');
+  TASKS.forEach(function (t, i) {
+    var id = t[0];
+    var row = document.createElement('div');
+    row.className = 'task';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.id = 'task-' + id;
+    cb.checked = !!state['task-' + id];
+    var lab = document.createElement('label');
+    lab.setAttribute('for', 'task-' + id);
+    lab.innerHTML = '<b>' + (i + 1) + '. ' + t[1] + '</b><div class="who">' + t[2] + '</div>';
+    if (cb.checked) row.classList.add('done');
+    cb.addEventListener('change', function () {
+      state['task-' + id] = cb.checked;
+      row.classList.toggle('done', cb.checked);
+      save(); refresh();
+    });
+    row.appendChild(cb); row.appendChild(lab); host.appendChild(row);
+  });
+
+  /* ---- decisions ---- */
+  document.querySelectorAll('.choices').forEach(function (group) {
+    var q = group.getAttribute('data-q');
+    group.querySelectorAll('.choice').forEach(function (btn) {
+      var v = btn.getAttribute('data-v');
+      btn.setAttribute('aria-pressed', String(state['ans-' + q] === v));
+      btn.addEventListener('click', function () {
+        state['ans-' + q] = (state['ans-' + q] === v) ? null : v;
+        group.querySelectorAll('.choice').forEach(function (b) {
+          b.setAttribute('aria-pressed', String(state['ans-' + q] === b.getAttribute('data-v')));
+        });
+        save(); refresh();
+      });
+    });
+  });
+
+  /* ---- progress: tasks only, so answering a question does not inflate it ---- */
+  var fill = document.getElementById('fill');
+  var count = document.getElementById('count');
+  function refresh() {
+    var done = TASKS.filter(function (t) { return state['task-' + t[0]]; }).length;
+    fill.style.width = (done / TASKS.length * 100) + '%';
+    count.textContent = done + ' of ' + TASKS.length;
+  }
+  refresh();
+
+  /* ---- write-up ---- */
+  var LABELS = {
+    calories: 'Lose fat + build muscle, with a goal weight',
+    exercises: 'The 26 new exercises',
+    photos: 'Food photos for the fat check',
+    cycle: 'Cycle-based workouts',
+    unpaid: 'The 43 clients with no payment history'
+  };
+  document.getElementById('make').addEventListener('click', function () {
+    var out = document.getElementById('out');
+    var lines = ['Here are my answers:', ''];
+    var any = false;
+    Object.keys(LABELS).forEach(function (k) {
+      if (state['ans-' + k]) { any = true; lines.push('- ' + LABELS[k] + ': ' + state['ans-' + k]); }
+    });
+    if (!any) lines.push('(nothing picked yet)');
+    var done = TASKS.filter(function (t) { return state['task-' + t[0]]; });
+    var todo = TASKS.filter(function (t) { return !state['task-' + t[0]]; });
+    if (done.length) {
+      lines.push('', 'Done:');
+      done.forEach(function (t) { lines.push('- ' + t[1]); });
+    }
+    if (todo.length) {
+      lines.push('', 'Still to do:');
+      todo.forEach(function (t) { lines.push('- ' + t[1]); });
+    }
+    out.value = lines.join('\n');
+    out.style.display = 'block';
+    out.focus(); out.select();
+    try { document.execCommand('copy'); this.textContent = 'Copied, paste it to me'; }
+    catch (e) { this.textContent = 'Select it all and copy'; }
+  });
+})();
+</script>

@@ -9,14 +9,13 @@ against what is actually in the app today. Checked by querying the live system, 
 
 ## ⛔ THE ONE THAT CHANGES THE SCHEDULE
 
-> *"When are we gonna start migrating my current clients into the app... my contract with Lena ends at
+> *"When are we gonna start migrating my current clients into the app... my contract with Lenus ends at
 > the end of the month and I wanna make sure I understand the system so I'll be able to service
 > clients throughout that time."*
 
 **This is the most important sentence in any of these messages, and it moves the launch date.**
 
-If "Lena" is **Lenus**, her current coaching platform, then she loses the tool she runs her business on
-**around 31 August**. Doors were planned for **27 September**. That is a **four week gap where she has
+Lenus is the coaching platform she runs her business on, and she loses it **around 31 August**. Doors were planned for **27 September**. That is a **four week gap where she has
 265 paying clients and nowhere to serve them.**
 
 ### Where the migration actually stands
