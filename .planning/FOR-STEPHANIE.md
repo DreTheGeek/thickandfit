@@ -268,19 +268,18 @@ You do not need to do anything with these. They are done.
 | 10 | Ten to fifteen labelled food photos | you | 20 minutes |
 | 11 | Send me your website changes | you | whenever |
 | 12 | Send me your offers, so I can check them against pricing | you | before launch |
-| 13 | D-U-N-S, then the Apple developer account | waiting on Apple | out of our hands |
+| 13 | App Store submission | Dre, once the D-U-N-S lands | built, ready to submit |
 
-**On number 13:** Apple's side is quick, usually days once the D-U-N-S number lands. The part that is
-not done is ours: nobody has built the iPhone wrapper yet. The app is already built as a phone app
-(it installs to a home screen and runs full screen), so wrapping it for the App Store is a few days of
-work, not a phase. **September is achievable if we start it.**
+**On number 13: the iPhone app is built.** It was built today. It is the same app your members already
+use, wrapped so it installs from the App Store, and it does things the website cannot: it opens your
+phone's real camera for meal photos and sends proper push notifications.
 
-Two real things to decide, neither of which is about time:
+It is ready to submit as soon as the D-U-N-S number arrives. **This is on track for September.**
 
-1. **Building and submitting needs a Mac with Xcode.** Whoever does it needs one.
-2. **Apple takes a cut of subscriptions sold inside an iPhone app**, 15 to 30 percent. On $19.97 a
-   month that is real money. There are legitimate ways to handle it, and it is worth deciding
-   deliberately rather than discovering it at submission.
+One thing worth deciding, and it is a business call rather than a technical one: **Apple takes 15 to 30
+percent of any subscription sold inside an iPhone app.** On $19.97 a month that adds up. The simple
+answer, and what most coaching apps do, is to sell on the website and let the app be for members who
+have already joined. Worth a two minute conversation before we submit.
 
 ---
 

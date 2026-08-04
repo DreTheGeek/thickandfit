@@ -104,6 +104,10 @@ first day is a handful of people rather than a wave.
 
 ## Things worth knowing before you start
 
+**There is an iPhone app, and it is built.** It goes to the App Store once the D-U-N-S number lands.
+In the meantime the site saves to your home screen and runs full screen, which is what your clients
+will use, and nothing changes for them when the App Store version appears.
+
 **Your clients keep everything.** When a client accepts her invitation and creates her account, her
 weight history, her photos and your old conversations are already there waiting. She does not start
 from zero and neither do you.
@@ -125,9 +129,6 @@ So nothing surprises you on the call.
 
 - **Your demo videos are not filmed.** 76 movements are on your shot list and 0 are shot. Members see
   the exercise name and written instructions, no video.
-- **The iPhone App Store version is not built yet.** The app already installs to your home screen and
-  runs full screen, which is what your clients will use at launch. The App Store wrapper is a few days
-  of work once the D-U-N-S number lands, so it can happen before September if we decide to do it.
 - **Payments are not switched on yet.** Nothing charges anyone today.
 - **43 of your clients have no payment history in the export**, so their payment type is blank. We need
   to know from you whether they were comped or whether the export was incomplete.

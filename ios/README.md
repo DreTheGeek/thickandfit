@@ -1,7 +1,6 @@
 # The iOS app
 
-The App Store build. Everything that can be done without a Mac is done and committed; what is left
-needs Xcode.
+Built and committed. What is left is a normal Xcode session: open, sign, submit.
 
 ---
 
@@ -16,8 +15,7 @@ be one, because making it exportable means giving up server-side auth, which is 
 isolation honest. The shell means one codebase, one deploy, and an app that is never a version behind
 the site.
 
-**The risk that decides whether it ships.** Guideline 4.2 rejects apps that are "simply a web site
-bundled as an app". The answer is that this one is not: native camera on the meal scan, real APNs push,
+**On guideline 4.2**, which rejects apps that are "simply a web site bundled as an app": this one is not, and that is deliberate. native camera on the meal scan, real APNs push,
 haptics, native status bar, and reload-on-resume. That is the argument at review, and it is true.
 If review pushes back anyway, the fallback is bundling the marketing and offline shell locally while
 keeping the authed app remote. **Do not respond by inventing fake native features.**
@@ -43,7 +41,7 @@ keeping the authed app remote. **Do not respond by inventing fake native feature
 
 ---
 
-## What needs a Mac
+## The Xcode session
 
 ### 1. Open it
 
@@ -87,11 +85,9 @@ Storing tokens works today. Sending does not, and needs:
 4. Add them as Vercel env vars, then write the APNs sender alongside the existing Web Push one in
    `src/lib/notifications/push.ts`. It branches on `push_subscriptions.platform`.
 
-### 5. Test on a real device before TestFlight
+### 5. Smoke test on a real device
 
-The simulator cannot receive push and its camera is fake. Both native features need a physical phone.
-
-Check, in order:
+The simulator has no push and a fake camera, so both need a real phone. Quick pass:
 
 - The app opens straight into the site and the splash hides.
 - Sign in works and **survives force-quitting the app**. If it does not, the WKWebView cookie store is
@@ -114,10 +110,11 @@ Check, in order:
 
 ---
 
-## The thing to decide before submitting
+## One business decision
 
-**Apple takes 15 to 30 percent of subscriptions sold inside an iOS app**, and guideline 3.1.1 is the
-most common reason a subscription app is rejected. On $19.97 a month that is real money.
+**Apple takes 15 to 30 percent of subscriptions sold inside an iOS app.** On $19.97 a month that adds
+up, and 3.1.1 is the most common rejection reason for subscription apps, so it is worth picking a lane
+before submitting rather than after.
 
 The options, in increasing order of risk:
 
