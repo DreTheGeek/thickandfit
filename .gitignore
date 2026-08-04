@@ -60,3 +60,9 @@ next-env.d.ts
 
 # rendered email previews (regenerate: node .qa-visual/welcome-email-preview.mjs)
 .qa-visual/out/
+
+# Capacitor iOS: the project is committed, the build output and CocoaPods are not.
+ios/App/Pods/
+ios/App/App/public/
+ios/App/output/
+ios/DerivedData/

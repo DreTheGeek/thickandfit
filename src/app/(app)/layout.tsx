@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { resolveAuth, COACH_ROLES } from '@/lib/auth/session';
 import { SubscriberShell } from '@/components/app/subscriber-shell';
+import { NativeBoot } from '@/components/app/native-boot';
 import { CoachShell } from '@/components/app/coach-shell';
 import { TimezoneSync } from '@/components/app/timezone-sync';
 import { NotificationBell } from '@/components/notifications/notification-bell';
@@ -41,6 +42,10 @@ export default async function AppLayout({
   return (
     <>
       <TimezoneSync />
+      {/* Hides the splash, sets the status bar, wires resume-reload and asks for push, but ONLY
+          inside the iOS shell. On the web every call returns immediately and no Capacitor code is
+          ever imported. */}
+      <NativeBoot />
       {shell}
     </>
   );

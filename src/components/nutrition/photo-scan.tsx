@@ -24,6 +24,8 @@ import {
 } from '@/lib/nutrition/macros';
 import { decodeBarcodeFromImage } from '@/lib/nutrition/barcode-scan';
 import { measureImageQuality, type ImageQuality } from '@/lib/nutrition/image-quality';
+// No-ops on the web and imports nothing into the browser bundle; see the header of bridge.ts.
+import { capturePhoto, tapFeedback } from '@/lib/native/bridge';
 
 // Client-safe mirror of the server pipeline's response shape (server module is server-only).
 type Macros = { kcal: number; proteinG: number; carbG: number; fatG: number };
@@ -285,7 +287,18 @@ export function PhotoScan({
       return;
     }
     warmupScan(); // belt-and-suspenders: warms during the barcode-decode + downscale window (~1-2s)
-    const dataUrl = await readAsDataUrl(file);
+    await onDataUrl(await readAsDataUrl(file));
+  }
+
+  /**
+   * The scan pipeline, from an image that is already a data URL.
+   *
+   * Split out from onFile so the iOS camera can feed it directly. Capacitor hands back a data URL,
+   * not a File, and round-tripping it through a Blob only to read it back would be work done twice.
+   * Everything from here down is identical whichever way the photo arrived.
+   */
+  async function onDataUrl(dataUrl: string): Promise<void> {
+    warmupScan();
     setPreview(dataUrl);
     setPhase('analyzing');
     setCandidates([]);
@@ -546,7 +559,20 @@ export function PhotoScan({
               <div className="space-y-3">
                 <button
                   type="button"
-                  onClick={() => fileRef.current?.click()}
+                  onClick={() => {
+                    // Real camera on iOS, file input everywhere else. capturePhoto() returns null on
+                    // the web AND when she cancels, and both mean the same thing here: fall through
+                    // to the input, which on mobile Safari opens the same camera sheet she expects.
+                    void (async () => {
+                      const shot = await capturePhoto();
+                      if (shot) {
+                        void tapFeedback('light');
+                        await onDataUrl(shot);
+                        return;
+                      }
+                      fileRef.current?.click();
+                    })();
+                  }}
                   className="tf-press flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-line py-8 text-faint hover:border-ink hover:text-ink"
                 >
                   <Icon name="camera" size={28} />

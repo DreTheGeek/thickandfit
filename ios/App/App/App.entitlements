@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Push entitlement.
+
+  aps-environment must be `development` for a device build from Xcode and `production` for anything
+  going to TestFlight or the App Store. Xcode swaps it automatically when the capability is added
+  through Signing & Capabilities, which is why the runbook tells you to add it there rather than by
+  hand. This file exists so the capability has somewhere to land and so it is in version control
+  rather than invented on one person's Mac.
+-->
+<plist version="1.0">
+<dict>
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>
