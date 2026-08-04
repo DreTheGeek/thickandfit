@@ -52,6 +52,20 @@ const VENDORS_ES: NonNullable<PrivacySection['vendors']> = [
   { name: 'PostHog', data: 'Cómo se usa la app, por ejemplo qué pantallas se abren', purpose: 'Entender qué funciones ayudan y cuáles no.' },
 ];
 
+/** Column headers for the processor table. */
+export type VendorTableLabels = { who: string; data: string; purpose: string };
+
+// These live here, next to the rows they label, and NOT in a message file. They are part of the legal
+// document, so the translation has to move in the same commit as the disclosure it heads. They were
+// hardcoded English in the shared LegalPage component, which meant /es/privacy served Spanish vendor
+// rows under "Who / What they receive / Why": the exact failure that splitting them from their
+// neighbours invites.
+export function vendorTableLabels(es: boolean): VendorTableLabels {
+  return es
+    ? { who: 'Quién', data: 'Qué recibe', purpose: 'Para qué' }
+    : { who: 'Who', data: 'What they receive', purpose: 'Why' };
+}
+
 export function privacySections(es: boolean): PrivacySection[] {
   if (es) {
     return [
@@ -100,7 +114,6 @@ export function privacySections(es: boolean): PrivacySection[] {
           'Puedes borrar tu cuenta dentro de la app, en Cuenta, en cualquier momento. No hace falta escribirnos.',
           'Al borrarla, eliminamos tu perfil, tu perfil de salud, tus registros, tus fotos y tus mensajes, y cancelamos tu suscripción activa.',
           'Conservamos los registros de pago el tiempo que la ley fiscal y contable exige, aunque borres la cuenta.',
-          'Borrar la cuenta en la app no cancela por sí solo una suscripción comprada por Apple. Esa se cancela desde los ajustes de tu dispositivo.',
           'También puedes descargar una copia de tus datos desde Cuenta antes de borrarlos.',
         ],
       },
@@ -172,7 +185,6 @@ export function privacySections(es: boolean): PrivacySection[] {
         'You can delete your account inside the app, under Account, at any time. You do not need to email anyone.',
         'Deleting removes your profile, health profile, logs, photos, and messages, and cancels an active subscription.',
         'We keep payment records for as long as tax and accounting law requires, even after you delete.',
-        'Deleting your account does not by itself cancel a subscription purchased through Apple. You cancel that in your device settings.',
         'You can also download a copy of your data from Account before you delete it.',
       ],
     },
