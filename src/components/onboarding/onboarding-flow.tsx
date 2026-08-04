@@ -162,8 +162,16 @@ export function OnboardingFlow({
   // form loads these back pre-filled instead of asking again.
   const [injuries, setInjuries] = useState<string[]>([]);
   const [conditions, setConditions] = useState<string[]>([]);
-  const [pregnancy, setPregnancy] = useState<string>('none');
+  // Starts EMPTY, not 'none'. It used to default to 'none' and render as selected, so the app
+  // recorded "not pregnant" for a member who never looked at the question. Same class of defect as
+  // the PAR-Q below: a health answer we never received is not the same as an answer of no, and on a
+  // pregnancy or a heart condition that difference is the whole point of asking.
+  const [pregnancy, setPregnancy] = useState<string>('');
   const [safety, setSafety] = useState<string[]>([]);
+  // An empty PAR-Q list is ambiguous: it means either "I read it and none apply" or "I scrolled
+  // past". We record it as the first, so we need her to have actually said so. Tapping any chip,
+  // including "None of these", flips this.
+  const [safetyAnswered, setSafetyAnswered] = useState<boolean>(false);
   // Free text. Chips only capture what we thought to ask; real intake is "c-section in March, left
   // shoulder clicks overhead, allergic to shellfish". The raw text is the record and the server
   // extracts structure from it; nothing here replaces her words.
@@ -229,6 +237,9 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
     firstName.trim() !== '' && lastName.trim() !== '' && bodyValid && bodyFatValid;
   // At least one goal, or the derived direction is a silent guess.
   const goalsValid = primaryGoals.length > 0;
+  // The two questions on the health step that carry real risk if we guess the answer. Injuries and
+  // conditions stay optional: a blank there is a missing nicety, a blank on these is a liability.
+  const healthValid = pregnancy !== '' && safetyAnswered;
 
   const goal = useMemo(() => deriveGoalDirection(primaryGoals), [primaryGoals]);
   // True when the derived direction holds weight steady but the member asked for a different number
@@ -287,7 +298,11 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
           health: {
             injuries,
             conditions,
-            pregnancy,
+            // The route validates this with z.enum(PREGNANCY).optional(), so an unanswered '' would
+            // fail the whole submit rather than the one field. The health step gates on it being
+            // answered, so this should never fire; it is here so a future change to that gate
+            // degrades to "we did not ask" instead of a 400 on the last screen of signup.
+            pregnancy: pregnancy || undefined,
             safety,
             notes: notes.trim() || undefined,
             trainingExperience: experience,
@@ -521,10 +536,16 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
               <ChipRow
                 options={SAFETY}
                 selected={safety}
-                onToggle={(v) => toggle(setSafety, v)}
+                onToggle={(v) => {
+                  setSafetyAnswered(true);
+                  toggle(setSafety, v);
+                }}
                 label={(v) => th(`opt.safety.${v}`)}
                 noneLabel={th('safetyNone')}
-                onNone={() => setSafety([])}
+                onNone={() => {
+                  setSafetyAnswered(true);
+                  setSafety([]);
+                }}
               />
               {safetyFlagged && (
                 <p className="mt-1 rounded-[12px] bg-warm px-4 py-3 text-[13px] leading-[1.5] text-soft">
@@ -759,7 +780,11 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
         {step < S_TIER && (
           <Button
             size="block"
-            disabled={(step === S_GOALS && !goalsValid) || (step === S_ABOUT && !step1Valid)}
+            disabled={
+              (step === S_GOALS && !goalsValid) ||
+              (step === S_ABOUT && !step1Valid) ||
+              (step === S_HEALTH && !healthValid)
+            }
             onClick={() => setStep((s) => s + 1)}
           >
             {t('continue')}
