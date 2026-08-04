@@ -8,17 +8,20 @@ import { getTranslations } from 'next-intl/server';
 
 import { LBody, LCta, LEyebrow, LH2, LSection } from '@/components/marketing/v2/ui';
 
-const DAY_LABELS: readonly string[] = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
-/** Day strip plus copy on the left, the app phone on the right. */
+/** Day strip plus copy on the left, the app phone on the right.
+ *
+ *  The weekday initials are a comma-separated message value, not a constant: M T W T F S S is
+ *  English, and a Spanish week starts on Monday as L M M J V S D. Splitting one string keeps the
+ *  strip a single translatable unit instead of seven keys. */
 export async function KnowExactly(): Promise<ReactElement> {
   const t = await getTranslations('home.features');
+  const dayLabels = t('dayLabels').split(',');
   return (
     <LSection tone="dark">
       <div className="grid items-center gap-12 lg:grid-cols-2">
         <div>
           <div className="flex gap-2">
-            {DAY_LABELS.map((label, index) => (
+            {dayLabels.map((label, index) => (
               <span
                 key={`${label}-${index}`}
                 className={`grid h-9 w-9 place-items-center rounded-full text-[13px] font-bold ${

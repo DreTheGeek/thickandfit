@@ -18,9 +18,15 @@ export type NavLink = {
 export function NavMenu({
   links,
   cta,
+  openLabel,
+  closeLabel,
 }: {
   links: readonly NavLink[];
   cta: NavLink;
+  /** Burger labels arrive already translated from the server nav: this component never holds copy,
+   *  so the same file serves /es without a fork and without shipping a second message bundle. */
+  openLabel: string;
+  closeLabel: string;
 }): ReactElement {
   const [open, setOpen] = useState(false);
 
@@ -63,7 +69,7 @@ export function NavMenu({
 
       <button
         type="button"
-        aria-label={open ? 'Close menu' : 'Open menu'}
+        aria-label={open ? closeLabel : openLabel}
         aria-expanded={open}
         aria-controls="site-menu"
         onClick={() => setOpen((v) => !v)}

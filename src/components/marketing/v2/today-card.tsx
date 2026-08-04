@@ -5,25 +5,32 @@
 //
 // It is a STATIC MARKETING REPLICA of /dashboard, not the live component. Numbers here are
 // illustrative of the layout, not claims about a real member.
+//
+// Every word in it is keyed, including the row values: this card is the only product screen on the
+// fold, so a Spanish visitor reading "Lower body, 45 min" inside it undoes the entire "in your
+// language" promise the page just made. The thousands separator differs too, which is why the values
+// are translated rather than interpolated.
 import type { ReactElement } from 'react';
+import { getTranslations } from 'next-intl/server';
 
 import { Icon } from '@/components/ui/icons';
 
 type Row = {
   icon: 'dumbbell' | 'nutrition' | 'steps' | 'pulse';
-  label: string;
-  value: string;
+  labelKey: string;
+  valueKey: string;
   done: boolean;
 };
 
 const ROWS: readonly Row[] = [
-  { icon: 'dumbbell', label: 'Train', value: 'Lower body, 45 min', done: true },
-  { icon: 'nutrition', label: 'Fuel', value: '1,850 kcal', done: true },
-  { icon: 'steps', label: 'Move', value: '8,240 steps', done: false },
-  { icon: 'pulse', label: 'Recover', value: '7h 32m', done: false },
+  { icon: 'dumbbell', labelKey: 'trainLabel', valueKey: 'trainValue', done: true },
+  { icon: 'nutrition', labelKey: 'fuelLabel', valueKey: 'fuelValue', done: true },
+  { icon: 'steps', labelKey: 'moveLabel', valueKey: 'moveValue', done: false },
+  { icon: 'pulse', labelKey: 'recoverLabel', valueKey: 'recoverValue', done: false },
 ];
 
-export function TodayCard(): ReactElement {
+export async function TodayCard(): Promise<ReactElement> {
+  const t = await getTranslations('home.today');
   return (
     <div className="relative w-full max-w-[420px]">
       {/* Ambient crimson bloom. Decorative, and kept low so the card reads as glass on black. */}
@@ -33,11 +40,13 @@ export function TodayCard(): ReactElement {
       />
 
       <div className="rounded-[26px] border border-white/12 bg-[#121214]/85 p-6 shadow-[0_40px_90px_-20px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:p-7">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">Today</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+          {t('eyebrow')}
+        </p>
 
         <div className="mt-3 flex items-end justify-between gap-4">
           <p className="text-[26px] font-extrabold leading-none tracking-[-0.02em] text-white sm:text-[30px]">
-            Your mission
+            {t('mission')}
           </p>
           <p className="text-[26px] font-extrabold leading-none tracking-[-0.02em] text-[#ff2d55] sm:text-[30px]">
             92%
@@ -52,7 +61,7 @@ export function TodayCard(): ReactElement {
         <ul className="mt-6 flex flex-col gap-3">
           {ROWS.map((row) => (
             <li
-              key={row.label}
+              key={row.labelKey}
               className="flex items-center gap-3.5 rounded-2xl bg-white/[0.045] px-4 py-3.5"
             >
               <span
@@ -65,10 +74,10 @@ export function TodayCard(): ReactElement {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[13px] font-bold uppercase tracking-[0.1em] text-white/55">
-                  {row.label}
+                  {t(row.labelKey)}
                 </span>
                 <span className="block truncate text-[15px] font-semibold text-white">
-                  {row.value}
+                  {t(row.valueKey)}
                 </span>
               </span>
               {row.done ? (
@@ -82,9 +91,9 @@ export function TodayCard(): ReactElement {
 
         <div className="mt-6 border-t border-white/10 pt-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
-            Your evolution
+            {t('evolutionEyebrow')}
           </p>
-          <p className="mt-2 text-[15px] font-semibold text-white">Week 8 of your transformation</p>
+          <p className="mt-2 text-[15px] font-semibold text-white">{t('evolutionValue')}</p>
         </div>
       </div>
     </div>

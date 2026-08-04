@@ -34,27 +34,33 @@ export async function AnnounceBar(): Promise<ReactElement> {
 
 /** Sticky top nav: wordmark left, hamburger right. The bar stays logo-only to match the reference;
  *  the burger opens the real menu (built in NavMenu). Links are locale-aware, so a visitor reading
- *  /es keeps their language and there is a real path to /es (and back to English). */
+ *  /es keeps their language and there is a real path to /es (and back to English).
+ *
+ *  Labels come from the message bundle, not from literals: the bar renders on /es too, and a
+ *  hardcoded "Pricing" is the one thing a Spanish reader sees before any of the page copy. The
+ *  language switch is the deliberate exception, because a switcher names the language it leads to,
+ *  in that language. */
 export async function SiteNav(): Promise<ReactElement> {
+  const t = await getTranslations('home.top');
   const pathname = (await headers()).get('x-pathname');
   const lp = (target: string): string => withLocalePrefix(pathname, target);
   const twin = twinPathFor(pathname);
 
   const links: NavLink[] = [
-    { label: 'Pricing', href: lp('/pricing') },
-    { label: 'FAQ', href: lp('/faq') },
+    { label: t('navPricing'), href: lp('/pricing') },
+    { label: t('navFaq'), href: lp('/faq') },
     ...(twin
       ? [
           {
-            label: twin.to === 'es' ? 'Espanol' : 'English',
+            label: twin.to === 'es' ? 'Español' : 'English',
             href: twin.href,
             hrefLang: twin.to,
             lang: twin.to,
-            ariaLabel: twin.to === 'es' ? 'Ver en espanol' : 'View in English',
+            ariaLabel: twin.to === 'es' ? 'Ver en español' : 'View in English',
           },
         ]
       : []),
-    { label: 'Log in', href: '/auth/sign-in' },
+    { label: t('navLogin'), href: '/auth/sign-in' },
   ];
 
   return (
@@ -65,7 +71,12 @@ export async function SiteNav(): Promise<ReactElement> {
           <img src="/brand/logo-white.svg" alt="Thick &amp; Fit" className="h-5 w-auto" />
         </Link>
 
-        <NavMenu links={links} cta={{ label: 'Start today', href: '/join' }} />
+        <NavMenu
+          links={links}
+          cta={{ label: t('heroCta'), href: '/join' }}
+          openLabel={t('menuOpen')}
+          closeLabel={t('menuClose')}
+        />
       </nav>
     </header>
   );
@@ -105,8 +116,15 @@ export async function Hero(): Promise<ReactElement> {
       />
 
       {/* The right column has to clear ~650px so "TRAINS ON TOKENS" stays on ONE line at 60px, the
-          way it does on the real page. A 1200px container split 50/50 wrapped it to three lines. */}
-      <div className="relative z-10 mx-auto grid min-h-[620px] w-full max-w-[1340px] grid-cols-1 items-end px-5 pb-14 pt-24 sm:px-8 lg:min-h-[88svh] lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:py-24">
+          way it does on the real page. A 1200px container split 50/50 wrapped it to three lines.
+
+          Phone height is deliberately shorter than everything above sm. The copy is bottom-anchored
+          (that is where the scrim is strongest), so the section's own height is what decides how much
+          wordless photo a visitor scrolls past first: at 620px the headline landed 365px down a
+          812px screen, a third of the fold with nothing to read. Shortening the box to 480px and
+          trimming the vertical padding lifts the whole block without touching the alignment, the
+          scrim, or anything from sm up. */}
+      <div className="relative z-10 mx-auto grid min-h-[480px] w-full max-w-[1340px] grid-cols-1 items-end px-5 pb-12 pt-16 sm:min-h-[620px] sm:px-8 sm:pb-14 sm:pt-24 lg:min-h-[88svh] lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:py-24">
         <div className="hidden justify-center lg:flex">
           <TodayCard />
         </div>

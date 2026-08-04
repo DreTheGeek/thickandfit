@@ -16,7 +16,7 @@
     "uiLanguage": "Interface language",
     "contentLanguage": "Content language",
     "english": "English",
-    "spanish": "Spanish",
+    "spanish": "Español",
     "errorTitle": "Something went wrong",
     "errorBody": "Something went wrong. Please try again."
   },
@@ -58,7 +58,6 @@
     "genericError": "Something went wrong. Please try again.",
     "rateLimited": "Too many attempts. Please wait a minute and try again.",
     "fineprint": "Every friend who joins with your link earns you 3 more giveaway entries (capped at 20). Founding members pay $19.97/month for life. Standard price after the founding window is $24.97/month.",
-    "footerLegal": "No purchase necessary. Must have an Instagram account to enter. Open to US residents 18+. Void where prohibited. Official rules on request.",
     "thanksTitle": "You're in.",
     "thanksSubline": "Here's your entry status and share link. The more friends you bring, the more entries you get.",
     "yourEntries": "Your entries",
@@ -72,7 +71,7 @@
     "earnQuizTitle": "Take the 60-second quiz",
     "earnQuizBody": "Tell me about your goals so your plan is ready on launch day. +2 entries.",
     "earnQuizCta": "Take the quiz",
-    "earnQuizDone": "Quiz done — thank you.",
+    "earnQuizDone": "Quiz done. Thank you.",
     "earnReferTitle": "Bring your friends",
     "earnReferBody": "Every friend earns you 3 entries (up to 20 friends). You have {credited} credited so far.",
     "unknownLead": "We couldn't find your waitlist entry. Rejoin below and your share link will come with your confirmation.",
@@ -103,14 +102,28 @@
     "quizError": "Couldn't save your answers. Try again in a minute.",
     "quizMissingLead": "We couldn't identify your entry. Please rejoin the waitlist first.",
     "confirmedBanner": "Email confirmed. You are all set.",
-    "unconfirmedBanner": "Check your inbox to confirm your email — it keeps my messages out of your spam folder.",
+    "unconfirmedBanner": "Check your inbox to confirm your email. It keeps my messages out of your spam folder.",
     "confirmFailedBanner": "That confirmation link did not resolve. Ask me to resend it from the address you signed up with.",
     "shareIMessage": "iMessage",
     "shareWhatsApp": "WhatsApp",
     "shareX": "X",
     "shareMore": "More options",
     "shareLinkLabel": "Your share link",
-    "unknownLeadTitle": "Let's find you."
+    "unknownLeadTitle": "Let's find you.",
+    "optional": "Optional",
+    "phoneConsent": "Only if you want texts from me. I'll send launch reminders and giveaway news, never as a condition of joining. Message and data rates may apply, frequency varies, and you can reply STOP anytime to stop or HELP for help.",
+    "freeReassurance": "Joining is free. No card, no charge today. This just puts you first in line when the doors open.",
+    "giveawayEligibility": "The waitlist is open to everyone, wherever you live. The giveaway is the part with rules: no purchase necessary, an Instagram account is required to enter, and prizes can only be awarded to US residents 18 and older. Void where prohibited. Full rules at the bottom of this page.",
+    "rulesTitle": "Giveaway rules",
+    "rulesEntry": "No purchase necessary and there is nothing to buy. Joining the waitlist is your first entry. The 60-second quiz adds 2 more. Every friend who joins with your link adds 3, up to 20 friends. An Instagram account is required so I can reach you if you win.",
+    "rulesEligibility": "Anyone can join the waitlist, from anywhere in the world. Prizes can only be awarded to residents of the 50 United States and DC who are 18 or older. Void where prohibited or restricted by law.",
+    "rulesWinners": "Winners are drawn after the entry period closes and are contacted on Instagram at the handle you gave. Prizes and drawing dates are announced with each drawing. Ask from the Support page for the full official rules.",
+    "rulesSponsor": "Sponsor: {entity}. This giveaway is not sponsored, endorsed, administered by or associated with Instagram or Meta.",
+    "footerWhoWeAre": "Thick & Fit is run by {entity}. Your name, email and phone number go to my team and the tools we use to run this waitlist, and nowhere else. We never sell your information.",
+    "footerPrivacy": "Privacy policy",
+    "footerTerms": "Terms",
+    "footerSupport": "Support",
+    "footerRights": "All rights reserved."
   },
   "auth": {
     "signIn": "Sign in",
@@ -2170,7 +2183,7 @@
       },
       {
         "q": "Is there a free trial?",
-        "a": "No free trial, but no contract either. Cancel anytime and you keep any free resources you grabbed. No tricks."
+        "a": "No free trial, but no contract either. Cancel anytime in one tap and you keep access through the end of the billing period you already paid for. Your logged workouts, weigh-ins and progress photos stay in your account, and you can export them whenever you want. No tricks."
       },
       {
         "q": "How does the food photo tracking work?",
@@ -2232,7 +2245,8 @@
     ],
     "ctaTitle": "Come see what I built for us",
     "ctaBody": "It is not a race, it is a marathon. Start whenever you are ready.",
-    "ctaButton": "Join the waitlist"
+    "ctaButton": "Join the waitlist",
+    "faqLink": "Still have a question? Read the FAQ"
   },
   "home": {
     "tiers": {
@@ -2241,6 +2255,7 @@
       "cardAlt": "Thick & Fit {name}",
       "foundation": {
         "name": "Foundation",
+        "price": "$19.97 / mo · founding",
         "blurb": "The full system: your training, your fuel, and your evolution tracked in one place. Founding members keep this price the day the doors open."
       },
       "findPlanHeading": "This is the last time you start over.",
@@ -2254,7 +2269,26 @@
       "heroHeadline2": "already decided.",
       "heroSub": "Open it and the day is already waiting. What to train, what to eat, what is left. You stop deciding and start doing.",
       "heroCta": "Start today",
-      "heroReassure": "Cancel anytime, no contract."
+      "heroReassure": "Cancel anytime, no contract.",
+      "navPricing": "Pricing",
+      "navFaq": "FAQ",
+      "navLogin": "Log in",
+      "menuOpen": "Open menu",
+      "menuClose": "Close menu"
+    },
+    "today": {
+      "eyebrow": "Today",
+      "mission": "Your mission",
+      "trainLabel": "Train",
+      "trainValue": "Lower body, 45 min",
+      "fuelLabel": "Fuel",
+      "fuelValue": "1,850 kcal",
+      "moveLabel": "Move",
+      "moveValue": "8,240 steps",
+      "recoverLabel": "Recover",
+      "recoverValue": "7h 32m",
+      "evolutionEyebrow": "Your evolution",
+      "evolutionValue": "Week 8 of your transformation"
     },
     "proof": {
       "wordmark": "Thick & Fit",
@@ -2284,7 +2318,7 @@
         },
         "b3": {
           "title": "You stop doing this alone",
-          "body": "Her team answers you every week. Someone knows your name and your plan."
+          "body": "Steph and her team answer you every week. Someone knows your name and your plan."
         },
         "b4": {
           "title": "Watch yourself become unrecognizable",
@@ -2307,7 +2341,8 @@
       "evolutionBody": "The change you cannot see day to day, laid out so it is impossible to miss.",
       "disciplineEyebrow": "Discipline",
       "disciplineHeading": "Become the person people ask for advice.",
-      "disciplineBody": "Consistency compounds. In twelve weeks you are the one being asked how you did it."
+      "disciplineBody": "Consistency compounds. In twelve weeks you are the one being asked how you did it.",
+      "dayLabels": "M,T,W,T,F,S,S"
     },
     "social": {
       "testimonialsEyebrow": "In their words",
@@ -2333,7 +2368,7 @@
       "faq3Q": "How much does it cost?",
       "faq3A": "Foundation is $19.97 a month. Coached membership, where Steph and her team work with you directly, starts at $200 a month.",
       "faq4Q": "Is there a free trial?",
-      "faq4A": "No free trial, but no contract either. Cancel anytime and you are never locked in, and you keep any free resources you picked up along the way.",
+      "faq4A": "No free trial, but no contract either. Cancel anytime and you are never locked in: you keep access through the end of the month you already paid for, and everything you logged stays in your account if you come back.",
       "faq5Q": "How does the food photo tracking work?",
       "faq5A": "You photograph your plate and it reads what is on it and how much, cooked or raw. No scale, no database searching, no guessing at your abuela's cooking.",
       "tagline": "The system that turns starting over into staying.",
@@ -2346,7 +2381,8 @@
       "linkAbout": "About",
       "linkPrivacy": "Privacy",
       "linkTerms": "Terms",
-      "linkSupport": "Support"
+      "linkSupport": "Support",
+      "linkCompare": "Compare"
     }
   },
   "marketing": {

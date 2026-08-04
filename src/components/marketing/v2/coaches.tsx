@@ -35,7 +35,9 @@ export async function TierCards(): Promise<ReactElement> {
           <h3 className="text-[24px] font-extrabold uppercase leading-[1.1] text-white">
             {t('foundation.name')}
           </h3>
-          <p className="mt-1 text-[17px] font-bold text-[#ff2d55]">$19.97 / mo · founding</p>
+          {/* Keyed, not literal: "/ mo · founding" was the last English left inside the offer card
+              on /es, sitting directly under a Spanish heading. */}
+          <p className="mt-1 text-[17px] font-bold text-[#ff2d55]">{t('foundation.price')}</p>
           <p className="mt-4 text-[15px] leading-snug text-[#bcbcbc]">{t('foundation.blurb')}</p>
         </div>
       </article>

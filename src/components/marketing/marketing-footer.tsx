@@ -78,7 +78,11 @@ export async function MarketingFooter(): Promise<ReactElement> {
 
       <div className="border-t border-neutral-200">
         <div className="mx-auto max-w-[1180px] px-6 py-6 text-[12px] text-faint">
-          &copy; {year} Thick &amp; Fit Coaching LLC. {t('footer.rights')}
+          {/* The registered entity has NO ampersand. "Thick & Fit" is the brand; "Thick Fit
+              Coaching LLC" is the company that takes the money, and a copyright line is a legal
+              notice, so it names the company. Matches marketing.footerCopyright in the message
+              bundle, src/app/join/page.tsx LEGAL_ENTITY, and src/lib/admin/launch-runway.ts. */}
+          &copy; {year} Thick Fit Coaching LLC. {t('footer.rights')}
         </div>
       </div>
     </footer>

@@ -40,7 +40,7 @@ export async function MarketingNav(): Promise<ReactElement> {
               href={twin.href}
               hrefLang={twin.to}
               lang={twin.to}
-              aria-label={twin.to === 'es' ? 'Ver en espanol' : 'View in English'}
+              aria-label={twin.to === 'es' ? 'Ver en español' : 'View in English'}
               className="whitespace-nowrap text-[15px] font-medium text-muted hover:text-ink"
             >
               {twin.to === 'es' ? 'ES' : 'EN'}
