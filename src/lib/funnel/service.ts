@@ -16,6 +16,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { enrollInDrip, upsertGhlContact } from '@/lib/ghl/client';
 import { sendLeadMagnet, sendWaitlistConfirmation } from '@/lib/email/resend';
 import { resolveTenantId } from '@/lib/tenant';
+import type { SmsConsentContext } from '@/lib/funnel/sms-consent';
 
 
 /**
@@ -226,7 +227,10 @@ async function pushReferralMilestoneTag(
  * existing lead + share code (never a new one — the referral link must stay stable for the whole
  * launch). Credits a referrer if the code resolves.
  */
-export async function submitSignup(input: SignupInput): Promise<SignupResult> {
+export async function submitSignup(
+  input: SignupInput,
+  consent?: SmsConsentContext,
+): Promise<SignupResult> {
   const parsed = signupSchema.parse(input);
   const supabase = createServiceClient();
   const companyId = await resolveTenantId();
@@ -258,6 +262,36 @@ export async function submitSignup(input: SignupInput): Promise<SignupResult> {
   // A brand-new lead was created if created_at is within the last few seconds. Fine as a signal —
   // if two signups race the loser will read created_at from the winning insert and skip credit here.
   const isNew = Date.now() - new Date((lead as { created_at: string }).created_at).getTime() < 10_000;
+
+  // TCPA consent record (migration 0114). Deliberately NOT part of the upsert patch above.
+  //
+  // Two rules decide whether anything is written here, and both are the point of the column:
+  //
+  // 1. NO PHONE, NO RECORD. She only sees the disclosure next to the phone field, and a consent row
+  //    for a woman who never gave a number would be a consent nobody gave. `parsed.phone` is the
+  //    gate, and the DB check constraint refuses the row independently, so a future caller cannot
+  //    write one by passing a context without a number.
+  // 2. WRITTEN ONCE, NEVER REFRESHED. `.is('sms_consent_at', null)` makes the update a no-op on a
+  //    resubmit. A refreshed stamp could end up dated AFTER messages already sent under the original
+  //    consent, which turns the record from a defence into evidence against us.
+  //
+  // Awaited, not backgrounded: the number and the agreement have to land together, or the lead is
+  // textable in GHL with nothing here to justify it.
+  if (consent && parsed.phone) {
+    const { error: consentErr } = await supabase
+      .from('waitlist_leads')
+      .update({
+        sms_consent_at: new Date().toISOString(),
+        sms_consent_ip: consent.ip,
+        sms_consent_user_agent: consent.userAgent,
+        sms_consent_text: consent.disclosure,
+      })
+      .eq('id', lead.id)
+      .is('sms_consent_at', null);
+    // Never fatal to the signup: she joined the list, and losing the SMS record must not lose the
+    // lead. It is logged loudly because the correct response is to not text her.
+    if (consentErr) console.error('funnel/service.submitSignup sms consent:', consentErr.message);
+  }
 
   // Signup entry (idempotent per lead — a resubmit doesn't double-count).
   const signupInserted = await recordEntry(companyId, lead.id, 'signup', ENTRY_POINTS.signup, `signup:${lead.id}`);

@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { apiSuccess, apiError } from '@/lib/api/auth';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { submitSignup, signupSchema } from '@/lib/funnel/service';
+import { buildSmsConsentContext } from '@/lib/funnel/sms-consent';
 import { checkRateLimit, clientIp } from '@/lib/security/rate-limit';
 import { verifyTurnstileToken } from '@/lib/security/turnstile';
 import { PREVIEW_COOKIE, hasPreviewAccess, isWaitlistClosed } from '@/lib/launch/prelaunch';
@@ -57,8 +58,15 @@ async function POST_h(req: Request): Promise<Response> {
     return apiError('Verification failed. Please refresh and try again.', 400);
   }
 
+  // What we can prove about the SMS agreement, resolved HERE rather than trusted from the body: the
+  // disclosure text comes from the server's own message catalog in the locale the page actually
+  // painted, so a client cannot post up a consent string of its own choosing. Built for every
+  // request and ignored by the service when there is no phone number, which keeps the "did she
+  // consent" decision in one place (the writer) instead of split across two.
+  const smsConsent = await buildSmsConsentContext(ip);
+
   try {
-    const result = await submitSignup(parsed.data);
+    const result = await submitSignup(parsed.data, smsConsent);
     return apiSuccess(result, 201);
   } catch (e) {
     console.error('funnel/signup:', e instanceof Error ? e.message : e);
