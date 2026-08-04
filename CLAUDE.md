@@ -33,7 +33,7 @@ friction, billing distrust, dead communities, buggy players.
 | Database | Supabase Postgres + pgvector, RLS on every table (PostGIS deferred: install only when the restaurant-locator scope in Gap Log #7 is confirmed) |
 | Auth | Supabase Auth (email/password + Google + Apple + Magic Link) |
 | Realtime | Supabase Realtime |
-| Payments | Stripe Connect Standard |
+| Payments | Stripe, single account (NOT Connect: see note below) |
 | AI | OpenRouter (claude-sonnet-4-6 quality, claude-haiku-4-5 volume, Gemini 2.5 Flash free photo) |
 | Video | Mux primary, Cloudflare Stream fallback |
 | Email | Resend (transactional) |
@@ -249,6 +249,52 @@ sender pointed at a domain the account no longer had. Resend requires, on `send.
 `feedback-smtp.us-east-1.amazonses.com` (10) plus a TXT of LITERALLY `v=spf1 include:amazonses.com ~all`.
 DNS is GoDaddy; disable its SPF-merge for that record or it rewrites it to a `_spfm` indirection and
 verification fails. Still TODO: no DMARC record on `_dmarc.teamthickandfit.com`.
+
+## Payments: plain Stripe, and the Square question (settled 2026-08-04)
+
+**There is no Connect code.** This file said "Stripe Connect Standard" for months and it was never true:
+`Stripe-Account`, `/v1/accounts`, `account_links`, `transfer_data`, `application_fee` and
+`on_behalf_of` return zero hits across `src/` and `supabase/`. It is a single-account integration:
+`src/lib/billing/stripe.ts` is a hand-rolled 252-line REST client over `fetch` with its own form
+encoder and HMAC signature check, no SDK. Anyone sizing a payments change off the old line would have
+badly overestimated it.
+
+**Square was evaluated and rejected.** Square is genuinely cheaper (3.5% + 15c card-on-file, no
+chargeback fee, vs Stripe's 2.9% + 30c + 1.5% international + 0.7% Billing), worth roughly $540/yr at
+265 low-tier subscribers. It loses anyway on one variable: **Square has no LATAM presence and one
+presentment currency.** A US Square account charges USD only, so a Guadalajara member sees `$24.97
+USD` and eats her issuer's FX. Square has merchant accounts in 8 countries, none in Latin America;
+Stripe has 46 including Mexico and Brazil, and 135+ presentment currencies. Cross-border
+authorization runs 5 to 15 points below domestic in the region, and on a subscription a decline is a
+lost member, not a lost sale. The fee saving is smaller than one bad month of involuntary churn.
+
+Square also has no dunning engine: no smart retries, no card account updater, no proration, no hosted
+portal, and ACH cannot be stored and charged later. `entitlement.ts` gates on `active | trialing` and
+the webhook handles `invoice.payment_failed` and `customer.subscription.trial_will_end`; neither has a
+Square equivalent. Migration is 1,375 lines of `src/lib/billing/`, 90 Stripe-referencing files, 8
+`stripe_*` column families across 4 tables, and a 170-line webhook covering 8 event types.
+
+Revisit only if Square opens a Mexican merchant account with local presentment, or if Stripe
+restricts the account (in which case the answer is Braintree/Adyen/Paddle, not Square, which is
+quicker to hold funds). If a physical surface ever appears (studio, retreat, merch), run Square for
+card-present and keep every subscription on Stripe. **Split by surface, never by customer.**
+
+The real LATAM lever is not the processor: add MXN/COP via `currency_options` on the existing Price
+objects, confirm Smart Retries and the card updater are on (the 0.7% Billing fee is already being
+paid), and instrument authorization rate by issuing country.
+
+## The advertised trial is an env var, not a build
+
+`/vs/cal-ai` and `/vs/fitia` say "Start 3 days free. No card to start." Both halves are currently
+false, in different ways, and they fail differently:
+
+- **The trial is built and switched off.** `trialDays()` in `src/lib/billing/actions.ts` reads
+  `STRIPE_TRIAL_DAYS`, defaults to 0, and `encodeForm` drops the key so no trial is sent. The var is
+  NOT set in Vercel production (checked 2026-08-04). Turning the trial on is one env var.
+- **"No card to start" stays false even then.** Stripe Checkout in subscription mode collects a card
+  regardless of `trial_period_days` unless `payment_method_collection: 'if_required'` is set, and it
+  is not. Setting it also means the trial can end with no card on file, which is a different product
+  decision. Do not fix the copy by flipping the env var alone.
 
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
