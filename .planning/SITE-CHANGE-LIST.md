@@ -8,7 +8,7 @@ already written for you. If you want a different word anywhere, just say the wor
 Section 2 is things we are simply fixing. You do not have to read it, it is there so you can see they
 are handled.
 
-**22 decisions.** Most of them will take you about ten seconds each.
+**23 decisions.** Most of them will take you about ten seconds each.
 
 ---
 
