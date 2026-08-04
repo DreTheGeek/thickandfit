@@ -38,6 +38,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent scratch space, not source. These are git-excluded but eslint reads the filesystem, not
+    // .gitignore, so without this they contributed 2,555 of the 2,716 errors `pnpm lint` reported:
+    // 2,180 from a leftover worktree and 375 from a scraped-site clone. A permanently red lint is a
+    // lint nobody reads, which is how the handful of real findings under src/ stayed invisible.
+    ".claude/**",
+    ".claude-browser/**",
   ]),
 ]);
 
