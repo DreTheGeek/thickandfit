@@ -1448,7 +1448,9 @@
       "formYes": "Yes",
       "formNo": "No",
       "navIntake": "Intake to review",
-      "navAwaiting": "Waiting on a program"
+      "navAwaiting": "Waiting on a program",
+      "colPaymentType": "Payment",
+      "paymentUnknown": "not in export"
     },
     "you": {
       "title": "You",

@@ -38,6 +38,7 @@ type ContactRowRaw = {
   is_legacy: boolean | null;
   was_lead: boolean | null;
   product_type: string | null;
+  payment_type: string | null;
   created_at: string;
   profile_id: string | null;
   client_subscriptions: SubRaw | SubRaw[] | null;
@@ -128,6 +129,7 @@ function mapRow(c: ContactRowRaw, noName: string): ClientRow {
     createdAt: c.created_at,
     isLegacy: c.is_legacy ?? false,
     wasLead: c.was_lead ?? false,
+    paymentType: c.payment_type,
   };
 }
 
@@ -141,7 +143,7 @@ async function loadClientRows(companyId: string): Promise<{ rows: ClientRow[]; t
     sb
       .from('contacts')
       .select(
-        'id, first_name, last_name, email, phone, language, owner, is_legacy, was_lead, product_type, created_at, profile_id, ' +
+        'id, first_name, last_name, email, phone, language, owner, is_legacy, was_lead, product_type, payment_type, created_at, profile_id, ' +
           'client_subscriptions(status, billing_health, product_type, grandfathered_price_cents, currency, next_billing_date, lifetime_paid_cents, started_at), ' +
           'contact_tags(tag:tags(slug, label, category, color))',
       )

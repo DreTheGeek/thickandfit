@@ -99,6 +99,9 @@ export function ClientsTable({
               <Th>{t('colStatus')}</Th>
               <Th className="hidden lg:table-cell">{t('facetBillingHealth')}</Th>
               <Th className="hidden sm:table-cell">{t('colPlan')}</Th>
+              {/* Monthly vs paid in full, asked for by name. Sits next to Plan because they answer
+                  the same question from two sides: what she bought, and how she paid for it. */}
+              <Th className="hidden lg:table-cell">{t('colPaymentType')}</Th>
               <Th className="hidden lg:table-cell">{t('colTags')}</Th>
               <Th field="mrr" active={sort === 'mrr'} dir={dir} onSort={setSort} align="right">
                 {t('colMrr')}
@@ -135,6 +138,21 @@ export function ClientsTable({
                   {r.billingHealth ? healthLabel(t, r.billingHealth) : <span className="text-faint">{healthLabel(t, NONE_KEY)}</span>}
                 </td>
                 <td className="hidden px-3 py-2.5 text-[13px] text-soft sm:table-cell">{planLabel(t, r.productType)}</td>
+                <td className="hidden whitespace-nowrap px-3 py-2.5 text-[13px] lg:table-cell">
+                  {r.paymentType ? (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] ${
+                        r.paymentType.startsWith('Monthly') ? 'bg-[#1F7A46]/12 text-[#1F7A46]' : 'bg-warm text-soft'
+                      }`}
+                    >
+                      {r.paymentType}
+                    </span>
+                  ) : (
+                    // Not the same as "never paid": she was not in the payment export at all, and
+                    // saying "-" would quietly assert something we do not know.
+                    <span className="text-faint">{t('paymentUnknown')}</span>
+                  )}
+                </td>
                 <td className="hidden px-3 py-2.5 lg:table-cell">
                   <div className="flex flex-wrap gap-1">
                     {r.tags.slice(0, 2).map((tag) => (

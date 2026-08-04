@@ -1852,6 +1852,7 @@ export type Database = {
       }
       contacts: {
         Row: {
+          charge_count: number | null
           company_id: string
           created_at: string
           email: string | null
@@ -1862,6 +1863,7 @@ export type Database = {
           is_legacy: boolean
           is_referred: boolean
           language: string | null
+          last_charge_on: string | null
           last_name: string | null
           lead_stage: string | null
           lead_type: string | null
@@ -1870,15 +1872,18 @@ export type Database = {
           lifecycle_stage: string
           lost_reason: string | null
           owner: string | null
+          payment_type: string | null
           phone: string | null
           product_type: string | null
           profile_id: string | null
           source: string
+          total_paid_cents: number | null
           type: string
           updated_at: string
           was_lead: boolean
         }
         Insert: {
+          charge_count?: number | null
           company_id: string
           created_at?: string
           email?: string | null
@@ -1889,6 +1894,7 @@ export type Database = {
           is_legacy?: boolean
           is_referred?: boolean
           language?: string | null
+          last_charge_on?: string | null
           last_name?: string | null
           lead_stage?: string | null
           lead_type?: string | null
@@ -1897,15 +1903,18 @@ export type Database = {
           lifecycle_stage?: string
           lost_reason?: string | null
           owner?: string | null
+          payment_type?: string | null
           phone?: string | null
           product_type?: string | null
           profile_id?: string | null
           source?: string
+          total_paid_cents?: number | null
           type: string
           updated_at?: string
           was_lead?: boolean
         }
         Update: {
+          charge_count?: number | null
           company_id?: string
           created_at?: string
           email?: string | null
@@ -1916,6 +1925,7 @@ export type Database = {
           is_legacy?: boolean
           is_referred?: boolean
           language?: string | null
+          last_charge_on?: string | null
           last_name?: string | null
           lead_stage?: string | null
           lead_type?: string | null
@@ -1924,10 +1934,12 @@ export type Database = {
           lifecycle_stage?: string
           lost_reason?: string | null
           owner?: string | null
+          payment_type?: string | null
           phone?: string | null
           product_type?: string | null
           profile_id?: string | null
           source?: string
+          total_paid_cents?: number | null
           type?: string
           updated_at?: string
           was_lead?: boolean
@@ -6175,6 +6187,7 @@ export type Database = {
         }[]
       }
       profile_role: { Args: never; Returns: string }
+      refresh_payment_types: { Args: never; Returns: Json }
       refresh_population_bias: {
         Args: { p_company_id?: string }
         Returns: Json

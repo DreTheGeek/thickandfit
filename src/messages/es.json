@@ -1448,7 +1448,9 @@
       "formYes": "Sí",
       "formNo": "No",
       "navIntake": "Registros por revisar",
-      "navAwaiting": "Esperan su plan"
+      "navAwaiting": "Esperan su plan",
+      "colPaymentType": "Pago",
+      "paymentUnknown": "sin datos"
     },
     "you": {
       "title": "Tú",

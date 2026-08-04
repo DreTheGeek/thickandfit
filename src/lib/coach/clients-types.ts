@@ -49,6 +49,14 @@ export type ClientRow = {
   createdAt: string;
   isLegacy: boolean;
   wasLead: boolean;
+  /**
+   * Monthly vs paid in full, which Stephanie asked for directly.
+   *
+   * Derived from real Lenus charge history (migration 0111), NOT from client_subscriptions, which
+   * has no billing data at all for 189 of her 256 clients. Null means she was not in the payment
+   * export, which is a different statement from "she never paid".
+   */
+  paymentType: string | null;
 };
 
 export type Bucket = { key: string; count: number };
