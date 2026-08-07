@@ -61,7 +61,17 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }): ReactElemen
         autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
         placeholder={t('password')}
         className={inputClass}
+        aria-describedby={mode === 'sign-up' ? 'password-hint' : undefined}
       />
+      {/* Sign-up only. On sign-in the rule is irrelevant (she already has a password) and showing it
+          there reads as a demand to change it. The rule is worth stating BEFORE she types, because
+          the breach check is not a complexity rule and nothing about the field hints at it: an
+          8-character password with a symbol in it still gets rejected if it has leaked somewhere. */}
+      {mode === 'sign-up' && (
+        <p id="password-hint" className="-mt-1 text-[12px] leading-[1.5] text-faint">
+          {t('passwordHint')}
+        </p>
+      )}
       {state.error != null && (
         <p role="alert" className="bg-alert px-3 py-2 text-sm text-alert-ink">
           {state.error}

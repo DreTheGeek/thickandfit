@@ -168,7 +168,8 @@
     "emailConfirmed": "Your email is confirmed. Sign in to get started.",
     "signUpPromise": "Six questions and you will have your calories, your macros, and a plan built around your body. Takes about two minutes.",
     "signupClosedTitle": "Sign-ups are closed",
-    "joinWaitlist": "Join the waitlist"
+    "joinWaitlist": "Join the waitlist",
+    "passwordHint": "At least 8 characters, and not one that has turned up in a data breach. If you already use it somewhere else, pick something new here."
   },
   "pwa": {
     "iosInstall": "Install Thick & Fit: tap <b>Share</b>, then <b>Add to Home Screen</b>.",

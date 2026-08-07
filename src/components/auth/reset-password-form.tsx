@@ -33,7 +33,15 @@ export function ResetPasswordForm(): ReactElement {
         autoComplete="new-password"
         placeholder={t('confirmPassword')}
         className={inputClass}
+        aria-describedby="password-hint"
       />
+      {/* The rule stated before she types, not after she is rejected. This is the screen where not
+          knowing it hurts most: she arrived here because she already could not get in, and the
+          obvious move is to reach for a password she uses elsewhere, which is exactly the one the
+          breach check will refuse. */}
+      <p id="password-hint" className="-mt-1 text-[12px] leading-[1.5] text-faint">
+        {t('passwordHint')}
+      </p>
       {state.error != null && (
         <p role="alert" className="bg-alert px-3 py-2 text-sm text-alert-ink">
           {state.error}

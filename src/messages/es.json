@@ -168,7 +168,8 @@
     "emailConfirmed": "Tu correo está confirmado. Inicia sesión para empezar.",
     "signUpPromise": "Seis preguntas y vas a tener tus calorías, tus macros y un plan hecho para tu cuerpo. Toma como dos minutos.",
     "signupClosedTitle": "Inscripciones cerradas",
-    "joinWaitlist": "Únete a la lista de espera"
+    "joinWaitlist": "Únete a la lista de espera",
+    "passwordHint": "Mínimo 8 caracteres, y que no haya aparecido en una filtración de datos. Si ya la usas en otro sitio, elige una nueva aquí."
   },
   "pwa": {
     "iosInstall": "Instala Thick & Fit: toca <b>Compartir</b>, luego <b>Añadir a pantalla de inicio</b>.",
