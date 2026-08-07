@@ -63,9 +63,10 @@ const signUpSchema = credentialsSchema.extend({
  * Everything unrecognized still falls back to the generic string: a message we cannot vouch for is
  * worse than one that admits nothing.
  */
-function signUpErrorFor(
+function authErrorFor(
   err: { code?: string; message?: string; status?: number },
   strings: Record<string, string>,
+  fallback: string,
 ): string {
   const code = err.code ?? '';
   const msg = (err.message ?? '').toLowerCase();
@@ -83,7 +84,12 @@ function signUpErrorFor(
   }
   if (code === 'email_address_invalid' || msg.includes('invalid email')) return strings.invalidEmail;
   if (code === 'user_already_exists' || msg.includes('already registered')) return strings.alreadyRegistered;
-  return strings.signupFailed;
+  // The recovery link is single-use and expires, and a stale one lands here rather than at the
+  // getUser() guard, because the session exists right up until the token is spent.
+  if (code === 'session_not_found' || code === 'refresh_token_not_found' || msg.includes('expired')) {
+    return strings.resetLinkExpired;
+  }
+  return fallback;
 }
 
 const emailSchema = z.object({ email: z.string().email() });
@@ -197,7 +203,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   });
   if (error) {
     console.error('signUpAction:', error.code ?? '(no code)', error.message);
-    return { error: signUpErrorFor(error, err) };
+    return { error: authErrorFor(error, err, err.signupFailed) };
   }
   // Supabase enumeration protection: signing up with an already-registered email "succeeds" with a
   // fake user carrying zero identities, and NO email is ever sent. Without this check the UI shows
@@ -300,8 +306,14 @@ export async function updatePasswordAction(_prev: AuthState, formData: FormData)
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
-    console.error('updatePasswordAction:', error.message);
-    return { error: err.updatePasswordFailed };
+    console.error('updatePasswordAction:', error.code, error.message);
+    // Same mapper the sign-up path uses, and for the same reason. Every failure here used to
+    // collapse into "Could not update your password. Please try again," and the most common one by
+    // far is `weak_password` from the HIBP breach check, where trying again with the same password
+    // fails forever and nothing on screen says why. Cost a real reset attempt on 2026-08-04: the
+    // email arrived, the link worked, the session was valid, and the only thing wrong was a password
+    // that appears in a known breach. The reset flow looked broken when it was working correctly.
+    return { error: authErrorFor(error, err, err.updatePasswordFailed) };
   }
 
   const { data: profile } = await supabase
