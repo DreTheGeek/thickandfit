@@ -46,12 +46,19 @@ export function ExportData(): ReactElement {
         {pending ? t('exportPending') : t('exportData')}
       </button>
       <div className="mt-2 grid grid-cols-2 gap-2">
+        {/* Plain anchors, not next/link. These are route handlers that stream a CSV with a
+            Content-Disposition attachment header, not pages. next/link would try a client-side
+            navigation to a non-page route and the download would never start. The lint rule cannot
+            tell a /api/* handler from a page, so it is disabled here with the reason rather than the
+            link being "fixed" into something that does not work. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
           href="/api/account/export?type=food"
           className="tf-press border border-line py-3 text-center text-[11px] font-semibold uppercase tracking-[1.5px] text-muted"
         >
           {t('exportFoodCsv')}
         </a>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
           href="/api/account/export?type=weights"
           className="tf-press border border-line py-3 text-center text-[11px] font-semibold uppercase tracking-[1.5px] text-muted"

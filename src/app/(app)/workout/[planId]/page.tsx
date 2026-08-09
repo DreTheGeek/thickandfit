@@ -6,6 +6,7 @@ import { getProgram } from '@/lib/programs/engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { WorkoutPlayer, type PlayerExercise } from '@/components/workout/workout-player';
 import { recommendForSession } from '@/lib/workout/logging';
+import { readCoachSettings } from '@/lib/coach/settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,6 +77,7 @@ export default async function WorkoutPage({
   );
 
   const tEx = await getTranslations('app.exercise');
+  const { isExerciseGuideShown: showExerciseGuides } = await readCoachSettings(ctx.companyId);
 
   // Progressive-overload recommendation per exercise from the client's recent set history.
   const recLocale = locale === 'es' ? 'es' : 'en';
@@ -102,7 +104,10 @@ export default async function WorkoutPage({
       weight: e.weight,
       rest_sec: e.rest_sec,
       notes: e.notes,
-      cues: (locale === 'es' && meta?.cues_es) || meta?.cues_en || null,
+      // "Include exercise instructions in client app" (coach settings). Dropped at the boundary
+      // rather than hidden in the player, so the coaching cues are not sitting in the page payload
+      // for anyone who opens the network tab after she turned them off.
+      cues: showExerciseGuides ? (locale === 'es' && meta?.cues_es) || meta?.cues_en || null : null,
       muscle: meta?.muscle_group ? (muscleLabel.get(meta.muscle_group) ?? meta.muscle_group) : null,
       muscleKey: meta?.muscle_group ?? null,
       video_mux_id: meta?.video_mux_id ?? null,

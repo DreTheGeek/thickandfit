@@ -3,6 +3,8 @@ import 'server-only';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 import { emitEvent } from '@/lib/events/emit';
+import { readCoachSettings } from '@/lib/coach/settings';
+import { sendHabitSummaryToChat } from '@/lib/habits/habit-summary';
 
 const fieldSchema = z.object({
   type: z.enum(['text', 'multiline', 'select', 'rating', 'sleep_duration', 'photo', 'measurement']),
@@ -125,6 +127,14 @@ export async function submitResponse(
     .maybeSingle();
   if (!form || form.status !== 'published') throw new Error('Form not available');
 
+  // The real enforcement point for the coach's "Allow clients to fill and send check-ins" switch.
+  // /checkin hides the list when it is off, but this is a public POST endpoint, and a page that stops
+  // rendering a link is not an access control.
+  if (form.type === 'check_in') {
+    const settings = await readCoachSettings(companyId);
+    if (!settings.isCheckinAllowed) throw new Error('Check-ins are turned off');
+  }
+
   const { data: assigned } = await supabase
     .from('form_assignments')
     .select('id')
@@ -154,6 +164,11 @@ export async function submitResponse(
       aggregateId: data.id,
       payload: { form_id: formId, form_version: form.version },
     });
+    // "Share habit summary in chat" (coach settings). Awaited, not fired and forgotten: a bare void
+    // after the response is returned dies with the frozen lambda on Vercel, and a habit summary that
+    // arrives only when the container happens to stay warm is worse than one that never arrives.
+    // The helper swallows its own failures, so a chat problem cannot fail the check-in itself.
+    await sendHabitSummaryToChat({ companyId, profileId, responseId: data.id });
   }
   return { responseId: data?.id };
 }

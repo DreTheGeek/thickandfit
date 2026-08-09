@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { getAssignedCheckins } from '@/lib/checkins/checkins';
+import { readCoachSettings } from '@/lib/coach/settings';
 import { Icon } from '@/components/ui/icons';
 import { IconTile, ListRow } from '@/components/ui/list-row';
 import { Tag } from '@/components/ui/badge';
@@ -15,14 +16,23 @@ export default async function CheckinPage(): Promise<ReactElement> {
   const ctx = await requireEntitled();
   const t = await getTranslations('app.checkin');
   const locale = await getLocale();
-  const checkins = ctx.companyId ? await getAssignedCheckins(ctx.companyId, ctx.userId) : [];
+  const settings = await readCoachSettings(ctx.companyId);
+  // "Allow clients to fill and send check-ins" (coach settings). Hiding the list is the courtesy half;
+  // the enforcement half is in submitResponse, because a direct POST to /api/forms/[id]/submit does
+  // not pass through this page.
+  const checkins =
+    ctx.companyId && settings.isCheckinAllowed ? await getAssignedCheckins(ctx.companyId, ctx.userId) : [];
 
   return (
     <div className="px-[22px] pb-7 pt-3">
       <PageTitle className="mb-1">{t('title')}</PageTitle>
       <p className="mb-5 text-[13px] text-faint">{t('subtitle')}</p>
 
-      {checkins.length === 0 ? (
+      {!settings.isCheckinAllowed ? (
+        <div className="flex min-h-[40vh] items-center justify-center rounded-2xl border border-dashed border-line px-8 text-center">
+          <p className="text-[14px] text-faint">{t('paused')}</p>
+        </div>
+      ) : checkins.length === 0 ? (
         <div className="flex min-h-[40vh] items-center justify-center rounded-2xl border border-dashed border-line px-8 text-center">
           <p className="text-[14px] text-faint">{t('empty')}</p>
         </div>

@@ -10,6 +10,7 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isStripeConfigured } from '@/lib/billing/stripe';
+import { readCoachSettingsForProfile } from '@/lib/coach/settings';
 
 /** Entitlement source vocabulary, matching the CHECK constraint on entitlements.source. */
 export type EntitlementSource = 'apple' | 'stripe' | 'ghl' | 'manual';
@@ -47,13 +48,30 @@ export async function isEntitled(profileId: string): Promise<boolean> {
     return false;
   }
 
+  const rows = (data ?? []) as { status: string; expires_at: string | null }[];
   const now = Date.now();
-  return (data ?? []).some((row) => {
-    const r = row as { status: string; expires_at: string | null };
+  const liveNow = rows.some((r) => {
     if (!isActiveEntitlementStatus(r.status)) return false;
     // No expiry = open-ended grant. Otherwise it must still be in the future.
     return !r.expires_at || new Date(r.expires_at).getTime() > now;
   });
+  if (liveNow) return true;
+
+  // "Automatically remove client access to the app when their membership expires" (coach settings,
+  // default ON). Only asked when the answer could change: a member who is entitled right now is
+  // entitled either way, and skipping the read keeps the settings table off the hot path.
+  //
+  // Scope is deliberately narrow. This can only rescue a grant that is STILL active or trialing and
+  // has simply run past its end date, which is the manual / GHL / paid-through-a-date case the coach
+  // is describing. A canceled, past_due, expired or revoked grant is dead regardless: turning this
+  // switch off must never keep serving paid content to someone whose payment failed.
+  const datedButActive = rows.some(
+    (r) => isActiveEntitlementStatus(r.status) && r.expires_at !== null,
+  );
+  if (!datedButActive) return false;
+
+  const { isAccessRevokedOnExpiry } = await readCoachSettingsForProfile(profileId);
+  return !isAccessRevokedOnExpiry;
 }
 
 /**
