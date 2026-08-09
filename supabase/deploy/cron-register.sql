@@ -338,11 +338,31 @@ exception
 end $$;
 
 -- ------------------------------------------------------------------------------------
--- tf-index-memory-6h (unified member-memory reconciler: sweeps every per-member data source
--- (food days incl. photo scans, meal plans, check-ins, weights, intake, coach notes, physique,
--- measurements) into member_memory so the coach can semantically recall everything. Idempotent +
--- capped, so re-runs only embed genuinely new rows. Default body = active subscribers; a backfill
--- is a manual POST with {"scope":"all","sinceDays":4000}.)
+-- tf-index-memory-6h. THE learning job. Two phases behind one endpoint, on purpose: the corpus and
+-- the member sweep answer the same question ("what is new since the last run") and must not be able
+-- to drift apart in cadence.
+--
+--   PHASE 2 (runs first, per company) -> coach_knowledge: Stephanie's 365 per-movement coaching
+--     cues and her published protocol (overview / rules / the day / grocery list, EN and ES).
+--     Re-derived from the live rows each run, so editing a cue in the coach UI re-embeds it. The
+--     corpus is what every member's answer is grounded in, which is why it goes first: on a run
+--     that cannot finish, shared knowledge is the part worth having.
+--   PHASE 1 (per member) -> member_memory: food days incl. photo scans, meal plans, check-ins,
+--     weights, measurements, coach notes, physique analyses, the health-profile intake fact,
+--     training days, and coaching-conversation days.
+--
+-- Idempotent + capped + resumable, so re-runs only embed genuinely new or changed rows and an
+-- interrupted run costs nothing. Default body = active subscribers. The historical backfill over
+-- migrated Lenus contacts is a manual POST with {"scope":"all","sinceDays":4000,"maxMembers":40},
+-- run repeatedly: maxMembers keeps each call inside the route's 300s budget and the reconcile means
+-- repeats are free.
+--
+-- SECRET VIA VAULT, not a literal. CLAUDE.md: 13 of 14 cron bodies were carrying CRON_SECRET as
+-- plaintext in cron.job.command, readable by anything with DB access and needing a 13-place edit to
+-- rotate. This job reads it from vault.decrypted_secrets at RUN time, so rotation is one
+-- vault.update_secret call and the command text holds no secret at all. Requires the secret to
+-- exist: select vault.create_secret('<value>', 'cron_secret'). Do the same to the remaining jobs in
+-- this file the next time each one is touched.
 -- ------------------------------------------------------------------------------------
 do $$
 declare v_job_id bigint;
@@ -357,7 +377,8 @@ begin
       select net.http_post(
         url := '__APP_URL__/api/internal/index-memory',
         headers := jsonb_build_object(
-          'Authorization', 'Bearer __CRON_SECRET__',
+          'Authorization',
+          'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret'),
           'Content-Type', 'application/json'
         ),
         body := '{}'::jsonb,
@@ -365,7 +386,7 @@ begin
       );
     $cron$
   );
-  raise notice 'scheduled tf-index-memory-6h at 30 */6 * * *';
+  raise notice 'scheduled tf-index-memory-6h at 30 */6 * * * (secret via vault)';
 exception
   when undefined_function then
     raise notice 'pg_cron/pg_net not installed. Skipping tf-index-memory-6h.';
