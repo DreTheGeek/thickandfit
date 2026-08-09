@@ -1,6 +1,6 @@
 // Public waitlist funnel signup — extends /api/waitlist with names/phone/IG + referral attribution.
 // The old /api/waitlist stays alive for lightweight newsletter forms; this endpoint is the launch
-// funnel entry point (Aug 4 → Sept 27), and the response is designed for the thank-you page:
+// funnel entry point (Aug 4 → doors open in October), and the response is designed for the thank-you page:
 // referral share URL + entry count + is-new signal, no email confirmation wall.
 import { cookies } from 'next/headers';
 import { apiSuccess, apiError } from '@/lib/api/auth';

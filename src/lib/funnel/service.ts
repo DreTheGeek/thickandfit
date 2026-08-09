@@ -1,5 +1,5 @@
 import 'server-only';
-// Waitlist funnel service — the read/write layer for the Libra Season launch (Aug 4 → Sept 27).
+// Waitlist funnel service — the read/write layer for the Libra Season launch (Aug 4 → doors open in October).
 //
 // Route rule from kb-funnels SKILL.md: the thank-you page is the product pre-launch. Signup fires
 // its side effects but never blocks the caller from getting a lead id, share URL, and entry count.

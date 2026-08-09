@@ -28,7 +28,7 @@ export const DEFAULT_FILTERS: DrawFilters = {
 
 export const DRAW_LABELS: Record<DrawKind, string> = {
   early_bird: 'Early-bird (around Aug 18)',
-  main: 'Main prize (doors open, Sept 27)',
+  main: 'Main prize (doors open, October)',
   founding_final: 'Founding-members final (window close)',
   bonus: 'Bonus drawing',
 };

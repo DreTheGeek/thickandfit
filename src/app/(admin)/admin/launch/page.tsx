@@ -1,5 +1,5 @@
 // Launch runway board — the single ops page that tracks what's left before Aug 4 (waitlist opens)
-// and Sept 27 (doors open). Blocker list lives in src/lib/admin/launch-runway.ts as a static const
+// and doors open in October (day not confirmed). Blocker list lives in src/lib/admin/launch-runway.ts as a static const
 // so a shipped item = a single-commit edit + git audit trail. No admin UI to author blockers on
 // purpose: launch-time work is bounded, coding is faster than clicking, and audit trail matters.
 //
@@ -17,16 +17,16 @@ export default async function AdminLaunchPage(): Promise<ReactElement> {
   await requireOperator();
 
   const aug4 = countByMilestone('aug4');
-  const sept27 = countByMilestone('sept27');
+  const doors = countByMilestone('doors');
   const ongoing = countByMilestone('ongoing');
 
   const daysUntilAug4 = daysUntil(CAMPAIGN_SCHEDULE.waitlistOpensIso);
-  const daysUntilSept27 = daysUntil(CAMPAIGN_SCHEDULE.doorsOpenIso);
+  const daysUntilDoors = daysUntil(CAMPAIGN_SCHEDULE.doorsOpenIso);
 
   return (
     <AdminPage
       title="Launch runway"
-      subtitle="Every blocker between here and Aug 4 (waitlist opens) then Sept 27 (doors open). Edit src/lib/admin/launch-runway.ts to flip status."
+      subtitle="Every blocker between here and Aug 4 (waitlist opens) then doors open in October, Libra season (day not confirmed). Edit src/lib/admin/launch-runway.ts to flip status."
     >
       <Card title="Days remaining">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -37,17 +37,17 @@ export default async function AdminLaunchPage(): Promise<ReactElement> {
             tone={daysUntilAug4 <= 7 && aug4.blocked + aug4.pending > 0 ? 'warn' : undefined}
           />
           <Stat
-            label="Until Sept 27"
-            value={String(daysUntilSept27)}
+            label="Until doors open"
+            value={String(daysUntilDoors)}
             sub="doors open"
           />
           <Stat label="Aug 4 blockers" value={`${aug4.done}/${aug4.total}`} sub={`${aug4.pct}% done`} tone={aug4.pct === 100 ? 'good' : undefined} />
-          <Stat label="Sept 27 blockers" value={`${sept27.done}/${sept27.total}`} sub={`${sept27.pct}% done`} tone={sept27.pct === 100 ? 'good' : undefined} />
+          <Stat label="Doors-open blockers" value={`${doors.done}/${doors.total}`} sub={`${doors.pct}% done`} tone={doors.pct === 100 ? 'good' : undefined} />
         </div>
       </Card>
 
       <MilestoneCard title="Aug 4 — waitlist opens" counts={aug4} blockers={BLOCKERS.filter((b) => b.milestone === 'aug4')} />
-      <MilestoneCard title="Sept 27 — doors open" counts={sept27} blockers={BLOCKERS.filter((b) => b.milestone === 'sept27')} />
+      <MilestoneCard title="Doors open, October (Libra season)" counts={doors} blockers={BLOCKERS.filter((b) => b.milestone === 'doors')} />
       <MilestoneCard title="Ongoing ops hygiene" counts={ongoing} blockers={BLOCKERS.filter((b) => b.milestone === 'ongoing')} />
     </AdminPage>
   );

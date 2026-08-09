@@ -1,7 +1,7 @@
 // /admin/waitlist/draws — run and audit the giveaway drawings.
 //
 // Three drawings are planned (2026-07-23 call): early-bird around Aug 18 to restart sharing in the
-// middle of the campaign, the main prize when doors open Sept 27, and a founding-members-only final
+// middle of the campaign, the main prize when doors open in October, and a founding-members-only final
 // when the 5-day window closes.
 //
 // Everything here is built around one requirement: because entries are earned partly by referral,

@@ -1,5 +1,5 @@
 import 'server-only';
-// Launch runway data — the one place a real ops team looks at "what's left before Aug 4 / Sept 27."
+// Launch runway data — the one place a real ops team looks at "what's left before Aug 4 / doors open in October."
 // Static const list rather than a DB table because launch-time tools should be easy to update via
 // a single commit + code review, not require an admin UI. When the launch is behind us, this file
 // gets moved to .planning/archive and the page redirects to /admin.
@@ -8,16 +8,16 @@ import 'server-only';
 //   - status:  'done' | 'in_progress' | 'blocked' | 'pending'
 //   - When a task ships, flip status to 'done' + add commit sha to notes.
 //   - When a task is blocked on a specific external action, put owner=the-person + notes=action.
-//   - Add new blockers with an id that will not collide with existing (`aug4-*`, `sept27-*`).
+//   - Add new blockers with an id that will not collide with existing (`aug4-*`, `doors-*`).
 //
 // Sources of truth this pulls from:
 //   - Aug 4 blockers: workflow w27o73vjo (pages-auth-launch-scope) + kb-funnels doctrine
-//   - Sept 27 blockers: 2026-07-23 call decisions + call-2026-07-01 tier structure
+//   - Doors-open blockers: 2026-07-23 call decisions + call-2026-07-01 tier structure
 //   - Ops long-poles: launch-runbook + STATE.md pending work
 
 export type BlockerStatus = 'done' | 'in_progress' | 'blocked' | 'pending';
 export type BlockerOwner = 'LaSean' | 'Rodney' | 'Shakira' | 'Stephanie' | 'vendor' | 'legal';
-export type BlockerMilestone = 'aug4' | 'sept27' | 'ongoing';
+export type BlockerMilestone = 'aug4' | 'doors' | 'ongoing';
 
 export type Blocker = {
   id: string;
@@ -112,67 +112,67 @@ export const BLOCKERS: readonly Blocker[] = [
 
   // ═══════════════════════════════════════ SEPT 27 — doors open ═══════════════════════════════════════
   {
-    id: 'sept27-stripe-live',
+    id: 'doors-stripe-live',
     title: 'Stripe live keys + STRIPE_PRICE_SELF/TEAM/STEPH + webhook secret',
-    milestone: 'sept27',
+    milestone: 'doors',
     owner: 'Stephanie',
     status: 'blocked',
     detail: 'Blocked on Stripe identity verification (forward Stripe email to lasean@kaldrbusiness.com; entity Thick Fit Coaching LLC). Paywall auto-arms the moment STRIPE_SECRET_KEY lands.',
   },
   {
-    id: 'sept27-founding-window',
+    id: 'doors-founding-window',
     title: 'A2 5-day founding-window pricing logic ($19.97 → $24.97)',
-    milestone: 'sept27',
+    milestone: 'doors',
     owner: 'LaSean',
     status: 'pending',
     detail: 'Two Stripe prices + window-close date logic in priceForTier(). Waitlist gets first 24h at founding; public gets remaining 4 days; then price flips.',
   },
   {
-    id: 'sept27-mux-env',
+    id: 'doors-mux-env',
     title: 'Mux tokens/secret/webhook/signing-key in Vercel prod',
-    milestone: 'sept27',
+    milestone: 'doors',
     owner: 'LaSean',
     status: 'blocked',
     detail: 'Workout demo playback + signed URLs cannot function without these. Core paid product value.',
   },
   {
-    id: 'sept27-legacy-reconcile',
+    id: 'doors-legacy-reconcile',
     title: 'Legacy Lenus subscribers pre-paywall reconcile (~256 rows)',
-    milestone: 'sept27',
+    milestone: 'doors',
     owner: 'LaSean',
     status: 'pending',
     detail: 'client_subscriptions has ~256 imported rows with no native Stripe sub → all get paywalled when Stripe arms. Comp-grant them OR UNION the tables BEFORE flipping Stripe live.',
     notes: 'Blocks Stephanie\'s existing client base.',
   },
   {
-    id: 'sept27-stephanie-content',
+    id: 'doors-stephanie-content',
     title: 'Stephanie content long-pole: AI KB, demo videos, recipes, offer blueprint',
-    milestone: 'sept27',
+    milestone: 'doors',
     owner: 'Stephanie',
     status: 'blocked',
     detail: 'AI Knowledge Base (blocks /coach-chat quality — Gap Log #5), 369 demo videos, approved recipe/exercise lists, offer blueprint.',
   },
   {
-    id: 'sept27-onboarding-split',
+    id: 'doors-onboarding-split',
     title: 'D: onboarding pre/post-paywall split',
-    milestone: 'sept27',
+    milestone: 'doors',
     owner: 'LaSean',
     status: 'done',
     notes: 'Walked end to end on prod 2026-08-01.',
     detail: 'Per 2026-07-23 call: name/email/phone/goals stay pre-paywall; weight/pictures/body-fat move post-paywall so we do not waste tokens on non-converters.',
   },
   {
-    id: 'sept27-storytelling-video',
+    id: 'doors-storytelling-video',
     title: 'AI childhood storytelling video (viral launch asset)',
-    milestone: 'sept27',
+    milestone: 'doors',
     owner: 'Stephanie',
     status: 'pending',
     detail: 'Comment-to-DM ("Comment THICK") → waitlist. Central promo per waitlist campaign plan Part Two.',
   },
   {
-    id: 'sept27-past-clients',
+    id: 'doors-past-clients',
     title: 'Past-client cleanup + segmentation (5 groups)',
-    milestone: 'sept27',
+    milestone: 'doors',
     owner: 'Stephanie',
     status: 'pending',
     detail: 'Rodney sends the churn list; Stephanie marks who is actually active/free/off-platform/bootcamp; Shakira segments + drafts reactivation.',
@@ -186,7 +186,7 @@ export const BLOCKERS: readonly Blocker[] = [
     milestone: 'ongoing',
     owner: 'LaSean',
     status: 'pending',
-    detail: 'Hobby caps pg_cron at 1/day and froze prod once before. Confirm Pro before Sept 27.',
+    detail: 'Hobby caps pg_cron at 1/day and froze prod once before. Confirm Pro before doors open.',
   },
   {
     id: 'ongoing-refund-cookies',

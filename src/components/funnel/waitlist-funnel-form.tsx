@@ -1,5 +1,5 @@
 'use client';
-// The Libra Season waitlist signup form (2026-07-23 launch call, Aug 4 → Sept 27 doors).
+// The Libra Season waitlist signup form (2026-07-23 launch call, Aug 4 → doors open in October).
 //
 // Reads a first-party ?r=<code> cookie set by the page (see /join server component) so the
 // referral chain works even when a friend clicks the link, closes the tab, and comes back later.

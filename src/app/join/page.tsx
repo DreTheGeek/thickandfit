@@ -1,4 +1,4 @@
-// The Libra Season waitlist landing (Aug 4 → Sept 27 doors). Public + crawlable.
+// The Libra Season waitlist landing (Aug 4 → doors open in October). Public + crawlable.
 //
 // Resolves the ?r=<code> referrer server-side so the friend's name shows in the hero without a
 // client round-trip, and sets a first-party cookie so the credit still fires after a bounce and

@@ -2,7 +2,7 @@
 //
 // Rodney, 2026-07-30: the teamthickandfit.com site should not be publicly visible yet, and the
 // launch runs as TWO separate funnels: the waitlist funnel (live Aug 4) and the main app signup
-// (live Sept 27 when doors open). This module hides the second one without touching the first.
+// (live when doors open in October). This module hides the second one without touching the first.
 //
 // WHY A DENYLIST AND NOT AN ALLOWLIST. "Hide everything except X" is the stricter shape and the
 // wrong one here. The waitlist opens in five days and the entire campaign points at /join, so a
@@ -39,7 +39,7 @@ const GATED_PATHS: RegExp[] = [
 /**
  * The waitlist funnel. Gated only by the SECOND switch (PRELAUNCH_WAITLIST_CLOSED), never by
  * PRELAUNCH_HIDE_SITE, because the two funnels open on different dates: the waitlist on Aug 4 and
- * the marketing site on Sept 27. One flag could not express that.
+ * the marketing site when doors open. One flag could not express that.
  */
 const WAITLIST_PATHS: RegExp[] = [/^\/join(\/|$)/];
 
@@ -69,7 +69,7 @@ export function isPrelaunchEnabled(env: NodeJS.ProcessEnv = process.env): boolea
  *
  * Dre, 2026-07-30: nobody should be able to join the waitlist yet, but the team still needs to reach
  * the site to log in and test. This closes the second funnel without disturbing the first switch, so
- * Aug 4 is `vercel env rm PRELAUNCH_WAITLIST_CLOSED` and Sept 27 is `vercel env rm
+ * Aug 4 is `vercel env rm PRELAUNCH_WAITLIST_CLOSED` and doors-open day is `vercel env rm
  * PRELAUNCH_HIDE_SITE`. Two dates, two switches, neither one entangled with the other.
  *
  * Defaults OFF, same as the marketing gate: shipping this code closes nothing by itself.

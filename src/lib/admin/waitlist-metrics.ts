@@ -320,10 +320,14 @@ export async function getTopReferrers(limit: number = 100): Promise<TopReferrers
   return { referrers, totalReferrals, uniqueReferrers };
 }
 
-// Exported for the /admin/launch runway page — it wants "days until Aug 4" and "days until Sept 27"
-// as tiles, and they belong in the same schedule module.
+// Exported for the /admin/launch runway page — it wants "days until the waitlist opens" and "days
+// until doors open" as tiles, and they belong in the same schedule module.
+//
+// Doors day is UNCONFIRMED: the 2026-08-06 call moved the launch to October (Libra season) without
+// naming a date, so this tracks the last day of that window alongside billing's DOORS_OPEN_ISO.
+// Keep the two in step, or the runway counts down to a different day than the price switches on.
 export const CAMPAIGN_SCHEDULE = {
   waitlistOpensIso: CAMPAIGN_START_ISO,
-  doorsOpenIso: '2026-09-27T00:00:00Z',
-  foundingClosesIso: '2026-10-02T00:00:00Z', // 5-day founding window after doors open
+  doorsOpenIso: '2026-10-22T00:00:00Z',
+  foundingClosesIso: '2026-10-27T00:00:00Z', // 5-day founding window after doors open
 } as const;

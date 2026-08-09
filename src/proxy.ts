@@ -99,7 +99,7 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
       const url = req.nextUrl.clone();
       url.pathname = gateRedirectPath(pathname, waitlistClosed);
       url.search = '';
-      // 307, not 308: this is a temporary state that ends when doors open on Sept 27, and a
+      // 307, not 308: this is a temporary state that ends when doors open in October, and a
       // permanent redirect would be cached by browsers and CDNs long after the site goes live.
       return NextResponse.redirect(url, 307);
     }

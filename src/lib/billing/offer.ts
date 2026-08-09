@@ -23,8 +23,21 @@ export const FOUNDING_PRICE_CENTS = 1997;
 // Code of Conduct issue. Founding members are insulated regardless (see productKeyForOffer).
 export const STANDARD_PRICE_CENTS = 2497;
 
-/** Doors open: 2026-09-27, midnight Pacific (Stephanie's audience is US-anchored). */
-export const DOORS_OPEN_ISO = '2026-09-27T07:00:00.000Z';
+/**
+ * Doors open, midnight Pacific (Stephanie's audience is US-anchored).
+ *
+ * THE DAY IS NOT CONFIRMED. The 2026-08-06 call moved the launch off her Sept 27 birthday to
+ * "October, Libra season" ("I think that's going to be the smartest thing logistic-wise") to absorb
+ * the D-U-N-S delay, but nobody named a date. Libra season ends 22 Oct, so this sits at the LAST
+ * day of the window on purpose.
+ *
+ * Why late rather than early: this constant only decides when the founding rate stops being
+ * claimable (see foundingClosesAt). Too late costs nothing, since the paywall is not open yet. Too
+ * early silently starts charging waitlist members $24.97 for the $19.97 they were promised, which
+ * is the one failure mode that reaches a customer's card. Replace with the real day when she picks
+ * it; nothing else needs to change.
+ */
+export const DOORS_OPEN_ISO = '2026-10-22T07:00:00.000Z';
 
 /** How long the founding rate stays claimable once doors open. */
 export const FOUNDING_WINDOW_DAYS = 5;
