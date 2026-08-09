@@ -146,9 +146,20 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   // Spanish. One way in, no way out, and the English canonical URL served Spanish to crawlers.
   const urlLocale = urlLocaleFor(req.nextUrl.pathname);
   if (urlLocale) {
+    // SESSION cookie, deliberately. Reading a page is not the same as choosing a language.
+    //
+    // This used to persist for a year, which meant one visit to any /es page converted the whole
+    // app, sign-in included, until the visitor found the toggle in Settings. It fired on us: we
+    // browsed /es/vs/cal-ai while testing and every login after that came up Spanish, even though
+    // the profile said en. An English speaker who taps "Español" once to look is in the same trap.
+    //
+    // A session cookie still does the job it was added for, which is keeping a visitor who arrived
+    // from Spanish search in Spanish through /join and sign-in, since those have no Spanish twin.
+    // It just stops that inference outliving the visit. The year-long cookie is now written only by
+    // an EXPLICIT choice: the language toggle, the onboarding language step, or the signed-in
+    // profile (lib/i18n/actions.ts, api/onboarding/submit, lib/auth/actions.ts).
     res.cookies.set('ui_locale', urlLocale, {
       path: '/',
-      maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
     });
   } else if (!req.cookies.get('ui_locale')) {
