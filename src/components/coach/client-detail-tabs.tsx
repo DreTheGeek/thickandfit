@@ -34,6 +34,143 @@ function fmtBytes(b: number | null): string {
   return `${(b / 1048576).toFixed(1)} MB`;
 }
 
+/**
+ * A row of slug chips, labelled from the SAME catalog the member's own health form uses
+ * (app.health.opt.*). Reusing it means the coach and the member can never end up reading two
+ * different names for one answer, and it adds no new strings to translate.
+ *
+ * Deliberately not the prompt labels in lib/health-profile/labels.ts: those are written for the
+ * model ("trains at home (assume minimal equipment ... do NOT prescribe barbell)") and would print
+ * a paragraph of instructions on her screen.
+ */
+function Chips({
+  group,
+  values,
+  tone,
+  th,
+}: {
+  group: string;
+  values: readonly string[];
+  tone?: 'warn';
+  th: (key: string) => string;
+}): ReactElement {
+  return (
+    <span className="flex flex-wrap justify-end gap-1.5">
+      {values.map((v) => (
+        <span
+          key={v}
+          className={[
+            'rounded-full px-2 py-0.5 text-[11px] font-medium',
+            tone === 'warn' ? 'bg-alert-bg text-alert-ink' : 'bg-warm text-soft',
+          ].join(' ')}
+        >
+          {th(`opt.${group}.${v}`)}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Everything the intake already captures and the coach was never shown.
+ *
+ * None of this is new capture. `client_intake` has held it for months, `coach-ai/context.ts` reads
+ * it into the chat prompt, and `getClientDetail` returns it, so the model knew things Stephanie
+ * could not see. On the live database that is 242 eating-disorder screenings, 244 sleep answers and
+ * 79 training-history write-ups that had never been rendered anywhere.
+ *
+ * The whole section hides when a client has answered none of it, rather than showing a card of
+ * dashes: a migrated Lenus client legitimately has nothing here until she fills in the in-app form.
+ */
+function HealthProfileSection({
+  intake,
+  t,
+  th,
+}: {
+  intake: NonNullable<ClientDetail['intake']>;
+  t: (key: string) => string;
+  th: (key: string) => string;
+}): ReactElement | null {
+  const h = intake.healthProfile;
+  const pregnancy = h.pregnancy && h.pregnancy !== 'none' && h.pregnancy !== 'prefer_not' ? h.pregnancy : null;
+  const has =
+    h.conditions.length > 0 ||
+    h.medications.length > 0 ||
+    h.safety.length > 0 ||
+    pregnancy != null ||
+    Boolean(h.allergies) ||
+    Boolean(h.sleep) ||
+    Boolean(h.stress) ||
+    Boolean(h.foodRelationship) ||
+    Boolean(h.trainingLocation) ||
+    Boolean(h.trainingExperience) ||
+    intake.edsRisk != null ||
+    Boolean(intake.activityLevel) ||
+    intake.tdee != null ||
+    Boolean(intake.clientWhy) ||
+    intake.sessionsPerWeek != null ||
+    (intake.equipment?.length ?? 0) > 0 ||
+    Boolean(intake.allergies);
+
+  if (!has) return null;
+
+  // The screen is 5 questions with a cutoff of 2 (scored in lib/health-profile/scoff.ts, not here).
+  // "Worth a conversation" rather than a diagnosis, because that is what a positive screen means and
+  // a coach reading a red "at risk" badge would be reading something the instrument cannot say.
+  const eds = intake.edsRisk;
+
+  return (
+    <Section title={t('healthProfile')}>
+      {intake.clientWhy && (
+        <Row label={t('healthWhy')} value={<span className="whitespace-pre-wrap text-left">{intake.clientWhy}</span>} />
+      )}
+      {eds && (
+        <Row
+          label={t('healthEdsScreen')}
+          value={
+            <span
+              className={[
+                'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                eds === 'potential' ? 'bg-alert-bg text-alert-ink' : 'bg-warm text-soft',
+              ].join(' ')}
+            >
+              {eds === 'potential' ? t('healthEdsPotential') : t('healthEdsNone')}
+            </span>
+          }
+        />
+      )}
+      {h.safety.length > 0 && (
+        <Row label={t('healthSafety')} value={<Chips group="safety" values={h.safety} tone="warn" th={th} />} />
+      )}
+      {pregnancy && <Row label={t('healthPregnancy')} value={<Chips group="pregnancy" values={[pregnancy]} tone="warn" th={th} />} />}
+      {h.conditions.length > 0 && <Row label={t('healthConditions')} value={<Chips group="conditions" values={h.conditions} th={th} />} />}
+      {h.medications.length > 0 && <Row label={t('healthMedications')} value={<Chips group="meds" values={h.medications} th={th} />} />}
+      {(h.allergies || intake.allergies) && (
+        <Row label={t('healthAllergies')} value={<span className="text-left">{h.allergies || intake.allergies}</span>} />
+      )}
+      {h.sleep && <Row label={t('healthSleep')} value={th(`opt.sleep.${h.sleep}`)} />}
+      {h.stress && <Row label={t('healthStress')} value={th(`opt.stress.${h.stress}`)} />}
+      {h.foodRelationship && <Row label={t('healthFoodRelationship')} value={th(`opt.food.${h.foodRelationship}`)} />}
+      {h.trainingLocation && <Row label={t('healthTrainingLocation')} value={th(`opt.trainingLocation.${h.trainingLocation}`)} />}
+      {h.trainingExperience && <Row label={t('healthExperience')} value={th(`opt.experience.${h.trainingExperience}`)} />}
+      {intake.sessionsPerWeek != null && <Row label={t('healthSessionsPerWeek')} value={String(intake.sessionsPerWeek)} />}
+      {intake.equipment && intake.equipment.length > 0 && (
+        <Row label={t('healthEquipment')} value={<span className="text-left capitalize">{intake.equipment.join(', ')}</span>} />
+      )}
+      {intake.tdee != null && (
+        <Row
+          label={t('healthTdee')}
+          value={`${Math.round(intake.tdee)} kcal${intake.pal != null ? ` (PAL ${intake.pal.toFixed(2)})` : ''}`}
+        />
+      )}
+      {/* Free prose from the Lenus intake, not a slug. Rendered as written, never parsed. */}
+      {intake.activityLevel && (
+        <Row label={t('healthActivity')} value={<span className="whitespace-pre-wrap text-left">{intake.activityLevel}</span>} />
+      )}
+    </Section>
+  );
+}
+
 function Row({ label, value }: { label: string; value: ReactNode }): ReactElement {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-divider py-2.5 last:border-0">
@@ -54,6 +191,9 @@ function Section({ title, children }: { title: string; children: ReactNode }): R
 
 export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; locale: string }): ReactElement {
   const t = useTranslations('app.coach');
+  // The member's own health form owns the slug labels (app.health.opt.*). Borrowing them keeps the
+  // coach and the member reading one vocabulary and adds nothing new to translate.
+  const th = useTranslations('app.health');
   const [tab, setTab] = useState<Tab>('overview');
   const cur = detail.currency;
   const mp = detail.mealPlan;
@@ -176,6 +316,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               {detail.intake.trainingExperience && <Row label={t('intakeTraining')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.trainingExperience}</span>} />}
             </Section>
           )}
+          {detail.intake && <HealthProfileSection intake={detail.intake} t={t} th={th} />}
           {(detail.progress.weights.length > 0 || detail.progress.measures.length > 0) && (
             <Section title={t('progressHistory')}>
               {detail.progress.weights.length > 0 && (() => {
