@@ -6,7 +6,11 @@
 import { useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ingestKnowledgeAction, deleteKnowledgeAction } from '@/app/(app)/coach/settings/knowledge/knowledge-actions';
+import {
+  ingestKnowledgeAction,
+  deleteKnowledgeAction,
+  reembedKnowledgeAction,
+} from '@/app/(app)/coach/settings/knowledge/knowledge-actions';
 
 export type KnowledgeSourceView = {
   sourceId: string;
@@ -28,8 +32,12 @@ export function KnowledgeBuilder({ sources }: { sources: KnowledgeSourceView[] }
   const [note, setNote] = useState('');
   const [pending, start] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [repairing, setRepairing] = useState(false);
 
   const valid = title.trim().length >= 2 && text.trim().length >= 20;
+  // Chunks that were stored but never indexed. match_coach_knowledge skips them, so they are dead
+  // weight until they are repaired, and nothing else on this page says so.
+  const missing = sources.reduce((n, s) => n + Math.max(0, s.chunks - s.embedded), 0);
 
   function submit(): void {
     setErr('');
@@ -43,6 +51,31 @@ export function KnowledgeBuilder({ sources }: { sources: KnowledgeSourceView[] }
         router.refresh();
       } else {
         setErr(t('errorIngest'));
+      }
+    });
+  }
+
+  function repair(): void {
+    setErr('');
+    setNote('');
+    setRepairing(true);
+    start(async () => {
+      try {
+        const res = await reembedKnowledgeAction();
+        if (!res.ok) {
+          setErr(t('errorRepair'));
+          return;
+        }
+        setNote(
+          res.failed > 0
+            ? t('repairFailed', { fixed: res.fixed, missing: res.missing, failed: res.failed })
+            : t('repairDone', { fixed: res.fixed, missing: res.missing }),
+        );
+        router.refresh();
+      } catch {
+        setErr(t('errorRepair'));
+      } finally {
+        setRepairing(false);
       }
     });
   }
@@ -92,6 +125,22 @@ export function KnowledgeBuilder({ sources }: { sources: KnowledgeSourceView[] }
           </button>
         </div>
       </div>
+
+      {/* Repair banner: only appears when something saved is unretrievable. */}
+      {missing > 0 && (
+        <div className="rounded-2xl border border-line bg-warm/40 p-5">
+          <p className="text-[13px] font-semibold text-ink">{t('repairTitle', { missing })}</p>
+          <p className="mt-1 text-[12px] text-muted">{t('repairHint')}</p>
+          <button
+            type="button"
+            onClick={repair}
+            disabled={pending}
+            className="tf-press mt-3 rounded-full border border-ink px-4 py-2 text-[12px] font-semibold text-ink disabled:opacity-40"
+          >
+            {repairing ? t('repairing') : t('repair')}
+          </button>
+        </div>
+      )}
 
       {/* Sources list */}
       <div className="rounded-2xl border border-line bg-surface p-5">

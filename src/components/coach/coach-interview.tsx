@@ -73,6 +73,34 @@ export function CoachInterview({ initial }: { initial: Record<string, string> })
   );
 }
 
+// What the last save actually did. `ok` carries the counts because "saved" and "searchable" are
+// different facts and only the second one means her coach can use it.
+type SaveStatus =
+  | { kind: 'idle' }
+  | { kind: 'ok'; chunks: number; embedded: number }
+  | { kind: 'error'; code: string; answersSaved: boolean };
+
+function SaveStatusLine({ status, t }: { status: SaveStatus; t: T }): ReactElement | null {
+  if (status.kind === 'idle') return null;
+
+  if (status.kind === 'error') {
+    // A training failure is materially different from a lost answer: her typing is on disk either
+    // way, and the previous version of this section is still intact, so say that.
+    const msg = status.answersSaved ? t('interviewTrainError') : t('interviewError');
+    return <span className="text-[12px] text-alert-ink">{msg}</span>;
+  }
+
+  const { chunks, embedded } = status;
+  if (chunks === 0) return <span className="text-[12px] text-muted">{t('interviewCleared')}</span>;
+  if (embedded === 0) {
+    return <span className="text-[12px] text-muted">{t('interviewNotSearchable')}</span>;
+  }
+  if (embedded < chunks) {
+    return <span className="text-[12px] text-alert-ink">{t('interviewPartial', { embedded, chunks })}</span>;
+  }
+  return <span className="text-[12px] text-accent">{t('interviewSavedCount', { embedded, chunks })}</span>;
+}
+
 function SectionCard({
   section,
   answers,
@@ -89,19 +117,30 @@ function SectionCard({
   t: T;
 }): ReactElement {
   const [pending, start] = useTransition();
-  const [status, setStatus] = useState<'idle' | 'ok' | 'error'>('idle');
+  const [status, setStatus] = useState<SaveStatus>({ kind: 'idle' });
   const done = sectionAnswered(section, answers);
 
   function save(): void {
-    setStatus('idle');
+    setStatus({ kind: 'idle' });
     start(async () => {
       const payload: Record<string, string> = {};
       for (const q of section.questions) {
         const v = answers[q.key];
         if (v != null) payload[q.key] = v;
       }
-      const res = await saveInterviewSectionAction({ sectionKey: section.key, answers: payload });
-      setStatus(res.ok ? 'ok' : 'error');
+      try {
+        const res = await saveInterviewSectionAction({ sectionKey: section.key, answers: payload });
+        // A save is only real when the text is SEARCHABLE, so the counts come back to the screen
+        // instead of being discarded. embedded < chunks means part of what she just typed cannot be
+        // recalled by her coach, which used to look exactly like a clean success.
+        setStatus(
+          res.ok
+            ? { kind: 'ok', chunks: res.chunks, embedded: res.embedded }
+            : { kind: 'error', code: res.error, answersSaved: res.answersSaved },
+        );
+      } catch {
+        setStatus({ kind: 'error', code: 'unreachable', answersSaved: false });
+      }
     });
   }
 
@@ -124,8 +163,7 @@ function SectionCard({
             <QuestionField key={q.key} q={q} value={answers[q.key] ?? ''} onSet={onSet} t={t} />
           ))}
           <div className="flex items-center justify-end gap-3 border-t border-divider pt-4">
-            {status === 'ok' && <span className="text-[12px] text-accent">{t('interviewSaved')}</span>}
-            {status === 'error' && <span className="text-[12px] text-alert-ink">{t('interviewError')}</span>}
+            <SaveStatusLine status={status} t={t} />
             <button
               type="button"
               onClick={save}

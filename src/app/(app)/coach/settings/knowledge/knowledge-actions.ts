@@ -7,7 +7,12 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { requireCoach } from '@/lib/auth/guards';
-import { ingestKnowledge, deleteKnowledgeSource } from '@/lib/coach-ai/knowledge';
+import {
+  ingestKnowledge,
+  deleteKnowledgeSource,
+  reembedMissing,
+  type ReembedResult,
+} from '@/lib/coach-ai/knowledge';
 
 export type KnowledgeActionResult =
   | { ok: true; chunks: number; embedded: number }
@@ -26,10 +31,23 @@ export async function ingestKnowledgeAction(input: unknown): Promise<KnowledgeAc
   if (!ctx.companyId) return { ok: false, error: 'no_company' };
 
   const result = await ingestKnowledge(ctx.companyId, ctx.userId, parsed.data.title, parsed.data.text);
-  if (result.chunks === 0) return { ok: false, error: 'failed' };
+  if (!result.ok) return { ok: false, error: result.error };
 
   revalidatePath('/coach/settings/knowledge');
   return { ok: true, chunks: result.chunks, embedded: result.embedded };
+}
+
+// Repair path for chunks stored without a vector. Those rows are invisible to retrieval and look
+// identical to good ones in the list, so without this the only fix is re-pasting every document.
+export type ReembedActionResult = ({ ok: true } & ReembedResult) | { ok: false; error: string };
+
+export async function reembedKnowledgeAction(): Promise<ReembedActionResult> {
+  const ctx = await requireCoach();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+
+  const res = await reembedMissing(ctx.companyId);
+  revalidatePath('/coach/settings/knowledge');
+  return { ok: true, ...res };
 }
 
 const DeleteInput = z.object({ sourceId: z.string().uuid() });
