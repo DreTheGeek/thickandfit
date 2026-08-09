@@ -14,7 +14,7 @@ const CLIENT = '32aa5971-7f05-47ee-b879-f4a42e8e6109';
   await Promise.all([p.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {}), p.click('button[type=submit]')]);
   await new Promise((r) => setTimeout(r, 2500));
 
-  await p.goto(`${BASE}/coach/health`, { waitUntil: 'networkidle2', timeout: 45000 });
+  await p.goto(`${BASE}/admin/health`, { waitUntil: 'networkidle2', timeout: 45000 });
   await new Promise((r) => setTimeout(r, 1800));
   await p.screenshot({ path: path.join(OUT, 'f-health.png') });
   console.log('f-health');

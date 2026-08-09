@@ -85,7 +85,7 @@ These are things multiple competitors have that Thick & Fit lacks or hasn't ship
 | # | Move | Lever |
 |---|---|---|
 | 7 | **Tune photo-to-macro for Latin home cooking; surface cooked/raw prominently** | The core wedge — "understands your abuela's cooking" |
-| 8 | **Churn intelligence:** flag the 90-day cliff / <3-workouts-in-14-days, trigger re-engagement in her voice (extend `/coach/intelligence`) | Retention — the widest open feature |
+| 8 | **Churn intelligence:** flag the 90-day cliff / <3-workouts-in-14-days, trigger re-engagement in her voice (extend `/admin/intelligence`) | Retention — the widest open feature |
 | 9 | **Recurring cohort challenges + leaderboard + finisher recognition** | 30-60% engagement lift, native to how she coaches |
 | 10 | **Reposition nutrition as "Steph's method, automated"** (out-trust Fitia, don't out-tech it) | Positioning |
 | 11 | **MyFitnessPal import + barcode + fastest-taps logging** | Neutralize the category's #1 friction |

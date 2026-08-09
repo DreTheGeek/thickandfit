@@ -27,7 +27,7 @@ async function check(p, route, tag) {
   await p.type('input[name=password]', 'TFSample2026!');
   await Promise.all([p.waitForNavigation({ waitUntil: 'networkidle2' }).catch(() => {}), p.click('button[type=submit]')]);
   await new Promise((r) => setTimeout(r, 2500));
-  await check(p, '/coach/health', 'health');
+  await check(p, '/admin/health', 'health');
   await check(p, '/coach/leads', 'leads');
   await check(p, `/coach/leads/${OPP}`, 'lead-detail');
   await b.close();

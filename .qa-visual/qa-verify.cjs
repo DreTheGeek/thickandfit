@@ -6,7 +6,7 @@ const OUT = path.join(__dirname, 'admin');
 const CLIENT = '8a428c79-e383-4b02-8233-35a3732d4eb5';
 const shots = [
   [`/coach/clients/${CLIENT}`, 'v-client'],
-  ['/coach/health', 'v-health'],
+  ['/admin/health', 'v-health'],
   ['/coach/settings', 'v-settings'],
 ];
 (async () => {

@@ -14,7 +14,7 @@ const shots = [
   ['/coach/tool/meal-plans', 'ia-mealplans'],
   ['/coach/programs', 'ia-programs'],
   ['/coach/settings', 'ia-settings'],
-  ['/coach/health', 'ia-health'],
+  ['/admin/health', 'ia-health'],
 ];
 (async () => {
   const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox'] });

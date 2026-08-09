@@ -35,7 +35,7 @@ async function shot(page, route, name, full = false) {
   await shot(d, `/coach/subscribers/${seed.samId}`, 'd3-profile');
   await shot(d, `/coach/programs/${seed.planId}`, 'd4-builder', true);
   await shot(d, '/coach/broadcasts', 'd5-broadcast', true);
-  await shot(d, '/coach/health', 'd6-health');
+  await shot(d, '/admin/health', 'd6-health');
 
   // Mobile
   const m = await (b.createBrowserContext ? b.createBrowserContext() : b.createIncognitoBrowserContext()).then((c) => c.newPage());

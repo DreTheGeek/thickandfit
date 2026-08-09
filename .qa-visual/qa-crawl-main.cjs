@@ -9,7 +9,7 @@ const ID = { client: '8a428c79-e383-4b02-8233-35a3732d4eb5', recipe: '383d7947-5
 const COACH = [
   '/coach', '/coach/clients', `/coach/clients/${ID.client}`, '/coach/leads', `/coach/leads/${ID.opp}`, `/coach/leads/${ID.leadContact}`,
   '/coach/subscribers', `/coach/subscribers/${ID.sub}`, '/coach/programs', `/coach/programs/${ID.plan}`, '/coach/forms',
-  '/coach/broadcasts', '/coach/community', '/coach/inbox', '/coach/health', '/coach/settings',
+  '/coach/broadcasts', '/coach/community', '/coach/inbox', '/admin/health', '/coach/settings',
   '/coach/tool/recipes', `/coach/tool/recipes/${ID.recipe}`, '/coach/tool/recipe-books', '/coach/tool/meal-plans', `/coach/tool/meal-plans/${ID.mealPlan}`, '/coach/tool/ingredients',
 ];
 const SUB = ['/dashboard', '/you', '/account', '/activities', '/nutrition', `/workout/${ID.plan}`];

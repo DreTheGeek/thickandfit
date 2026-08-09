@@ -42,7 +42,7 @@
         "/coach/forms",
         "/coach/settings",
         "/coach/settings/knowledge",
-        "/coach/health"
+        "/coach/subscribers"
       ]
     }
   ],

@@ -31,6 +31,10 @@ const FORBIDDEN = [
   'sessions', 'forms', 'ai_evals', 'email_send_log', 'legacy_client_snapshot', 'coach_knowledge',
   'coaching_assignments', 'approval_queue', 'coach_interview_answers', 'ai_inferences', 'qa_checklist',
   'domain_events',
+  // Added 2026-08-09 with migration 0115. A member never reads this directly: every member-facing
+  // reader goes through the service client. Her email-notification preferences and her client-handling
+  // defaults must not be on the wire for a subscriber who opens PostgREST.
+  'coach_settings',
 ];
 
 async function signIn(email) {

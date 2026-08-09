@@ -100,7 +100,7 @@ const ITEMS = [
   ['12. Learning Loop (agentic)', 'KB change flows to chat SAME DAY', 'Change a knowledge entry -> chat answer changes accordingly (no stale cache).'],
   ['12. Learning Loop (agentic)', 'Nightly insights carry scan quality', 'Ops: after nightly job, user_insights payload has scan_quality (scans/corrections/rate) for active members.'],
   ['12. Learning Loop (agentic)', 'Corrections change coaching context', 'For a member with 5+ scans and 30%+ correction rate: coach chat context includes their scan-accuracy line (ops verify via chat behavior or SQL).'],
-  ['12. Learning Loop (agentic)', 'Intelligence dashboard populated', '/coach/intelligence: scans/day, accuracy, portion error, calibration + trends render with real data (not all zeros) once members scan.'],
+  ['12. Learning Loop (agentic)', 'Intelligence dashboard populated', '/admin/intelligence: scans/day, accuracy, portion error, calibration + trends render with real data (not all zeros) once members scan.'],
   ['12. Learning Loop (agentic)', 'Eval harness runs + compares', 'Ops: pnpm eval:scan completes, prints per-case results + run-over-run comparison vs baseline (92%/F1 .92 band).'],
   ['12. Learning Loop (agentic)', 'Scan images persist for the gold set', 'Ops: after a photo scan, storage has ai-scans/<inference_id>.jpg (fuels future eval cases automatically).'],
   ['12. Learning Loop (agentic)', 'Food corpus grows itself', 'Scan an unusual food not in the DB -> USDA-grounds + caches; SECOND scan of the same food resolves locally (faster, no new row).'],
