@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { useClientFilterUrl } from '@/components/coach/use-client-filters';
 import { ExerciseFavoriteButton } from '@/components/coach/exercise-favorite-button';
+import { ExerciseFilmedButton } from '@/components/coach/exercise-filmed-button';
 import type { ExercisesPage, ExerciseFilters } from '@/lib/coach/exercises';
 
 /**
@@ -73,7 +74,37 @@ export function ExercisesView({ page, filters }: { page: ExercisesPage; filters:
           {t('exercisesFilterFavorites')}{' '}
           <span className={filters.fav ? 'text-bg/60' : 'text-faint'}>{page.counts.fav}</span>
         </button>
+        {/* Only offered once she owns something to shoot, so a fresh tenant never sees a chip
+            that can only ever read 0. */}
+        {page.filming.total > 0 && (
+          <button
+            type="button"
+            onClick={() => setParam('tofilm', filters.toFilm ? null : '1')}
+            aria-pressed={filters.toFilm}
+            className={chipCls(filters.toFilm)}
+          >
+            {t('exercisesFilterToFilm')}{' '}
+            <span className={filters.toFilm ? 'text-bg/60' : 'text-faint'}>{page.counts.toFilm}</span>
+          </button>
+        )}
       </div>
+
+      {/* Shoot progress. Measured against her whole library rather than the filtered view, so the
+          number means the same thing whatever is typed in the search box. This is the thing the
+          published checklist could not do: it reset to 0 percent every time she opened it. */}
+      {page.filming.total > 0 && (
+        <div className="flex items-center gap-3">
+          <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-warm">
+            <div
+              className="h-full rounded-full bg-accent transition-[width] duration-500"
+              style={{ width: `${Math.round((page.filming.filmed / page.filming.total) * 100)}%` }}
+            />
+          </div>
+          <span className="shrink-0 text-[12px] font-semibold tabular-nums text-muted">
+            {t('exercisesFilmedProgress', { filmed: page.filming.filmed, total: page.filming.total })}
+          </span>
+        </div>
+      )}
 
       {/* muscle-group chips */}
       <div className="tf-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -168,6 +199,10 @@ function ExerciseCard({ row }: { row: CardRow }): ReactElement {
           </span>
         </span>
       </Link>
+      {/* The camera only appears on her own rows. The seed library is not hers to film, and the
+          action rejects those ids anyway, so rendering a control that could only ever fail would be
+          the same kind of lie as the checklist that said "saved" and did not. */}
+      {row.isCoachAuthored && <ExerciseFilmedButton exerciseId={row.id} initial={row.filmedAt != null} />}
       <ExerciseFavoriteButton exerciseId={row.id} initial={row.isFavorite} />
     </div>
   );

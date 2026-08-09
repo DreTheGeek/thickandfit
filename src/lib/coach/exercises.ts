@@ -21,6 +21,8 @@ export type ExerciseRow = {
   isCoachAuthored: boolean;
   /** Starred by the coach reading the page. Personal, not company-wide. */
   isFavorite: boolean;
+  /** When she filmed it for the app. Null means it is still on the shoot list. */
+  filmedAt: string | null;
 };
 
 export type ExerciseFilters = {
@@ -31,6 +33,8 @@ export type ExerciseFilters = {
   mine: boolean;
   /** "Favourites". */
   fav: boolean;
+  /** "Still to film": her own rows with no filmed_at. Off by default. */
+  toFilm: boolean;
   page: number;
   pageSize: number;
 };
@@ -44,8 +48,10 @@ export type ExercisesPage = {
   page: number;
   pageSize: number;
   facets: { muscle: Facet[]; equipment: Facet[] };
-  /** Counts for the two ownership toggles, computed over everything the search box has narrowed to. */
-  counts: { mine: number; fav: number };
+  /** Counts for the ownership toggles, computed over everything the search box has narrowed to. */
+  counts: { mine: number; fav: number; toFilm: number };
+  /** Shoot progress across her whole library, independent of every filter on screen. */
+  filming: { filmed: number; total: number };
 };
 
 const PAGE_SIZE = 40;
@@ -56,6 +62,7 @@ export const NO_EXERCISE_FILTERS: Omit<ExerciseFilters, 'muscle' | 'pageSize'> =
   equipment: [],
   mine: false,
   fav: false,
+  toFilm: false,
   page: 1,
 };
 
@@ -71,6 +78,7 @@ export function parseExerciseFilters(sp: Record<string, string | string[] | unde
     equipment: arr(sp.equipment),
     mine: one(sp.mine) !== '0',
     fav: one(sp.fav) === '1',
+    toFilm: one(sp.tofilm) === '1',
     page: Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1,
     pageSize: PAGE_SIZE,
   };
@@ -87,6 +95,7 @@ type ExerciseRaw = {
   category: string | null;
   is_own_demo: boolean | null;
   is_coach_authored: boolean | null;
+  filmed_at: string | null;
 };
 
 function mapRow(r: ExerciseRaw, locale: string, favorites: ReadonlySet<string>): ExerciseRow {
@@ -104,11 +113,12 @@ function mapRow(r: ExerciseRaw, locale: string, favorites: ReadonlySet<string>):
     isShared: r.company_id == null,
     isCoachAuthored: r.is_coach_authored ?? false,
     isFavorite: favorites.has(r.id),
+    filmedAt: r.filmed_at,
   };
 }
 
 const SELECT_COLS =
-  'id, company_id, name_en, name_es, muscle_group, equipment, difficulty, category, is_own_demo, is_coach_authored';
+  'id, company_id, name_en, name_es, muscle_group, equipment, difficulty, category, is_own_demo, is_coach_authored, filmed_at';
 
 /** The starred ids for one coach. Empty set when nobody is asking (server-side candidate reads). */
 async function loadFavoriteIds(profileId: string | null): Promise<Set<string>> {
@@ -140,7 +150,12 @@ async function loadExercises(companyId: string, locale: string, profileId: strin
   return ((data ?? []) as ExerciseRaw[]).map((r) => mapRow(r, locale, favorites));
 }
 
-type FacetKey = 'q' | 'muscle' | 'equipment' | 'own';
+type FacetKey = 'q' | 'muscle' | 'equipment' | 'own' | 'film';
+
+/** Her own, not yet shot. Only coach-authored rows are hers to film, so seed content never qualifies. */
+function isToFilm(r: ExerciseRow): boolean {
+  return r.isCoachAuthored && !r.filmedAt;
+}
 
 function matches(r: ExerciseRow, f: ExerciseFilters, exclude: FacetKey | null): boolean {
   if (exclude !== 'q' && f.q) {
@@ -157,6 +172,10 @@ function matches(r: ExerciseRow, f: ExerciseFilters, exclude: FacetKey | null): 
     const own = (f.mine && r.isCoachAuthored) || (f.fav && r.isFavorite);
     if (!own) return false;
   }
+  // "Still to film" narrows rather than widens, so unlike the two above it is an AND. Turning it on
+  // while "Favourites" is on means "the ones I starred that I still owe a shoot", which is the
+  // reading she wants on a shoot day.
+  if (exclude !== 'film' && f.toFilm && !isToFilm(r)) return false;
   return true;
 }
 
@@ -183,6 +202,11 @@ export async function getExercisesPage(
   // it happens to be on. They DO respect the search box and the chips, which is the useful reading:
   // "of what you are looking at, this many are yours".
   const ownPool = all.filter((r) => matches(r, filters, 'own'));
+  const filmPool = all.filter((r) => matches(r, filters, 'film'));
+  // Her shoot progress is deliberately measured against the WHOLE library, not the filtered view.
+  // "12 of 367" has to mean the same thing after she types in the search box, or the number is
+  // useless for planning a shoot day.
+  const hers = all.filter((r) => r.isCoachAuthored);
   return {
     rows: filtered.slice(start, start + filters.pageSize),
     total: filtered.length,
@@ -196,7 +220,9 @@ export async function getExercisesPage(
     counts: {
       mine: ownPool.filter((r) => r.isCoachAuthored).length,
       fav: ownPool.filter((r) => r.isFavorite).length,
+      toFilm: filmPool.filter(isToFilm).length,
     },
+    filming: { filmed: hers.filter((r) => r.filmedAt).length, total: hers.length },
   };
 }
 
