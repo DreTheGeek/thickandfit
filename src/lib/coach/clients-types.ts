@@ -2,6 +2,11 @@
 // so client components can import these without dragging in the service client. The server data
 // layer (clients.ts) re-exports everything from here.
 import type { Standing } from '@/lib/coach/standing';
+// TYPE-ONLY, and it has to stay that way. health-profile/data.ts is `import "server-only"`, which
+// throws if it is ever pulled into a client bundle. `import type` is erased at compile time so no
+// runtime import exists. Do not convert this to a value import to grab the schema or a constant:
+// take those from health-profile/labels.ts, which is genuinely client-safe.
+import type { HealthProfileInput } from '@/lib/health-profile/data';
 
 export type SortField = 'name' | 'mrr' | 'started' | 'lifetime';
 export type SortDir = 'asc' | 'desc';
@@ -197,16 +202,41 @@ export type ClientIntake = {
   heightCm: number | null;
   startingWeightKg: number | null;
   goalType: string | null;
+  goalIntensity: string | null;
   targetWeightKg: number | null;
   bmr: number | null;
+  /** bmr * pal. Null for migrated clients, who never answered an activity question we can score. */
+  tdee: number | null;
+  /** Physical activity multiplier, e.g. 1.54. */
+  pal: number | null;
   calorieGoalKcal: number | null;
+  /**
+   * FREE TEXT, not a slug, despite the name. On the live database this is prose carried over from
+   * the Lenus intake ("I've been a weight lifter since 1995..."), 188 of 267 rows null. Render it,
+   * never parse it. The scoreable slug is on onboarding_responses.answers.activity.
+   */
+  activityLevel: string | null;
   injuries: string[] | null;
   injuriesDescription: string | null;
   medicalConditions: string | null;
   dietaryExclusions: string[] | null;
+  allergies: string | null;
   trainingExperience: string | null;
   badHabits: string | null;
+  clientWhy: string | null;
+  sessionsPerWeek: number | null;
+  equipment: string[] | null;
+  /** 'potential' | 'none' | null. The verdict, not the per-question SCOFF booleans. */
+  edsRisk: string | null;
+  intakeNotes: string | null;
+  needsCoachReview: boolean;
   questionnaireFilledAt: string | null;
+  /**
+   * Conditions, medications, pregnancy, PAR-Q safety flags, sleep, stress, food relationship and
+   * training location. Derived by the SAME mapper the member's own health form uses
+   * (lib/health-profile/data.ts), so the two readings cannot drift.
+   */
+  healthProfile: HealthProfileInput;
 };
 
 export const LEDGER_TXN_CAP = 1000;

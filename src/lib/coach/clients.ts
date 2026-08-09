@@ -6,6 +6,8 @@ import 'server-only';
 import { getTranslations } from 'next-intl/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { deriveStanding } from '@/lib/coach/standing';
+import { mapIntakeToHealthProfile } from '@/lib/health-profile/data';
+import { scoffPositive } from '@/lib/health-profile/screening';
 import {
   CLIENT_ROWS_CAP,
   LEDGER_TXN_CAP,
@@ -446,29 +448,66 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     bytes: f.bytes,
   }));
 
-  // Migrated-from-Lenus intake/health profile + progress history (keyed to this contact only).
+  // Intake / health profile.
+  //
+  // This select used to name 15 of the ~25 columns, and the omissions were the clinically loaded
+  // ones: allergies, medications, PCOS, sleep, stress, food relationship, pregnancy, PAR-Q flags,
+  // eating-disorder screening. All of it is written by health-profile/data.ts and all of it was
+  // already being read by coach-ai/context.ts to ground the chat, so the model knew a member's
+  // medications while the coach looking at her record did not. Now the coach sees what the model
+  // sees. `healthProfile` below is the SAME derivation the member's own form uses.
   const { data: intakeRow } = await sb
     .from('client_intake')
-    .select('sex, birth_date, height_cm, starting_weight_kg, goal_type, target_weight_kg, bmr, calorie_goal_kcal, injuries, injuries_description, medical_conditions, dietary_exclusions, training_experience, bad_habits, questionnaire_filled_at')
+    .select(
+      'sex, birth_date, height_cm, starting_weight_kg, goal_type, goal_intensity, target_weight_kg, bmr, tdee, pal, ' +
+        'calorie_goal_kcal, activity_level, injuries, injuries_description, medical_conditions, dietary_exclusions, ' +
+        'allergies, training_experience, bad_habits, client_why, sessions_per_week, equipment, ' +
+        'eating_disorder_screening, sleep_assessment, custom_fields, intake_notes, needs_coach_review, questionnaire_filled_at',
+    )
     .eq('company_id', companyId)
     .eq('contact_id', contactId)
     .maybeSingle();
   type IntakeRaw = {
     sex: string | null; birth_date: string | null; height_cm: number | null; starting_weight_kg: number | null;
-    goal_type: string | null; target_weight_kg: number | null; bmr: number | null; calorie_goal_kcal: number | null;
+    goal_type: string | null; goal_intensity: string | null; target_weight_kg: number | null;
+    bmr: number | null; tdee: number | null; pal: number | null; calorie_goal_kcal: number | null;
+    activity_level: string | null;
     injuries: string[] | null; injuries_description: string | null; medical_conditions: string | null;
-    dietary_exclusions: string[] | null; training_experience: string | null; bad_habits: string | null; questionnaire_filled_at: string | null;
+    dietary_exclusions: string[] | null; allergies: string | null; training_experience: string | null;
+    bad_habits: string | null; client_why: string | null; sessions_per_week: number | null; equipment: string[] | null;
+    eating_disorder_screening: Record<string, unknown> | null;
+    intake_notes: string | null; needs_coach_review: boolean | null; questionnaire_filled_at: string | null;
   };
   const ir = intakeRow as IntakeRaw | null;
   // Postgres numeric arrives as a string via PostgREST; coerce every numeric or .toFixed() crashes.
   const nn = (v: number | string | null): number | null => (v == null ? null : Number(v));
+  // Structured hormonal/medical answers live in custom_fields.healthProfile and in two jsonb columns.
+  // Read them through the same mapper the member's form uses so the two never diverge.
+  const healthProfile = mapIntakeToHealthProfile(
+    (intakeRow as Parameters<typeof mapIntakeToHealthProfile>[0]) ?? null,
+  );
+  // The screen stores per-question booleans; the coach needs the verdict, not the instrument.
+  //
+  // Scored by the SAME scoffPositive() the coach persona and the member's own screens already use.
+  // A first pass here counted every true value in the payload, which is wrong twice over: the blob
+  // carries eight keys and only five are SCOFF items, so `prefersLightTracking` alone would have
+  // pushed a member to two and flagged her. 242 of 267 clients have this payload, so a scoring bug
+  // here is a wrong badge on most of her book, on the most sensitive thing we hold.
+  const eds = (ir?.eating_disorder_screening ?? null) as Record<string, unknown> | null;
+  const edsRisk = eds == null ? null : scoffPositive(eds) ? 'potential' : 'none';
   const intake = ir
     ? {
         sex: ir.sex, birthDate: ir.birth_date, heightCm: nn(ir.height_cm), startingWeightKg: nn(ir.starting_weight_kg),
-        goalType: ir.goal_type, targetWeightKg: nn(ir.target_weight_kg), bmr: nn(ir.bmr), calorieGoalKcal: nn(ir.calorie_goal_kcal),
+        goalType: ir.goal_type, goalIntensity: ir.goal_intensity, targetWeightKg: nn(ir.target_weight_kg),
+        bmr: nn(ir.bmr), tdee: nn(ir.tdee), pal: nn(ir.pal), calorieGoalKcal: nn(ir.calorie_goal_kcal),
+        activityLevel: ir.activity_level,
         injuries: ir.injuries, injuriesDescription: ir.injuries_description, medicalConditions: ir.medical_conditions,
-        dietaryExclusions: ir.dietary_exclusions, trainingExperience: ir.training_experience, badHabits: ir.bad_habits,
+        dietaryExclusions: ir.dietary_exclusions, allergies: ir.allergies,
+        trainingExperience: ir.training_experience, badHabits: ir.bad_habits,
+        clientWhy: ir.client_why, sessionsPerWeek: ir.sessions_per_week, equipment: ir.equipment,
+        edsRisk, intakeNotes: ir.intake_notes, needsCoachReview: ir.needs_coach_review === true,
         questionnaireFilledAt: ir.questionnaire_filled_at,
+        healthProfile,
       }
     : null;
 

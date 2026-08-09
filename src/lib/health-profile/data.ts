@@ -110,13 +110,15 @@ async function findIntake(
   return { row: (data as IntakeRow | null) ?? null, contactId };
 }
 
-// Prefill the form from whatever is already on file (a fresh signup gets all-empty; a migrated client
-// sees their Lenus dietary/injury data and any prior health-profile answers).
-export async function loadHealthProfile(
-  profileId: string,
-  companyId: string,
-): Promise<HealthProfileInput> {
-  const { row } = await findIntake(profileId, companyId);
+// Row -> answers. Pure, and exported because the COACH needs the identical reading of this row.
+//
+// This data was being written here and read only by the chat prompt (coach-ai/context.ts), so the
+// model knew a member's medications, PCOS and allergies while Stephanie, looking at the same member
+// on screen, did not. Two readings of one row is how they drift, so the coach page calls this rather
+// than re-deriving the shape.
+export function mapIntakeToHealthProfile(
+  row: IntakeRow | null,
+): HealthProfileInput {
   if (!row) return EMPTY;
   const hp = (row.custom_fields?.healthProfile ?? {}) as Record<
     string,
@@ -142,6 +144,36 @@ export async function loadHealthProfile(
       (eds as Record<string, unknown>).selfReport,
     ),
   };
+}
+
+// Prefill the form from whatever is already on file (a fresh signup gets all-empty; a migrated client
+// sees their Lenus dietary/injury data and any prior health-profile answers).
+export async function loadHealthProfile(
+  profileId: string,
+  companyId: string,
+): Promise<HealthProfileInput> {
+  const { row } = await findIntake(profileId, companyId);
+  return mapIntakeToHealthProfile(row);
+}
+
+/**
+ * The same profile, read by CONTACT id, for the coach's client record.
+ *
+ * The coach page is keyed on the contact because that is the only key every client has: a migrated
+ * Lenus client may never have claimed an account, so she has no profile at all. findIntake resolves
+ * the other direction (profile -> contact) and cannot serve that case.
+ */
+export async function loadHealthProfileByContact(
+  contactId: string,
+  companyId: string,
+): Promise<HealthProfileInput> {
+  const { data } = await createServiceClient()
+    .from("client_intake")
+    .select(INTAKE_COLS)
+    .eq("company_id", companyId)
+    .eq("contact_id", contactId)
+    .maybeSingle();
+  return mapIntakeToHealthProfile((data as IntakeRow | null) ?? null);
 }
 
 export type SaveResult = { ok: boolean };
