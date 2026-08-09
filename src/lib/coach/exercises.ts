@@ -17,12 +17,20 @@ export type ExerciseRow = {
   category: string | null;
   isOwnDemo: boolean;
   isShared: boolean;
+  /** Filmed and written by the coach herself (the 367 imported with her own cues), not seed content. */
+  isCoachAuthored: boolean;
+  /** Starred by the coach reading the page. Personal, not company-wide. */
+  isFavorite: boolean;
 };
 
 export type ExerciseFilters = {
   q: string;
   muscle: string[];
   equipment: string[];
+  /** "My exercises". Defaults ON: her own 367 matter more to her than the seed library. */
+  mine: boolean;
+  /** "Favourites". */
+  fav: boolean;
   page: number;
   pageSize: number;
 };
@@ -36,18 +44,33 @@ export type ExercisesPage = {
   page: number;
   pageSize: number;
   facets: { muscle: Facet[]; equipment: Facet[] };
+  /** Counts for the two ownership toggles, computed over everything the search box has narrowed to. */
+  counts: { mine: number; fav: number };
 };
 
 const PAGE_SIZE = 40;
+
+/** Filters for a programmatic read (substitution candidate pools), where no toggle is implied. */
+export const NO_EXERCISE_FILTERS: Omit<ExerciseFilters, 'muscle' | 'pageSize'> = {
+  q: '',
+  equipment: [],
+  mine: false,
+  fav: false,
+  page: 1,
+};
 
 export function parseExerciseFilters(sp: Record<string, string | string[] | undefined>): ExerciseFilters {
   const arr = (v: string | string[] | undefined): string[] => (Array.isArray(v) ? v : v ? [v] : []);
   const one = (v: string | string[] | undefined): string => (Array.isArray(v) ? (v[0] ?? '') : (v ?? ''));
   const pageRaw = Number.parseInt(one(sp.page), 10);
+  // `mine` is the only filter that is ON when absent, so the OFF state has to be written into the
+  // URL as mine=0 rather than by dropping the key. Anything else and the toggle cannot be turned off.
   return {
     q: one(sp.q).trim(),
     muscle: arr(sp.muscle),
     equipment: arr(sp.equipment),
+    mine: one(sp.mine) !== '0',
+    fav: one(sp.fav) === '1',
     page: Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1,
     pageSize: PAGE_SIZE,
   };
@@ -63,9 +86,10 @@ type ExerciseRaw = {
   difficulty: string | null;
   category: string | null;
   is_own_demo: boolean | null;
+  is_coach_authored: boolean | null;
 };
 
-function mapRow(r: ExerciseRaw, locale: string): ExerciseRow {
+function mapRow(r: ExerciseRaw, locale: string, favorites: ReadonlySet<string>): ExerciseRow {
   const name = (locale.startsWith('es') ? r.name_es : r.name_en) || r.name_en;
   return {
     id: r.id,
@@ -78,15 +102,34 @@ function mapRow(r: ExerciseRaw, locale: string): ExerciseRow {
     category: r.category,
     isOwnDemo: r.is_own_demo ?? false,
     isShared: r.company_id == null,
+    isCoachAuthored: r.is_coach_authored ?? false,
+    isFavorite: favorites.has(r.id),
   };
 }
 
-async function loadExercises(companyId: string, locale: string): Promise<ExerciseRow[]> {
+const SELECT_COLS =
+  'id, company_id, name_en, name_es, muscle_group, equipment, difficulty, category, is_own_demo, is_coach_authored';
+
+/** The starred ids for one coach. Empty set when nobody is asking (server-side candidate reads). */
+async function loadFavoriteIds(profileId: string | null): Promise<Set<string>> {
+  if (!profileId) return new Set();
   const sb = createServiceClient();
+  const { data, error } = await sb.from('exercise_favorites').select('exercise_id').eq('profile_id', profileId);
+  // A failed favourites read must not take the library down: the star is a convenience, the list is not.
+  if (error) {
+    console.error('[loadFavoriteIds]', error.message);
+    return new Set();
+  }
+  return new Set(((data ?? []) as { exercise_id: string }[]).map((r) => r.exercise_id));
+}
+
+async function loadExercises(companyId: string, locale: string, profileId: string | null): Promise<ExerciseRow[]> {
+  const sb = createServiceClient();
+  const favorites = await loadFavoriteIds(profileId);
   // Shared-corpus pattern: the global seed (company_id IS NULL) plus this tenant's own exercises.
   const { data, error } = await sb
     .from('exercises')
-    .select('id, company_id, name_en, name_es, muscle_group, equipment, difficulty, category, is_own_demo')
+    .select(SELECT_COLS)
     .or(`company_id.is.null,company_id.eq.${companyId}`)
     // Curated out (0105). This is the coach's BROWSE surface, so archived rows must not be offerable.
     // getExercise() below deliberately does NOT filter: it resolves a committed exercise by id and
@@ -94,10 +137,10 @@ async function loadExercises(companyId: string, locale: string): Promise<Exercis
     .is('archived_at', null)
     .limit(2000);
   if (error) throw new Error(`loadExercises: ${error.message}`);
-  return ((data ?? []) as ExerciseRaw[]).map((r) => mapRow(r, locale));
+  return ((data ?? []) as ExerciseRaw[]).map((r) => mapRow(r, locale, favorites));
 }
 
-type FacetKey = 'q' | 'muscle' | 'equipment';
+type FacetKey = 'q' | 'muscle' | 'equipment' | 'own';
 
 function matches(r: ExerciseRow, f: ExerciseFilters, exclude: FacetKey | null): boolean {
   if (exclude !== 'q' && f.q) {
@@ -107,6 +150,13 @@ function matches(r: ExerciseRow, f: ExerciseFilters, exclude: FacetKey | null): 
   }
   if (exclude !== 'muscle' && f.muscle.length && !(r.muscleGroup && f.muscle.includes(r.muscleGroup))) return false;
   if (exclude !== 'equipment' && f.equipment.length && !(r.equipment && f.equipment.includes(r.equipment))) return false;
+  // The two ownership toggles are OR, not AND: with both on she wants her own PLUS anything she
+  // starred, which is how she used the old list. AND would hide every starred seed exercise the
+  // moment "My exercises" is on, i.e. always, since it defaults on.
+  if (exclude !== 'own' && (f.mine || f.fav)) {
+    const own = (f.mine && r.isCoachAuthored) || (f.fav && r.isFavorite);
+    if (!own) return false;
+  }
   return true;
 }
 
@@ -124,10 +174,15 @@ export async function getExercisesPage(
   companyId: string,
   filters: ExerciseFilters,
   locale: string,
+  profileId: string | null = null,
 ): Promise<ExercisesPage> {
-  const all = await loadExercises(companyId, locale);
+  const all = await loadExercises(companyId, locale, profileId);
   const filtered = all.filter((r) => matches(r, filters, null)).sort((a, b) => a.name.localeCompare(b.name));
   const start = (filters.page - 1) * filters.pageSize;
+  // Toggle counts ignore the toggles themselves, so "My exercises 367" does not read 367 only while
+  // it happens to be on. They DO respect the search box and the chips, which is the useful reading:
+  // "of what you are looking at, this many are yours".
+  const ownPool = all.filter((r) => matches(r, filters, 'own'));
   return {
     rows: filtered.slice(start, start + filters.pageSize),
     total: filtered.length,
@@ -138,19 +193,28 @@ export async function getExercisesPage(
       muscle: tally(all.filter((r) => matches(r, filters, 'muscle')), (r) => r.muscleGroup),
       equipment: tally(all.filter((r) => matches(r, filters, 'equipment')), (r) => r.equipment),
     },
+    counts: {
+      mine: ownPool.filter((r) => r.isCoachAuthored).length,
+      fav: ownPool.filter((r) => r.isFavorite).length,
+    },
   };
 }
 
-export async function getExercise(companyId: string, exerciseId: string, locale: string): Promise<ExerciseRow | null> {
+export async function getExercise(
+  companyId: string,
+  exerciseId: string,
+  locale: string,
+  profileId: string | null = null,
+): Promise<ExerciseRow | null> {
   const sb = createServiceClient();
   const { data } = await sb
     .from('exercises')
-    .select('id, company_id, name_en, name_es, muscle_group, equipment, difficulty, category, is_own_demo')
+    .select(SELECT_COLS)
     .eq('id', exerciseId)
     .or(`company_id.is.null,company_id.eq.${companyId}`)
     .maybeSingle();
   if (!data) return null;
-  return mapRow(data as ExerciseRaw, locale);
+  return mapRow(data as ExerciseRaw, locale, await loadFavoriteIds(profileId));
 }
 
 export type SubstituteLite = {

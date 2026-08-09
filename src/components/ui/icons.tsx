@@ -165,6 +165,8 @@ const PATHS = {
     <path d="M12 20.5 4.2 12.7a4.6 4.6 0 0 1 6.5-6.5l1.3 1.3 1.3-1.3a4.6 4.6 0 0 1 6.5 6.5z" />
   ),
   play: <path d="M7 5.5v13l11-6.5z" />,
+  // Outline by default; pass fill="currentColor" for the starred state.
+  star: <path d="M12 3.4l2.65 5.37 5.93.86-4.29 4.18 1.01 5.9L12 16.92l-5.3 2.79 1.01-5.9L3.42 9.63l5.93-.86z" />,
 } as const;
 
 export type IconName = keyof typeof PATHS;

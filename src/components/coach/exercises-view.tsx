@@ -5,8 +5,17 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { useClientFilterUrl } from '@/components/coach/use-client-filters';
+import { ExerciseFavoriteButton } from '@/components/coach/exercise-favorite-button';
 import type { ExercisesPage, ExerciseFilters } from '@/lib/coach/exercises';
 
+/**
+ * The exercise library, laid out the way Stephanie already reads one: a search box, ownership
+ * toggles, a muscle filter, then the list. "My exercises" is ON by default, because her own 367
+ * are the ones she programmes from and the seed library is the fallback, not the front page.
+ *
+ * Kept as a card grid rather than the table she had: the same information in a shape that survives
+ * a 390px phone, where a four-column table does not.
+ */
 export function ExercisesView({ page, filters }: { page: ExercisesPage; filters: ExerciseFilters }): ReactElement {
   const t = useTranslations('app.coach');
   const { setParam, toggleMulti } = useClientFilterUrl();
@@ -42,6 +51,28 @@ export function ExercisesView({ page, filters }: { page: ExercisesPage; filters:
           />
         </div>
         <span className="shrink-0 text-[13px] font-medium text-muted">{t('exercisesCount', { count: page.total })}</span>
+      </div>
+
+      {/* ownership toggles: her own, and the ones she starred */}
+      <div className="tf-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        <button
+          type="button"
+          // ON is the default, so OFF has to be written to the URL. See parseExerciseFilters.
+          onClick={() => setParam('mine', filters.mine ? '0' : null)}
+          aria-pressed={filters.mine}
+          className={chipCls(filters.mine)}
+        >
+          {t('exercisesFilterMine')} <span className={filters.mine ? 'text-bg/60' : 'text-faint'}>{page.counts.mine}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setParam('fav', filters.fav ? null : '1')}
+          aria-pressed={filters.fav}
+          className={chipCls(filters.fav)}
+        >
+          {t('exercisesFilterFavorites')}{' '}
+          <span className={filters.fav ? 'text-bg/60' : 'text-faint'}>{page.counts.fav}</span>
+        </button>
       </div>
 
       {/* muscle-group chips */}
@@ -82,22 +113,7 @@ export function ExercisesView({ page, filters }: { page: ExercisesPage; filters:
       ) : (
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {page.rows.map((r) => (
-            <Link
-              key={r.id}
-              href={`/coach/exercises/${r.id}`}
-              className="tf-press group flex items-center gap-3 rounded-2xl bg-surface p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
-            >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-warm text-soft">
-                <Icon name="dumbbell" size={20} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-semibold text-ink">{r.name}</span>
-                <span className="block truncate text-[12px] capitalize text-muted">
-                  {[r.muscleGroup, r.equipment].filter(Boolean).join(' · ')}
-                </span>
-              </span>
-              <Icon name="chevronRight" size={16} className="shrink-0 text-faint group-hover:text-ink" />
-            </Link>
+            <ExerciseCard key={r.id} row={r} />
           ))}
         </div>
       )}
@@ -123,6 +139,36 @@ export function ExercisesView({ page, filters }: { page: ExercisesPage; filters:
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+type CardRow = ExercisesPage['rows'][number];
+
+/** One row: name, muscle/equipment, her "Owned by me" badge, and the star. */
+function ExerciseCard({ row }: { row: CardRow }): ReactElement {
+  const t = useTranslations('app.coach');
+  return (
+    <div className="group relative flex items-center gap-3 rounded-2xl bg-surface p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+      <Link href={`/coach/exercises/${row.id}`} className="tf-press flex min-w-0 flex-1 items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-warm text-soft">
+          <Icon name="dumbbell" size={20} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14px] font-semibold text-ink">{row.name}</span>
+          <span className="mt-0.5 flex items-center gap-1.5">
+            <span className="min-w-0 truncate text-[12px] capitalize text-muted">
+              {[row.muscleGroup, row.equipment].filter(Boolean).join(' · ')}
+            </span>
+            {row.isCoachAuthored && (
+              <span className="shrink-0 rounded-full bg-warm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-soft">
+                {t('exercisesOwnedByMe')}
+              </span>
+            )}
+          </span>
+        </span>
+      </Link>
+      <ExerciseFavoriteButton exerciseId={row.id} initial={row.isFavorite} />
     </div>
   );
 }

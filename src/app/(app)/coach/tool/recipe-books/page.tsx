@@ -17,7 +17,7 @@ export default async function CoachRecipeBooksPage(): Promise<ReactElement> {
 
   return (
     <div>
-      <Eyebrow>{t('bucketNutrition')}</Eyebrow>
+      <Eyebrow>{t('bucketToolbox')}</Eyebrow>
       <PageTitle className="mb-5 mt-1">{t('toolRecipeBooks')}</PageTitle>
 
       {books.length === 0 ? (

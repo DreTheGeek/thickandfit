@@ -23,11 +23,12 @@ export default async function CoachExercisesPage({
   }
 
   const filters = parseExerciseFilters(await searchParams);
-  const page = await getExercisesPage(ctx.companyId, filters, locale);
+  // profileId, not companyId: a favourite is the reading coach's own shortlist (0118).
+  const page = await getExercisesPage(ctx.companyId, filters, locale, ctx.userId);
 
   return (
     <div>
-      <Eyebrow>{t('bucketTraining')}</Eyebrow>
+      <Eyebrow>{t('bucketToolbox')}</Eyebrow>
       <PageTitle className="mb-1 mt-1">{t('toolExercises')}</PageTitle>
       <p className="tf-measure mb-5 text-[13px] text-muted">{t('exercisesSubtitle')}</p>
       <ExercisesView page={page} filters={filters} />

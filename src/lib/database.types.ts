@@ -883,12 +883,14 @@ export type Database = {
           birth_date: string | null
           bmr: number | null
           calorie_goal_kcal: number | null
+          client_why: string | null
           company_id: string
           contact_id: string
           created_at: string
           custom_fields: Json | null
           dietary_exclusions: string[] | null
           eating_disorder_screening: Json | null
+          equipment: string[] | null
           goal_intensity: number | null
           goal_type: string | null
           height_cm: number | null
@@ -899,14 +901,17 @@ export type Database = {
           intake_notes: string | null
           medical_conditions: string | null
           needs_coach_review: boolean
+          pal: number | null
           profile_id: string | null
           questionnaire_filled_at: string | null
           raw: Json | null
+          sessions_per_week: number | null
           sex: string | null
           sleep_assessment: Json | null
           source: string
           starting_weight_kg: number | null
           target_weight_kg: number | null
+          tdee: number | null
           training_experience: string | null
           updated_at: string
         }
@@ -917,12 +922,14 @@ export type Database = {
           birth_date?: string | null
           bmr?: number | null
           calorie_goal_kcal?: number | null
+          client_why?: string | null
           company_id: string
           contact_id: string
           created_at?: string
           custom_fields?: Json | null
           dietary_exclusions?: string[] | null
           eating_disorder_screening?: Json | null
+          equipment?: string[] | null
           goal_intensity?: number | null
           goal_type?: string | null
           height_cm?: number | null
@@ -933,14 +940,17 @@ export type Database = {
           intake_notes?: string | null
           medical_conditions?: string | null
           needs_coach_review?: boolean
+          pal?: number | null
           profile_id?: string | null
           questionnaire_filled_at?: string | null
           raw?: Json | null
+          sessions_per_week?: number | null
           sex?: string | null
           sleep_assessment?: Json | null
           source?: string
           starting_weight_kg?: number | null
           target_weight_kg?: number | null
+          tdee?: number | null
           training_experience?: string | null
           updated_at?: string
         }
@@ -951,12 +961,14 @@ export type Database = {
           birth_date?: string | null
           bmr?: number | null
           calorie_goal_kcal?: number | null
+          client_why?: string | null
           company_id?: string
           contact_id?: string
           created_at?: string
           custom_fields?: Json | null
           dietary_exclusions?: string[] | null
           eating_disorder_screening?: Json | null
+          equipment?: string[] | null
           goal_intensity?: number | null
           goal_type?: string | null
           height_cm?: number | null
@@ -967,14 +979,17 @@ export type Database = {
           intake_notes?: string | null
           medical_conditions?: string | null
           needs_coach_review?: boolean
+          pal?: number | null
           profile_id?: string | null
           questionnaire_filled_at?: string | null
           raw?: Json | null
+          sessions_per_week?: number | null
           sex?: string | null
           sleep_assessment?: Json | null
           source?: string
           starting_weight_kg?: number | null
           target_weight_kg?: number | null
+          tdee?: number | null
           training_experience?: string | null
           updated_at?: string
         }
@@ -1398,6 +1413,168 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_settings: {
+        Row: {
+          allergies: string[]
+          availability: string[]
+          avoided_ingredients: string[]
+          company_id: string
+          created_at: string
+          default_meal_plan_name: string
+          default_training_plan_name: string
+          dietary_preferences: string[]
+          dropset_behavior: string
+          is_access_revoked_on_expiry: boolean
+          is_birthday_reminder_on: boolean
+          is_checkin_allowed: boolean
+          is_checkin_reminder_on: boolean
+          is_client_audio_allowed: boolean
+          is_client_image_allowed: boolean
+          is_client_video_allowed: boolean
+          is_email_on_new_checkin: boolean
+          is_email_on_new_lead: boolean
+          is_email_on_new_message: boolean
+          is_exercise_guide_shown: boolean
+          is_group_roster_shown: boolean
+          is_habit_summary_shared: boolean
+          is_macros_shown: boolean
+          is_onboarding_required: boolean
+          is_reminder_chat_on: boolean
+          is_reminder_email_on: boolean
+          is_reminder_push_on: boolean
+          is_reminder_skipped_when_done: boolean
+          is_upsell_shown: boolean
+          is_weight_shown: boolean
+          is_weight_shown_in_checkin: boolean
+          macro_flexibility: string
+          meal_plan_followup: string
+          meal_plan_format: string
+          measurement_unit: string
+          old_chat_days: number
+          onboarding_send_when: string
+          recipe_ingredient_display: string
+          reminder_every: number
+          reminder_period: string
+          reminder_skip_days: number
+          reminder_time_local: string
+          reminder_weekday: number
+          training_followup: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allergies?: string[]
+          availability?: string[]
+          avoided_ingredients?: string[]
+          company_id: string
+          created_at?: string
+          default_meal_plan_name?: string
+          default_training_plan_name?: string
+          dietary_preferences?: string[]
+          dropset_behavior?: string
+          is_access_revoked_on_expiry?: boolean
+          is_birthday_reminder_on?: boolean
+          is_checkin_allowed?: boolean
+          is_checkin_reminder_on?: boolean
+          is_client_audio_allowed?: boolean
+          is_client_image_allowed?: boolean
+          is_client_video_allowed?: boolean
+          is_email_on_new_checkin?: boolean
+          is_email_on_new_lead?: boolean
+          is_email_on_new_message?: boolean
+          is_exercise_guide_shown?: boolean
+          is_group_roster_shown?: boolean
+          is_habit_summary_shared?: boolean
+          is_macros_shown?: boolean
+          is_onboarding_required?: boolean
+          is_reminder_chat_on?: boolean
+          is_reminder_email_on?: boolean
+          is_reminder_push_on?: boolean
+          is_reminder_skipped_when_done?: boolean
+          is_upsell_shown?: boolean
+          is_weight_shown?: boolean
+          is_weight_shown_in_checkin?: boolean
+          macro_flexibility?: string
+          meal_plan_followup?: string
+          meal_plan_format?: string
+          measurement_unit?: string
+          old_chat_days?: number
+          onboarding_send_when?: string
+          recipe_ingredient_display?: string
+          reminder_every?: number
+          reminder_period?: string
+          reminder_skip_days?: number
+          reminder_time_local?: string
+          reminder_weekday?: number
+          training_followup?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allergies?: string[]
+          availability?: string[]
+          avoided_ingredients?: string[]
+          company_id?: string
+          created_at?: string
+          default_meal_plan_name?: string
+          default_training_plan_name?: string
+          dietary_preferences?: string[]
+          dropset_behavior?: string
+          is_access_revoked_on_expiry?: boolean
+          is_birthday_reminder_on?: boolean
+          is_checkin_allowed?: boolean
+          is_checkin_reminder_on?: boolean
+          is_client_audio_allowed?: boolean
+          is_client_image_allowed?: boolean
+          is_client_video_allowed?: boolean
+          is_email_on_new_checkin?: boolean
+          is_email_on_new_lead?: boolean
+          is_email_on_new_message?: boolean
+          is_exercise_guide_shown?: boolean
+          is_group_roster_shown?: boolean
+          is_habit_summary_shared?: boolean
+          is_macros_shown?: boolean
+          is_onboarding_required?: boolean
+          is_reminder_chat_on?: boolean
+          is_reminder_email_on?: boolean
+          is_reminder_push_on?: boolean
+          is_reminder_skipped_when_done?: boolean
+          is_upsell_shown?: boolean
+          is_weight_shown?: boolean
+          is_weight_shown_in_checkin?: boolean
+          macro_flexibility?: string
+          meal_plan_followup?: string
+          meal_plan_format?: string
+          measurement_unit?: string
+          old_chat_days?: number
+          onboarding_send_when?: string
+          recipe_ingredient_display?: string
+          reminder_every?: number
+          reminder_period?: string
+          reminder_skip_days?: number
+          reminder_time_local?: string
+          reminder_weekday?: number
+          training_followup?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2359,6 +2536,52 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_favorites: {
+        Row: {
+          company_id: string
+          created_at: string
+          exercise_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          exercise_id: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_favorites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_favorites_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_favorites_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_substitutions: {
         Row: {
           company_id: string
@@ -2434,8 +2657,10 @@ export type Database = {
           difficulty: string | null
           equipment: string | null
           id: string
+          is_coach_authored: boolean
           is_core: boolean
           is_own_demo: boolean
+          lenus_video_key: string | null
           muscle_group: string | null
           name_en: string
           name_es: string | null
@@ -2454,8 +2679,10 @@ export type Database = {
           difficulty?: string | null
           equipment?: string | null
           id?: string
+          is_coach_authored?: boolean
           is_core?: boolean
           is_own_demo?: boolean
+          lenus_video_key?: string | null
           muscle_group?: string | null
           name_en: string
           name_es?: string | null
@@ -2474,8 +2701,10 @@ export type Database = {
           difficulty?: string | null
           equipment?: string | null
           id?: string
+          is_coach_authored?: boolean
           is_core?: boolean
           is_own_demo?: boolean
+          lenus_video_key?: string | null
           muscle_group?: string | null
           name_en?: string
           name_es?: string | null
@@ -4373,30 +4602,39 @@ export type Database = {
       }
       push_subscriptions: {
         Row: {
-          auth: string
+          auth: string | null
           company_id: string
           created_at: string
-          endpoint: string
+          device_token: string | null
+          endpoint: string | null
           id: string
-          p256dh: string
+          last_seen_at: string
+          p256dh: string | null
+          platform: string
           profile_id: string
         }
         Insert: {
-          auth: string
+          auth?: string | null
           company_id: string
           created_at?: string
-          endpoint: string
+          device_token?: string | null
+          endpoint?: string | null
           id?: string
-          p256dh: string
+          last_seen_at?: string
+          p256dh?: string | null
+          platform?: string
           profile_id: string
         }
         Update: {
-          auth?: string
+          auth?: string | null
           company_id?: string
           created_at?: string
-          endpoint?: string
+          device_token?: string | null
+          endpoint?: string | null
           id?: string
-          p256dh?: string
+          last_seen_at?: string
+          p256dh?: string | null
+          platform?: string
           profile_id?: string
         }
         Relationships: [
@@ -5803,6 +6041,10 @@ export type Database = {
           quiz_completed_at: string | null
           referral_code: string
           referred_by_code: string | null
+          sms_consent_at: string | null
+          sms_consent_ip: string | null
+          sms_consent_text: string | null
+          sms_consent_user_agent: string | null
           source: string | null
           unsubscribed_at: string | null
         }
@@ -5824,6 +6066,10 @@ export type Database = {
           quiz_completed_at?: string | null
           referral_code?: string
           referred_by_code?: string | null
+          sms_consent_at?: string | null
+          sms_consent_ip?: string | null
+          sms_consent_text?: string | null
+          sms_consent_user_agent?: string | null
           source?: string | null
           unsubscribed_at?: string | null
         }
@@ -5845,6 +6091,10 @@ export type Database = {
           quiz_completed_at?: string | null
           referral_code?: string
           referred_by_code?: string | null
+          sms_consent_at?: string | null
+          sms_consent_ip?: string | null
+          sms_consent_text?: string | null
+          sms_consent_user_agent?: string | null
           source?: string | null
           unsubscribed_at?: string | null
         }

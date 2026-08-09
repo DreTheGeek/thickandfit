@@ -26,7 +26,7 @@ export default async function CoachRecipesPage({
     <div>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <Eyebrow>{t('bucketNutrition')}</Eyebrow>
+          <Eyebrow>{t('bucketToolbox')}</Eyebrow>
           <PageTitle className="mt-1">{t('toolRecipes')}</PageTitle>
         </div>
         <Link

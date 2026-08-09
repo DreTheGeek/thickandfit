@@ -12,9 +12,15 @@ import { Icon, type IconName } from '@/components/ui/icons';
 type NavItem = { key: string; href: string; icon: IconName };
 type NavSection = { headerKey: string; items: NavItem[] };
 
-// The coaching console structure, reorganized from Lenus's flat "Toolbox" into clear sections. Trimmed to
-// shipped routes only (WP9): Phase-3 tooling is kept out of the product entirely rather than badged
-// "soon", so every visible item routes to a real, data-bound screen.
+// The coaching console, grouped the way Stephanie's previous platform grouped it, because that
+// grouping is the one she already has in her hands: Dashboard, Clients, Leads, Chat, Toolbox,
+// Settings. Trimmed to shipped routes only (WP9): tooling that does not exist yet is left out
+// entirely rather than badged "soon", so every visible item routes to a real, data-bound screen.
+//
+// TOOLBOX IS ONE FLAT LIST ON PURPOSE. It used to be split three ways (Training / Nutrition /
+// Content & Check-ins), which is our taxonomy, not hers: she scans a single alphabetical list and
+// picks. The order below is her list's order for the items we have, so the relative positions she
+// learned still hold. Programs sits where "training templates" sat, at the end, not under P.
 //
 // SCOPE RULE for anything added here: this portal is about PEOPLE and PROGRAMMING. A number about a
 // woman belongs here; a number about the system belongs in the operator portal on the admin. host.
@@ -44,7 +50,17 @@ const SECTIONS: NavSection[] = [
       // waiting on the plan we told her you were writing". Adjacent because they are the same member
       // on the same day, and separating them by three sections is how one of them gets forgotten.
       { key: 'navAwaiting', href: '/coach/awaiting', icon: 'clipboard' },
+      // Leads is a sibling of Clients on her old top-level nav, not a child. It stays in this
+      // section rather than getting a header of its own, because a one-item section is a header
+      // with nothing under it.
       { key: 'navLeads', href: '/coach/leads', icon: 'funnel' },
+    ],
+  },
+  {
+    // Her word is Chat, so the item is Chat. Community and Challenges join it because all three are
+    // "talking to people", and neither is the group-programming surface her Client groups was.
+    headerKey: 'navInbox',
+    items: [
       { key: 'navInbox', href: '/coach/inbox', icon: 'chat' },
       { key: 'navCommunity', href: '/coach/community', icon: 'community' },
       { key: 'navChallenges', href: '/coach/challenges', icon: 'community' },
@@ -61,23 +77,15 @@ const SECTIONS: NavSection[] = [
     ],
   },
   {
-    headerKey: 'bucketTraining',
+    headerKey: 'bucketToolbox',
     items: [
-      { key: 'programs', href: '/coach/programs', icon: 'clipboard' },
       { key: 'toolExercises', href: '/coach/exercises', icon: 'dumbbell' },
-    ],
-  },
-  {
-    headerKey: 'bucketNutrition',
-    items: [
-      { key: 'toolRecipes', href: '/coach/tool/recipes', icon: 'nutrition' },
-      { key: 'toolRecipeBooks', href: '/coach/tool/recipe-books', icon: 'book' },
+      { key: 'forms', href: '/coach/forms', icon: 'file' },
       { key: 'toolMealPlans', href: '/coach/tool/meal-plans', icon: 'nutrition' },
+      { key: 'toolRecipeBooks', href: '/coach/tool/recipe-books', icon: 'book' },
+      { key: 'toolRecipes', href: '/coach/tool/recipes', icon: 'nutrition' },
+      { key: 'programs', href: '/coach/programs', icon: 'clipboard' },
     ],
-  },
-  {
-    headerKey: 'bucketContent',
-    items: [{ key: 'forms', href: '/coach/forms', icon: 'file' }],
   },
   {
     headerKey: 'navSettings',

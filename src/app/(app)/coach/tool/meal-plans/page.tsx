@@ -25,7 +25,7 @@ export default async function CoachMealPlansPage({
     <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <Eyebrow>{t('bucketNutrition')}</Eyebrow>
+          <Eyebrow>{t('bucketToolbox')}</Eyebrow>
           <PageTitle className="mb-5 mt-1">{t('toolMealPlans')}</PageTitle>
         </div>
         <Link
