@@ -584,11 +584,42 @@ function exerciseHeader(r: ExerciseRow, es: boolean): string {
   return es ? `Ejercicio: ${name}${suffix}.` : `Exercise: ${name}${suffix}.`;
 }
 
+// TENANCY, and the trap in it. exercises is the one table here whose company_id is deliberately
+// NULLABLE, and every row in prod (all 1,259) has it NULL. That is not drift: its RLS read policy is
+// `company_id IS NULL OR company_id = current_company_id()`, so NULL means a shared catalog row any
+// tenant may READ, while only tenant-owned rows are writable.
+//
+// Two ways to get this wrong, and they fail in opposite directions:
+//   1. Filtering `company_id = X` (the obvious thing to write) matches ZERO rows today, so the
+//      indexer would report success every run while indexing nothing.
+//   2. Restating the read policy verbatim matches all 365 rows for EVERY company, which would copy
+//      Stephanie's coaching voice into RLS Test Tenant B's coach_knowledge. Tenant B has a live
+//      subscriber, and readable is not the same as copy-into-their-corpus. Her cues are the product.
+//
+// So: tenant-owned rows always index for their tenant, and the shared NULL-company catalog indexes
+// only for the primary tenant, resolved as the oldest company rather than a hardcoded uuid
+// ("Stephanie is tenant 1, architecture supports white-label later"). A white-label tenant that
+// later authors its own library gets its own rows and none of hers.
+async function primaryCompanyId(svc: Svc): Promise<string | null> {
+  const { data } = await svc
+    .from('companies')
+    .select('id')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return (data as { id: string } | null)?.id ?? null;
+}
+
 async function exerciseDocs(svc: Svc, companyId: string): Promise<CorpusDoc[]> {
+  const primary = await primaryCompanyId(svc);
+  const scope =
+    primary && primary === companyId
+      ? `company_id.is.null,company_id.eq.${companyId}`
+      : `company_id.eq.${companyId}`;
   const { data, error } = await svc
     .from('exercises')
     .select('id, name_en, name_es, cues_en, cues_es, muscle_group, secondary_muscles, equipment, difficulty, category')
-    .eq('company_id', companyId)
+    .or(scope)
     .eq('is_coach_authored', true)
     .is('archived_at', null)
     .limit(5000);
