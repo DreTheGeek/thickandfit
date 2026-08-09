@@ -34,7 +34,7 @@ export default async function CoachBillingPage(): Promise<ReactElement> {
     : { mrrCents: 0, renewSoon: 0, failedOverdue: 0, rows: [] };
 
   return (
-    <div className="px-[22px] py-6">
+    <div>
       <PageTitle className="mb-5">{t('billingTitle')}</PageTitle>
 
       <div className="mb-6 grid grid-cols-3 gap-3">

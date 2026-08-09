@@ -35,7 +35,7 @@ export default async function EditMealPlanPage({ params }: { params: Promise<{ i
   };
 
   return (
-    <div className="mx-auto w-full max-w-[900px] px-5 py-7 sm:px-8">
+    <div className="mx-auto w-full max-w-[900px]">
       <Link href={`/coach/tool/meal-plans/${p.id}`} className="tf-press mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
         <Icon name="arrowLeft" size={15} /> {t('backToPlan')}
       </Link>

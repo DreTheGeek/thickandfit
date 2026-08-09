@@ -16,7 +16,7 @@ export default async function CoachRecipeBooksPage(): Promise<ReactElement> {
   const books = await getRecipeBooks(ctx.companyId);
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <Eyebrow>{t('bucketNutrition')}</Eyebrow>
       <PageTitle className="mb-5 mt-1">{t('toolRecipeBooks')}</PageTitle>
 

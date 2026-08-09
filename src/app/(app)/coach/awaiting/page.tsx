@@ -7,7 +7,6 @@ import type { ReactElement } from 'react';
 import Link from 'next/link';
 import { requireCoach } from '@/lib/auth/guards';
 import { listAwaitingProgram, OVERDUE_DAYS } from '@/lib/coach/awaiting-program';
-import { AdminPage } from '@/components/admin/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,11 +21,16 @@ export default async function CoachAwaitingPage(): Promise<ReactElement> {
   const items = ctx.companyId ? await listAwaitingProgram(ctx.companyId) : [];
   const overdue = items.filter((i) => i.waitingDays >= OVERDUE_DAYS).length;
 
+  // Renders its own heading rather than borrowing AdminPage from the admin portal: that component
+  // carries the admin portal's own max-w-5xl and padding, which fought the coach container.
   return (
-    <AdminPage
-      title="Waiting on a program"
-      subtitle="Finished onboarding, no training plan assigned yet. Oldest first, because a queue sorted newest-first starves its own bottom."
-    >
+    <div>
+      <h1 className="font-display text-2xl uppercase tracking-tight sm:text-3xl">Waiting on a program</h1>
+      <p className="tf-measure mt-1 text-[13px] text-muted">
+        Finished onboarding, no training plan assigned yet. Oldest first, because a queue sorted
+        newest-first starves its own bottom.
+      </p>
+      <div className="mt-6 flex flex-col gap-5">
       {items.length === 0 ? (
         <div className="rounded-[14px] border border-line px-5 py-8 text-center">
           <p className="text-[15px] text-ink">Nobody is waiting.</p>
@@ -45,7 +49,9 @@ export default async function CoachAwaitingPage(): Promise<ReactElement> {
               </>
             ) : null}
           </p>
-          <div className="flex flex-col gap-3">
+          {/* A work queue, so it tiles across the width instead of running one card per row down
+              a 1000px screen. items-start keeps a card with injuries from stretching its row. */}
+          <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2 2xl:grid-cols-3">
             {items.map((i) => {
               const late = i.waitingDays >= OVERDUE_DAYS;
               return (
@@ -115,6 +121,7 @@ export default async function CoachAwaitingPage(): Promise<ReactElement> {
           </div>
         </>
       )}
-    </AdminPage>
+      </div>
+    </div>
   );
 }

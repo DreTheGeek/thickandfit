@@ -22,7 +22,7 @@ export default async function CoachMealPlansPage({
   const page = await getMealPlansPage(ctx.companyId, filters);
 
   return (
-    <div className="w-full px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <div className="flex items-start justify-between gap-3">
         <div>
           <Eyebrow>{t('bucketNutrition')}</Eyebrow>

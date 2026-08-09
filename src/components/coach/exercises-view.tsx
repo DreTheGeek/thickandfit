@@ -80,7 +80,7 @@ export function ExercisesView({ page, filters }: { page: ExercisesPage; filters:
           {page.totalAll === 0 ? t('exercisesEmpty') : t('exercisesNoneFiltered')}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {page.rows.map((r) => (
             <Link
               key={r.id}

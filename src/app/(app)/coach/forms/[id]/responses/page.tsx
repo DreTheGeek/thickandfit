@@ -61,7 +61,7 @@ export default async function FormResponsesPage({
   });
 
   return (
-    <div className="mx-auto w-full max-w-[820px] px-5 py-7 sm:px-8">
+    <div className="mx-auto w-full max-w-[820px]">
       <Link
         href="/coach/forms"
         className="tf-press mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink"

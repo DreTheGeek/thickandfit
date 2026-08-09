@@ -17,7 +17,7 @@ export default async function CoachIntakePage(): Promise<ReactElement> {
   const items = ctx.companyId ? await listIntakeReviews(ctx.companyId) : [];
 
   return (
-    <div className="px-[22px] py-6">
+    <div>
       <PageTitle className="mb-2">Intake to review</PageTitle>
       <p className="mb-5 max-w-[62ch] text-[13px] leading-relaxed text-faint">
         What a member wrote in her own words at signup, when it mentions something worth a human read.

@@ -97,7 +97,7 @@ export function ClientsTable({
                 {t('colMember')}
               </Th>
               <Th>{t('colStatus')}</Th>
-              <Th className="hidden lg:table-cell">{t('facetBillingHealth')}</Th>
+              <Th className="hidden lg:table-cell xl:whitespace-nowrap">{t('facetBillingHealth')}</Th>
               <Th className="hidden sm:table-cell">{t('colPlan')}</Th>
               {/* Monthly vs paid in full, asked for by name. Sits next to Plan because they answer
                   the same question from two sides: what she bought, and how she paid for it. */}
@@ -134,10 +134,13 @@ export function ClientsTable({
                 <td className="px-3 py-2.5">
                   <StatusPill status={r.status} health={r.billingHealth} />
                 </td>
-                <td className="hidden px-3 py-2.5 text-[13px] text-soft lg:table-cell">
+                {/* nowrap only from xl. Below that the table is genuinely tight and wrapping is
+                    preferable to a horizontal scrollbar; from xl there is room, and "No billing
+                    data" / "Personal Coaching" breaking over two lines just looked cramped. */}
+                <td className="hidden px-3 py-2.5 text-[13px] text-soft lg:table-cell xl:whitespace-nowrap">
                   {r.billingHealth ? healthLabel(t, r.billingHealth) : <span className="text-faint">{healthLabel(t, NONE_KEY)}</span>}
                 </td>
-                <td className="hidden px-3 py-2.5 text-[13px] text-soft sm:table-cell">{planLabel(t, r.productType)}</td>
+                <td className="hidden px-3 py-2.5 text-[13px] text-soft sm:table-cell xl:whitespace-nowrap">{planLabel(t, r.productType)}</td>
                 <td className="hidden whitespace-nowrap px-3 py-2.5 text-[13px] lg:table-cell">
                   {r.paymentType ? (
                     <span

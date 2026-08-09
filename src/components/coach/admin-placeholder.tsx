@@ -12,7 +12,7 @@ export async function AdminPlaceholder({ title }: { title: string }): Promise<Re
       ? 'Estamos construyendo esto. La estructura ya está organizada; la funcionalidad llega pronto.'
       : "We're building this. The structure is laid out and organized; functionality lands soon.";
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-3xl">
       <PageTitle>{title}</PageTitle>
       <div className="mt-6 rounded-2xl border border-dashed border-line p-12 text-center">
         <Tag>{t('comingSoonShort')}</Tag>

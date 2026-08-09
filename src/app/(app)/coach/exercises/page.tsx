@@ -26,10 +26,10 @@ export default async function CoachExercisesPage({
   const page = await getExercisesPage(ctx.companyId, filters, locale);
 
   return (
-    <div className="w-full px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <Eyebrow>{t('bucketTraining')}</Eyebrow>
       <PageTitle className="mb-1 mt-1">{t('toolExercises')}</PageTitle>
-      <p className="mb-5 max-w-2xl text-[13px] text-muted">{t('exercisesSubtitle')}</p>
+      <p className="tf-measure mb-5 text-[13px] text-muted">{t('exercisesSubtitle')}</p>
       <ExercisesView page={page} filters={filters} />
     </div>
   );

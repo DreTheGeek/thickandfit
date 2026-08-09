@@ -21,7 +21,7 @@ export default async function CoachDraftsPage(): Promise<ReactElement> {
 
   if (!companyId) {
     return (
-      <div className="px-[22px] py-6">
+      <div>
         <PageTitle className="mb-5">{t('draftsTitle')}</PageTitle>
         <p className="text-[13px] text-faint">{t('errorFailed')}</p>
       </div>
@@ -40,7 +40,7 @@ export default async function CoachDraftsPage(): Promise<ReactElement> {
   ]);
 
   return (
-    <div className="px-[22px] py-6">
+    <div>
       <PageTitle className="mb-2">{t('draftsTitle')}</PageTitle>
       <p className="mb-5 text-[13px] text-faint">{t('draftsIntro')}</p>
 

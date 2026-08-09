@@ -104,10 +104,16 @@ export function SubscribersList({ rows }: { rows: CoachSubscriber[] }): ReactEle
 
       {/* List */}
       <div className="overflow-hidden rounded-2xl border border-line bg-surface">
-        {/* header (sm+) */}
-        <div className="hidden grid-cols-[2fr_1fr_1fr_0.8fr] gap-3 border-b border-line px-4 py-3 text-[11px] font-semibold uppercase tracking-[1px] text-faint sm:grid">
+        {/* header (sm+)
+            Language was already loaded for the Spanish segment filter but never shown, which was a
+            wasted column on a list this narrow on data. The four data columns are sized to their
+            contents rather than in fractions: on a 1600px screen `1fr` each blew a status pill out
+            to a 300px cell and left ragged gaps. Member takes all the slack instead, which is what
+            lets a long name and a long email sit on one line without truncating. */}
+        <div className="hidden grid-cols-[minmax(0,1fr)_150px_130px_150px_100px] gap-3 border-b border-line px-4 py-3 text-[11px] font-semibold uppercase tracking-[1px] text-faint sm:grid">
           <span>{t('colMember')}</span>
           <span>{t('colTier')}</span>
+          <span>{t('facetLanguage')}</span>
           <span>{t('colJoined')}</span>
           <span>{t('colWorkouts')}</span>
         </div>
@@ -119,7 +125,7 @@ export function SubscribersList({ rows }: { rows: CoachSubscriber[] }): ReactEle
               key={r.id}
               href={`/coach/subscribers/${r.id}`}
               className={[
-                'tf-press flex items-center gap-3 px-4 py-3.5 sm:grid sm:grid-cols-[2fr_1fr_1fr_0.8fr] sm:items-center',
+                'tf-press flex items-center gap-3 px-4 py-3.5 sm:grid sm:grid-cols-[minmax(0,1fr)_150px_130px_150px_100px] sm:items-center',
                 i < filtered.length - 1 ? 'border-b border-divider' : '',
               ].join(' ')}
             >
@@ -137,6 +143,9 @@ export function SubscribersList({ rows }: { rows: CoachSubscriber[] }): ReactEle
                   <Tag>{t('segPremium')}</Tag>
                 )}
                 {r.legacy && <Badge variant="legacy">{t('legacy')}</Badge>}
+              </span>
+              <span className="hidden text-[13px] text-muted sm:block">
+                {r.locale === 'es' ? t('spanish') : t('english')}
               </span>
               <span className="hidden text-[13px] text-muted sm:block">{r.joined}</span>
               <span className="hidden text-[13px] font-semibold sm:block">{r.workouts}</span>

@@ -131,8 +131,10 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
     <div>
       <UnderlineTabs options={options} value={tab} onChange={setTab} className="mb-5" />
 
+      {/* Card stacks go two-up once the panel is wide enough to hold two readable label/value
+          columns. items-start so a short card does not stretch to match a tall neighbour. */}
       {tab === 'overview' && (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
           <Section title={t('membership')}>
             <Row label={t('facetStatus')} value={<span className="capitalize">{detail.status ?? '-'}</span>} />
             <Row label={t('nextBilling')} value={fmtDate(detail.nextBillingDate, locale)} />
@@ -157,7 +159,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
       )}
 
       {tab === 'health' && (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
           {detail.intake && (
             <Section title={t('healthIntake')}>
               <Row label={t('intakeGoal')} value={<span className="capitalize">{detail.intake.goalType ?? '-'}</span>} />
@@ -240,7 +242,9 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
           <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
             {[...detail.messages].reverse().map((m) => (
               <div key={m.id} className={`flex ${m.isFromCoach ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 ${m.isFromCoach ? 'bg-ink text-surface' : 'bg-warm text-ink'}`}>
+                {/* A percentage cap alone stops working once the panel is wide: 78% of a 1200px
+                    column is a 900px line of chat, which is unreadable. Hold a fixed measure. */}
+                <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 xl:max-w-[620px] ${m.isFromCoach ? 'bg-ink text-surface' : 'bg-warm text-ink'}`}>
                   <div className={`mb-0.5 flex items-center gap-2 text-[10px] ${m.isFromCoach ? 'text-surface/70' : 'text-faint'}`}>
                     <span className="font-semibold">{m.isFromCoach ? (m.senderName ?? t('messageCoach')) : detail.name}</span>
                     <span>{fmtDateTime(m.sentAt, locale)}</span>
@@ -323,7 +327,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
       )}
 
       {tab === 'nutrition' && (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
           {mealPlanCard(true)}
           {planDelivery}
         </div>
@@ -339,7 +343,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-faint">
                   {t('progressPhotos')} · {photos.length}
                 </div>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 2xl:grid-cols-8">
                   {photos.slice(0, 60).map((f, i) => (
                     <a
                       key={i}
@@ -381,7 +385,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
 
       {tab === 'engagement' &&
         (detail.snapshot ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-6">
             {[
               { label: t('engMealPlans'), value: detail.snapshot.mealPlans },
               { label: t('engCheckins'), value: detail.snapshot.checkins },
@@ -396,7 +400,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               </div>
             ))}
             {detail.snapshot.weightGoal && (
-              <div className="col-span-2 rounded-2xl border border-line bg-surface p-4 sm:col-span-3">
+              <div className="col-span-2 rounded-2xl border border-line bg-surface p-4 sm:col-span-3 2xl:col-span-6">
                 <span className="text-[13px] text-faint">{t('engWeightGoal')}: </span>
                 <span className="text-[13px] font-medium capitalize">{detail.snapshot.weightGoal}</span>
               </div>

@@ -15,7 +15,7 @@ export default async function CoachCommunityPage(): Promise<ReactElement> {
   const data = await getCommunity(ctx.userId);
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:py-8">
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
       <CommunityFeed data={data} canBroadcast viewerId={ctx.userId} />
     </div>

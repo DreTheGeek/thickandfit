@@ -75,16 +75,24 @@ export function CoachConversation({
     <div className="flex h-full flex-col">
       {!hasAccount && (
         <div className="border-b border-line bg-warm/50 px-4 py-2 text-[12px] text-muted">
-          {name} hasn&apos;t joined the app yet. Your messages are emailed to them and saved here.
+          {/* Explicit {' '}: JSX drops the space between an expression and the text that follows
+              it, so this banner read "Shelise A Mardenboroughhasn't joined the app yet." */}
+          {name}{' '}
+          hasn&apos;t joined the app yet. Your messages are emailed to them and saved here.
         </div>
       )}
-      <div className="flex-1 space-y-2 overflow-y-auto p-4">
+      {/* The pane fills whatever the thread list leaves, which on a 1920 screen is ~1300px. A chat
+          transcript set that wide is unreadable, so the transcript and the composer share one
+          centred column while the surrounding chrome (the unclaimed-client banner, the composer's
+          top border) still spans the pane. */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="mx-auto w-full max-w-[980px] space-y-2">
         {messages.length === 0 ? (
           <p className="pt-8 text-center text-[13px] text-faint">No messages yet. Say hello.</p>
         ) : (
           messages.map((m) => (
             <div key={m.id} className={m.fromCoach ? 'flex justify-end' : 'flex justify-start'}>
-              <div className={['max-w-[75%] rounded-2xl px-3.5 py-2', m.fromCoach ? 'bg-ink text-surface' : 'bg-surface text-ink'].join(' ')}>
+              <div className={['max-w-[75%] rounded-2xl px-3.5 py-2 xl:max-w-[620px]', m.fromCoach ? 'bg-ink text-surface' : 'bg-surface text-ink'].join(' ')}>
                 <div className={['mb-0.5 flex items-center gap-2 text-[10px]', m.fromCoach ? 'text-surface/70' : 'text-faint'].join(' ')}>
                   <span className="font-semibold">{m.fromCoach ? m.senderName || 'Coach' : name}</span>
                   <span>{fmt(m.at)}</span>
@@ -95,24 +103,27 @@ export function CoachConversation({
           ))
         )}
         <div ref={endRef} />
+        </div>
       </div>
-      {note && <p className="px-4 pb-1 text-[12px] text-muted">{note}</p>}
-      <div className="flex items-center gap-2 border-t border-line p-3">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
-          placeholder={`Message ${name}...`}
-          className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-2.5 text-[14px] outline-none focus:border-ink"
-        />
-        <button
-          type="button"
-          onClick={send}
-          disabled={pending || !draft.trim()}
-          className="tf-press rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-surface disabled:opacity-40"
-        >
-          {pending ? 'Sending' : 'Send'}
-        </button>
+      {note && <p className="mx-auto w-full max-w-[980px] px-4 pb-1 text-[12px] text-muted">{note}</p>}
+      <div className="border-t border-line p-3">
+        <div className="mx-auto flex w-full max-w-[980px] items-center gap-2">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
+            placeholder={`Message ${name}...`}
+            className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-2.5 text-[14px] outline-none focus:border-ink"
+          />
+          <button
+            type="button"
+            onClick={send}
+            disabled={pending || !draft.trim()}
+            className="tf-press rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-surface disabled:opacity-40"
+          >
+            {pending ? 'Sending' : 'Send'}
+          </button>
+        </div>
       </div>
     </div>
   );

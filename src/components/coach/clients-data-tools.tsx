@@ -53,6 +53,10 @@ export function ClientsDataTools(): ReactElement {
       >
         <Icon name="plus" size={14} /> Add client
       </button>
+      {/* Plain anchor, not next/link: this is a route handler streaming a CSV attachment, not a
+          page, and a client-side navigation would never start the download. The lint rule cannot
+          tell a /api/* handler from a page. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a
         href="/api/coach/clients/export"
         className="tf-press inline-flex items-center gap-2 rounded-full border border-line px-3.5 py-2 text-[12px] font-semibold text-muted hover:border-ink hover:text-ink"

@@ -171,6 +171,47 @@
   color: var(--color-faint);
 }
 
+/* ---- coach console container --------------------------------------------- */
+
+/* ONE container for every /coach page, applied once by src/app/(app)/coach/layout.tsx. Before this
+   existed only 13 of 37 pages set a width at all, each picking its own max-w-2xl/3xl/4xl/5xl, so a
+   2000px monitor showed a 720px column of content floating in the middle: a phone layout stretched
+   onto a desktop. Pages must NOT set their own page-level max-w/padding any more; they inherit this.
+   The ceiling is deliberately generous because the console is tables and dashboards, not an article,
+   but it is a real ceiling so an ultrawide does not get 2500px-wide table rows. At 1920 the sidebar
+   takes 256px and the remaining 1664 is under the cap, so the page fills the screen. */
+.tf-coach-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1720px;
+  padding: 1.5rem 1.25rem;
+}
+@media (min-width: 640px) {
+  .tf-coach-page {
+    padding: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .tf-coach-page {
+    padding: 2.5rem;
+  }
+}
+
+/* Full-bleed escape for app-like surfaces. The inbox is a three-pane mail client that owns the
+   viewport, not a document on a page. A child layout cannot un-wrap a parent in the App Router, so
+   the page marks its own root with data-coach-bleed and the container stands down. Direct child
+   only: a bleed region nested deeper inside a normal page must not collapse that page's gutters. */
+.tf-coach-page:has(> [data-coach-bleed]) {
+  max-width: none;
+  padding: 0;
+}
+
+/* Comfortable reading measure. The container width is NOT a safe line length: body copy set across
+   1600px is unreadable. Any run of prose (page subtitles, empty-state explanations) gets this. */
+.tf-measure {
+  max-width: 68ch;
+}
+
 /* ---- motion -------------------------------------------------------------- */
 
 /* Goal/macro rings animate-fill on load. */

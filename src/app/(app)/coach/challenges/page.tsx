@@ -17,7 +17,7 @@ export default async function CoachChallengesPage(): Promise<ReactElement> {
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="px-[22px] py-6">
+    <div>
       <PageTitle className="mb-5">{t('challengesTitle')}</PageTitle>
       <CreateChallenge />
 

@@ -29,7 +29,7 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <div className="mb-6 flex items-center justify-between gap-4">
         <PageTitle>{t('programs')}</PageTitle>
         <ButtonLink href="/coach/programs/new" size="sm" className="shrink-0">
@@ -39,18 +39,18 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
       {plans.length === 0 ? (
         <p className="text-sm text-muted">{t('noPrograms')}</p>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-line bg-surface">
-          {plans.map((p, i) => (
+        // Tiles, not full-width rows. A program row carries a name and a duration, so stretched
+        // across a 1600px screen it put the two ends a monitor apart with nothing in between. Same
+        // card grid the exercise library uses.
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          {plans.map((p) => (
             <Link
               key={p.id}
               href={`/coach/programs/${p.id}`}
-              className={[
-                'tf-press flex items-center justify-between px-4 py-3.5',
-                i < plans.length - 1 ? 'border-b border-divider' : '',
-              ].join(' ')}
+              className="tf-press flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5 hover:border-ink"
             >
-              <span className="font-medium">{p.name_en}</span>
-              <span className="flex items-center gap-2 text-[12px] text-faint">
+              <span className="min-w-0 truncate font-medium">{p.name_en}</span>
+              <span className="flex shrink-0 items-center gap-2 text-[12px] text-faint">
                 {p.weeks}w
                 {p.is_template && <Badge variant="inactive">{t('template')}</Badge>}
                 <Icon name="chevronRight" size={16} className="text-line" />

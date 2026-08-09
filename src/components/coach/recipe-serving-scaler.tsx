@@ -6,6 +6,7 @@ import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
 import { ConfidenceDots } from '@/components/coach/confidence-dots';
 import type { RecipeIngredient } from '@/lib/coach/recipes-types';
+import type { IngredientDisplay } from '@/lib/coach/settings-shared';
 
 const STEPS = [0.5, 1, 2, 3, 4] as const;
 const MIN = 0.5;
@@ -15,14 +16,56 @@ type Macros = { proteinG: number; carbG: number; fatG: number; kcal: number };
 
 // Scales the recipe's per-serving macros + each ingredient amount by a 0.5x-4x multiplier.
 // All math is client-side off the base (1x) values passed in; nothing is re-fetched.
+/**
+ * The household-measure half of amount_print.
+ *
+ * Every one of the 824 imported ingredient rows stores amount_print as "<grams>g (<measure>)", so the
+ * raw string already contains the gram figure. Pasting it next to a scaled gram figure produced
+ * "20 g (20g (~1/4 cup))", which is why this pulls out just the parenthesised measure. A row with no
+ * parentheses is treated as being entirely the measure.
+ */
+function unitPhrase(amountPrint: string | null): string | null {
+  if (!amountPrint) return null;
+  const match = amountPrint.match(/\(([^)]+)\)\s*$/);
+  const phrase = (match ? match[1] : amountPrint).trim();
+  return phrase.length > 0 ? phrase : null;
+}
+
+/**
+ * Render one ingredient's amount under the coach's "Display recipe ingredients in" preference.
+ *
+ * ONLY GRAMS SCALE. Grams are a number; "~1/4 cup" and "3 1/2 pcs" are not, and multiplying them
+ * gives either "2.5 ~1/4 cup" or a silently wrong rounding. So above or below 1x the household
+ * measure is dropped and the scaled gram figure stands alone, including in "Units only": a coach who
+ * asked for cups is better served by an accurate gram weight than by a cup figure that is wrong.
+ *
+ * When the preferred form is missing for a row the other one is shown. A blank amount is not a
+ * preference being honoured, it is a recipe that cannot be cooked.
+ */
+function amountLabel(
+  ing: RecipeIngredient,
+  factor: number,
+  display: IngredientDisplay,
+): string | null {
+  const grams = ing.amountGrams == null ? null : `${Math.round(ing.amountGrams * factor)} g`;
+  const measure = unitPhrase(ing.amountPrint);
+  const units = factor === 1 ? measure : null;
+  if (display === 'grams') return grams ?? measure;
+  if (display === 'units') return units ?? grams ?? measure;
+  if (grams && units) return `${grams} (${units})`;
+  return grams ?? units ?? measure;
+}
+
 export function RecipeServingScaler({
   base,
   baseServings,
   ingredients,
+  ingredientDisplay,
 }: {
   base: Macros;
   baseServings: number;
   ingredients: RecipeIngredient[];
+  ingredientDisplay: IngredientDisplay;
 }): ReactElement {
   const t = useTranslations('app.coach');
   const [factor, setFactor] = useState(1);
@@ -120,8 +163,7 @@ export function RecipeServingScaler({
         ) : (
           <ul className="flex flex-col">
             {ingredients.map((ing, i) => {
-              const grams = ing.amountGrams == null ? null : Math.round(ing.amountGrams * factor);
-              const amount = grams != null ? `${grams} g` : ing.amountPrint;
+              const amount = amountLabel(ing, factor, ingredientDisplay);
               return (
                 <li
                   key={i}

@@ -46,7 +46,7 @@ export default async function CoachExerciseDetailPage({
   ];
 
   return (
-    <div className="w-full px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <Link
         href="/coach/exercises"
         className="tf-press mb-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-muted hover:text-ink"

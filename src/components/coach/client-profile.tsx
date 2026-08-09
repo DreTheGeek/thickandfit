@@ -48,18 +48,23 @@ export function ClientProfile({
   const cur = detail.currency;
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-5 py-7 sm:px-8">
+    <div>
       <Link href={backHref} className="tf-press mb-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
         <Icon name="arrowLeft" size={15} /> {t('backToClients')}
       </Link>
 
-      {/* Header */}
+      {/* Header. Three zones (identity, stats, actions) that sit on ONE row from 2xl up, so a wide
+          screen reads the whole summary without scrolling. Below that they stack, which is why the
+          stat strip carries its divider only at the narrow sizes where it is genuinely a new row.
+          The breakpoint is 2xl and not xl on purpose: the three zones need roughly 1100px of card
+          interior, and at xl (1280 viewport, minus the 256px nav) there are only ~900, which
+          squeezed the name onto two lines and broke the email address mid-word. */}
       <div className="rounded-2xl border border-line bg-surface p-6">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-5 2xl:flex-row 2xl:items-center 2xl:justify-between 2xl:gap-10">
+          <div className="flex min-w-0 items-center gap-4">
             <Avatar initials={detail.initials} size={64} />
             <div className="min-w-0">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <h1 className="tf-display text-[28px] leading-none">{detail.name}</h1>
                 <StatusPill status={detail.status} health={detail.billingHealth} />
               </div>
@@ -69,7 +74,16 @@ export function ClientProfile({
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+
+          {/* Stat strip */}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-t border-divider pt-5 sm:grid-cols-4 2xl:shrink-0 2xl:border-t-0 2xl:pt-0">
+            <Stat value={formatCents(detail.priceCents, cur, locale)} label={t('kpiMrr')} />
+            <Stat value={formatCents(detail.lifetimeCents, cur, locale)} label={t('lifetimePaid')} />
+            <Stat value={planLabel(t, detail.productType)} label={t('colPlan')} />
+            <Stat value={detail.tenureDays != null ? String(detail.tenureDays) : '-'} label={t('tenureDays')} />
+          </div>
+
+          <div className="flex flex-wrap gap-2 2xl:shrink-0">
             {detail.email && (
               <a
                 href={`mailto:${detail.email}`}
@@ -89,16 +103,8 @@ export function ClientProfile({
           </div>
         </div>
 
-        {/* Stat strip */}
-        <div className="mt-6 flex flex-wrap gap-x-10 gap-y-4 border-t border-divider pt-5">
-          <Stat value={formatCents(detail.priceCents, cur, locale)} label={t('kpiMrr')} />
-          <Stat value={formatCents(detail.lifetimeCents, cur, locale)} label={t('lifetimePaid')} />
-          <Stat value={planLabel(t, detail.productType)} label={t('colPlan')} />
-          <Stat value={detail.tenureDays != null ? String(detail.tenureDays) : '-'} label={t('tenureDays')} />
-        </div>
-
         {detail.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-divider pt-4">
             {detail.tags.map((tag) => (
               <span
                 key={tag.slug}
@@ -113,9 +119,11 @@ export function ClientProfile({
         )}
       </div>
 
-      {/* Body */}
+      {/* Body: rail beside the content from lg up. The rail is fixed-width because its rows are
+          label/value pairs that gain nothing from extra width; every pixel past it belongs to the
+          tab panel, which is what actually has content to lay out. */}
       <div className="mt-5 flex flex-col gap-5 lg:flex-row">
-        <aside className="w-full shrink-0 lg:w-72">
+        <aside className="w-full shrink-0 lg:w-[300px] xl:w-[320px]">
           <div className="rounded-2xl border border-line bg-surface p-5">
             <div className="mb-1 text-[12px] font-semibold uppercase tracking-[1px] text-faint">{t('contactInfo')}</div>
             <RailRow label={t('email')} value={detail.email ?? '-'} />

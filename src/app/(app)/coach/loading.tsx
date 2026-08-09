@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/states/skeleton';
 // queries before first byte; this paints the shell immediately instead of a blank screen.
 export default function CoachLoading(): ReactElement {
   return (
-    <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <Skeleton className="h-8 w-48" />
       <Skeleton className="mt-6 h-12" />
       <Skeleton className="mt-3 h-64 rounded-2xl" />

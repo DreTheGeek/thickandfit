@@ -3,7 +3,9 @@
 // they have joined the app (unclaimed clients are messaged by email). "New message" opens the picker.
 import type { ReactElement } from 'react';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
+import { Icon } from '@/components/ui/icons';
 import { getInboxThreads, getContactThread, getClientPickerList } from '@/lib/messages/inbox';
 import { CoachConversation } from '@/components/messages/coach-conversation';
 import { NewMessagePicker } from '@/components/messages/new-message-picker';
@@ -26,14 +28,32 @@ export default async function CoachInboxPage({
   searchParams: Promise<{ c?: string; new?: string }>;
 }): Promise<ReactElement> {
   const ctx = await requireCoach();
+  // Named `common`, not `t`: the thread list below already binds `t` to each thread in its map.
+  const common = await getTranslations('app.common');
   const sp = await searchParams;
   const threads = ctx.companyId ? await getInboxThreads(ctx.companyId) : [];
+  // Two different questions. `selected` is which thread to render, and on a desktop it falls back
+  // to the newest so the pane is never empty. `opened` is whether the coach actually chose one,
+  // which is what decides the phone layout: defaulting to the first thread there would mean the
+  // inbox never shows its own list.
+  const opened = Boolean(sp.c || sp.new);
   const selected = sp.c ?? threads[0]?.contactId ?? null;
   const thread = selected && ctx.companyId ? await getContactThread(ctx.companyId, selected) : null;
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] min-h-[480px]">
-      <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-line">
+    // data-coach-bleed: this is a three-pane mail client that owns the viewport, so it opts out of
+    // the coach container's max-width and gutters (see .tf-coach-page in globals.css).
+    <div data-coach-bleed className="flex h-[calc(100dvh-3.5rem)] min-h-[480px]">
+      {/* One pane at a time below lg. Side by side, a 288px list left the conversation 100px on a
+          390px phone, which rendered "Test" as "Tes / t" and pushed the composer off screen. From
+          lg both panes show, and the list earns width on a big screen: at w-72 every name and
+          preview was clipped mid-word while 1300px of empty message pane sat next to it. */}
+      <aside
+        className={[
+          'w-full shrink-0 flex-col overflow-hidden border-line lg:flex lg:w-72 lg:border-r xl:w-80 2xl:w-96',
+          opened ? 'hidden' : 'flex',
+        ].join(' ')}
+      >
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <span className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">Inbox</span>
           <Link
@@ -66,7 +86,15 @@ export default async function CoachInboxPage({
           )}
         </div>
       </aside>
-      <main className="flex-1 overflow-hidden">
+      <main className={['min-w-0 flex-1 flex-col overflow-hidden lg:flex', opened ? 'flex' : 'hidden'].join(' ')}>
+        {/* Phone-only way back to the list, since the list is hidden while a thread is open. */}
+        <Link
+          href="/coach/inbox"
+          className="tf-press flex items-center gap-1.5 border-b border-line px-4 py-2.5 text-[13px] font-semibold text-muted lg:hidden"
+        >
+          <Icon name="arrowLeft" size={15} /> {common('back')}
+        </Link>
+        <div className="min-h-0 flex-1 overflow-hidden">
         {sp.new ? (
           <NewMessagePicker clients={ctx.companyId ? await getClientPickerList(ctx.companyId) : []} />
         ) : thread ? (
@@ -74,6 +102,7 @@ export default async function CoachInboxPage({
         ) : (
           <div className="flex h-full items-center justify-center text-[13px] text-faint">Select a conversation, or hit + New.</div>
         )}
+        </div>
       </main>
     </div>
   );

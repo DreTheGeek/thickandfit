@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { getRecipeDetail } from '@/lib/coach/recipes';
+import { readCoachSettings } from '@/lib/coach/settings';
 import { Icon } from '@/components/ui/icons';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { RecipeServingScaler } from '@/components/coach/recipe-serving-scaler';
@@ -25,7 +26,10 @@ export default async function CoachRecipeDetailPage({
   if (!ctx.companyId) notFound();
   const { id } = await params;
   const locale = await getLocale();
-  const r = await getRecipeDetail(ctx.companyId, id, locale, ctx.userId);
+  const [r, settings] = await Promise.all([
+    getRecipeDetail(ctx.companyId, id, locale, ctx.userId),
+    readCoachSettings(ctx.companyId),
+  ]);
   if (!r) notFound();
   const t = await getTranslations('app.coach');
   const { from } = await searchParams;
@@ -33,7 +37,7 @@ export default async function CoachRecipeDetailPage({
   const backHref = fromQs ? `/coach/tool/recipes?${fromQs}` : '/coach/tool/recipes';
 
   return (
-    <div className="mx-auto w-full max-w-[1000px] px-5 py-7 sm:px-8">
+    <div className="mx-auto w-full max-w-[1000px]">
       <Link href={backHref} className="tf-press mb-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
         <Icon name="arrowLeft" size={15} /> {t('backToRecipes')}
       </Link>
@@ -61,6 +65,7 @@ export default async function CoachRecipeDetailPage({
               base={{ proteinG: r.proteinG, carbG: r.carbG, fatG: r.fatG, kcal: r.kcal }}
               baseServings={r.servings}
               ingredients={r.ingredients}
+              ingredientDisplay={settings.recipeIngredientDisplay}
             />
           </div>
 

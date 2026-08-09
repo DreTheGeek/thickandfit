@@ -25,7 +25,7 @@ export default async function CoachKnowledgePage(): Promise<ReactElement> {
   const aiConfigured = isConfigured();
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-3xl">
       <PageTitle className="mb-2">{t('pageTitle')}</PageTitle>
       <p className="mb-6 text-[14px] text-muted">{t('pageIntro')}</p>
 

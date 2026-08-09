@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { getProgram } from '@/lib/programs/engine';
 import { createServiceClient } from '@/lib/supabase/service';
+import { readCoachSettings } from '@/lib/coach/settings';
 import { ProgramBuilder, type BuilderInitial } from '@/components/coach/program-builder';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +27,15 @@ export default async function ProgramBuilderPage({
   const tEx = await getTranslations('app.exercise');
   const supabase = createServiceClient();
 
-  let initial: BuilderInitial = { nameEn: '', nameEs: '', weeks: 4, days: [] };
+  // "Default training plan name" (coach settings). Applied to the English name only: the preference
+  // is one string, and copying it into name_es would present a guess as a translation.
+  const { defaultTrainingPlanName } = await readCoachSettings(ctx.companyId);
+  let initial: BuilderInitial = {
+    nameEn: id === 'new' ? defaultTrainingPlanName : '',
+    nameEs: '',
+    weeks: 4,
+    days: [],
+  };
   let subscribers: { id: string; name: string }[] = [];
 
   if (ctx.companyId) {

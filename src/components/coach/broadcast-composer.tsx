@@ -51,7 +51,7 @@ export function BroadcastComposer(): ReactElement {
   const [status, setStatus] = useState('');
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-3xl">
       <h1 className="tf-display mb-3 text-[30px]">{t('createBroadcast')}</h1>
       <p className="mb-6 max-w-2xl rounded-xl bg-warm px-4 py-3 text-[13px] text-soft">{t('broadcastsSoon')}</p>
 

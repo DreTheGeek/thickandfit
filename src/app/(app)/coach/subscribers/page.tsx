@@ -1,5 +1,11 @@
-// Coach subscribers list. Coach-guarded. Real subscribers + workout counts, client-side
-// search/segment filtering, responsive table/cards.
+// Coach members list: app accounts (profiles), coach-guarded. Real subscribers + workout counts,
+// client-side search/segment filtering, responsive table/cards.
+//
+// Not the same population as /coach/clients, which reads `contacts` (the Lenus + GHL CRM). A woman
+// who signs up and stops before finishing setup has a profile and no contact row, so this is the only
+// place she is visible. Not the same page as /admin/subscribers either: that one unions native Stripe
+// subscriptions with the CRM imports to answer "who is paying", and deep-links back into
+// /coach/subscribers/[id] as the canonical member record.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
@@ -61,8 +67,9 @@ export default async function CoachSubscribersPage(): Promise<ReactElement> {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 lg:py-10">
-      <PageTitle className="mb-6">{t('subscribers')}</PageTitle>
+    <div>
+      <PageTitle className="mb-2">{t('navMembers')}</PageTitle>
+      <p className="mb-6 max-w-[68ch] text-[13px] leading-relaxed text-faint">{t('membersSubtitle')}</p>
       <SubscribersList rows={rows} />
     </div>
   );

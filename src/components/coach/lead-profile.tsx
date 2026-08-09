@@ -44,14 +44,16 @@ export function LeadProfile({
   const t = useTranslations('app.coach');
 
   return (
-    <div className="mx-auto w-full max-w-[1000px] px-5 py-7 sm:px-8">
+    <div>
       <Link href={backHref} className="tf-press mb-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
         <Icon name="arrowLeft" size={15} /> {t('backToLeads')}
       </Link>
 
+      {/* Same three-zone header as the client detail page: identity, stats, actions on one row
+          from 2xl, stacked below it (see client-profile.tsx for why 2xl and not xl). */}
       <div className="rounded-2xl border border-line bg-surface p-6">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-5 2xl:flex-row 2xl:items-center 2xl:justify-between 2xl:gap-10">
+          <div className="flex min-w-0 items-center gap-4">
             <Avatar initials={detail.initials} size={60} />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
@@ -64,7 +66,14 @@ export function LeadProfile({
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-t border-divider pt-5 sm:grid-cols-4 2xl:shrink-0 2xl:border-t-0 2xl:pt-0">
+            <Stat value={formatCents(detail.valueCents, detail.currency, locale)} label={t('kpiDealValue')} />
+            <Stat value={detail.stageName ?? '-'} label={t('colStage')} />
+            <Stat value={detail.pipelineName ?? '-'} label={t('leadPipeline')} />
+            <Stat value={detail.daysInStage != null ? String(detail.daysInStage) : '-'} label={t('colDaysInStage')} />
+          </div>
+
+          <div className="flex flex-wrap gap-2 2xl:shrink-0">
             {detail.email && (
               <a href={`mailto:${detail.email}`} className="tf-press inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-[12px] font-semibold text-muted hover:border-ink hover:text-ink">
                 <Icon name="send" size={14} /> {t('email')}
@@ -78,15 +87,8 @@ export function LeadProfile({
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-x-10 gap-y-4 border-t border-divider pt-5">
-          <Stat value={formatCents(detail.valueCents, detail.currency, locale)} label={t('kpiDealValue')} />
-          <Stat value={detail.stageName ?? '-'} label={t('colStage')} />
-          <Stat value={detail.pipelineName ?? '-'} label={t('leadPipeline')} />
-          <Stat value={detail.daysInStage != null ? String(detail.daysInStage) : '-'} label={t('colDaysInStage')} />
-        </div>
-
         {detail.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-divider pt-4">
             {detail.tags.map((tag) => (
               <span key={tag.slug} className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium text-ink" style={{ borderColor: `${tag.color}55` }}>
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tag.color }} />
@@ -98,7 +100,7 @@ export function LeadProfile({
       </div>
 
       <div className="mt-5 flex flex-col gap-5 lg:flex-row">
-        <aside className="w-full shrink-0 lg:w-72">
+        <aside className="w-full shrink-0 lg:w-[300px] xl:w-[320px]">
           <div className="rounded-2xl border border-line bg-surface p-5">
             <div className="mb-1 text-[12px] font-semibold uppercase tracking-[1px] text-faint">{t('contactInfo')}</div>
             <RailRow label={t('email')} value={detail.email ?? '-'} />

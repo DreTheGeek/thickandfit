@@ -112,7 +112,7 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
   tabs.push('workouts');
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <Link href="/coach/subscribers" className="tf-press mb-3 inline-flex items-center gap-2 text-[13px] text-muted">
         <Icon name="arrowLeft" size={16} /> {t('backToSubs')}
       </Link>

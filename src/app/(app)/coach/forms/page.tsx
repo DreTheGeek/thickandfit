@@ -45,7 +45,7 @@ export default async function CoachFormsPage(): Promise<ReactElement> {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-8 py-10">
+    <div className="mx-auto w-full max-w-3xl">
       <div className="mb-8 flex items-end justify-between">
         <PageHeader title={t('forms')} />
         <ButtonLink href="/coach/forms/new" size="sm" className="mb-1">

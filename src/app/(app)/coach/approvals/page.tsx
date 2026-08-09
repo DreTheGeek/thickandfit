@@ -18,7 +18,7 @@ export default async function CoachApprovalsPage(): Promise<ReactElement> {
 
   if (!companyId) {
     return (
-      <div className="px-[22px] py-6">
+      <div>
         <PageTitle className="mb-5">{t('approvalsTitle')}</PageTitle>
         <p className="text-[13px] text-faint">{t('errorFailed')}</p>
       </div>
@@ -31,7 +31,7 @@ export default async function CoachApprovalsPage(): Promise<ReactElement> {
   ]);
 
   return (
-    <div className="px-[22px] py-6">
+    <div>
       <PageTitle className="mb-2">{t('approvalsTitle')}</PageTitle>
       <p className="mb-5 text-[13px] text-faint">{t('approvalsIntro')}</p>
       <ApprovalQueue pending={pending} decided={decided} />

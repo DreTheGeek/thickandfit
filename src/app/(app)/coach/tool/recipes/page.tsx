@@ -23,7 +23,7 @@ export default async function CoachRecipesPage({
   const page = await getRecipesPage(ctx.companyId, filters, locale, ctx.userId);
 
   return (
-    <div className="w-full px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <Eyebrow>{t('bucketNutrition')}</Eyebrow>

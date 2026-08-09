@@ -36,7 +36,7 @@ export default async function CoachMealPlanDetailPage({
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[900px] px-5 py-7 sm:px-8">
+    <div className="mx-auto w-full max-w-[900px]">
       <div className="mb-5 flex items-center justify-between gap-3">
         <Link href={backHref} className="tf-press inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
           <Icon name="arrowLeft" size={15} /> {t('backToMealPlans')}

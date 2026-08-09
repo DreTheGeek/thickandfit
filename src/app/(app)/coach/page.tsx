@@ -57,7 +57,9 @@ function BarList({ rows, accent, t }: { rows: Bucket[]; accent?: boolean; t: Tra
     <div className="flex flex-col gap-2.5">
       {rows.map((r) => (
         <div key={r.key} className="flex items-center gap-3">
-          <span className="w-32 shrink-0 truncate text-[13px] text-soft">{labelFor(t, r.key)}</span>
+          {/* Wider label column once there is room: "Less Developed Contact" was truncating to
+              "Less Developed C..." in the pipeline card. */}
+          <span className="w-32 shrink-0 truncate text-[13px] text-soft xl:w-44">{labelFor(t, r.key)}</span>
           <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-warm">
             <span
               className={['block h-2.5 rounded-full', accent ? 'bg-accent' : 'bg-ink'].join(' ')}
@@ -140,7 +142,7 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1180px] px-5 py-8 sm:px-8 lg:py-10">
+    <div>
       <Eyebrow>{t('overviewTitle')}</Eyebrow>
       <h1 className="tf-display mt-1 text-[34px]">{t('welcomeBack', { name: firstName })}</h1>
       <p className="mb-7 mt-1 text-sm text-faint">{dateLabel}</p>
@@ -208,8 +210,11 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
         </Card>
       </div>
 
-      {/* Status + product */}
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+      {/* Status + product + lost reasons. These are three readings of the same book, all short bar
+          lists, so on a wide screen they belong on one row rather than two half-width cards with a
+          third full-width card stacked underneath. The third column only exists when there is a
+          third card, otherwise two cards would sit in a 3-up grid with a hole on the right. */}
+      <div className={`mb-4 grid grid-cols-1 items-start gap-4 md:grid-cols-2 ${o.lostReasons.length > 0 ? 'xl:grid-cols-3' : ''}`}>
         <Card>
           <h2 className="mb-4 font-display text-[20px]">{t('secClientStatus')}</h2>
           {o.statusBreakdown.length > 0 ? (
@@ -226,6 +231,12 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
             <p className="py-8 text-center text-sm text-faint">{t('emptyOverview')}</p>
           )}
         </Card>
+        {o.lostReasons.length > 0 && (
+          <Card className="md:col-span-2 xl:col-span-1">
+            <h2 className="mb-4 font-display text-[20px]">{t('secLostReasons')}</h2>
+            <BarList rows={o.lostReasons} t={t} />
+          </Card>
+        )}
       </div>
 
       {/* Segments & tags */}
@@ -260,13 +271,6 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
         </div>
       </Card>
 
-      {/* Lost reasons */}
-      {o.lostReasons.length > 0 && (
-        <Card>
-          <h2 className="mb-4 font-display text-[20px]">{t('secLostReasons')}</h2>
-          <BarList rows={o.lostReasons} t={t} />
-        </Card>
-      )}
     </div>
   );
 }

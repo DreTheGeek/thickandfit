@@ -45,7 +45,7 @@ export default async function FormBuilderPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-8 py-10">
+    <div className="mx-auto w-full max-w-2xl">
       <PageHeader title={t('formBuilder')} />
       <FormBuilder initial={initial} />
     </div>

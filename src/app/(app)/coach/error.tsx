@@ -16,7 +16,7 @@ export default function CoachError({
     console.error('coach segment error:', error.message);
   }, [error]);
   return (
-    <div className="mx-auto w-full max-w-5xl px-5 py-16 sm:px-8">
+    <div className="py-8">
       <ErrorState onRetry={reset} />
     </div>
   );

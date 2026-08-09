@@ -17,7 +17,7 @@ export default async function CoachInterviewPage(): Promise<ReactElement> {
   const answers = ctx.companyId ? await getInterviewAnswers(ctx.companyId) : {};
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-3xl">
       <Link href="/coach/settings/knowledge" className="tf-press mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
         <Icon name="arrowLeft" size={15} /> {t('navKnowledge')}
       </Link>
