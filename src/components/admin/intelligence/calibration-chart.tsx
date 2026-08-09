@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { CalibrationBucket } from '@/lib/coach/intelligence';
+import type { CalibrationBucket } from '@/lib/admin/scan-intelligence';
 
 // Confidence-calibration bars: per confidence decile, % of logged items later corrected. The
 // dashed reference is perfect calibration (at 90-100% confidence, ~0-10% corrections): bars ABOVE

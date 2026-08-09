@@ -12,22 +12,31 @@ import { Icon, type IconName } from '@/components/ui/icons';
 type NavItem = { key: string; href: string; icon: IconName };
 type NavSection = { headerKey: string; items: NavItem[] };
 
-// Admin portal IA, reorganized from Lenus's flat "Toolbox" into clear sections. Trimmed to shipped
-// routes only (WP9): Phase-3 admin tooling is kept out of the product entirely rather than badged
+// The coaching console structure, reorganized from Lenus's flat "Toolbox" into clear sections. Trimmed to
+// shipped routes only (WP9): Phase-3 tooling is kept out of the product entirely rather than badged
 // "soon", so every visible item routes to a real, data-bound screen.
+//
+// SCOPE RULE for anything added here: this portal is about PEOPLE and PROGRAMMING. A number about a
+// woman belongs here; a number about the system belongs in the operator portal on the admin. host.
+// Scan accuracy, model latency and service probes used to live here (navIntelligence, appHealth) and
+// were moved to /admin/intelligence and /admin/health for exactly that reason.
 const SECTIONS: NavSection[] = [
   {
     headerKey: 'overview',
     items: [
       { key: 'navHome', href: '/coach', icon: 'home' },
       { key: 'navBilling', href: '/coach/billing', icon: 'card' },
-      { key: 'navIntelligence', href: '/coach/intelligence', icon: 'sparkles' },
     ],
   },
   {
     headerKey: 'navClients',
     items: [
       { key: 'navClients', href: '/coach/clients', icon: 'user' },
+      // App accounts, as distinct from CRM contacts above: a woman who signed up but has not finished
+      // onboarding has a profile and no contact row, so she appears here and nowhere else. This was
+      // reachable only by deep link before, which is why /coach/subscribers/[id]'s back button led to
+      // a page with no way in.
+      { key: 'navMembers', href: '/coach/subscribers', icon: 'community' },
       // Sits directly under Clients on purpose: it is a queue about specific new members, and the
       // whole point of over-flagging in the extractor is that a human passes by here.
       { key: 'navIntake', href: '/coach/intake', icon: 'clipboard' },
@@ -74,8 +83,12 @@ const SECTIONS: NavSection[] = [
     headerKey: 'navSettings',
     items: [
       { key: 'navSettings', href: '/coach/settings', icon: 'gear' },
+      // The two preference screens carried over from the platform she is leaving. Listed separately
+      // rather than buried inside /coach/settings because that is where she expects to find them:
+      // one click from the sidebar, not one click plus a hunt down a page of account cards.
+      { key: 'navClientApp', href: '/coach/settings/client-app', icon: 'grid' },
+      { key: 'navCoachingPrefs', href: '/coach/settings/coaching', icon: 'ruler' },
       { key: 'navKnowledge', href: '/coach/settings/knowledge', icon: 'sparkles' },
-      { key: 'appHealth', href: '/coach/health', icon: 'pulse' },
     ],
   },
 ];

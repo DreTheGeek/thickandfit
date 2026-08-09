@@ -1,6 +1,9 @@
-// Scan-intelligence data layer for the coach dashboard: how accurate the scans are, whether the
+// Scan-intelligence data layer for the OPERATOR portal: how accurate the scans are, whether the
 // members' corrections are trending down, and whether confidence is calibrated (high-confidence
 // items should rarely be corrected). Two bounded selects + TS aggregation, mirroring overview.ts.
+//
+// This is a number about the SYSTEM, not about a woman, which is why it lives under /admin and not
+// in the coaching console. Model names, prompt versions and latency are Dre's job, not Stephanie's.
 //
 // UNITS TRAP: portion error comes ONLY from the correction payload (visible vs visible grams,
 // parsed by scan-quality.ts's shared parser). food_log.grams is raw-converted and never used for

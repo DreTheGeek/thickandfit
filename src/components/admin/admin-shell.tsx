@@ -16,6 +16,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin/connections', label: 'Connections', icon: 'bolt' },
   { href: '/admin/api', label: 'API analytics', icon: 'pulse' },
   { href: '/admin/traces', label: 'Agent traces', icon: 'sparkles' },
+  { href: '/admin/intelligence', label: 'Scan intelligence', icon: 'pulse' },
   { href: '/admin/evals', label: 'Evals', icon: 'clipboard' },
   { href: '/admin/usage', label: 'AI usage & spend', icon: 'sparkles' },
   { href: '/admin/status', label: 'Status & crons', icon: 'refresh' },

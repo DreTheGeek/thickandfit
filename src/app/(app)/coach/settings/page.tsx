@@ -1,5 +1,10 @@
-// Coach settings: account, appearance, language, workspace, team, integrations, sign out.
+// Coach settings: her account, appearance, language, workspace, team, sign out.
 // Real data (profile + company + team); functional theme + language; honest read-only elsewhere.
+//
+// Deliberately NOT the same page as /admin/settings. This is "who am I and how do I want the app to
+// look"; that one is "what support contact do members see", which is a company-wide operator switch.
+// The integrations panel that used to sit at the bottom pointed at service probes and deploy commits
+// and now lives at /admin/health, where the person who acts on a red light can see it.
 import type { ReactElement, ReactNode } from 'react';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -9,9 +14,7 @@ import { LanguageToggle } from '@/components/i18n/language-toggle';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { PageTitle, SectionTitle } from '@/components/ui/section';
 import { Avatar } from '@/components/ui/avatar';
-import { Icon } from '@/components/ui/icons';
 import { signOutAction } from '@/lib/auth/actions';
-import { coverageTotals } from '@/lib/coach/system-map';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +52,7 @@ export default async function CoachSettingsPage(): Promise<ReactElement> {
   const ctx = await requireCoach();
   const t = await getTranslations('app.coach');
   const c = await getTranslations('app.common');
+  const cs = await getTranslations('app.coachSettings');
   const locale = await getLocale();
   const sb = createServiceClient();
   const cid = ctx.companyId ?? '';
@@ -60,16 +64,37 @@ export default async function CoachSettingsPage(): Promise<ReactElement> {
   ]);
   const profile = (me ?? null) as ProfileRow | null;
   const teamRows = (team ?? []) as TeamRow[];
-  const totals = coverageTotals();
   const memberSince = profile?.created_at
     ? new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }).format(new Date(profile.created_at))
     : '-';
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-3xl">
       <PageTitle className="mb-6">{t('settingsTitle')}</PageTitle>
 
       <div className="flex flex-col gap-4">
+        {/* The two coaching preference screens. This page is "who am I and how do I want the app to
+            look"; those two are "how does my coaching business behave", which is a different question
+            and a much longer screen each. Linked from here as well as the sidebar because this is the
+            page anyone lands on when they go looking for a setting. */}
+        <Card title={t('settingsMoreTitle')}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              { href: '/coach/settings/client-app', title: cs('clientApp.title'), blurb: t('settingsClientAppBlurb') },
+              { href: '/coach/settings/coaching', title: cs('coaching.title'), blurb: t('settingsCoachingBlurb') },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="tf-press rounded-xl border border-line p-4 hover:border-ink"
+              >
+                <div className="text-[14px] font-semibold text-ink">{item.title}</div>
+                <p className="mt-1 text-[13px] leading-relaxed text-soft">{item.blurb}</p>
+              </Link>
+            ))}
+          </div>
+        </Card>
+
         {/* Account */}
         <Card title={t('settingsAccount')}>
           <div className="flex items-center gap-4">
@@ -125,23 +150,6 @@ export default async function CoachSettingsPage(): Promise<ReactElement> {
             </div>
           )}
         </Card>
-
-        {/* Integrations */}
-        <Link href="/coach/health" className="tf-press rounded-2xl border border-line bg-surface p-6">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <SectionTitle>{t('settingsIntegrations')}</SectionTitle>
-              <div className="mt-1.5 text-[13px] text-faint">
-                <span className="font-semibold text-accent-ink">{totals.live}</span> {t('statusLive').toLowerCase()} ·{' '}
-                <span className="font-semibold">{totals.partial}</span> {t('statusPartial').toLowerCase()} ·{' '}
-                <span className="font-semibold">{totals.planned}</span> {t('statusPlanned').toLowerCase()}
-              </div>
-            </div>
-            <span className="flex items-center gap-1.5 text-[13px] font-semibold text-muted">
-              {t('appHealth')} <Icon name="chevronRight" size={16} />
-            </span>
-          </div>
-        </Link>
 
         {/* Sign out */}
         <form action={signOutAction} className="mt-2">

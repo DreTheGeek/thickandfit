@@ -1,6 +1,6 @@
 // System coverage map: the single source of truth for "what should work, what connects to what,
 // and what action produces what reaction." Doubles as a QA / bug-testing checklist. Client-safe
-// (pure data). Keep statuses honest; this is the contract the App Health Coverage tab renders.
+// (pure data). Keep statuses honest; this is the contract the /admin/health Coverage section renders.
 
 export type CoverageStatus = 'live' | 'partial' | 'planned';
 
@@ -71,7 +71,8 @@ export const COVERAGE: CoverageItem[] = [
   // Platform
   { area: 'Platform', name: 'Light / dark theme', status: 'live', route: 'all', connects: ['next-themes', 'data-theme'], action: 'Toggle theme (top bar)', reaction: 'Whole app flips via CSS-var tokens; choice persists' },
   { area: 'Platform', name: 'Language (EN / ES)', status: 'live', route: 'all', connects: ['next-intl', 'profiles.ui_locale'], action: 'Switch language in Settings', reaction: 'UI + content locale persist to the profile' },
-  { area: 'Platform', name: 'App Health + coverage', status: 'live', route: '/coach/health', connects: ['system-health', 'system-map'], action: 'Open App Health', reaction: 'Real service probes, live data counts, and this coverage checklist' },
+  { area: 'Platform', name: 'System health + coverage', status: 'live', route: '/admin/health', connects: ['system-health', 'system-map'], action: 'Open System health in the operator portal', reaction: 'Real service probes, live data counts, deploy info, and this coverage checklist' },
+  { area: 'Platform', name: 'Scan intelligence', status: 'live', route: '/admin/intelligence', connects: ['ai_inferences', 'food_log', 'scan-intelligence'], action: 'Open Scan intelligence in the operator portal', reaction: 'Correction rate, portion error, confidence calibration and per-model runs/latency/errors' },
   { area: 'Platform', name: 'Error monitoring + analytics', status: 'planned', route: null, connects: ['Sentry', 'PostHog'], action: 'Any runtime error / event', reaction: 'Planned: Sentry capture + PostHog product analytics (key-gated)' },
 
   // Coach intelligence

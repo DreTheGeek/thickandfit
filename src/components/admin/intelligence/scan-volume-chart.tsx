@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { DayCount } from '@/lib/coach/intelligence';
+import type { DayCount } from '@/lib/admin/scan-intelligence';
 
 // Pure-SVG daily scan volume bars; the corrected share overlays as a darker segment inside each
 // bar. Server-rendered (viewBox scaling, native <title> tooltips), same pattern as revenue-chart.

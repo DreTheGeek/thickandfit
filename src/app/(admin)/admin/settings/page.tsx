@@ -1,5 +1,8 @@
 // Company settings: the operator-editable support contact (and maintenance note) shown to members.
 // Backs the admin_settings table. English-only ops tool.
+//
+// Shares a name with /coach/settings and is genuinely a different thing: that page is one coach's own
+// account, theme and language; this one is a company-wide value every member sees. Do not merge them.
 import type { ReactElement } from 'react';
 import { requireOperator } from '@/lib/auth/guards';
 import { getAdminSettings } from '@/lib/admin/settings';

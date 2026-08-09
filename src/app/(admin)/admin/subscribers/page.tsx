@@ -1,6 +1,11 @@
-// /admin/subscribers — searchable subscriber table across native Stripe subs and the CRM imports.
+// /admin/subscribers: searchable subscriber table across native Stripe subs and the CRM imports.
 // Read-only view; row-level actions live at /coach/subscribers/[id] (same detail surface the
-// coach already uses — one canonical page across roles).
+// coach already uses, one canonical page across roles).
+//
+// Kept deliberately separate from /coach/subscribers despite the shared name. This one answers "who
+// is paying", unioning two billing sources with pagination and a rate-limited search. That one
+// answers "who is in the app", reading profiles with workout counts. Different question, different
+// source, same people. Both deep-link into the one member record.
 import type { ReactElement } from 'react';
 import { requireOperator } from '@/lib/auth/guards';
 import { AdminPage } from '@/components/admin/ui';
