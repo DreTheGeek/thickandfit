@@ -22,6 +22,7 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { indexMemory, type MemorySource } from '@/lib/coach-ai/memory-store';
 import { embedText, toVectorLiteral } from '@/lib/coach-ai/embeddings';
+import { sharedCatalogScope } from '@/lib/tenant/shared-catalog';
 
 type Svc = ReturnType<typeof createServiceClient>;
 
@@ -600,22 +601,10 @@ function exerciseHeader(r: ExerciseRow, es: boolean): string {
 // only for the primary tenant, resolved as the oldest company rather than a hardcoded uuid
 // ("Stephanie is tenant 1, architecture supports white-label later"). A white-label tenant that
 // later authors its own library gets its own rows and none of hers.
-async function primaryCompanyId(svc: Svc): Promise<string | null> {
-  const { data } = await svc
-    .from('companies')
-    .select('id')
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  return (data as { id: string } | null)?.id ?? null;
-}
-
+// The rule itself now lives in lib/tenant/shared-catalog.ts, because the filming tracker needs the
+// identical scoping and a security rule with two copies has one that drifts.
 async function exerciseDocs(svc: Svc, companyId: string): Promise<CorpusDoc[]> {
-  const primary = await primaryCompanyId(svc);
-  const scope =
-    primary && primary === companyId
-      ? `company_id.is.null,company_id.eq.${companyId}`
-      : `company_id.eq.${companyId}`;
+  const scope = await sharedCatalogScope(svc, companyId);
   const { data, error } = await svc
     .from('exercises')
     .select('id, name_en, name_es, cues_en, cues_es, muscle_group, secondary_muscles, equipment, difficulty, category')
