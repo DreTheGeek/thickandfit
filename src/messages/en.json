@@ -2190,7 +2190,11 @@
       "energyLabel": "Energy",
       "saveDay": "Save today",
       "daySaved": "Saved.",
-      "close": "Close"
+      "close": "Close",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "periodStartedThisDay": "My period started this day",
+      "calendarHint": "Tap any past day to log a period start on the day it actually happened. A dot means you logged how you felt."
     },
     "shopping": {
       "title": "Shopping list",

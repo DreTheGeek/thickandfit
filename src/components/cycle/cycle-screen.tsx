@@ -7,6 +7,7 @@
 // a date she will then measure herself against. `predictedNextStart` is null in that case by design.
 import { useState, useTransition, type ReactElement } from 'react';
 import { CycleDayLogger } from '@/components/cycle/day-logger';
+import { CycleCalendar } from '@/components/cycle/cycle-calendar';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
@@ -71,6 +72,8 @@ export function CycleScreen({
           </>
         )}
       </Card>
+
+      <CycleCalendar logs={summary.logs} days={summary.days} today={today} />
 
       {/* Symptoms and mood for today, collapsed. Sits under the phase card and above the period
           button so the common action stays the most prominent one. */}

@@ -2190,7 +2190,11 @@
       "energyLabel": "Energía",
       "saveDay": "Guardar hoy",
       "daySaved": "Guardado.",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "prevMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "periodStartedThisDay": "Mi periodo empezó este día",
+      "calendarHint": "Toca cualquier día pasado para registrar el inicio de tu periodo el día que de verdad pasó. Un punto significa que anotaste cómo te sentiste."
     },
     "shopping": {
       "title": "Lista de compras",
