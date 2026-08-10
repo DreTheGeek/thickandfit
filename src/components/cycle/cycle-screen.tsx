@@ -6,6 +6,7 @@
 // and perimenopause, so when the history is irregular we show a RANGE and say so, rather than naming
 // a date she will then measure herself against. `predictedNextStart` is null in that case by design.
 import { useState, useTransition, type ReactElement } from 'react';
+import { CycleDayLogger } from '@/components/cycle/day-logger';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
@@ -70,6 +71,15 @@ export function CycleScreen({
           </>
         )}
       </Card>
+
+      {/* Symptoms and mood for today, collapsed. Sits under the phase card and above the period
+          button so the common action stays the most prominent one. */}
+      <CycleDayLogger
+        today={today}
+        initialSymptoms={(summary.todayLog?.symptoms ?? []) as Parameters<typeof CycleDayLogger>[0]['initialSymptoms']}
+        initialMoods={(summary.todayLog?.moods ?? []) as Parameters<typeof CycleDayLogger>[0]['initialMoods']}
+        initialEnergy={summary.todayLog?.energy ?? null}
+      />
 
       {/* One tap to log. This is the only thing most members will ever do here. */}
       <Button size="block" disabled={pending} onClick={() => run(() => logPeriodStartAction({ startedOn: today }))}>

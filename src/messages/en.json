@@ -2182,7 +2182,15 @@
       },
       "shareWithCoach": "Let my coach see my cycle",
       "shareOn": "Your coach can see this",
-      "shareOff": "Your coach cannot see this"
+      "shareOff": "Your coach cannot see this",
+      "logDayTitle": "How today feels",
+      "logDayCount": "{count} logged",
+      "symptomsLabel": "Symptoms",
+      "moodsLabel": "Mood",
+      "energyLabel": "Energy",
+      "saveDay": "Save today",
+      "daySaved": "Saved.",
+      "close": "Close"
     },
     "shopping": {
       "title": "Shopping list",

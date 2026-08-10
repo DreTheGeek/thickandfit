@@ -40,6 +40,8 @@ export async function loadCycleLogs(profileId: string, limit = 24): Promise<Cycl
   );
 }
 
+export type CycleDay = { symptoms: string[]; moods: string[]; energy: number | null };
+
 export type CycleSummary = {
   logs: CycleRow[];
   phase: PhaseInfo;
@@ -47,12 +49,21 @@ export type CycleSummary = {
   isIrregular: boolean;
   predictedNextStart: string | null;
   predictedRange: { from: string; to: string } | null;
+  /** Today's entry, so the logger opens on what she already saved rather than blank. */
+  todayLog: CycleDay | null;
 };
 
 /** Everything the cycle screen renders. `today` is injected so the caller owns the clock read. */
 export async function loadCycleSummary(profileId: string, today: string): Promise<CycleSummary> {
   const logs = await loadCycleLogs(profileId);
   const stats = cycleStats(logs);
+  const sb = createServiceClient();
+  const { data: dayRow } = await sb
+    .from('cycle_day_logs')
+    .select('symptoms, moods, energy')
+    .eq('profile_id', profileId)
+    .eq('logged_on', today)
+    .maybeSingle<{ symptoms: string[] | null; moods: string[] | null; energy: number | null }>();
   return {
     logs,
     phase: currentPhase(logs, today),
@@ -60,5 +71,6 @@ export async function loadCycleSummary(profileId: string, today: string): Promis
     isIrregular: stats.isIrregular,
     predictedNextStart: stats.predictedNextStart,
     predictedRange: stats.predictedRange,
+    todayLog: dayRow ? { symptoms: dayRow.symptoms ?? [], moods: dayRow.moods ?? [], energy: dayRow.energy } : null,
   };
 }

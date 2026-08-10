@@ -2182,7 +2182,15 @@
       },
       "shareWithCoach": "Que mi coach vea mi ciclo",
       "shareOn": "Tu coach puede ver esto",
-      "shareOff": "Tu coach no puede ver esto"
+      "shareOff": "Tu coach no puede ver esto",
+      "logDayTitle": "Cómo te sientes hoy",
+      "logDayCount": "{count} registrado(s)",
+      "symptomsLabel": "Síntomas",
+      "moodsLabel": "Ánimo",
+      "energyLabel": "Energía",
+      "saveDay": "Guardar hoy",
+      "daySaved": "Guardado.",
+      "close": "Cerrar"
     },
     "shopping": {
       "title": "Lista de compras",
