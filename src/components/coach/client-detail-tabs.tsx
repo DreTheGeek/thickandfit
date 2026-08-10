@@ -366,6 +366,20 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               {detail.progress.foodDays > 0 && <Row label={t('progressFoodLogs')} value={`${detail.progress.foodDays}`} />}
             </Section>
           )}
+          {/* Her latest check-in, and a reply box under it. Reading a check-in and answering it are
+              one action for a coach, and they were on two different pages: the submission on
+              /coach/subscribers/[id], the reply on the Messages tab here. */}
+          {detail.latestCheckin && (
+            <Section title={t('checkinLatest')}>
+              <p className="pb-1 text-[11px] text-faint">{fmtDateTime(detail.latestCheckin.submittedAt, locale)}</p>
+              {detail.latestCheckin.fields.map((f, i) => (
+                <Row key={i} label={f.label} value={<span className="whitespace-pre-wrap text-left">{f.value}</span>} />
+              ))}
+              <div className="pt-3">
+                <ClientReplyBox contactId={detail.id} name={detail.name} hasAccount={detail.hasAccount} />
+              </div>
+            </Section>
+          )}
           {/* Habits, on the canonical record. These are keyed by profile_id and until now only
               existed on /coach/subscribers/[id], so a coach had to know which of two URLs held
               which half of a client. */}

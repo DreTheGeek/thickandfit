@@ -30,6 +30,38 @@ function fmtAnswer(type: string, value: unknown): string {
   return String(value);
 }
 
+/**
+ * Just the latest submission, without the photos.
+ *
+ * Split out so the canonical client page can show a check-in without paying for twelve more signed
+ * photo URLs it already loads elsewhere. getClientCheckin below still returns both, for the
+ * check-in queue that genuinely wants the photos beside the answers.
+ */
+export async function getLatestCheckin(companyId: string, profileId: string): Promise<ClientCheckin['latest']> {
+  const sb = createServiceClient();
+  const { data: resp } = await sb
+    .from('form_responses')
+    .select('id, form_id, answers, submitted_at, forms!inner(type)')
+    .eq('company_id', companyId)
+    .eq('profile_id', profileId)
+    .eq('forms.type', 'check_in')
+    .order('submitted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const row = resp as { form_id: string; answers: Record<string, unknown>; submitted_at: string } | null;
+  if (!row) return null;
+  const form = await getForm(companyId, row.form_id);
+  const fields: CheckinField[] = (form?.fields ?? [])
+    .map((f) => ({
+      label: (f.label_en as string) || 'Field',
+      type: f.type as string,
+      value: fmtAnswer(f.type as string, row.answers?.[f.id as string]),
+    }))
+    .filter((f) => f.value !== '-');
+  return { submittedAt: row.submitted_at, fields };
+}
+
 export async function getClientCheckin(companyId: string, profileId: string): Promise<ClientCheckin> {
   const sb = createServiceClient();
 

@@ -5,7 +5,8 @@
 import 'server-only';
 import { getTranslations } from 'next-intl/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { getClientHabits, type ClientHabits } from '@/lib/coach/client-habits';
+import { getClientHabits } from '@/lib/coach/client-habits';
+import { getLatestCheckin } from '@/lib/coach/client-checkin';
 import { deriveStanding } from '@/lib/coach/standing';
 import { mapIntakeToHealthProfile } from '@/lib/health-profile/data';
 import { scoffPositive } from '@/lib/health-profile/screening';
@@ -563,7 +564,9 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     .filter((p): p is { url: string; on: string; pose: string | null; weightKg: number | null } => p != null);
 
   // Habits are keyed by profile, so a client who never claimed an app account simply has none.
-  const habits = raw.profile_id ? await getClientHabits(companyId, raw.profile_id) : null;
+  const [habits, latestCheckin] = raw.profile_id
+    ? await Promise.all([getClientHabits(companyId, raw.profile_id), getLatestCheckin(companyId, raw.profile_id)])
+    : [null, null];
 
   // Migrated Lenus workout history (session summaries): total + the most recent handful.
   const [{ count: workoutCount }, { data: woRows }] = await Promise.all([
@@ -684,5 +687,6 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     // know which of two URLs holds which half of a client.
     profileId: raw.profile_id,
     habits,
+    latestCheckin,
   };
 }
