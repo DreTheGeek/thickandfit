@@ -10,6 +10,8 @@ import { RecipeImage } from '@/components/coach/recipe-image';
 import { formatCents } from '@/components/coach/money';
 import { ClientReplyBox } from '@/components/messages/client-reply-box';
 import { PhotoCompare } from '@/components/coach/photo-compare';
+import { WeightTrend } from '@/components/coach/weight-trend';
+import { WeightGoalEditor } from '@/components/coach/weight-goal-editor';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
 type Tab = 'overview' | 'health' | 'messages' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
@@ -325,12 +327,37 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
                 const last = w[w.length - 1]; // newest, so genuinely the latest
                 const baseline = detail.progress.weightStartKg ?? w[0].kg; // true first weigh-in
                 const delta = last.kg - baseline;
+                const goal = detail.intake?.targetWeightKg ?? null;
+                // Distance to goal, signed toward the goal rather than in absolute terms: "3.2 kg
+                // to go" is the sentence a coach says, and it works whether she is cutting or
+                // gaining. Reaching it is the one place green belongs on this card.
+                const toGo = goal != null ? Math.abs(last.kg - goal) : null;
+                const reached = goal != null && toGo != null && toGo < 0.5;
                 return (
                   <>
+                    <WeightTrend points={detail.progress.weights} goalKg={goal} startKg={detail.progress.weightStartKg} locale={locale} />
                     <Row label={t('progressWeighIns')} value={`${detail.progress.weightCount}`} />
                     {detail.progress.weightStartKg != null && <Row label={t('progressStartWeight')} value={`${baseline.toFixed(1)} kg`} />}
                     <Row label={t('progressLatestWeight')} value={`${last.kg.toFixed(1)} kg (${fmtDate(last.on, locale)})`} />
                     <Row label={t('progressChange')} value={<span className={delta <= 0 ? 'text-good-ink' : 'text-ink'}>{delta >= 0 ? '+' : ''}{delta.toFixed(1)} kg</span>} />
+                    <Row
+                      label={t('progressGoalWeight')}
+                      value={
+                        <span className="flex flex-wrap items-center justify-end gap-2">
+                          {goal != null && (
+                            <span className="tabular-nums">
+                              {goal.toFixed(1)} kg
+                              {reached ? (
+                                <span className="ml-1.5 text-good-ink">{t('progressGoalReached')}</span>
+                              ) : (
+                                <span className="ml-1.5 text-muted">{t('progressGoalToGo', { kg: toGo!.toFixed(1) })}</span>
+                              )}
+                            </span>
+                          )}
+                          <WeightGoalEditor contactId={detail.id} initial={goal} />
+                        </span>
+                      }
+                    />
                   </>
                 );
               })()}

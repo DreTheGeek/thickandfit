@@ -1465,7 +1465,15 @@
       "compareBefore": "Antes",
       "compareAfter": "Después",
       "compareApart": "{days} días de diferencia",
-      "compareSameDay": "El mismo día"
+      "compareSameDay": "El mismo día",
+      "progressGoalWeight": "Peso meta",
+      "progressGoalToGo": "faltan {kg} kg",
+      "progressGoalReached": "Lograda",
+      "weightGoalSet": "Poner meta",
+      "weightGoalEdit": "Editar",
+      "weightGoalClear": "Quitar",
+      "weightGoalRange": "Escribe un peso en kg entre 25 y 300.",
+      "weightGoalFailed": "No se guardó. Inténtalo de nuevo en un momento."
     },
     "you": {
       "title": "Tú",
