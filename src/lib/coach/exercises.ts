@@ -5,6 +5,7 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { CONTEXTS, resolveSubstitutions } from '@/lib/substitutions/engine';
+import { BLOCKS, BLOCK_ORDER, type Block } from '@/lib/exercises/blocks';
 
 export type ExerciseRow = {
   id: string;
@@ -23,6 +24,12 @@ export type ExerciseRow = {
   isFavorite: boolean;
   /** When she filmed it for the app. Null means it is still on the shoot list. */
   filmedAt: string | null;
+  /** Her own session vocabulary. Null renders as "Unsorted" rather than being hidden. */
+  block: Block | null;
+  /** Her filmed demo is in storage and playable. */
+  hasDemo: boolean;
+  /** Her written coaching cues: the reason her library beats a generic one. */
+  cues: string | null;
 };
 
 export type ExerciseFilters = {
@@ -35,6 +42,10 @@ export type ExerciseFilters = {
   fav: boolean;
   /** "Still to film": her own rows with no filmed_at. Off by default. */
   toFilm: boolean;
+  /** "Has my demo": rows whose footage is in storage and playable. Off by default. */
+  hasDemo: boolean;
+  /** Narrow to one or more of her blocks. Empty means show every block, grouped. */
+  block: string[];
   page: number;
   pageSize: number;
 };
@@ -49,9 +60,19 @@ export type ExercisesPage = {
   pageSize: number;
   facets: { muscle: Facet[]; equipment: Facet[] };
   /** Counts for the ownership toggles, computed over everything the search box has narrowed to. */
-  counts: { mine: number; fav: number; toFilm: number };
+  counts: { mine: number; fav: number; toFilm: number; hasDemo: number };
   /** Shoot progress across her whole library, independent of every filter on screen. */
   filming: { filmed: number; total: number };
+  /**
+   * The page's rows split into her blocks, in her programming order.
+   *
+   * This is the organization fix. 367 movements in one A-Z grid ten pages deep is not a library a
+   * coach can programme a leg day from. `rows` is kept alongside for callers that want the flat
+   * list (the substitution candidate pool does).
+   */
+  groups: { block: Block | null; rows: ExerciseRow[] }[];
+  /** How many rows sit in each block across everything the other filters allow. */
+  blockFacets: Facet[];
 };
 
 const PAGE_SIZE = 40;
@@ -63,6 +84,8 @@ export const NO_EXERCISE_FILTERS: Omit<ExerciseFilters, 'muscle' | 'pageSize'> =
   mine: false,
   fav: false,
   toFilm: false,
+  hasDemo: false,
+  block: [],
   page: 1,
 };
 
@@ -79,6 +102,8 @@ export function parseExerciseFilters(sp: Record<string, string | string[] | unde
     mine: one(sp.mine) !== '0',
     fav: one(sp.fav) === '1',
     toFilm: one(sp.tofilm) === '1',
+    hasDemo: one(sp.demo) === '1',
+    block: arr(sp.block),
     page: Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1,
     pageSize: PAGE_SIZE,
   };
@@ -96,6 +121,10 @@ type ExerciseRaw = {
   is_own_demo: boolean | null;
   is_coach_authored: boolean | null;
   filmed_at: string | null;
+  block: string | null;
+  demo_storage_path: string | null;
+  cues_en: string | null;
+  cues_es: string | null;
 };
 
 function mapRow(r: ExerciseRaw, locale: string, favorites: ReadonlySet<string>): ExerciseRow {
@@ -114,11 +143,14 @@ function mapRow(r: ExerciseRaw, locale: string, favorites: ReadonlySet<string>):
     isCoachAuthored: r.is_coach_authored ?? false,
     isFavorite: favorites.has(r.id),
     filmedAt: r.filmed_at,
+    block: (BLOCKS as readonly string[]).includes(r.block ?? '') ? (r.block as Block) : null,
+    hasDemo: r.demo_storage_path != null,
+    cues: (locale.startsWith('es') ? r.cues_es : r.cues_en) || r.cues_en,
   };
 }
 
 const SELECT_COLS =
-  'id, company_id, name_en, name_es, muscle_group, equipment, difficulty, category, is_own_demo, is_coach_authored, filmed_at';
+  'id, company_id, name_en, name_es, muscle_group, equipment, difficulty, category, is_own_demo, is_coach_authored, filmed_at, block, demo_storage_path, cues_en, cues_es';
 
 /** The starred ids for one coach. Empty set when nobody is asking (server-side candidate reads). */
 async function loadFavoriteIds(profileId: string | null): Promise<Set<string>> {
@@ -150,7 +182,7 @@ async function loadExercises(companyId: string, locale: string, profileId: strin
   return ((data ?? []) as ExerciseRaw[]).map((r) => mapRow(r, locale, favorites));
 }
 
-type FacetKey = 'q' | 'muscle' | 'equipment' | 'own' | 'film';
+type FacetKey = 'q' | 'muscle' | 'equipment' | 'own' | 'film' | 'demo' | 'block';
 
 /** Her own, not yet shot. Only coach-authored rows are hers to film, so seed content never qualifies. */
 function isToFilm(r: ExerciseRow): boolean {
@@ -176,6 +208,8 @@ function matches(r: ExerciseRow, f: ExerciseFilters, exclude: FacetKey | null): 
   // while "Favourites" is on means "the ones I starred that I still owe a shoot", which is the
   // reading she wants on a shoot day.
   if (exclude !== 'film' && f.toFilm && !isToFilm(r)) return false;
+  if (exclude !== 'demo' && f.hasDemo && !r.hasDemo) return false;
+  if (exclude !== 'block' && f.block.length && !(r.block && f.block.includes(r.block))) return false;
   return true;
 }
 
@@ -196,19 +230,41 @@ export async function getExercisesPage(
   profileId: string | null = null,
 ): Promise<ExercisesPage> {
   const all = await loadExercises(companyId, locale, profileId);
-  const filtered = all.filter((r) => matches(r, filters, null)).sort((a, b) => a.name.localeCompare(b.name));
+  // Sort by BLOCK first, then name. Sorting by name alone scatters every block across every page,
+  // so "Hamstrings & glutes" would appear as a handful of rows on all ten pages instead of as one
+  // run she can read top to bottom. Unplaced rows sort last, with the "Everything else" heading.
+  const rank = (r: ExerciseRow): number => (r.block ? BLOCK_ORDER.indexOf(r.block) : BLOCK_ORDER.length);
+  const filtered = all
+    .filter((r) => matches(r, filters, null))
+    .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
   const start = (filters.page - 1) * filters.pageSize;
   // Toggle counts ignore the toggles themselves, so "My exercises 367" does not read 367 only while
   // it happens to be on. They DO respect the search box and the chips, which is the useful reading:
   // "of what you are looking at, this many are yours".
   const ownPool = all.filter((r) => matches(r, filters, 'own'));
   const filmPool = all.filter((r) => matches(r, filters, 'film'));
+  const demoPool = all.filter((r) => matches(r, filters, 'demo'));
+  const blockPool = all.filter((r) => matches(r, filters, 'block'));
+
+  // Group the page she is actually looking at, in her programming order, with anything the
+  // classifier could not place last and visible rather than dropped.
+  const pageRows = filtered.slice(start, start + filters.pageSize);
+  const byBlock = new Map<Block | null, ExerciseRow[]>();
+  for (const r of pageRows) {
+    const list = byBlock.get(r.block);
+    if (list) list.push(r);
+    else byBlock.set(r.block, [r]);
+  }
+  const groups = [
+    ...BLOCK_ORDER.filter((b) => byBlock.has(b)).map((b) => ({ block: b as Block | null, rows: byBlock.get(b) ?? [] })),
+    ...(byBlock.has(null) ? [{ block: null, rows: byBlock.get(null) ?? [] }] : []),
+  ];
   // Her shoot progress is deliberately measured against the WHOLE library, not the filtered view.
   // "12 of 367" has to mean the same thing after she types in the search box, or the number is
   // useless for planning a shoot day.
   const hers = all.filter((r) => r.isCoachAuthored);
   return {
-    rows: filtered.slice(start, start + filters.pageSize),
+    rows: pageRows,
     total: filtered.length,
     totalAll: all.length,
     page: filters.page,
@@ -217,10 +273,15 @@ export async function getExercisesPage(
       muscle: tally(all.filter((r) => matches(r, filters, 'muscle')), (r) => r.muscleGroup),
       equipment: tally(all.filter((r) => matches(r, filters, 'equipment')), (r) => r.equipment),
     },
+    groups,
+    blockFacets: BLOCK_ORDER.map((b) => ({ key: b, count: blockPool.filter((r) => r.block === b).length })).filter(
+      (f) => f.count > 0,
+    ),
     counts: {
       mine: ownPool.filter((r) => r.isCoachAuthored).length,
       fav: ownPool.filter((r) => r.isFavorite).length,
       toFilm: filmPool.filter(isToFilm).length,
+      hasDemo: demoPool.filter((r) => r.hasDemo).length,
     },
     filming: { filmed: hers.filter((r) => r.filmedAt).length, total: hers.length },
   };

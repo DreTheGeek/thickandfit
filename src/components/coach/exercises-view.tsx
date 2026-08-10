@@ -74,6 +74,19 @@ export function ExercisesView({ page, filters }: { page: ExercisesPage; filters:
           {t('exercisesFilterFavorites')}{' '}
           <span className={filters.fav ? 'text-bg/60' : 'text-faint'}>{page.counts.fav}</span>
         </button>
+        {/* "My footage". The whole point of the library is that these are HER demos, so being able
+            to see only the movements that have one is the first cut she asked for. */}
+        {page.counts.hasDemo > 0 && (
+          <button
+            type="button"
+            onClick={() => setParam('demo', filters.hasDemo ? null : '1')}
+            aria-pressed={filters.hasDemo}
+            className={chipCls(filters.hasDemo)}
+          >
+            {t('exercisesFilterHasDemo')}{' '}
+            <span className={filters.hasDemo ? 'text-bg/60' : 'text-faint'}>{page.counts.hasDemo}</span>
+          </button>
+        )}
         {/* Only offered once she owns something to shoot, so a fresh tenant never sees a chip
             that can only ever read 0. */}
         {page.filming.total > 0 && (
@@ -106,19 +119,40 @@ export function ExercisesView({ page, filters }: { page: ExercisesPage; filters:
         </div>
       )}
 
-      {/* muscle-group chips */}
-      <div className="tf-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {page.facets.muscle.map((m) => (
-          <button
-            key={m.key}
-            type="button"
-            onClick={() => toggleMulti('muscle', m.key)}
-            className={chipCls(filters.muscle.includes(m.key))}
-          >
-            {m.key} <span className="text-faint">{m.count}</span>
-          </button>
-        ))}
-      </div>
+      {/* Her blocks, in the order she programmes them. These replace the muscle-group chips as the
+          primary cut: muscle_group is null on 360 of her 367 rows, so those chips were built from
+          the 7 that happen to carry one and were useless for finding anything. */}
+      {page.blockFacets.length > 0 && (
+        <div className="tf-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {page.blockFacets.map((b) => (
+            <button
+              key={b.key}
+              type="button"
+              onClick={() => toggleMulti('block', b.key)}
+              className={chipCls(filters.block.includes(b.key))}
+            >
+              {t(`block_${b.key}`)}{' '}
+              <span className={filters.block.includes(b.key) ? 'text-bg/60' : 'text-faint'}>{b.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* muscle-group chips: still useful inside the seed library, which does carry them */}
+      {page.facets.muscle.length > 0 && (
+        <div className="tf-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {page.facets.muscle.map((m) => (
+            <button
+              key={m.key}
+              type="button"
+              onClick={() => toggleMulti('muscle', m.key)}
+              className={chipCls(filters.muscle.includes(m.key))}
+            >
+              {m.key} <span className="text-faint">{m.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* equipment chips */}
       {page.facets.equipment.length > 0 && (
@@ -142,9 +176,23 @@ export function ExercisesView({ page, filters }: { page: ExercisesPage; filters:
           {page.totalAll === 0 ? t('exercisesEmpty') : t('exercisesNoneFiltered')}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {page.rows.map((r) => (
-            <ExerciseCard key={r.id} row={r} />
+        /* Grouped, not a flat A-Z grid. 367 movements alphabetised across ten pages is not a
+           library anyone can build a leg day from; her own session names are. */
+        <div className="flex flex-col gap-6">
+          {page.groups.map((g) => (
+            <div key={g.block ?? 'unsorted'}>
+              <div className="mb-2.5 flex items-baseline gap-2">
+                <h2 className="text-[12px] font-semibold uppercase tracking-[0.1em] text-soft">
+                  {g.block ? t(`block_${g.block}`) : t('blockUnsorted')}
+                </h2>
+                <span className="text-[12px] tabular-nums text-faint">{g.rows.length}</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                {g.rows.map((r) => (
+                  <ExerciseCard key={r.id} row={r} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -182,8 +230,16 @@ function ExerciseCard({ row }: { row: CardRow }): ReactElement {
   return (
     <div className="group relative flex items-center gap-3 rounded-2xl bg-surface p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
       <Link href={`/coach/exercises/${row.id}`} className="tf-press flex min-w-0 flex-1 items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-warm text-soft">
-          <Icon name="dumbbell" size={20} />
+        {/* The tile is the signal. A movement with her footage gets a play mark on black; one
+            without keeps the dumbbell. At a glance she can see which of her library is filmed. */}
+        <span
+          className={[
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+            row.hasDemo ? 'bg-ink text-bg' : 'bg-warm text-soft',
+          ].join(' ')}
+          title={row.hasDemo ? t('exercisesHasDemo') : undefined}
+        >
+          <Icon name={row.hasDemo ? 'play' : 'dumbbell'} size={row.hasDemo ? 16 : 20} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14px] font-semibold text-ink">{row.name}</span>

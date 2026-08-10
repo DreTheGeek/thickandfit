@@ -48,6 +48,12 @@ function buildCsp(nonce: string, isDev: boolean): string {
     // data: for the landing page's base64-embedded webfonts (lifted Webflow CSS).
     "font-src 'self' data:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.r2.dev https://*.mux.com https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io https://challenges.cloudflare.com",
+    // Her filmed exercise demos stream from a private Supabase bucket via signed URLs, and Mux
+    // serves the member-facing player. Without this, media falls back to default-src 'self' and
+    // every <video> is blocked: the element loads, fires onError, and the app looks like it has no
+    // footage. Found exactly that way, with a working signed URL that returned a valid MP4 to curl
+    // and refused to play in a browser.
+    "media-src 'self' blob: https://*.supabase.co https://*.mux.com",
     // Turnstile mounts its challenge UI inside a same-origin iframe on challenges.cloudflare.com.
     "frame-src https://challenges.cloudflare.com",
     "frame-ancestors 'none'",
