@@ -9,6 +9,7 @@ import { MacroRing } from '@/components/coach/macro-ring';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { formatCents } from '@/components/coach/money';
 import { ClientReplyBox } from '@/components/messages/client-reply-box';
+import { messageBodyText } from '@/lib/messages/body-text';
 import { PhotoCompare } from '@/components/coach/photo-compare';
 import { WeightTrend } from '@/components/coach/weight-trend';
 import { WeightGoalEditor } from '@/components/coach/weight-goal-editor';
@@ -461,13 +462,13 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               <div key={m.id} className={`flex ${m.isFromCoach ? 'justify-end' : 'justify-start'}`}>
                 {/* A percentage cap alone stops working once the panel is wide: 78% of a 1200px
                     column is a 900px line of chat, which is unreadable. Hold a fixed measure. */}
-                <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 xl:max-w-[620px] ${m.isFromCoach ? 'bg-ink text-surface' : 'bg-warm text-ink'}`}>
+                <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 xl:max-w-[620px] ${m.isFromCoach ? 'bg-bubble text-bubble-ink' : 'bg-warm text-ink'}`}>
                   <div className={`mb-0.5 flex items-center gap-2 text-[10px] ${m.isFromCoach ? 'text-surface/70' : 'text-faint'}`}>
                     <span className="font-semibold">{m.isFromCoach ? (m.senderName ?? t('messageCoach')) : detail.name}</span>
                     <span>{fmtDateTime(m.sentAt, locale)}</span>
                     {m.type && m.type !== 'custom' && <span className="rounded-full bg-black/10 px-1.5 py-px capitalize">{m.type}</span>}
                   </div>
-                  {m.body && <p className="whitespace-pre-wrap break-words text-[13px] leading-snug">{m.body}</p>}
+                  {m.body && <p className="whitespace-pre-wrap break-words text-[13px] leading-snug">{messageBodyText(m.body)}</p>}
                   {(m.attachments.length > 0 || m.attachmentCount > 0) && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {m.attachments.map((a, i) => (

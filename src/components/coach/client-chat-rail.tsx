@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactElement } from 'react';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
 import { ClientReplyBox } from '@/components/messages/client-reply-box';
+import { messageBodyText } from '@/lib/messages/body-text';
 import type { ClientDetail, ClientMessage } from '@/lib/coach/clients-types';
 
 /**
@@ -91,11 +92,11 @@ export function ClientChatRail({ detail, locale }: { detail: ClientDetail; local
                          inverted text down the whole rail, which is unreadable and was the actual
                          complaint. Monochrome cannot use hue, so: hers filled, theirs outlined. */
                       <div
-                        className={`rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed text-ink ${
-                          m.isFromCoach ? 'bg-warm' : 'border border-line bg-surface'
+                        className={`rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed ${
+                          m.isFromCoach ? 'bg-bubble text-bubble-ink' : 'border border-line bg-surface'
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                        <p className="whitespace-pre-wrap break-words">{messageBodyText(m.body)}</p>
                       </div>
                     )}
                     {m.attachments.map((a, i) =>

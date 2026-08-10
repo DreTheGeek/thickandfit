@@ -31,6 +31,12 @@
   --c-alert: #f3c0c0;
   --c-alert-ink: #7a1f1f;
   --c-warning: #c89a2b;
+
+  /* Coach message bubble. Stephanie asked for Lenus's blue, so this is a deliberate exception to
+     the monochrome rule, scoped to exactly one thing: the bubble carrying her voice in a
+     conversation. It is not a general brand colour and must not spread to buttons, links or cards. */
+  --c-bubble: #d6e6f7;
+  --c-bubble-ink: #10263c;
 }
 
 [data-theme="dark"] {
@@ -45,6 +51,10 @@
   --c-faint: #71717a;
   --c-accent: #5ebe62;
   --c-accent-ink: #bff0c1;
+  /* Night mode gets green rather than blue, her call. A pale blue on a #0c0c0e ground goes cold and
+     muddy; the green already in the palette sits properly against it. */
+  --c-bubble: #1e3a24;
+  --c-bubble-ink: #d3efd6;
   --c-pending: #3a3214;
   --c-pending-ink: #fbe6a2;
   --c-alert: #3a1d1d;
@@ -68,6 +78,10 @@
   --color-muted: var(--c-muted);
   --color-soft: var(--c-soft);
   --color-faint: var(--c-faint);
+
+  /* coach message bubble: blue in light, green in dark */
+  --color-bubble: var(--c-bubble);
+  --color-bubble-ink: var(--c-bubble-ink);
 
   /* functional accent (green) */
   --color-accent: var(--c-accent);

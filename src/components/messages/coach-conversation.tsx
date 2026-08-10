@@ -1,4 +1,6 @@
 'use client';
+
+import { messageBodyText } from '@/lib/messages/body-text';
 // Coach-side conversation: the merged migrated + live thread for one client, with a composer that
 // sends in-app (claimed clients) or by email (unclaimed migrated clients). Optimistically appends the
 // sent message and reports how it was delivered.
@@ -92,12 +94,12 @@ export function CoachConversation({
         ) : (
           messages.map((m) => (
             <div key={m.id} className={m.fromCoach ? 'flex justify-end' : 'flex justify-start'}>
-              <div className={['max-w-[75%] rounded-2xl px-3.5 py-2 xl:max-w-[620px]', m.fromCoach ? 'bg-ink text-surface' : 'bg-surface text-ink'].join(' ')}>
+              <div className={['max-w-[75%] rounded-2xl px-3.5 py-2 xl:max-w-[620px]', m.fromCoach ? 'bg-bubble text-bubble-ink' : 'border border-line bg-surface text-ink'].join(' ')}>
                 <div className={['mb-0.5 flex items-center gap-2 text-[10px]', m.fromCoach ? 'text-surface/70' : 'text-faint'].join(' ')}>
                   <span className="font-semibold">{m.fromCoach ? m.senderName || 'Coach' : name}</span>
                   <span>{fmt(m.at)}</span>
                 </div>
-                <p className="whitespace-pre-wrap break-words text-[14px] leading-snug">{m.body}</p>
+                <p className="whitespace-pre-wrap break-words text-[14px] leading-snug">{messageBodyText(m.body)}</p>
               </div>
             </div>
           ))
