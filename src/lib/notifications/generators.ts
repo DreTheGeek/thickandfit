@@ -466,3 +466,93 @@ export async function finalizeEndedChallenges(): Promise<GeneratorResult> {
 
   return { ok: true, job: 'close-challenges', selected: challenges.length, notified };
 }
+
+/**
+ * The daily nudge during her period, at 6pm local, only when she has logged nothing.
+ *
+ * WHY 6PM AND NOT MORNING. A symptom log is a report on a day, and at 8am there is no day to report
+ * on yet. Evening is also when she is most likely to have her phone and least likely to be mid-task.
+ *
+ * WHY ONLY DURING THE PERIOD PHASE. A tracker that pings every day of the month is a tracker that
+ * gets its notifications switched off in week one, and then never reaches her on the days that
+ * matter. The bleeding window is when symptom data is worth the interruption.
+ *
+ * WHY ONLY WHEN NOTHING IS LOGGED. Reminding someone to do a thing she already did is the fastest
+ * way to teach her the reminders are not worth reading.
+ *
+ * Runs off the existing hourly notify-reminders cron rather than a new pg_cron entry: that job
+ * already fires every hour precisely so per-timezone local-hour delivery works from one schedule.
+ */
+const CYCLE_REMINDER_HOUR = 18;
+
+type CycleReminderRow = {
+  profile_id: string;
+  company_id: string;
+  reminders_enabled: boolean;
+};
+
+export async function generateCycleReminders(at: Date = new Date()): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+
+  const { data: profiles, error } = await svc
+    .from('cycle_profiles')
+    .select('profile_id, company_id, reminders_enabled')
+    .eq('reminders_enabled', true);
+  if (error) return { ok: false, job: 'cycle-reminders', selected: 0, notified: 0, error: error.message };
+
+  const optedIn = (profiles ?? []) as CycleReminderRow[];
+  if (optedIn.length === 0) return { ok: true, job: 'cycle-reminders', selected: 0, notified: 0 };
+
+  // Timezone and locale live on profiles, not on cycle_profiles.
+  const ids = optedIn.map((p) => p.profile_id);
+  const { data: people } = await svc.from('profiles').select('id, ui_locale, timezone').in('id', ids);
+  const meta = new Map(
+    ((people ?? []) as { id: string; ui_locale: string | null; timezone: string | null }[]).map((p) => [p.id, p]),
+  );
+
+  const dueNow = optedIn.filter((p) => localHour(meta.get(p.profile_id)?.timezone ?? null, at) === CYCLE_REMINDER_HOUR);
+  if (dueNow.length === 0) return { ok: true, job: 'cycle-reminders', selected: 0, notified: 0 };
+
+  const dueIds = dueNow.map((p) => p.profile_id);
+  // Open periods only: a period with an end date is over, and one with no end is still running.
+  // 10 days is the cutoff for "still bleeding" on an unclosed log, so a forgotten one from March
+  // does not nudge her every evening for five months.
+  const todayIso = at.toISOString().slice(0, 10);
+  const windowStart = new Date(at.getTime() - 10 * 86_400_000).toISOString().slice(0, 10);
+
+  const [{ data: openPeriods }, { data: loggedToday }] = await Promise.all([
+    svc
+      .from('cycle_logs')
+      .select('profile_id')
+      .in('profile_id', dueIds)
+      .is('ended_on', null)
+      .gte('started_on', windowStart),
+    svc.from('cycle_day_logs').select('profile_id').in('profile_id', dueIds).eq('logged_on', todayIso),
+  ]);
+
+  const bleeding = new Set(((openPeriods ?? []) as { profile_id: string }[]).map((r) => r.profile_id));
+  const alreadyLogged = new Set(((loggedToday ?? []) as { profile_id: string }[]).map((r) => r.profile_id));
+  const targets = dueNow.filter((p) => bleeding.has(p.profile_id) && !alreadyLogged.has(p.profile_id));
+  if (targets.length === 0) return { ok: true, job: 'cycle-reminders', selected: dueNow.length, notified: 0 };
+
+  const byCompany = new Map<string, Array<{ profileId: string; payload: NotificationPayload }>>();
+  for (const p of targets) {
+    const locale: NotifLocale = asNotifLocale(meta.get(p.profile_id)?.ui_locale);
+    const payload: NotificationPayload = {
+      type: 'reminder',
+      title: notifText(locale, 'cycleReminderTitle'),
+      body: notifText(locale, 'cycleReminderBody'),
+      link: '/you/cycle',
+    };
+    const list = byCompany.get(p.company_id) ?? [];
+    list.push({ profileId: p.profile_id, payload });
+    byCompany.set(p.company_id, list);
+  }
+
+  let notified = 0;
+  for (const [companyId, recipients] of byCompany) {
+    await createNotificationsBulk(companyId, recipients);
+    notified += recipients.length;
+  }
+  return { ok: true, job: 'cycle-reminders', selected: targets.length, notified };
+}

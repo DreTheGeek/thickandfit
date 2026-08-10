@@ -2082,7 +2082,9 @@
         "challengeWonTitle": "¡Ganaste! 🏆",
         "challengeWonBody": "Terminaste #1 en \"{title}\". Estoy tan orgullosa de ti. Insignia de campeona desbloqueada. 🤍",
         "physiqueFlagTitle": "Seguimiento de bienestar",
-        "physiqueFlagBody": "La lectura de {name} se marcó para un seguimiento de bienestar. Toca para escribirle y ver cómo está."
+        "physiqueFlagBody": "La lectura de {name} se marcó para un seguimiento de bienestar. Toca para escribirle y ver cómo está.",
+        "cycleReminderTitle": "¿Cómo te sentiste hoy?",
+        "cycleReminderBody": "Anota tus síntomas y tu ánimo para que tu plan se ajuste a ti."
       }
     },
     "forms": {

@@ -2082,7 +2082,9 @@
         "challengeWonTitle": "You won! 🏆",
         "challengeWonBody": "You finished #1 in \"{title}\". So proud of you. Champion badge unlocked. 🤍",
         "physiqueFlagTitle": "Wellbeing check-in",
-        "physiqueFlagBody": "{name}'s physique read was flagged for a wellbeing follow-up. Tap to reach out and check in."
+        "physiqueFlagBody": "{name}'s physique read was flagged for a wellbeing follow-up. Tap to reach out and check in.",
+        "cycleReminderTitle": "How did today feel?",
+        "cycleReminderBody": "Log your symptoms and mood so your plan can work around them."
       }
     },
     "forms": {

@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest, after } from 'next/server';
 import { withApiLog } from '@/lib/telemetry/request-log';
 import { safeEqual } from '@/lib/api/auth';
 import { logCronRun } from '@/lib/monitoring/cron-log';
-import { generateLocalTimeReminders } from '@/lib/notifications/generators';
+import { generateLocalTimeReminders, generateCycleReminders } from '@/lib/notifications/generators';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -19,14 +19,17 @@ async function run(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const result = await generateLocalTimeReminders();
+  // Both run off this one hourly job: it already fires every hour so per-timezone local-hour
+  // delivery works from a single schedule, which is exactly what the cycle nudge needs too.
+  // Settled independently so a failure in one still lets the other send.
+  const [result, cycle] = await Promise.all([generateLocalTimeReminders(), generateCycleReminders()]);
 
   // after(): the audit insert must survive the frozen lambda, else a real run silently never logs
   // and ops cannot tell the cron ran (the exact gap the coverage audit flagged).
-  after(() => logCronRun('notify-reminders-cron', result.ok ? 'success' : 'error', result));
+  after(() => logCronRun('notify-reminders-cron', result.ok && cycle.ok ? 'success' : 'error', { result, cycle }));
 
   // The raw error (if any) is persisted to cron_job_log.detail; don't echo internals on failure.
-  const body = result.ok ? result : { ok: false as const, job: result.job };
+  const body = result.ok && cycle.ok ? { ...result, cycle } : { ok: false as const, job: result.job };
   return NextResponse.json(body, { status: result.ok ? 200 : 500 });
 }
 
