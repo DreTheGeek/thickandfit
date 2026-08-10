@@ -1477,7 +1477,16 @@
       "habitsLegendFull": "All done",
       "habitsLegendPartial": "Some done",
       "habitsLegendNone": "Nothing logged",
-      "habitsOf": "habits"
+      "habitsOf": "habits",
+      "cycleTitle": "Cycle",
+      "cycleDayPhase": "Day {day} · {phase}",
+      "cycleIrregular": "Irregular, no date predicted",
+      "cycleLastPeriod": "Last period",
+      "cycleNextExpected": "Next expected",
+      "cycleDaysLogged": "Days logged",
+      "cycleSymptoms": "Symptoms",
+      "cycleMoods": "Mood",
+      "noMessages": "No messages yet. Say hi."
     },
     "you": {
       "title": "You",
@@ -2117,7 +2126,7 @@
     "cycle": {
       "title": "Your cycle",
       "intro": "Track your period so your plan works with your body instead of against it.",
-      "privacy": "Private. Only you can see this, and your coach never browses it.",
+      "privacy": "Your coach can see your cycle so she can plan around it. You can turn that off any time in Settings, and she never sees your notes.",
       "noDataTitle": "Nothing logged yet",
       "noDataBody": "Tap below on the first day of your next period and this fills in from there.",
       "dayLabel": "Day {day}",
@@ -2143,7 +2152,37 @@
         "follicular": "Energy and recovery are usually at their best right now. Good week to push.",
         "ovulation": "Strength usually peaks here. Joints are a little looser, so keep your form tight on heavy lower body.",
         "luteal": "Appetite and cravings often rise and the scale can hold from water. That is normal. Do not cut calories over it."
-      }
+      },
+      "symptom": {
+        "cramps": "Cramps",
+        "bloating": "Bloating",
+        "headache": "Headache",
+        "breast_tenderness": "Breast tenderness",
+        "acne": "Breakouts",
+        "fatigue": "Fatigue",
+        "back_pain": "Back pain",
+        "nausea": "Nausea",
+        "cravings": "Cravings",
+        "poor_sleep": "Poor sleep"
+      },
+      "mood": {
+        "good": "Good",
+        "calm": "Calm",
+        "irritable": "Irritable",
+        "anxious": "Anxious",
+        "low": "Low",
+        "sensitive": "Sensitive",
+        "motivated": "Motivated",
+        "flat": "Flat"
+      },
+      "flow": {
+        "light": "Light",
+        "medium": "Medium",
+        "heavy": "Heavy"
+      },
+      "shareWithCoach": "Let my coach see my cycle",
+      "shareOn": "Your coach can see this",
+      "shareOff": "Your coach cannot see this"
     },
     "shopping": {
       "title": "Shopping list",

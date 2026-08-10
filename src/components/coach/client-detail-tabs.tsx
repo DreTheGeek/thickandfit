@@ -14,6 +14,7 @@ import { PhotoCompare } from '@/components/coach/photo-compare';
 import { WeightTrend } from '@/components/coach/weight-trend';
 import { WeightGoalEditor } from '@/components/coach/weight-goal-editor';
 import { HabitCalendar } from '@/components/coach/habit-calendar';
+import { ClientCycleCard } from '@/components/coach/client-cycle-card';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
 type Tab = 'overview' | 'health' | 'messages' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
@@ -205,7 +206,15 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
   const photos = detail.files.filter((f) => f.category === 'progress_photos');
   const docs = detail.files.filter((f) => f.category !== 'progress_photos');
 
-  const hasHealth = detail.intake != null || detail.progress.weights.length > 0 || detail.progress.measures.length > 0 || detail.progress.photos.length > 0 || detail.progress.workoutCount > 0;
+  // Cycle counts as health data. Without it in this test, a member who tracks her cycle and nothing
+  // else has the whole tab hidden and her coach cannot see the one thing she does log.
+  const hasHealth =
+    detail.intake != null ||
+    detail.progress.weights.length > 0 ||
+    detail.progress.measures.length > 0 ||
+    detail.progress.photos.length > 0 ||
+    detail.progress.workoutCount > 0 ||
+    detail.cycle != null;
   const options: TabOption<Tab>[] = [
     { value: 'overview', label: t('tabOverview') },
     ...(hasHealth ? [{ value: 'health' as Tab, label: t('tabHealth') }] : []),
@@ -328,6 +337,14 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
             </Section>
           )}
           {detail.intake && <HealthProfileSection intake={detail.intake} t={t} th={th} />}
+          {/* Absent entirely when she has logged nothing or has turned sharing off. No placeholder:
+              an empty "Cycle" card on every client's page would train the eye to skip it, and on the
+              clients who never see it, it would be a section about something they do not track. */}
+          {detail.cycle && (
+            <Section title={t('cycleTitle')}>
+              <ClientCycleCard cycle={detail.cycle} locale={locale} />
+            </Section>
+          )}
           {(detail.progress.weights.length > 0 || detail.progress.measures.length > 0) && (
             <Section title={t('progressHistory')}>
               {detail.progress.weights.length > 0 && (() => {

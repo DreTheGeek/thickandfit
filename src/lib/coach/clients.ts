@@ -6,6 +6,7 @@ import 'server-only';
 import { getTranslations } from 'next-intl/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getClientHabits } from '@/lib/coach/client-habits';
+import { loadCoachCycle } from '@/lib/coach/client-cycle';
 import { getLatestCheckin } from '@/lib/coach/client-checkin';
 import { deriveStanding } from '@/lib/coach/standing';
 import { mapIntakeToHealthProfile } from '@/lib/health-profile/data';
@@ -563,10 +564,22 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     })
     .filter((p): p is { url: string; on: string; pose: string | null; weightKg: number | null } => p != null);
 
-  // Habits are keyed by profile, so a client who never claimed an app account simply has none.
-  const [habits, latestCheckin] = raw.profile_id
-    ? await Promise.all([getClientHabits(companyId, raw.profile_id), getLatestCheckin(companyId, raw.profile_id)])
-    : [null, null];
+  // Habits, check-ins and the cycle are keyed by profile, so a client who never claimed an app
+  // account simply has none of them.
+  //
+  // The cycle window is 60 days: long enough to span two cycles for most members, short enough that
+  // a symptom count reads as "lately" rather than as a lifetime total. loadCoachCycle returns null
+  // when she has turned sharing off, and that is indistinguishable here from having logged nothing,
+  // on purpose: telling a coach that a member opted out is itself a disclosure about her.
+  const today = new Date().toISOString().slice(0, 10);
+  const cycleSince = new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
+  const [habits, latestCheckin, cycle] = raw.profile_id
+    ? await Promise.all([
+        getClientHabits(companyId, raw.profile_id),
+        getLatestCheckin(companyId, raw.profile_id),
+        loadCoachCycle(raw.profile_id, companyId, cycleSince, today),
+      ])
+    : [null, null, null];
 
   // Migrated Lenus workout history (session summaries): total + the most recent handful.
   const [{ count: workoutCount }, { data: woRows }] = await Promise.all([
@@ -688,5 +701,6 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     profileId: raw.profile_id,
     habits,
     latestCheckin,
+    cycle,
   };
 }

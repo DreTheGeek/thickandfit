@@ -1,3 +1,4 @@
+import type { CoachCycleView } from '@/lib/coach/client-cycle';
 import type { ClientHabits } from '@/lib/coach/client-habits';
 import type { ClientCheckin } from '@/lib/coach/client-checkin';
 // Pure, client-safe types + constants + filter parsing for the Clients CRM. No server imports,
@@ -192,6 +193,12 @@ export type ClientDetail = {
   habits: ClientHabits | null;
   /** Her most recent check-in submission, so the coach can read and answer it on one page. */
   latestCheckin: ClientCheckin['latest'];
+  /**
+   * Her cycle, last 60 days. Null when she has no app account, has logged nothing, OR has turned
+   * coach sharing off. Those are deliberately not distinguished here: reporting an opt-out to the
+   * coach would itself be a disclosure about the member.
+   */
+  cycle: CoachCycleView | null;
 };
 
 export type ClientMessage = {

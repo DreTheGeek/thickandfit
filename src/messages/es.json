@@ -1477,7 +1477,16 @@
       "habitsLegendFull": "Todo hecho",
       "habitsLegendPartial": "Algo hecho",
       "habitsLegendNone": "Sin registrar",
-      "habitsOf": "hábitos"
+      "habitsOf": "hábitos",
+      "cycleTitle": "Ciclo",
+      "cycleDayPhase": "Día {day} · {phase}",
+      "cycleIrregular": "Irregular, sin fecha estimada",
+      "cycleLastPeriod": "Último periodo",
+      "cycleNextExpected": "Próximo estimado",
+      "cycleDaysLogged": "Días registrados",
+      "cycleSymptoms": "Síntomas",
+      "cycleMoods": "Ánimo",
+      "noMessages": "Aún no hay mensajes aquí. Manda el primero, aunque sea un hola."
     },
     "you": {
       "title": "Tú",
@@ -2117,7 +2126,7 @@
     "cycle": {
       "title": "Tu ciclo",
       "intro": "Registra tu periodo para que tu plan trabaje con tu cuerpo, no en contra.",
-      "privacy": "Privado. Solo tú lo ves, y tu entrenadora nunca lo revisa.",
+      "privacy": "Tu coach puede ver tu ciclo para planear con eso en mente. Puedes desactivarlo cuando quieras en Ajustes, y ella nunca ve tus notas.",
       "noDataTitle": "Aún no hay registros",
       "noDataBody": "Toca abajo el primer día de tu próximo periodo y desde ahí se llena solo.",
       "dayLabel": "Día {day}",
@@ -2143,7 +2152,37 @@
         "follicular": "Tu energía y recuperación suelen estar en su mejor momento. Buena semana para exigirte.",
         "ovulation": "Aquí suele estar tu punto más fuerte. Las articulaciones están un poco más laxas, así que cuida la técnica en pierna pesada.",
         "luteal": "El apetito y los antojos suelen subir y la báscula puede quedarse igual por retención. Es normal. No recortes calorías por eso."
-      }
+      },
+      "symptom": {
+        "cramps": "Cólicos",
+        "bloating": "Hinchazón",
+        "headache": "Dolor de cabeza",
+        "breast_tenderness": "Senos sensibles",
+        "acne": "Brotes",
+        "fatigue": "Fatiga",
+        "back_pain": "Dolor de espalda",
+        "nausea": "Náuseas",
+        "cravings": "Antojos",
+        "poor_sleep": "Dormí mal"
+      },
+      "mood": {
+        "good": "Bien",
+        "calm": "Tranquila",
+        "irritable": "Irritable",
+        "anxious": "Ansiosa",
+        "low": "Baja",
+        "sensitive": "Sensible",
+        "motivated": "Motivada",
+        "flat": "Apagada"
+      },
+      "flow": {
+        "light": "Ligero",
+        "medium": "Medio",
+        "heavy": "Abundante"
+      },
+      "shareWithCoach": "Que mi coach vea mi ciclo",
+      "shareOn": "Tu coach puede ver esto",
+      "shareOff": "Tu coach no puede ver esto"
     },
     "shopping": {
       "title": "Lista de compras",
