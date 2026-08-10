@@ -66,3 +66,8 @@ ios/App/Pods/
 ios/App/App/public/
 ios/App/output/
 ios/DerivedData/
+
+# Lenus export working area. Holds a live session cookie (lenus-session.json) and 400MB of her
+# video footage; neither belongs in git. The recipe book is a set of query templates plus auth
+# headers, so it is a credential too.
+/.capture/
