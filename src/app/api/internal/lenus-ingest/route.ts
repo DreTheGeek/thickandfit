@@ -19,6 +19,8 @@ export const maxDuration = 60;
 // One client's worth of operations. The bridge posts per client, which keeps a failure to one
 // client rather than to the whole sweep.
 const Body = z.object({
+  // Present on the token path only; auth is settled before this parses.
+  token: z.string().optional(),
   profileId: z.string().min(8),
   fullName: z.string().max(200).nullable().optional(),
   operations: z.record(z.string().max(120), z.unknown()).refine((o) => Object.keys(o).length > 0, {
@@ -26,13 +28,52 @@ const Body = z.object({
   }),
 });
 
-export async function POST(req: Request): Promise<NextResponse> {
-  // The bridge page runs on our origin, so the coach's own session authenticates this. No shared
-  // secret to leak into a third-party tab, and an operator cannot ingest into someone else's tenant.
-  const ctx = await requireCoach().catch(() => null);
-  if (!ctx?.companyId) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+/**
+ * Accept both shapes the exporter can actually produce.
+ *
+ * The Lenus tab cannot use fetch: their CSP restricts connect-src to their own origin, and a
+ * CORS-open third party is blocked too, so it is CSP and not a missing header. `form-action` is a
+ * SEPARATE directive and they do not restrict it, so a form POST into a hidden iframe gets out
+ * where fetch cannot. That arrives as `enctype=text/plain`, which encodes as `name=value`, so the
+ * JSON is everything after the first `=`.
+ */
+async function readPayload(req: Request): Promise<{ body: unknown; token: string | null }> {
+  const type = req.headers.get('content-type') ?? '';
+  const asToken = (v: unknown): string | null => (typeof v === 'string' ? v : null);
+  if (type.startsWith('text/plain')) {
+    const raw = await req.text();
+    const eq = raw.indexOf('=');
+    if (eq < 0) return { body: null, token: null };
+    try {
+      const parsed = JSON.parse(raw.slice(eq + 1).trim()) as Record<string, unknown>;
+      return { body: parsed, token: asToken(parsed.token) };
+    } catch {
+      return { body: null, token: null };
+    }
+  }
+  const json = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+  return { body: json, token: asToken(json?.token) };
+}
 
-  const parsed = Body.safeParse(await req.json().catch(() => null));
+export async function POST(req: Request): Promise<NextResponse> {
+  const { body, token } = await readPayload(req);
+
+  // TWO DOORS. The bridge page is same-origin, so the coach's own session authenticates it. The
+  // Lenus tab cannot send cookies cross-site, so it presents a migration token instead.
+  //
+  // That token is deliberately NOT CRON_SECRET. It is a single-purpose value that exists only while
+  // the export runs and is deleted from the environment afterwards, because a token pasted into a
+  // third party's page is a token that third party can read. All it grants is writing raw export
+  // rows into a hidden schema.
+  const expected = process.env.LENUS_INGEST_TOKEN;
+  const viaToken = Boolean(expected && token && token === expected);
+
+  if (!viaToken) {
+    const ctx = await requireCoach().catch(() => null);
+    if (!ctx?.companyId) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
+
+  const parsed = Body.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: parsed.error.issues[0]?.message ?? 'invalid' }, { status: 400 });
   }
