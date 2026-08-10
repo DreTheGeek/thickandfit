@@ -1366,8 +1366,8 @@
       "payComped": "Cortesía",
       "payFree": "Gratis",
       "payPastDue": "Vencido",
-      "habitsTitle": "Hábitos",
-      "habitsStreak": "Racha",
+      "habitsTitle": "Hábitos diarios",
+      "habitsStreak": "racha de {days} días",
       "habitsWeek": "{pct}% esta semana",
       "tabCheckins": "Check-ins",
       "checkinLatest": "Último check-in",
@@ -1473,7 +1473,11 @@
       "weightGoalEdit": "Editar",
       "weightGoalClear": "Quitar",
       "weightGoalRange": "Escribe un peso en kg entre 25 y 300.",
-      "weightGoalFailed": "No se guardó. Inténtalo de nuevo en un momento."
+      "weightGoalFailed": "No se guardó. Inténtalo de nuevo en un momento.",
+      "habitsLegendFull": "Todo hecho",
+      "habitsLegendPartial": "Algo hecho",
+      "habitsLegendNone": "Sin registrar",
+      "habitsOf": "hábitos"
     },
     "you": {
       "title": "Tú",

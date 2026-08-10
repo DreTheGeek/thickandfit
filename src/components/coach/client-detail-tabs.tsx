@@ -12,6 +12,7 @@ import { ClientReplyBox } from '@/components/messages/client-reply-box';
 import { PhotoCompare } from '@/components/coach/photo-compare';
 import { WeightTrend } from '@/components/coach/weight-trend';
 import { WeightGoalEditor } from '@/components/coach/weight-goal-editor';
+import { HabitCalendar } from '@/components/coach/habit-calendar';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
 type Tab = 'overview' | 'health' | 'messages' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
@@ -363,6 +364,26 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               })()}
               {detail.progress.measureCount > 0 && <Row label={t('progressMeasurements')} value={`${detail.progress.measureCount}`} />}
               {detail.progress.foodDays > 0 && <Row label={t('progressFoodLogs')} value={`${detail.progress.foodDays}`} />}
+            </Section>
+          )}
+          {/* Habits, on the canonical record. These are keyed by profile_id and until now only
+              existed on /coach/subscribers/[id], so a coach had to know which of two URLs held
+              which half of a client. */}
+          {detail.habits && detail.habits.habitCount > 0 && (
+            <Section title={t('habitsTitle')}>
+              <HabitCalendar
+                days={detail.habits.days}
+                habitCount={detail.habits.habitCount}
+                streak={detail.habits.streak}
+                locale={locale}
+                labels={{
+                  legendFull: t('habitsLegendFull'),
+                  legendPartial: t('habitsLegendPartial'),
+                  legendNone: t('habitsLegendNone'),
+                  streak: t('habitsStreak', { days: detail.habits.streak }),
+                  ofHabits: t('habitsOf'),
+                }}
+              />
             </Section>
           )}
           {detail.progress.workoutCount > 0 && (

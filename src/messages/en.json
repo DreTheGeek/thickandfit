@@ -1366,8 +1366,8 @@
       "payComped": "Comped",
       "payFree": "Free",
       "payPastDue": "Past due",
-      "habitsTitle": "Habits",
-      "habitsStreak": "Streak",
+      "habitsTitle": "Daily habits",
+      "habitsStreak": "{days}-day streak",
       "habitsWeek": "{pct}% this week",
       "tabCheckins": "Check-ins",
       "checkinLatest": "Latest check-in",
@@ -1473,7 +1473,11 @@
       "weightGoalEdit": "Edit",
       "weightGoalClear": "Clear",
       "weightGoalRange": "Enter a weight in kg between 25 and 300.",
-      "weightGoalFailed": "That did not save. Try again in a moment."
+      "weightGoalFailed": "That did not save. Try again in a moment.",
+      "habitsLegendFull": "All done",
+      "habitsLegendPartial": "Some done",
+      "habitsLegendNone": "Nothing logged",
+      "habitsOf": "habits"
     },
     "you": {
       "title": "You",

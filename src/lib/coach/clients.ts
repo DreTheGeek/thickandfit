@@ -5,6 +5,7 @@
 import 'server-only';
 import { getTranslations } from 'next-intl/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { getClientHabits, type ClientHabits } from '@/lib/coach/client-habits';
 import { deriveStanding } from '@/lib/coach/standing';
 import { mapIntakeToHealthProfile } from '@/lib/health-profile/data';
 import { scoffPositive } from '@/lib/health-profile/screening';
@@ -561,6 +562,9 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     })
     .filter((p): p is { url: string; on: string; pose: string | null; weightKg: number | null } => p != null);
 
+  // Habits are keyed by profile, so a client who never claimed an app account simply has none.
+  const habits = raw.profile_id ? await getClientHabits(companyId, raw.profile_id) : null;
+
   // Migrated Lenus workout history (session summaries): total + the most recent handful.
   const [{ count: workoutCount }, { data: woRows }] = await Promise.all([
     sb.from('client_workout_history').select('id', { count: 'exact', head: true }).eq('contact_id', contactId),
@@ -674,5 +678,11 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     messages,
     totalMessages: totalMessages ?? 0,
     hasAccount: raw.profile_id != null,
+    // Phase 0: the canonical page is keyed by contact_id, but habits, check-ins, physique reads and
+    // coach notes are all keyed by profile_id and lived on /coach/subscribers/[id]. Carrying the
+    // resolved profile here lets those sections move onto ONE record instead of Stephanie having to
+    // know which of two URLs holds which half of a client.
+    profileId: raw.profile_id,
+    habits,
   };
 }

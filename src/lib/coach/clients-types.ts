@@ -1,3 +1,4 @@
+import type { ClientHabits } from '@/lib/coach/client-habits';
 // Pure, client-safe types + constants + filter parsing for the Clients CRM. No server imports,
 // so client components can import these without dragging in the service client. The server data
 // layer (clients.ts) re-exports everything from here.
@@ -184,6 +185,10 @@ export type ClientDetail = {
   messages: ClientMessage[];
   totalMessages: number;
   hasAccount: boolean; // client has claimed an app profile (messages go in-app vs by email)
+  /** The claimed app profile, when there is one. Habits, check-ins and notes are keyed by it. */
+  profileId: string | null;
+  /** Eight weeks of habit completion. Null when the client has no app account. */
+  habits: ClientHabits | null;
 };
 
 export type ClientMessage = {
