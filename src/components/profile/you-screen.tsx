@@ -32,6 +32,7 @@ export async function YouScreen({
   chosenGoalType,
   latestLb,
   latestWeightDate,
+  showCycle = true,
   supportEmail,
   children,
 }: {
@@ -39,6 +40,8 @@ export async function YouScreen({
   membership: string;
   memberSince: string | null;
   supportEmail: string;
+  /** Hide the cycle row when we affirmatively know it does not apply. Defaults to showing. */
+  showCycle?: boolean;
   workoutCount: number;
   streakWeeks: number;
   progressLbs: number;
@@ -75,7 +78,7 @@ export async function YouScreen({
     { key: 'aiCoach', icon: 'sparkles', label: t('aiCoach'), href: '/coach-chat' },
     { key: 'evolution', icon: 'pulse', label: t('evolution'), href: '/evolution' },
     { key: 'health', icon: 'heart', label: t('healthProfile'), href: '/you/health' },
-    { key: 'cycle', icon: 'heart', label: t('cycle'), href: '/you/cycle' },
+    ...(showCycle ? [{ key: 'cycle', icon: 'heart' as const, label: t('cycle'), href: '/you/cycle' }] : []),
     { key: 'messages', icon: 'chat', label: t('messages'), href: '/inbox' },
     { key: 'photos', icon: 'camera', label: t('myPhotos'), href: '/progress' },
     { key: 'measurements', icon: 'ruler', label: t('measurements'), href: '/progress?tab=body' },

@@ -21,7 +21,7 @@ export default async function YouPage(): Promise<ReactElement> {
   const t = await getTranslations('app.you');
   const supabase = await createClient();
 
-  const [{ data: profile }, { data: onb }, { count }, { data: latestWeight }] = await Promise.all([
+  const [{ data: profile }, { data: onb }, { count }, { data: latestWeight }, { data: intakeSex }] = await Promise.all([
     supabase
       .from('profiles')
       .select('full_name, role, created_at')
@@ -43,7 +43,20 @@ export default async function YouPage(): Promise<ReactElement> {
       .order('recorded_on', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    // Only to decide whether the cycle row belongs in her menu. See showCycle below.
+    supabase.from('client_intake').select('sex').eq('profile_id', ctx.userId).maybeSingle(),
   ]);
+
+  /**
+   * Show the cycle tracker unless we affirmatively know it does not apply.
+   *
+   * NOT `sex === 'female'`. On the live database that is 255 female, 12 null and zero male: the
+   * nulls are members who skipped an optional question, not men. Gating on a positive match would
+   * hide the feature from twelve women for not having filled in a form, which is the worse error by
+   * a distance in an app whose entire audience is women. So the rule is "hide when we know
+   * otherwise", and the default is to show.
+   */
+  const showCycle = (intakeSex as { sex?: string | null } | null)?.sex !== 'male';
 
   const name = (profile?.full_name ?? '').trim() || (locale === 'es' ? 'Miembro' : 'Member');
   const membership = profile?.role === 'free' ? t('freeMember') : t('premiumMember');
@@ -121,6 +134,7 @@ export default async function YouPage(): Promise<ReactElement> {
       chosenGoalType={chosenGoalType}
       latestLb={latestLb}
       latestWeightDate={lwRow?.recorded_on ?? null}
+      showCycle={showCycle}
     >
       {gamification != null && (
         <StreakBadges snapshot={gamification} newlyEarnedKeys={newlyEarnedKeys} />
