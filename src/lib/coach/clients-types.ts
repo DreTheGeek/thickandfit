@@ -173,7 +173,8 @@ export type ClientDetail = {
     weightStartKg: number | null; // the very first weigh-in (accurate net-change baseline)
     measures: { on: string; waist: number | null; hips: number | null; chest: number | null; arms: number | null; thighs: number | null }[];
     measureCount: number;
-    photos: { url: string; on: string; pose: string | null }[];
+    /** Newest first, with the oldest 20 merged in so a before/after can reach the real baseline. */
+    photos: { url: string; on: string; pose: string | null; weightKg: number | null }[];
     photoCount: number; // true total photos
     foodDays: number;
     workoutCount: number; // migrated Lenus workout sessions

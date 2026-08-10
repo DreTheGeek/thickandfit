@@ -9,6 +9,7 @@ import { MacroRing } from '@/components/coach/macro-ring';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { formatCents } from '@/components/coach/money';
 import { ClientReplyBox } from '@/components/messages/client-reply-box';
+import { PhotoCompare } from '@/components/coach/photo-compare';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
 type Tab = 'overview' | 'health' | 'messages' | 'billing' | 'payments' | 'nutrition' | 'files' | 'engagement' | 'tags';
@@ -358,6 +359,11 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               {detail.progress.photoCount > detail.progress.photos.length && (
                 <p className="py-1 text-[11px] text-faint">{t('messagesShowingRecent', { shown: detail.progress.photos.length, total: detail.progress.photoCount })}</p>
               )}
+              {/* The comparison first, the grid under it. A grid tells her photos exist; the
+                  comparison is what the photos are for. */}
+              <div className="py-2">
+                <PhotoCompare photos={detail.progress.photos} locale={locale} />
+              </div>
               <div className="grid grid-cols-3 gap-2 py-2 sm:grid-cols-4">
                 {detail.progress.photos.map((p, i) => (
                   <a key={i} href={p.url} target="_blank" rel="noreferrer" className="tf-press block overflow-hidden rounded-xl border border-line">

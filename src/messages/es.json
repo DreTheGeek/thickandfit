@@ -1461,7 +1461,11 @@
       "navCoachingPrefs": "Preferencias de coaching",
       "settingsMoreTitle": "Configuración de coaching",
       "settingsClientAppBlurb": "Lo que tus clientas pueden hacer y ver en la app.",
-      "settingsCoachingBlurb": "Tus valores por defecto para planes de comida, entrenamiento y bienvenida."
+      "settingsCoachingBlurb": "Tus valores por defecto para planes de comida, entrenamiento y bienvenida.",
+      "compareBefore": "Antes",
+      "compareAfter": "Después",
+      "compareApart": "{days} días de diferencia",
+      "compareSameDay": "El mismo día"
     },
     "you": {
       "title": "Tú",

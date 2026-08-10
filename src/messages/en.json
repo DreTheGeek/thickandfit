@@ -1461,7 +1461,11 @@
       "navCoachingPrefs": "Coaching preferences",
       "settingsMoreTitle": "Coaching setup",
       "settingsClientAppBlurb": "What your clients can do and see in the app.",
-      "settingsCoachingBlurb": "Your defaults for meal plans, training plans and onboarding."
+      "settingsCoachingBlurb": "Your defaults for meal plans, training plans and onboarding.",
+      "compareBefore": "Before",
+      "compareAfter": "After",
+      "compareApart": "{days} days apart",
+      "compareSameDay": "Same day"
     },
     "you": {
       "title": "You",

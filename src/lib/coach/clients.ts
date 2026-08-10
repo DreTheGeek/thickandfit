@@ -516,7 +516,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
   const [{ data: wRows, count: weightCount }, { data: mRows, count: measureCount }, { data: pRows, count: photoCount }, { data: wFirst }, { count: foodDays }] = await Promise.all([
     sb.from('weight_entries').select('recorded_on, weight_kg', { count: 'exact' }).eq('contact_id', contactId).order('recorded_on', { ascending: false }).limit(120),
     sb.from('body_measurements').select('recorded_on, waist_cm, hips_cm, chest_cm, arms_cm, thighs_cm', { count: 'exact' }).eq('contact_id', contactId).order('recorded_on', { ascending: false }).limit(120),
-    sb.from('progress_photos').select('storage_path, taken_on, pose_source', { count: 'exact' }).eq('contact_id', contactId).order('taken_on', { ascending: false }).limit(60),
+    sb.from('progress_photos').select('storage_path, taken_on, pose_source, weight_kg', { count: 'exact' }).eq('contact_id', contactId).order('taken_on', { ascending: false }).limit(60),
     sb.from('weight_entries').select('weight_kg').eq('contact_id', contactId).order('recorded_on', { ascending: true }).limit(1),
     sb.from('food_log').select('log_date', { count: 'exact', head: true }).eq('contact_id', contactId),
   ]);
@@ -526,15 +526,40 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     on: m.recorded_on, waist: nnn(m.waist_cm), hips: nnn(m.hips_cm), chest: nnn(m.chest_cm), arms: nnn(m.arms_cm), thighs: nnn(m.thighs_cm),
   }))).reverse();
   const weightStartKg = nnn((((wFirst ?? []) as { weight_kg: number }[])[0]?.weight_kg) ?? null);
-  // Sign each migrated photo (private bucket) for a short-lived coach view.
-  const photoRaw = (pRows ?? []) as { storage_path: string; taken_on: string; pose_source: string | null }[];
-  const signed = await Promise.all(
-    photoRaw.map(async (p) => {
-      const { data: s } = await sb.storage.from('progress-photos').createSignedUrl(p.storage_path, 3600);
-      return s?.signedUrl ? { url: s.signedUrl, on: p.taken_on, pose: p.pose_source } : null;
-    }),
-  );
-  const photos = signed.filter((p): p is { url: string; on: string; pose: string | null } => p != null);
+  // The 60 above are the NEWEST. A before/after needs the other end of the story and Shelise has
+  // 177 photos going back to Aug 2024, so her baseline is nowhere near the recent 60. Pull the
+  // oldest as well and merge; without this the comparison could only ever show "recent vs slightly
+  // less recent", which is not the picture a two-year transformation deserves.
+  type PhotoRaw = { storage_path: string; taken_on: string; pose_source: string | null; weight_kg: number | string | null };
+  const { data: pOldest } = await sb
+    .from('progress_photos')
+    .select('storage_path, taken_on, pose_source, weight_kg')
+    .eq('contact_id', contactId)
+    .order('taken_on', { ascending: true })
+    .limit(20);
+
+  const seenPath = new Set<string>();
+  const photoRaw: PhotoRaw[] = [];
+  for (const p of [...((pRows ?? []) as PhotoRaw[]), ...((pOldest ?? []) as PhotoRaw[])]) {
+    if (seenPath.has(p.storage_path)) continue;
+    seenPath.add(p.storage_path);
+    photoRaw.push(p);
+  }
+  photoRaw.sort((a, b) => b.taken_on.localeCompare(a.taken_on));
+
+  // Sign each migrated photo (private bucket) for a short-lived coach view. One batched call
+  // instead of eighty round trips.
+  const { data: signedRows } = await sb.storage
+    .from('progress-photos')
+    .createSignedUrls(photoRaw.map((p) => p.storage_path), 3600);
+  const urlByPath = new Map<string, string>();
+  for (const s of signedRows ?? []) if (s.path && s.signedUrl && !s.error) urlByPath.set(s.path, s.signedUrl);
+  const photos = photoRaw
+    .map((p) => {
+      const url = urlByPath.get(p.storage_path);
+      return url ? { url, on: p.taken_on, pose: p.pose_source, weightKg: nnn(p.weight_kg) } : null;
+    })
+    .filter((p): p is { url: string; on: string; pose: string | null; weightKg: number | null } => p != null);
 
   // Migrated Lenus workout history (session summaries): total + the most recent handful.
   const [{ count: workoutCount }, { data: woRows }] = await Promise.all([
