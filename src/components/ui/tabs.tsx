@@ -2,7 +2,19 @@
 
 import type { ReactElement } from 'react';
 
-export type TabOption<T extends string> = { value: T; label: string };
+export type TabOption<T extends string> = {
+  value: T;
+  label: string;
+  /**
+   * Per-tab utility classes, for a tab that only exists at some widths.
+   *
+   * The client page pins the conversation to a rail from xl up, so its Messages tab is `xl:hidden`:
+   * one place for the thread at every size, no duplicate. Done in CSS rather than by measuring the
+   * viewport in JS, because a matchMedia check renders the tab on the server and then removes it on
+   * hydration, which the coach sees as a tab flickering out from under the cursor.
+   */
+  className?: string;
+};
 
 /** Underline tab row (active: bold + 2px ink underline). Controlled. */
 export function UnderlineTabs<T extends string>({
@@ -40,6 +52,7 @@ export function UnderlineTabs<T extends string>({
               active
                 ? 'border-b-2 border-ink font-semibold text-ink'
                 : 'text-faint',
+              opt.className ?? '',
             ].join(' ')}
           >
             {opt.label}

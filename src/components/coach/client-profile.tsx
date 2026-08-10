@@ -7,6 +7,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Icon } from '@/components/ui/icons';
 import { StatusPill } from '@/components/coach/status-pill';
 import { ClientDetailTabs } from '@/components/coach/client-detail-tabs';
+import { ClientChatRail } from '@/components/coach/client-chat-rail';
 import { formatCents } from '@/components/coach/money';
 import type { ClientDetail } from '@/lib/coach/clients-types';
 
@@ -48,7 +49,13 @@ export function ClientProfile({
   const cur = detail.currency;
 
   return (
-    <div>
+    /* data-coach-bleed: like the inbox, this owns the viewport. It is not a document on a page, it
+       is a workspace with a live conversation pinned beside it, so it opts out of the coach
+       container's 1720px ceiling and gutters (see .tf-coach-page in globals.css). Before this the
+       page sat in a centred column and left roughly a third of a wide screen empty while the
+       conversation was hidden behind a tab. */
+    <div data-coach-bleed className="flex h-[calc(100dvh-3.5rem)] min-h-[560px]">
+      <div className="min-w-0 flex-1 overflow-y-auto px-5 py-6 lg:px-8">
       <Link href={backHref} className="tf-press mb-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
         <Icon name="arrowLeft" size={15} /> {t('backToClients')}
       </Link>
@@ -143,6 +150,14 @@ export function ClientProfile({
         <div className="min-w-0 flex-1">
           <ClientDetailTabs detail={detail} locale={locale} />
         </div>
+      </div>
+      </div>
+
+      {/* The conversation, pinned. Hidden below xl, where there is not enough width for two
+          columns and a chat panel; on those sizes the Messages tab is still in the tab row, so
+          nothing becomes unreachable on a laptop or a phone. */}
+      <div className="hidden w-[380px] shrink-0 xl:block 2xl:w-[440px]">
+        <ClientChatRail detail={detail} locale={locale} />
       </div>
     </div>
   );

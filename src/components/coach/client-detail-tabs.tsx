@@ -208,7 +208,13 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
   const options: TabOption<Tab>[] = [
     { value: 'overview', label: t('tabOverview') },
     ...(hasHealth ? [{ value: 'health' as Tab, label: t('tabHealth') }] : []),
-    { value: 'messages' as Tab, label: detail.totalMessages > 0 ? `${t('tabMessages')} (${detail.totalMessages})` : t('tabMessages') },
+    {
+      value: 'messages' as Tab,
+      label: detail.totalMessages > 0 ? `${t('tabMessages')} (${detail.totalMessages})` : t('tabMessages'),
+      // From xl the conversation is pinned to its own rail beside the page, so the tab would be a
+      // second door to the same room.
+      className: 'xl:hidden',
+    },
     { value: 'billing', label: t('tabBilling') },
     { value: 'payments', label: t('tabPayments') },
     { value: 'nutrition', label: t('tabNutrition') },
@@ -441,7 +447,9 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
       )}
 
       {tab === 'messages' && (
-        <div className="flex flex-col gap-3">
+        // Matches the tab's own xl:hidden: if she is on Messages and widens the window, the rail
+        // takes over rather than showing the thread twice.
+        <div className="flex flex-col gap-3 xl:hidden">
           <ClientReplyBox contactId={detail.id} name={detail.name} hasAccount={detail.hasAccount} />
           {detail.totalMessages > detail.messages.length && (
             <p className="rounded-xl border border-line bg-warm/40 px-4 py-2.5 text-center text-[12px] text-muted">
