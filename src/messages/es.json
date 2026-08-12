@@ -1526,7 +1526,11 @@
       "attention_unanswered": "esperan respuesta",
       "attention_intake": "formularios por revisar",
       "attention_noPlan": "sin plan de comida",
-      "attention_atRisk": "pagos en riesgo"
+      "attention_atRisk": "pagos en riesgo",
+      "mbSaveAsTemplate": "Guardar como plantilla",
+      "mbSaveCopy": "Guardar una copia",
+      "mbTemplateSuffix": "plantilla",
+      "kpiPerOwner": "Clientes por responsable"
     },
     "you": {
       "title": "Tú",

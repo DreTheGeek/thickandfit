@@ -277,6 +277,16 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
             <p className="py-8 text-center text-sm text-faint">{t('emptyOverview')}</p>
           )}
         </Card>
+        {/* Clients per owner, only once the book is genuinely split between people. With a single
+            owner this is a bar chart of the client count she already has three tiles above.
+            Labelled "owner" rather than "team member" on purpose: on the live data the biggest
+            bucket is "thickandfit", which is the company account and not a person. */}
+        {o.clientsByOwner.length > 1 && (
+          <Card>
+            <h2 className="mb-4 font-display text-[20px]">{t('kpiPerOwner')}</h2>
+            <BarList rows={o.clientsByOwner} t={t} />
+          </Card>
+        )}
         {o.lostReasons.length > 0 && (
           <Card className="md:col-span-2 xl:col-span-1">
             <h2 className="mb-4 font-display text-[20px]">{t('secLostReasons')}</h2>

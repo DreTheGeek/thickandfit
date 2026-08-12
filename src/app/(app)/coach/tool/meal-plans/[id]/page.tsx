@@ -7,6 +7,7 @@ import { requireCoach } from '@/lib/auth/guards';
 import { getMealPlanDetail } from '@/lib/coach/meal-plans';
 import { Icon } from '@/components/ui/icons';
 import { MacroRing } from '@/components/coach/macro-ring';
+import { SaveAsTemplateButton } from '@/components/coach/save-as-template-button';
 import { MealPlanNotesEditor } from '@/components/coach/meal-plan-notes';
 import { StructuredPlanView } from '@/components/nutrition/structured-plan-view';
 
@@ -98,6 +99,11 @@ export default async function CoachMealPlanDetailPage({
       )}
 
       <MealPlanNotesEditor planId={p.id} initial={p.notes} />
+
+      {/* Keep this structure for the next client. Copies, never moves: see saveAsTemplateAction. */}
+      <div className="mt-5">
+        <SaveAsTemplateButton planId={p.id} name={p.name} />
+      </div>
     </div>
   );
 }

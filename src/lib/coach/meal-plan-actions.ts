@@ -149,3 +149,53 @@ export async function saveStructuredPlanAction(input: unknown): Promise<SaveStru
   revalidatePath('/coach/tool/meal-plans');
   return { ok: true, planId: (inserted as { id: string }).id };
 }
+
+/**
+ * Copy an existing plan into the library as a reusable template.
+ *
+ * The gap this fills: a new plan already saves as a template, and editing an existing one updates
+ * it in place, but there was no way to take a plan written FOR a client and keep it. Stephanie's
+ * method is a small number of structures reused across many clients, so the plan she perfects for
+ * one is the plan she wants for the next twenty. Without this she rebuilds it by hand each time,
+ * which is exactly where drift and typos come from.
+ *
+ * A COPY, never a move. The original stays assigned to the client: turning her client's live plan
+ * into a library template would silently take away the plan that client is eating from.
+ */
+export async function saveAsTemplateAction(input: unknown): Promise<SaveStructuredResult> {
+  const parsed = z.object({ planId: z.string().uuid(), name: z.string().trim().min(1).max(160) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalid' };
+  const ctx = await requireCoach();
+  if (!ctx.companyId) return { ok: false, error: 'no_company' };
+
+  const sb = createServiceClient();
+  const { data: source } = await sb
+    .from('meal_plans')
+    .select('calorie_goal, split_protein_pct, split_carb_pct, split_fat_pct, num_meal_groups, structured, notes')
+    .eq('id', parsed.data.planId)
+    .eq('company_id', ctx.companyId)
+    .maybeSingle();
+
+  if (!source) return { ok: false, error: 'not_found' };
+
+  const { data: inserted, error } = await sb
+    .from('meal_plans')
+    .insert({
+      company_id: ctx.companyId,
+      // contact_id null + is_template true is what makes it a library row rather than an assignment.
+      contact_id: null,
+      is_template: true,
+      name: parsed.data.name,
+      ...(source as Record<string, unknown>),
+    })
+    .select('id')
+    .single();
+
+  if (error || !inserted) {
+    console.error('saveAsTemplateAction:', error?.message);
+    return { ok: false, error: 'save_failed' };
+  }
+
+  revalidatePath('/coach/tool/meal-plans');
+  return { ok: true, planId: (inserted as { id: string }).id };
+}

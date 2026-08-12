@@ -1526,7 +1526,11 @@
       "attention_unanswered": "waiting on a reply",
       "attention_intake": "intake to review",
       "attention_noPlan": "no meal plan yet",
-      "attention_atRisk": "billing at risk"
+      "attention_atRisk": "billing at risk",
+      "mbSaveAsTemplate": "Save as template",
+      "mbSaveCopy": "Save a copy",
+      "mbTemplateSuffix": "template",
+      "kpiPerOwner": "Clients per owner"
     },
     "you": {
       "title": "You",
