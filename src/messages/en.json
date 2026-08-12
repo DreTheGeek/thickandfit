@@ -1649,7 +1649,8 @@
       "esAllDone": "Every movement has a Spanish name.",
       "esNotConfigured": "Drafting is not switched on yet.",
       "esFailed": "That did not work. Try it again.",
-      "navSpanish": "Spanish"
+      "navSpanish": "Spanish",
+      "planDays": "{n} days"
     },
     "you": {
       "title": "You",

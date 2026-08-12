@@ -88,6 +88,16 @@ function prescribe(ex) {
   return out;
 }
 
+// Duration comes from HER NAME, not a default. The first import hardcoded 12 weeks and every tile
+// in her library then read "12w", including the 6 and 8 week ones she can name on sight. Lenus
+// stores no duration on the template, so the name is the only statement of it that exists: 17 of
+// her 40 are 6 week, 9 are 8 week, 14 are 12 week.
+const weeksOf = (n) => {
+  const m = String(n).match(/(\d+)\s*week/i);
+  const w = m ? Number(m[1]) : 12;
+  return w >= 1 && w <= 52 ? w : 12;
+};
+
 // --- walk -------------------------------------------------------------------
 // CREATE WHAT IS MISSING rather than drop it. 46 movements she programs are absent from our
 // catalogue entirely (plain Push Up, Close Grip Bench Press, Running). Skipping them would silently
@@ -119,9 +129,9 @@ for (const p of doc.programs) {
   planN += 1;
 
   statements.push(
-    `insert into plans (company_id, lenus_id, name_en, weeks, is_template) values (${lit(COMPANY)}, ${lit(p.id)}, ${lit(name)}, 12, true)
+    `insert into plans (company_id, lenus_id, name_en, weeks, is_template) values (${lit(COMPANY)}, ${lit(p.id)}, ${lit(name)}, ${weeksOf(name)}, true)
      on conflict (company_id, lenus_id) where lenus_id is not null
-     do update set name_en = excluded.name_en;`,
+     do update set name_en = excluded.name_en, weeks = excluded.weeks;`,
   );
 
   (v.items || []).forEach((s, si) => {

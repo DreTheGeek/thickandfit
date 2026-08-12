@@ -1649,7 +1649,8 @@
       "esAllDone": "Todos los ejercicios ya tienen nombre en español.",
       "esNotConfigured": "La generación todavía no está activada.",
       "esFailed": "No funcionó. Inténtalo otra vez.",
-      "navSpanish": "Español"
+      "navSpanish": "Español",
+      "planDays": "{n} días"
     },
     "you": {
       "title": "Tú",

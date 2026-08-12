@@ -11,7 +11,7 @@ import { Icon } from '@/components/ui/icons';
 
 export const dynamic = 'force-dynamic';
 
-type PlanRow = { id: string; name_en: string; weeks: number; is_template: boolean };
+type PlanRow = { id: string; name_en: string; weeks: number; is_template: boolean; days: number };
 
 export default async function CoachProgramsPage(): Promise<ReactElement> {
   const ctx = await requireCoach();
@@ -20,12 +20,24 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
   let plans: PlanRow[] = [];
   if (ctx.companyId) {
     const supabase = createServiceClient();
-    const { data } = await supabase
-      .from('plans')
-      .select('id, name_en, weeks, is_template, updated_at')
-      .eq('company_id', ctx.companyId)
-      .order('updated_at', { ascending: false });
-    plans = (data ?? []) as PlanRow[];
+    // The DAY COUNT is what she reads first. Her Lenus library listed every program as "5 ITEMS" or
+    // "7 ITEMS", because that is how you tell a 3-day split from a 5-day one at a glance, and the
+    // name does not always say it. Sorted by name rather than updated_at: the import stamped all 40
+    // within the same minute, so recency ordering scrambled a library whose names are already
+    // deliberately sequential (Month 1, Month 2, Month 3).
+    const [{ data }, { data: sessionRows }] = await Promise.all([
+      supabase
+        .from('plans')
+        .select('id, name_en, weeks, is_template')
+        .eq('company_id', ctx.companyId)
+        .order('name_en', { ascending: true }),
+      supabase.from('sessions').select('plan_id').eq('company_id', ctx.companyId),
+    ]);
+    const dayCount = new Map<string, number>();
+    for (const s of (sessionRows ?? []) as { plan_id: string | null }[]) {
+      if (s.plan_id) dayCount.set(s.plan_id, (dayCount.get(s.plan_id) ?? 0) + 1);
+    }
+    plans = ((data ?? []) as Omit<PlanRow, 'days'>[]).map((p) => ({ ...p, days: dayCount.get(p.id) ?? 0 }));
   }
 
   return (
@@ -51,6 +63,7 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
             >
               <span className="min-w-0 truncate font-medium">{p.name_en}</span>
               <span className="flex shrink-0 items-center gap-2 text-[12px] text-faint">
+                {p.days > 0 && <span className="text-muted">{t('planDays', { n: p.days })}</span>}
                 {p.weeks}w
                 {p.is_template && <Badge variant="inactive">{t('template')}</Badge>}
                 <Icon name="chevronRight" size={16} className="text-line" />
