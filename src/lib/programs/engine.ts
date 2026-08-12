@@ -143,12 +143,26 @@ export async function assignProgram(companyId: string, planId: string, profileId
   return { assigned: true };
 }
 
+/**
+ * A member's assigned plans, NEWEST ASSIGNMENT FIRST.
+ *
+ * The ordering is load-bearing, not tidiness. plan_assignments is UNIQUE(plan_id, profile_id)
+ * (0009), so one member can legitimately hold several plans, and /workouts renders `plans[0]` as
+ * "your program". Without an ORDER BY, Postgres is free to return those rows in any order it likes,
+ * so which program a member sees was undefined and could change between two loads of the same
+ * screen. Newest-first also matches the intent of the act: a coach assigning a plan today means
+ * that one is the current one.
+ *
+ * NOTE for the caller: this still returns every plan. A member holding more than one has no way to
+ * reach the others from /workouts, which takes the first and drops the rest silently.
+ */
 export async function getAssignedPlans(companyId: string, profileId: string) {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from('plan_assignments')
     .select('plan:plan_id (id, name_en, name_es, weeks)')
     .eq('company_id', companyId)
-    .eq('profile_id', profileId);
+    .eq('profile_id', profileId)
+    .order('assigned_at', { ascending: false });
   return (data ?? []).map((r) => r.plan);
 }
