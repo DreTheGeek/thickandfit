@@ -62,12 +62,16 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="mb-1 flex items-center justify-between gap-4">
         <PageTitle>{t('programs')}</PageTitle>
         <ButtonLink href="/coach/programs/new" size="sm" className="shrink-0">
           {t('newProgram')}
         </ButtonLink>
       </div>
+      {/* What this page IS, in a sentence, for a coach who has never opened it. Stephanie knows
+          her own library; the assistant coaches she hires do not, and a title alone does not say
+          whether this is where you build a program or where you hand one to a client. */}
+      <p className="tf-measure mb-6 text-[13px] text-muted">{t('programsIntro')}</p>
       {plans.length === 0 ? (
         <p className="text-sm text-muted">{t('noPrograms')}</p>
       ) : (

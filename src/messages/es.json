@@ -1658,7 +1658,8 @@
       "famClient": "Escritos para una clienta",
       "famOther": "Todo lo demás",
       "planDaysWeeks": "{d, plural, one {# día} other {# días}} · {w} semanas",
-      "planWeeks": "{w} semanas"
+      "planWeeks": "{w} semanas",
+      "programsIntro": "Tus programas de entrenamiento. Abre uno para ver sus días y ejercicios, o crea uno nuevo. Asignar un programa a una clienta se hace dentro del programa."
     },
     "you": {
       "title": "Tú",
