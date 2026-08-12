@@ -14,6 +14,7 @@ import 'server-only';
 // member who replies and then somehow re-submits onboarding must never have a second identical
 // greeting appear above her own message.
 import { createServiceClient } from '@/lib/supabase/service';
+import { getCompanyCoach } from '@/lib/tenant/owner';
 
 export type IntroArgs = {
   companyId: string;
@@ -75,18 +76,12 @@ export async function seedIntroMessage(args: IntroArgs): Promise<{ seeded: boole
       .maybeSingle();
     if (existing) return { seeded: false };
 
-    // The byline. Oldest coach in the company is the owner, which for tenant 1 is Stephanie. Falls
-    // back to no sender rather than inventing one: an intro apparently written by the wrong person
+    // The byline: the owner the tenant states, not the oldest coach row. That old ordering put
+    // Stephanie first by 36 minutes; a second coach account created earlier that afternoon would
+    // have signed every member's first message from her with a nameless dev account. Falls back to
+    // no sender rather than inventing one, because an intro apparently written by the wrong person
     // is worse than one with no avatar.
-    const { data: coach } = await svc
-      .from('profiles')
-      .select('id')
-      .eq('company_id', args.companyId)
-      .eq('role', 'coach')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    const senderId = (coach as { id?: string } | null)?.id ?? null;
+    const senderId = (await getCompanyCoach(args.companyId))?.id ?? null;
     if (!senderId) {
       console.error('seedIntroMessage: no coach in company', args.companyId);
       return { seeded: false };

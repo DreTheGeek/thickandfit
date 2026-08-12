@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { getLocale } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { getCompanyCoach } from '@/lib/tenant/owner';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
 import { getTodayHabits, localToday } from '@/lib/habits/habits';
 import { getDailyMetrics } from '@/lib/dailymetrics/daily';
@@ -118,20 +118,15 @@ export default async function DashboardPage(): Promise<ReactElement> {
     }
   }
 
-  // Coach card: the company's coach (Stephanie). Service client + company scope (a subscriber can't
-  // read other profiles via RLS); we only surface the display name.
+  // Coach card: the company's owner. This used to order profiles by created_at across coach AND
+  // operator, which resolved to the agency operator account that predates Stephanie's by a month,
+  // so a member's home screen read "Your coach: LaSean". getCompanyCoach reads the owner the tenant
+  // states (0124) instead of whoever signed up first. A subscriber cannot read other profiles via
+  // RLS, so it uses the service client and surfaces only the display name.
   let coach: { name: string } | null = null;
   if (ctx.companyId) {
-    const { data: c } = await createServiceClient()
-      .from('profiles')
-      .select('full_name')
-      .eq('company_id', ctx.companyId)
-      .in('role', ['operator', 'coach'])
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    const nm = (c?.full_name ?? '').trim();
-    if (nm) coach = { name: nm };
+    const owner = await getCompanyCoach(ctx.companyId);
+    if (owner?.name) coach = { name: owner.name };
   }
 
   // All date math anchors on the MEMBER's calendar day (`today` = localDay(tz), computed above),
