@@ -23,6 +23,9 @@ const Body = z.object({
   token: z.string().optional(),
   profileId: z.string().min(8),
   fullName: z.string().max(200).nullable().optional(),
+  // Escape hatch for the one legitimate case: Lenus itself really did lose rows and we want our
+  // copy to match. Off by default, because the destructive direction must be the deliberate one.
+  allowShrink: z.boolean().optional(),
   operations: z.record(z.string().max(120), z.unknown()).refine((o) => Object.keys(o).length > 0, {
     message: 'no operations',
   }),
@@ -77,9 +80,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: parsed.error.issues[0]?.message ?? 'invalid' }, { status: 400 });
   }
-  const { profileId, fullName, operations } = parsed.data;
+  const { profileId, fullName, operations, allowShrink } = parsed.data;
 
-  const rows = Object.entries(operations).map(([operation, data]) => ({
+  const incoming = Object.entries(operations).map(([operation, data]) => ({
     profile_id: profileId,
     full_name: fullName ?? null,
     operation,
@@ -92,15 +95,60 @@ export async function POST(req: Request): Promise<NextResponse> {
   // (profile_id, operation), so re-running the sweep replaces rather than duplicates. That is what
   // makes a final sweep on 30 August safe to run over the top of this one.
   const sb = createServiceClient();
-  const { error } = await sb
+
+  // SHRINK GUARD. "Replaces rather than duplicates" is the whole design, and it is also the way to
+  // lose everything: the row is REPLACED, so a page-one response overwrites a complete one and the
+  // account it came from closes on 31 August. This is not hypothetical. The UI requests
+  // ClientWorkoutHistory with pageSize 3, and replaying the recorded variables verbatim would have
+  // turned one client's 482 stored workouts into 3.
+  //
+  // The extractor now paginates, so this should never fire. It exists because "should never fire"
+  // is not a property you want to bet an unrecoverable dataset on, and because the failure is
+  // invisible: a shrinking write returns 200 and looks like a clean sync.
+  const { data: existing, error: readErr } = await sb
     .schema('lenus')
     .from('raw_client_extract')
-    .upsert(rows, { onConflict: 'profile_id,operation' });
+    .select('operation, data')
+    .eq('profile_id', profileId);
 
-  if (error) {
-    console.error('[lenus-ingest]', profileId, error.message);
-    return NextResponse.json({ ok: false, error: 'write_failed' }, { status: 500 });
+  if (readErr) {
+    console.error('[lenus-ingest] read-before-write failed', profileId, readErr.message);
+    return NextResponse.json({ ok: false, error: 'read_failed' }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, stored: rows.length });
+  const storedSize = new Map<string, number>();
+  for (const row of existing ?? []) {
+    storedSize.set(String(row.operation), JSON.stringify(row.data ?? null).length);
+  }
+
+  // 10% slack absorbs ordinary churn (a message edited, a field nulled) without waving through the
+  // order-of-magnitude collapse that a pagination regression produces.
+  const SHRINK_TOLERANCE = 0.9;
+  const skipped: Array<{ operation: string; storedBytes: number; incomingBytes: number }> = [];
+  const rows = incoming.filter((row) => {
+    const before = storedSize.get(row.operation);
+    if (before === undefined || allowShrink) return true;
+    const after = JSON.stringify(row.data ?? null).length;
+    if (after >= before * SHRINK_TOLERANCE) return true;
+    skipped.push({ operation: row.operation, storedBytes: before, incomingBytes: after });
+    return false;
+  });
+
+  if (skipped.length) {
+    console.warn('[lenus-ingest] refused shrinking writes', profileId, JSON.stringify(skipped));
+  }
+
+  if (rows.length) {
+    const { error } = await sb
+      .schema('lenus')
+      .from('raw_client_extract')
+      .upsert(rows, { onConflict: 'profile_id,operation' });
+
+    if (error) {
+      console.error('[lenus-ingest]', profileId, error.message);
+      return NextResponse.json({ ok: false, error: 'write_failed' }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json({ ok: true, stored: rows.length, skipped });
 }

@@ -23,27 +23,66 @@ Discovery is DONE. The replay has not run.
 
 ### The root cause of "I still don't see everything from every client"
 
-The July extract took page one of every list and stopped. Measured today, per client across 265:
+**CORRECTED 2026-08-12, later the same day. The first answer in this file was wrong and is kept
+below so nobody re-derives it.** The claim was that the July extract took page one of every list and
+stopped, and that `pageSize: 3` on `ClientWorkoutHistory` was the proof. Measured against the live
+DB before starting the sweep, it does not hold: the July run paginated to completion. Shelise's 482
+workouts are all present. `ProfileHistory_Profile` is complete too, 1,543 of 1,543, `hasMore` false
+everywhere. The 15.8 workouts per client average is not a truncation artifact, it is the real
+average across 265 people, most of whom are not Shelise.
 
-| | held | should be |
-|---|---|---|
-| Workouts | 15.8 | one client shows `fullCount: 482` |
-| Check-ins | 0.01 (2 rows total) | weekly over months |
-| Weigh-ins | 2.9 | ~52 for a year of weekly |
-| Photos | 8.6 | 30+ for monthly over a year |
-| Messages | 45.4 | likely one page too |
+Two different things are actually wrong:
 
-**The proof, and the fix, is one variable.** `ClientWorkoutHistory` is called with
-`{ pageSize: 3, offset: 0, profileId }`. The UI asks for THREE. Raise `pageSize`, loop `offset`, and
-the history is complete. `useClientListInfiniteScrolling_clientList` uses `{ offset, limit: 20 }`.
+1. **The extract is 40 days stale, not 9.** It is from 3 July. Lenus messages stop dead at
+   2026-07-03 14:59 and transactions at 13 June. This is a re-sync, not a repair.
+2. **Check-ins were captured as IDs and the bodies were never fetched.**
+   `raw_client_extract` holds 765 check-in response IDs; `form_responses` holds 2 rows for 1 person.
+   The list operation returns only `{id, submittedAt}`; the answers need a second call per ID to
+   `ClientCheckinDashboardView_checkInResponse`. Nobody made it. **This is the biggest hole in her
+   portal and it is the thing she reviews weekly.**
+
+**Why the bodies were never fetched, found in our own code.** `scripts/lenus-export.js` did list
+that operation. It resolved its variable against one flat list of id-ish names that included `id`,
+so it sent the PROFILE id where a CHECK-IN RESPONSE id was expected. Lenus errored, `gql()` turned
+the error into `null`, and `if (d)` dropped it without a word, 265 times. Fixed, with the fan-out
+now driven off the harvested IDs.
+
+**`pageSize: 3` still matters, in the opposite direction to the one first claimed.** It is not why
+data is missing. It is why the RE-RUN was dangerous: the ingest upserts on
+`(profile_id, operation)`, so replaying the recorded variables verbatim would have overwritten the
+482 complete workouts with 3. The extractor paginates at 200 now, and `/api/internal/lenus-ingest`
+refuses a write that shrinks a stored payload unless `allowShrink` is set. Verified by
+`.qa-visual/lenus-export-test.mjs`, 22 assertions against a mock Lenus, which fails if either bug is
+reintroduced.
+
+Roster note: Lenus lists **256** clients today against **265** on file. The extra 9 are ours to
+keep, the upsert never deletes; but the roster loader reads from Lenus, not from us, so a client who
+joined after 3 July is picked up.
 
 ### How to run it
 
-1. Load `.planning/lenus-recipes.json`. It carries the endpoint, headers and every query document.
-2. For each of 265 client profile ids, for each per-client operation, loop `offset` with a raised
-   `pageSize`/`limit` until a page returns nothing new.
-3. Import idempotently on `lenus_id`, the pattern proven by `scripts/import-lenus-programs.mjs`.
-4. **Done means:** run it twice, row counts do not move on the second pass.
+The pipeline already exists end to end and does not need rebuilding: the extractor runs in her
+logged-in tab, `postMessage`s each client to `/lenus-bridge` on our origin, which POSTs to
+`/api/internal/lenus-ingest`, which upserts into `lenus.raw_client_extract`. Lenus's CSP is why it
+is shaped that way; see the comments in those three files before changing any of it.
+
+1. `node .qa-visual/lenus-export-test.mjs` first. 22 assertions, no network. If it does not pass, do
+   not paste anything into her browser.
+2. `node scripts/lenus-verify.mjs --snapshot` to record the before state.
+3. Log into `us.lenus.io`, open ANY client (that page load teaches the script every query it needs),
+   paste `scripts/lenus-export.js` into the console, run `lenusExport.start()`, paste
+   `LENUS_INGEST_TOKEN`. Leave the tab open and awake. Watch for any `ids, 0 bodies` warning.
+4. `node scripts/lenus-verify.mjs --checkins` to confirm bodies actually landed, and
+   `--diff <snapshot>` for the run-twice proof.
+5. Then map raw to app tables, idempotent on `lenus_id`, the pattern proven by
+   `scripts/import-lenus-programs.mjs`.
+
+**Done means:** run it twice, row counts do not move on the second pass, and no operation shrank.
+
+**The check-in mapper cannot be written until step 3 has run once.** Its payload shape has never
+been observed, because the call was never successfully made. `node scripts/lenus-verify.mjs --shape
+ClientCheckinDashboardView_checkInResponse` prints keys and types with no values, which is what to
+design `form_responses` promotion against without pasting her members' answers into a chat.
 
 Per-client operations that matter: `ClientWorkoutHistory`, `ClientMeasurements_Profile`,
 `ClientInfoCheckinsContext_CheckInResponses`, `fetchClientChart`, `ChatConversationWeb`,
