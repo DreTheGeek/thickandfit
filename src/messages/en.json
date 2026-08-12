@@ -490,7 +490,14 @@
         "glutes": "Glutes",
         "calves": "Calves",
         "abdominals": "Abdominals",
-        "lats": "Lats"
+        "lats": "Lats",
+        "middleBack": "Middle back",
+        "lowerBack": "Lower back",
+        "forearms": "Forearms",
+        "abductors": "Abductors",
+        "adductors": "Adductors",
+        "traps": "Traps",
+        "neck": "Neck"
       },
       "equipmentTypes": {
         "bodyOnly": "Body only",
@@ -499,11 +506,21 @@
         "machine": "Machine",
         "cable": "Cable",
         "kettlebells": "Kettlebells",
-        "bands": "Bands"
+        "bands": "Bands",
+        "other": "Other",
+        "medicineBall": "Medicine ball",
+        "exerciseBall": "Exercise ball",
+        "foamRoll": "Foam roller",
+        "eZCurlBar": "EZ curl bar"
       },
       "noResults": "No exercises",
       "noResultsBody": "Try a different search or filter.",
-      "demo": "Demo"
+      "demo": "Demo",
+      "difficulty": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "expert": "Advanced"
+      }
     },
     "onboarding": {
       "stepOf": "Step {step} of {total}",

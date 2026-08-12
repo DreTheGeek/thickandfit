@@ -490,7 +490,14 @@
         "glutes": "Glúteos",
         "calves": "Pantorrillas",
         "abdominals": "Abdominales",
-        "lats": "Dorsales"
+        "lats": "Dorsales",
+        "middleBack": "Espalda media",
+        "lowerBack": "Espalda baja",
+        "forearms": "Antebrazos",
+        "abductors": "Abductores",
+        "adductors": "Aductores",
+        "traps": "Trapecios",
+        "neck": "Cuello"
       },
       "equipmentTypes": {
         "bodyOnly": "Peso corporal",
@@ -499,11 +506,21 @@
         "machine": "Máquina",
         "cable": "Cable",
         "kettlebells": "Pesa rusa",
-        "bands": "Bandas"
+        "bands": "Bandas",
+        "other": "Otro",
+        "medicineBall": "Balón medicinal",
+        "exerciseBall": "Pelota de ejercicio",
+        "foamRoll": "Rodillo de espuma",
+        "eZCurlBar": "Barra Z"
       },
       "noResults": "Sin ejercicios",
       "noResultsBody": "Prueba otra búsqueda o filtro.",
-      "demo": "Demo"
+      "demo": "Demo",
+      "difficulty": {
+        "beginner": "Principiante",
+        "intermediate": "Intermedio",
+        "expert": "Avanzado"
+      }
     },
     "onboarding": {
       "stepOf": "Paso {step} de {total}",

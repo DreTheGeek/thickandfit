@@ -30,15 +30,28 @@ const MUSCLES = [
 const EQUIPMENT = [
   'body only', 'barbell', 'dumbbell', 'machine', 'cable', 'kettlebells', 'bands',
 ];
-// slug -> i18n key ('body only' -> 'bodyOnly').
+// slug -> i18n key ('body only' -> 'bodyOnly', 'e-z curl bar' -> 'eZCurlBar').
 const labelKey = (slug: string): string =>
   slug
-    .split(' ')
+    .split(/[\s-]+/)
     .map((w, i) => (i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)))
     .join('');
 
+// Title-case the raw slug as a last resort. The library carries 17 muscle groups, 13 equipment
+// types and 3 difficulty levels, and the catalog will always trail the data by a row or two, so an
+// unlabelled value must degrade to "Middle Back" rather than to a crash or a blank.
+const humanize = (slug: string): string =>
+  slug.replace(/[\s-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
 export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactElement {
   const t = useTranslations('app.library');
+  // t() on a missing key renders the key path itself, which is how "library.muscles.neck" would end
+  // up printed on a card. t.has() is the guard, humanize() is the readable fallback.
+  const label = (slug: string | null | undefined, group: string): string => {
+    if (!slug) return '';
+    const key = `${group}.${labelKey(slug)}`;
+    return t.has(key as never) ? t(key as never) : humanize(slug);
+  };
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState('');
   const [equipment, setEquipment] = useState('');
@@ -132,7 +145,15 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
                 />
               }
               title={(locale === 'es' && ex.name_es) || ex.name_en}
-              sub={[ex.muscle_group, ex.equipment, ex.difficulty]
+              // The filter chips above have always been localized; this subtitle was not, so every
+              // card on a Spanish member's screen read "abdominals · body only · beginner" in
+              // English underneath a Spanish name. Same catalog, same key function, now applied
+              // where she actually reads it.
+              sub={[
+                label(ex.muscle_group, 'muscles'),
+                label(ex.equipment, 'equipmentTypes'),
+                label(ex.difficulty, 'difficulty'),
+              ]
                 .filter(Boolean)
                 .join(' · ')}
             />
