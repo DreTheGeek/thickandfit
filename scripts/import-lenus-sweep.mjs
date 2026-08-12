@@ -17,17 +17,12 @@
 // Run: node scripts/import-lenus-sweep.mjs [--apply]
 
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { makeSql, runBatched } from './lib/mgmt-sql.mjs';
 
 const APPLY = process.argv.includes('--apply');
 const COMPANY = 'c0ffee00-0000-4000-8000-000000000001';
 
-const sql = (q) => {
-  const out = execFileSync('node', ['.qa-visual/sql.cjs', q], { encoding: 'utf8', maxBuffer: 128 * 1024 * 1024 });
-  const parsed = JSON.parse(out);
-  if (parsed && parsed.message) throw new Error(parsed.message);
-  return parsed;
-};
+const sql = makeSql();
 const lit = (v) =>
   v === null || v === undefined || v === '' ? 'null' : typeof v === 'number' ? String(v) : typeof v === 'boolean' ? String(v) : `'${String(v).replace(/'/g, "''")}'`;
 const jlit = (o) => (o == null ? 'null' : `'${JSON.stringify(o).replace(/'/g, "''")}'::jsonb`);
@@ -119,30 +114,12 @@ if (!APPLY) {
   process.exit(0);
 }
 
-const MAX_CHARS = 6000;
-function run(label, statements) {
-  let done = 0;
-  let buf = [];
-  let bufLen = 0;
-  const flush = () => {
-    if (!buf.length) return;
-    sql(buf.join('\n'));
-    done += buf.length;
-    if (done % 500 < buf.length) console.log(`  ${label} ${done}/${statements.length}`);
-    buf = [];
-    bufLen = 0;
-  };
-  for (const st of statements) {
-    if (bufLen + st.length > MAX_CHARS) {
-      flush();
-      execFileSync(process.execPath, ['-e', 'setTimeout(() => {}, 120)']);
-    }
-    buf.push(st);
-    bufLen += st.length;
-  }
-  flush();
-  console.log(`${label}: applied ${done}`);
-}
+const run = (label, statements) =>
+  runBatched(sql, label, statements, {
+    onProgress: (done, total) => {
+      if (done % 500 < 10) console.log(`  ${label} ${done}/${total}`);
+    },
+  });
 
 run(
   'contacts',
