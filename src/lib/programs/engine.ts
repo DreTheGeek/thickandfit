@@ -96,7 +96,7 @@ export async function getProgram(companyId: string, planId: string) {
   if (sessionIds.length) {
     const { data: exs } = await supabase
       .from('session_exercises')
-      .select('session_id, exercise_id, format, sets, reps, time_sec, weight, rest_sec, rounds, notes, sort_order')
+      .select('session_id, exercise_id, format, sets, reps, reps_min, reps_max, time_sec, weight, rest_sec, rounds, notes, sort_order, group_key, group_kind, is_amrap')
       .in('session_id', sessionIds)
       .order('sort_order', { ascending: true });
     for (const e of exs ?? []) {

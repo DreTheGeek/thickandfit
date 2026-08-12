@@ -14,9 +14,14 @@ type SessionExercise = {
   exercise_id: string;
   sets: number | null;
   reps: number | null;
+  reps_min: number | null;
+  reps_max: number | null;
   weight: number | null;
   rest_sec: number | null;
   notes: string | null;
+  group_key: string | null;
+  group_kind: string | null;
+  is_amrap: boolean | null;
 };
 
 export default async function WorkoutPage({
@@ -104,6 +109,11 @@ export default async function WorkoutPage({
       weight: e.weight,
       rest_sec: e.rest_sec,
       notes: e.notes,
+      repsMin: e.reps_min,
+      repsMax: e.reps_max,
+      isAmrap: e.is_amrap === true,
+      groupKey: e.group_key,
+      groupKind: e.group_kind,
       // "Include exercise instructions in client app" (coach settings). Dropped at the boundary
       // rather than hidden in the player, so the coaching cues are not sitting in the page payload
       // for anyone who opens the network tab after she turned them off.

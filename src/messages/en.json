@@ -737,7 +737,10 @@
       "untitled": "Exercise",
       "saveFailed": "That did not save. Your sets are still here, tap to try again.",
       "saving": "Saving…",
-      "tryAgain": "Try again"
+      "tryAgain": "Try again",
+      "supersetOf": "Superset {pos} of {total}",
+      "thenStraightInto": "Then straight into",
+      "amrap": "AMRAP"
     },
     "coach": {
       "overview": "Overview",

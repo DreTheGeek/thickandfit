@@ -737,7 +737,10 @@
       "untitled": "Ejercicio",
       "saveFailed": "No se guardó. Tus series siguen aquí, toca para reintentar.",
       "saving": "Guardando…",
-      "tryAgain": "Reintentar"
+      "tryAgain": "Reintentar",
+      "supersetOf": "Superserie {pos} de {total}",
+      "thenStraightInto": "Y de una vez",
+      "amrap": "Máximo de reps"
     },
     "coach": {
       "overview": "Resumen",

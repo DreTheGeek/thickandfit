@@ -48,6 +48,16 @@ export type PlayerExercise = {
   muscle: string | null;
   muscleKey: string | null;
   video_mux_id: string | null;
+  /**
+   * Prescription detail imported from her Lenus programming. 1,531 of her 2,497 exercises sit
+   * inside a superset and nothing in the app said so, which meant a member performed them as
+   * straight sets with full rest: a different workout from the one she wrote.
+   */
+  repsMin: number | null;
+  repsMax: number | null;
+  isAmrap: boolean;
+  groupKey: string | null;
+  groupKind: string | null;
   overload: OverloadHint | null;
   // All-time bests for PR detection (Epley e1RM for weighted, max reps for bodyweight).
   bestE1rm: number | null;
@@ -316,6 +326,24 @@ export function WorkoutPlayer({
     }
   }, [ex, setNum, totalSets, idx, exercises, reps, weight, difficulty, fire]);
 
+  // SUPERSET CONTEXT. Everything sharing a group_key is performed back to back, so the member needs
+  // to know before she starts the set, not after. Without this the app rendered her supersets as
+  // straight sets and a member would rest between them, which is a different training stimulus from
+  // the one Stephanie wrote.
+  const groupMates = ex?.groupKey
+    ? exercises.filter((e) => e.groupKey === ex.groupKey)
+    : [];
+  const groupPos = ex?.groupKey ? groupMates.findIndex((e) => e.exercise_id === ex.exercise_id) + 1 : 0;
+  const nextInGroup = groupPos > 0 && groupPos < groupMates.length ? groupMates[groupPos] : null;
+
+  // Her prescription, in her words. A range is what she actually writes; a single number is the
+  // target. AMRAP is neither, and must not be shown as a rep count.
+  const targetLabel = ex?.isAmrap
+    ? t('amrap')
+    : ex?.repsMin != null && ex?.repsMax != null && ex.repsMax !== ex.repsMin
+      ? `${ex.repsMin}-${ex.repsMax}`
+      : null;
+
   const muscleLabel = ex?.muscle ?? null;
   const cueLines = ex?.cues
     ? ex.cues
@@ -356,6 +384,14 @@ export function WorkoutPlayer({
             <div className="text-[14px] font-semibold">{ex.name}</div>
             <div className="text-[11px] text-white/70">
               {idx + 1} / {exercises.length} · {dayLabel}
+              {groupMates.length > 1 && (
+                <>
+                  {' · '}
+                  <span className="font-semibold text-accent">
+                    {t('supersetOf', { pos: groupPos, total: groupMates.length })}
+                  </span>
+                </>
+              )}
             </div>
           </div>
           {/* Total elapsed workout time. */}
@@ -422,7 +458,10 @@ export function WorkoutPlayer({
         {/* Steppers */}
         <div className="mt-[26px] flex items-center justify-between gap-3.5">
           <Stepper
-            label={t('reps')}
+            // Her prescription in the label, so the stepper is measured against what she wrote
+            // rather than floating free. "REPS 12-15" is the instruction; the number below is the
+            // attempt.
+            label={targetLabel ? `${t('reps')} ${targetLabel}` : t('reps')}
             value={String(reps)}
             onDec={() => setReps((r) => Math.max(0, r - 1))}
             onInc={() => setReps((r) => r + 1)}
@@ -471,6 +510,18 @@ export function WorkoutPlayer({
             >
               {t('skipRest')}
             </button>
+          </div>
+        )}
+
+        {/* What she goes straight into. Placed above the rest timer's territory on purpose: the
+            whole point of a superset is that there is no rest here, and naming the next movement is
+            what lets her set up for it before she finishes this one. */}
+        {nextInGroup && (
+          <div className="mt-4 rounded-xl bg-warm px-4 py-3 text-center">
+            <span className="text-[11px] font-semibold uppercase tracking-[1px] text-faint">
+              {t('thenStraightInto')}
+            </span>
+            <div className="mt-0.5 text-[15px] font-semibold text-ink">{nextInGroup.name}</div>
           </div>
         )}
 
