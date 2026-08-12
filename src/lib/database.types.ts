@@ -5172,6 +5172,13 @@ export type Database = {
       }
       session_exercises: {
         Row: {
+          group_key: string | null
+          group_kind: string | null
+          reps_min: number | null
+          reps_max: number | null
+          pct_1rm: number | null
+          is_amrap: boolean
+          tempo: string | null
           company_id: string
           config: Json
           created_at: string
@@ -5189,6 +5196,13 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          group_key?: string | null
+          group_kind?: string | null
+          reps_min?: number | null
+          reps_max?: number | null
+          pct_1rm?: number | null
+          is_amrap?: boolean
+          tempo?: string | null
           company_id: string
           config?: Json
           created_at?: string
@@ -5206,6 +5220,13 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          group_key?: string | null
+          group_kind?: string | null
+          reps_min?: number | null
+          reps_max?: number | null
+          pct_1rm?: number | null
+          is_amrap?: boolean
+          tempo?: string | null
           company_id?: string
           config?: Json
           created_at?: string
