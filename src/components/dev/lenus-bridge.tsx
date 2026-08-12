@@ -84,6 +84,29 @@ export function LenusBridge(): ReactElement {
       <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 16 }}>
         {ready ? 'Listening' : 'Starting'} for payloads from {LENUS_ORIGIN}. Leave this tab open.
       </p>
+
+      {/* THE EXPORT TAB HAS TO BE OPENED FROM HERE, not the other way round. postMessage needs a
+          window handle, and the only handle a page gets for free is window.opener. Opening Lenus
+          from this button makes this page its opener, so the extractor can post back without us
+          hunting for a reference. It also has to be a real click: window.open() from a script with
+          no user gesture is popup-blocked and returns null, which is exactly what happened the
+          first time. */}
+      <button
+        type="button"
+        onClick={() => window.open(`${LENUS_ORIGIN}/dashboard/clients`, 'lenusExport')}
+        style={{
+          marginBottom: 20,
+          padding: '10px 18px',
+          fontSize: 13,
+          fontWeight: 600,
+          borderRadius: 8,
+          border: '1px solid currentColor',
+          background: 'transparent',
+          cursor: 'pointer',
+        }}
+      >
+        Open Lenus export tab
+      </button>
       <p style={{ fontSize: 14, marginBottom: 16 }}>
         <strong>{ok}</strong> clients stored
         {failed > 0 && (

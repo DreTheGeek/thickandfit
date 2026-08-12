@@ -97,6 +97,9 @@ const SECTIONS: NavSection[] = [
       { key: 'navClientApp', href: '/coach/settings/client-app', icon: 'grid' },
       { key: 'navCoachingPrefs', href: '/coach/settings/coaching', icon: 'ruler' },
       { key: 'navKnowledge', href: '/coach/settings/knowledge', icon: 'sparkles' },
+      // Sits beside the knowledge base because that is where she teaches it; this is where she sees
+      // what it did with what she taught.
+      { key: 'navMethod', href: '/coach/method', icon: 'pulse' },
     ],
   },
 ];
