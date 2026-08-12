@@ -85,6 +85,11 @@ ios/DerivedData/
 /dev.log
 /0
 
-# Supabase CLI local state. cli-latest and linked-project.json are already tracked and stay that
-# way; everything else here is per-machine (pooler URL, installed component versions).
-supabase/.temp/
+# Supabase CLI local state: per-machine (pooler URL, installed component versions). The two
+# negations are files already tracked before this rule existed; without them git refuses to stage
+# their edits, and they would sit dirty forever.
+# The trailing /* matters: excluding the DIRECTORY makes git skip it entirely and a negation
+# inside can never re-include anything. Exclude the contents instead, then negate.
+supabase/.temp/*
+!supabase/.temp/cli-latest
+!supabase/.temp/linked-project.json

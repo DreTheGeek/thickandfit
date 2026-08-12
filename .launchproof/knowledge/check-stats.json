@@ -2,14 +2,15 @@
   "db:rls-permissive-policy": {
     "kept": 28,
     "dismissed": 0,
-    "runs": 2,
-    "seen": 14
+    "runs": 5,
+    "seen": 35,
+    "autoSuppressed": 21
   },
   "db:fk-missing": {
     "kept": 17,
     "dismissed": 0,
-    "runs": 2,
-    "seen": 2
+    "runs": 5,
+    "seen": 5
   },
   "db:excess-superuser-role": {
     "kept": 2,
@@ -19,20 +20,21 @@
   "db:empty-table": {
     "kept": 29,
     "dismissed": 0,
-    "runs": 2,
-    "seen": 2
+    "runs": 5,
+    "seen": 5
   },
   "orphans:orphan-route": {
     "kept": 20,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 3
+    "runs": 4,
+    "seen": 9,
+    "autoSuppressed": 3
   },
   "orphans:route-coverage": {
     "kept": 4,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 1
+    "runs": 4,
+    "seen": 4
   },
   "expectations:orphaned-server-capability": {
     "kept": 2,
@@ -43,14 +45,15 @@
   "crawl:dead-control": {
     "kept": 71,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 53
+    "runs": 3,
+    "seen": 56,
+    "autoSuppressed": 2
   },
   "a11y:a11y-color-contrast": {
     "kept": 3,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 1
+    "runs": 2,
+    "seen": 2
   },
   "completeness:dead-end-shell": {
     "kept": 2,
@@ -61,18 +64,21 @@
   "completeness:empty-page": {
     "kept": 3,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 4
   },
   "visual:visual-regression": {
     "kept": 28,
     "dismissed": 0,
-    "runs": 0
+    "runs": 1,
+    "seen": 14,
+    "autoSuppressed": 2
   },
   "analytics:analytics-missing": {
     "kept": 1,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 2
+    "runs": 2,
+    "seen": 4
   },
   "crawl:error-on-actuate": {
     "kept": 1,
@@ -95,14 +101,14 @@
   "seo:missing-og": {
     "kept": 8,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 8
+    "runs": 4,
+    "seen": 11
   },
   "seo:public-noindex": {
     "kept": 1,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 1
+    "runs": 4,
+    "seen": 10
   },
   "seo:duplicate-title": {
     "kept": 4,
@@ -124,20 +130,23 @@
   "db:pii-plaintext": {
     "kept": 1,
     "dismissed": 0,
-    "runs": 2,
-    "seen": 2
+    "runs": 5,
+    "seen": 5,
+    "autoSuppressed": 3
   },
   "db:rls-owner-unscoped": {
     "kept": 0,
     "dismissed": 0,
-    "runs": 2,
-    "seen": 8
+    "runs": 5,
+    "seen": 20,
+    "autoSuppressed": 12
   },
   "db:nullable-tenant-column": {
     "kept": 0,
     "dismissed": 0,
-    "runs": 2,
-    "seen": 26
+    "runs": 5,
+    "seen": 56,
+    "autoSuppressed": 30
   },
   "simulate:flow-not-completed": {
     "kept": 0,
@@ -160,14 +169,14 @@
   "chaos:chaos-uncaught-error": {
     "kept": 0,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 10
+    "runs": 2,
+    "seen": 12
   },
   "aeo:weak-geo-signals": {
     "kept": 0,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 1
+    "runs": 4,
+    "seen": 4
   },
   "aeo:no-llms-txt": {
     "kept": 0,
@@ -208,16 +217,41 @@
   "deploy-drift:deploy-drift-undeployed": {
     "kept": 0,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 1
+    "runs": 4,
+    "seen": 4
   },
   "wiring:empty-catch": {
     "kept": 0,
     "dismissed": 0,
-    "runs": 1,
-    "seen": 7
+    "runs": 4,
+    "seen": 19,
+    "autoSuppressed": 9
   },
   "payments:live-payment-key": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 1
+  },
+  "crawl:auth-not-established": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 2,
+    "seen": 3
+  },
+  "completeness:placeholder-content": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 2
+  },
+  "visual:visual-baseline-set": {
+    "kept": 0,
+    "dismissed": 0,
+    "runs": 1,
+    "seen": 18
+  },
+  "a11y:a11y-svg-img-alt": {
     "kept": 0,
     "dismissed": 0,
     "runs": 1,
