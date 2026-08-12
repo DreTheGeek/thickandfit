@@ -3,7 +3,7 @@
 // Weight entry card for the You screen. Subscriber types a weight, picks lb/kg, logs it.
 // Writes via logWeightAction -> weight_entries (feeds the AI coach context + the goal ring).
 import { useState, useTransition, type ReactElement } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { logWeightAction } from '@/lib/coach-ai/weight-actions';
 
@@ -17,6 +17,16 @@ export function WeightLogCard({
   recordedOn: string | null;
 }): ReactElement {
   const t = useTranslations('app.you');
+  const locale = useLocale();
+  // The stored value is a plain calendar date (recorded_on is a DATE column, no time, no zone), so
+  // it is formatted in UTC on purpose. Parsing "2026-07-01" as a local instant shifts it a day
+  // backwards for anyone west of Greenwich, which would show a member the wrong day for her own
+  // weigh-in.
+  const recordedLabel = recordedOn
+    ? new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(
+        new Date(`${recordedOn}T00:00:00Z`),
+      )
+    : '';
   const [value, setValue] = useState('');
   const [unit, setUnit] = useState<Unit>('lb');
   const [status, setStatus] = useState<'idle' | 'ok' | 'error'>('idle');
@@ -49,7 +59,7 @@ export function WeightLogCard({
         </span>
         {latestLb != null && (
           <span className="text-[11px] text-faint">
-            {t('lastLogged', { weight: `${latestLb} lb`, date: recordedOn ?? '' })}
+            {t('lastLogged', { weight: `${latestLb} lb`, date: recordedLabel })}
           </span>
         )}
       </div>
