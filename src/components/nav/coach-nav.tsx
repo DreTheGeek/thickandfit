@@ -80,6 +80,10 @@ const SECTIONS: NavSection[] = [
     headerKey: 'bucketToolbox',
     items: [
       { key: 'toolExercises', href: '/coach/exercises', icon: 'dumbbell' },
+      // Beside the exercise library because it is a job about that library, but deliberately NOT at
+      // /coach/exercises/spanish: isActive() matches on prefix, so a child route of an item already
+      // in this list lights up both rows at once.
+      { key: 'navSpanish', href: '/coach/spanish', icon: 'book' },
       { key: 'forms', href: '/coach/forms', icon: 'file' },
       { key: 'toolMealPlans', href: '/coach/tool/meal-plans', icon: 'nutrition' },
       { key: 'toolRecipeBooks', href: '/coach/tool/recipe-books', icon: 'book' },
