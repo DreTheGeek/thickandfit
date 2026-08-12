@@ -143,14 +143,27 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
   );
 
   // Touch the session so @supabase/ssr refreshes + re-writes the auth cookies via setAll.
-  await supabase.auth.getUser();
+  const {
+    data: { user: sessionUser },
+  } = await supabase.auth.getUser();
 
   // The URL is authoritative in BOTH directions, and that symmetry is the point. /es writes es so a
   // visitor arriving from Spanish search stays in Spanish through /join and sign-in, which have no
   // Spanish twin. The English twin writes en so the nav toggle actually works: without it, /es set a
   // one-year cookie, nothing ever cleared it, and clicking EN landed on / which still rendered
   // Spanish. One way in, no way out, and the English canonical URL served Spanish to crawlers.
-  const urlLocale = urlLocaleFor(req.nextUrl.pathname);
+  //
+  // NOT for someone who is signed in. This inference exists to carry an ANONYMOUS visitor's arrival
+  // language through /join and sign-in. A member with an account has already stated her language,
+  // it is on her profile, and sign-in applies it; the URL she happened to open must not overrule it.
+  //
+  // It was overruling it, on the most common path there is. `/` is a bilingual path whose URL locale
+  // is `en`, `/` does not redirect a signed-in member anywhere, and manifest.json has
+  // "start_url": "/". So a Spanish member who installed the app to her home screen, which is the
+  // whole point of a phone-first product, had her entire app flip to English on EVERY launch.
+  // Tapping a bare link to the domain from an email or a bio did the same. Reproduced as a real
+  // subscriber: cookie es, fetch `/`, cookie en, and every screen after that in English.
+  const urlLocale = sessionUser ? null : urlLocaleFor(req.nextUrl.pathname);
   if (urlLocale) {
     // SESSION cookie, deliberately. Reading a page is not the same as choosing a language.
     //
