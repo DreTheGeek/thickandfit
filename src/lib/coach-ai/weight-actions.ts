@@ -25,7 +25,15 @@ export async function logWeightAction(input: unknown): Promise<WeightLogResult> 
   const ctx = await requireAuth();
   // Convert to canonical kg, clamp to a sane human range so a bad unit toggle can't poison the trend.
   const kg = parsed.data.unit === 'lb' ? parsed.data.weight * LB_TO_KG : parsed.data.weight;
-  const weightKg = Math.round(kg * 10) / 10;
+  // Three decimals (one gram), not one.
+  //
+  // Rounding the canonical kg to 0.1 was fine for a member who weighs in kg and wrong for everyone
+  // else: 0.05 kg is 0.11 lb, so a US member typing 154.4 got 70.0 kg stored and 154.3 read back.
+  // Observed exactly that on a real account. Silently changing the number she just typed is a bad
+  // property in any field and a worse one in a weight tracker, where the whole point is that small
+  // moves are real. The column is unconstrained numeric, so the extra places cost nothing, and a
+  // gram is far below the noise floor of a bathroom scale, so this is not false precision either.
+  const weightKg = Math.round(kg * 1000) / 1000;
   if (weightKg < 20 || weightKg > 500) return { ok: false, error: 'invalid' };
 
   const sb = await createClient();
