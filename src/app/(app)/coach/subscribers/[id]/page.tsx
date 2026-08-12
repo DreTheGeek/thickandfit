@@ -108,7 +108,9 @@ export default async function CoachSubscriberPage({
       createdAt: profile.created_at,
     }),
     getClientHabits(id, tz),
-    getClientCheckin(ctx.companyId, id),
+    // Both keys: this page is reached by profile id, but the check-ins and progress photos
+    // migrated from Lenus are keyed to the contact.
+    getClientCheckin(ctx.companyId, { profileId: id, contactId }),
   ]);
 
   const targets = (onb?.computed_targets ?? null) as Targets | null;

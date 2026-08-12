@@ -9,6 +9,24 @@ const PHOTO_BUCKET = 'progress-photos';
 const SIGNED_TTL_SECONDS = 60 * 60;
 const KG_TO_LB = 2.20462;
 
+/**
+ * Who the check-in belongs to.
+ *
+ * BOTH keys, always. `profile_id` is set only once a member claims an app account; every row
+ * migrated from Lenus carries `contact_id` and a null profile. Querying one key showed half the
+ * history, and after the August sweep that meant 851 of 853 check-ins and 2,286 of 2,289 progress
+ * photos were invisible to the coach: imported, indexed, and unreachable.
+ */
+export type CheckinOwner = { profileId?: string | null; contactId?: string | null };
+
+/** PostgREST `or` filter over whichever keys we actually have. Null when we have neither. */
+function ownerFilter(owner: CheckinOwner): string | null {
+  const parts: string[] = [];
+  if (owner.profileId) parts.push(`profile_id.eq.${owner.profileId}`);
+  if (owner.contactId) parts.push(`contact_id.eq.${owner.contactId}`);
+  return parts.length ? parts.join(',') : null;
+}
+
 export type CheckinField = { label: string; type: string; value: string };
 export type CheckinPhoto = { id: string; url: string | null; pose: string | null; takenOn: string; weightLb: number | null };
 export type ClientCheckin = {
@@ -37,13 +55,15 @@ function fmtAnswer(type: string, value: unknown): string {
  * photo URLs it already loads elsewhere. getClientCheckin below still returns both, for the
  * check-in queue that genuinely wants the photos beside the answers.
  */
-export async function getLatestCheckin(companyId: string, profileId: string): Promise<ClientCheckin['latest']> {
+export async function getLatestCheckin(companyId: string, owner: CheckinOwner): Promise<ClientCheckin['latest']> {
+  const filter = ownerFilter(owner);
+  if (!filter) return null;
   const sb = createServiceClient();
   const { data: resp } = await sb
     .from('form_responses')
     .select('id, form_id, answers, submitted_at, forms!inner(type)')
     .eq('company_id', companyId)
-    .eq('profile_id', profileId)
+    .or(filter)
     .eq('forms.type', 'check_in')
     .order('submitted_at', { ascending: false })
     .limit(1)
@@ -62,7 +82,9 @@ export async function getLatestCheckin(companyId: string, profileId: string): Pr
   return { submittedAt: row.submitted_at, fields };
 }
 
-export async function getClientCheckin(companyId: string, profileId: string): Promise<ClientCheckin> {
+export async function getClientCheckin(companyId: string, owner: CheckinOwner): Promise<ClientCheckin> {
+  const filter = ownerFilter(owner);
+  if (!filter) return { latest: null, photos: [] };
   const sb = createServiceClient();
 
   // Latest check-in submission (join forms to restrict to type=check_in).
@@ -70,7 +92,7 @@ export async function getClientCheckin(companyId: string, profileId: string): Pr
     .from('form_responses')
     .select('id, form_id, answers, submitted_at, forms!inner(type)')
     .eq('company_id', companyId)
-    .eq('profile_id', profileId)
+    .or(filter)
     .eq('forms.type', 'check_in')
     .order('submitted_at', { ascending: false })
     .limit(1)
@@ -95,7 +117,7 @@ export async function getClientCheckin(companyId: string, profileId: string): Pr
     .from('progress_photos')
     .select('id, storage_path, taken_on, pose, weight_kg')
     .eq('company_id', companyId)
-    .eq('profile_id', profileId)
+    .or(filter)
     .order('taken_on', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(12);
