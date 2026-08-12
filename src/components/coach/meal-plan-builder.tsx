@@ -4,12 +4,14 @@
 // structured plan the client renders: kcal-budgeted slots -> recipe OPTIONS -> raw-weight ingredients,
 // per-recipe macros, a tip, and steps. Controlled top-down: each level owns its immutable onChange, so
 // the parent never threads deep indices. Saves via saveStructuredPlanAction. See meal-plan-method.
-import { useState, useTransition, type ReactElement } from 'react';
+import { useMemo, useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { saveStructuredPlanAction } from '@/lib/coach/meal-plan-actions';
 import { blankRecipe, blankSlot, type PlanIngredient, type PlanRecipe, type PlanSlot } from '@/lib/coach/meal-plan-structured';
 import { Icon } from '@/components/ui/icons';
+import { MacroPlanner } from '@/components/coach/macro-planner';
+import type { SlotTotals } from '@/lib/meal-plans/macros';
 
 export type BuilderInitial = {
   planId: string | null;
@@ -325,6 +327,34 @@ export function MealPlanBuilder({ initial }: { initial: BuilderInitial }): React
   const m = plan.macros;
   const setM = (patch: Partial<typeof m>): void => setPlan({ ...plan, macros: { ...m, ...patch } });
 
+  /**
+   * What the meals she has actually written add up to.
+   *
+   * A recipe's calories are taken as ENTERED, not recomputed from its macros. Her own protocol is
+   * 134/151/39 at a stated 1,555 kcal where 4/4/9 gives 1,491, because both figures come off food
+   * labels. Deriving one from the other would report her real plan as wrong. Only when a recipe has
+   * no calories at all does this fall back to Atwater, which is a genuine estimate rather than an
+   * override of something she typed.
+   */
+  const slotTotals: SlotTotals[] = useMemo(
+    () =>
+      plan.slots.map((slot) =>
+        slot.recipes.reduce<SlotTotals>(
+          (acc, r) => ({
+            proteinG: acc.proteinG + (r.macros?.proteinG ?? 0),
+            carbG: acc.carbG + (r.macros?.carbG ?? 0),
+            fatG: acc.fatG + (r.macros?.fatG ?? 0),
+            kcal:
+              acc.kcal +
+              (r.kcal ??
+                (r.macros ? r.macros.proteinG * 4 + r.macros.carbG * 4 + r.macros.fatG * 9 : 0)),
+          }),
+          { proteinG: 0, carbG: 0, fatG: 0, kcal: 0 },
+        ),
+      ),
+    [plan.slots],
+  );
+
   function save(): void {
     setStatus('idle');
     start(async () => {
@@ -378,6 +408,14 @@ export function MealPlanBuilder({ initial }: { initial: BuilderInitial }): React
           <p className="mt-1 text-[12px] text-faint">{t('mbNotesHint')}</p>
         </div>
       </div>
+
+      {/* Planning layer: splits, tolerance, and whether the meals below match the header above. */}
+      <MacroPlanner
+        calories={plan.calorieTarget}
+        macros={plan.macros}
+        slotTotals={slotTotals}
+        onApply={(next) => setPlan({ ...plan, calorieTarget: next.calories, macros: next.macros })}
+      />
 
       {/* Slots */}
       {plan.slots.map((s, si) => (
