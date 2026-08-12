@@ -1503,7 +1503,15 @@
       "mpNoMeals": "Add a meal and this checks it against your target.",
       "mpInTolerance": "The meals match your target, within ±{flex}%.",
       "mpOutOfTolerance": "The meals do not match your target at ±{flex}%. Adjust the meals, the target, or the flexibility.",
-      "mpAtwaterNote": "Your macros multiply to {fromMacros} kcal against a {target} kcal target. That is normal when calories come from labels; both numbers are kept as you entered them."
+      "mpAtwaterNote": "Your macros multiply to {fromMacros} kcal against a {target} kcal target. That is normal when calories come from labels; both numbers are kept as you entered them.",
+      "mpActivity_sedentary": "Sedentary",
+      "mpActivity_light": "Lightly active",
+      "mpActivity_moderate": "Moderate",
+      "mpActivity_high": "Very active",
+      "mpActivity_athlete": "Athlete",
+      "mpRecommends": "Maintenance about {tdee} kcal, so start her at {target}.",
+      "mpUseThis": "Use this",
+      "mpFloored": "Raised to {min} kcal, the lowest this tool will set."
     },
     "you": {
       "title": "You",

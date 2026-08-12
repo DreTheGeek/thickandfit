@@ -190,3 +190,54 @@ export function reconcile(target: Macros, calories: number, slots: SlotTotals[],
       inBand(actual.fatG, target.fatG),
   };
 }
+
+// ---------------------------------------------------------------------------------------------
+// Turning the number we HAVE into the number she needs.
+// ---------------------------------------------------------------------------------------------
+//
+// On the live database 265 clients have a BMR and exactly ONE has a TDEE, because the Lenus intake
+// never asked an activity question we can score. So a "recommended intake" keyed off TDEE would be
+// blank for 264 of 265 people, which is a feature that exists only in a demo.
+//
+// BMR x an activity multiplier the coach picks IS answerable for all of them, and picking it is a
+// judgement she is qualified to make and we are not. So the multiplier is an input, never a guess.
+
+export const ACTIVITY_LEVELS = [
+  { key: 'sedentary', pal: 1.2 },
+  { key: 'light', pal: 1.375 },
+  { key: 'moderate', pal: 1.55 },
+  { key: 'high', pal: 1.725 },
+  { key: 'athlete', pal: 1.9 },
+] as const;
+
+export type ActivityKey = (typeof ACTIVITY_LEVELS)[number]['key'];
+
+/**
+ * Deficit and surplus as PERCENTAGES of maintenance, not flat calorie offsets.
+ *
+ * A flat -500 is a 20% cut for a 2,500 kcal maintenance and a 36% cut for 1,400, which is how
+ * smaller women end up on dangerous targets from a rule of thumb built for larger ones. Half her
+ * audience sits at the low end, so the percentage form is the safe one.
+ */
+export const GOAL_ADJUST: Record<'lose' | 'maintain' | 'gain', number> = {
+  lose: -0.2,
+  maintain: 0,
+  gain: 0.1,
+};
+
+/** A hard floor. Below this a plan needs supervision we are not providing through a builder. */
+export const MIN_SAFE_KCAL = 1200;
+
+export type Recommendation = {
+  tdee: number;
+  target: number;
+  /** True when the goal-adjusted number was raised to the floor. */
+  flooredToMinimum: boolean;
+};
+
+export function recommendIntake(bmr: number, pal: number, goal: 'lose' | 'maintain' | 'gain'): Recommendation {
+  const tdee = Math.round(bmr * pal);
+  const raw = Math.round(tdee * (1 + GOAL_ADJUST[goal]));
+  const target = Math.max(MIN_SAFE_KCAL, raw);
+  return { tdee, target, flooredToMinimum: target > raw };
+}

@@ -19,6 +19,9 @@ import {
   distribute,
   reconcile,
   SPLIT_TEMPLATES,
+  recommendIntake,
+  ACTIVITY_LEVELS,
+  MIN_SAFE_KCAL,
   FLEX_MIN,
   FLEX_MAX,
 } from '../src/lib/meal-plans/macros';
@@ -121,6 +124,28 @@ ok('an empty plan is not within tolerance', !reconcile(protocol, 1555, [], 5).wi
 const herGap = reconcile(protocol, 1555, [{ ...protocol, kcal: 1555 }], 5);
 check('her label calories are preserved, not recomputed from macros', herGap.actual.kcal, 1555);
 check('Atwater on her macros really is 64 short', kcalFromMacros(protocol), 1491);
+
+
+// --- recommended intake, derived from BMR --------------------------------------------------------
+// 265 clients have a BMR and exactly ONE has a TDEE, so a recommendation must start from BMR or it
+// is blank for 264 people.
+const rec = recommendIntake(1400, 1.375, 'lose');
+check('TDEE is BMR x PAL', rec.tdee, 1925);
+check('a cut is a percentage of maintenance', rec.target, 1540);
+ok('a normal cut is not floored', !rec.flooredToMinimum);
+
+// A flat -500 would put a small woman on 900 kcal. The percentage form plus a floor prevents that,
+// and the floor is REPORTED so the coach knows her number was moved rather than silently accepted.
+const tiny = recommendIntake(900, 1.2, 'lose');
+ok('a very small maintenance is floored', tiny.flooredToMinimum);
+check('the floor is the documented minimum', tiny.target, MIN_SAFE_KCAL);
+
+check('maintain returns maintenance', recommendIntake(1500, 1.55, 'maintain').target, Math.round(1500 * 1.55));
+ok('a surplus is above maintenance', recommendIntake(1500, 1.55, 'gain').target > Math.round(1500 * 1.55));
+ok('every activity level is a plausible multiplier', ACTIVITY_LEVELS.every((a) => a.pal >= 1.2 && a.pal <= 1.9));
+
+// Sanity against her real work: a typical client lands near the 1,555 she actually writes.
+ok('a typical client lands near her real protocol', Math.abs(recommendIntake(1400, 1.375, 'lose').target - 1555) < 100);
 
 console.log(`meal macros: ${pass} passed, ${failures.length} failed`);
 if (failures.length) {

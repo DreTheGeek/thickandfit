@@ -11,6 +11,10 @@ import {
   flexRange,
   reconcile,
   kcalFromMacros,
+  recommendIntake,
+  ACTIVITY_LEVELS,
+  MIN_SAFE_KCAL,
+  type ActivityKey,
   type Macros,
   type SlotTotals,
 } from '@/lib/meal-plans/macros';
@@ -36,6 +40,7 @@ export function MacroPlanner({
   pal,
   allergies,
   avoid,
+  goal,
 }: {
   calories: number | null;
   macros: Macros;
@@ -47,11 +52,22 @@ export function MacroPlanner({
   pal?: number | null;
   allergies?: string | null;
   avoid?: string[];
+  /** Her stored goal, so a recommendation cuts or builds in the right direction. */
+  goal?: 'lose' | 'maintain' | 'gain' | null;
 }): ReactElement {
   const t = useTranslations('app.coach');
   const [flex, setFlex] = useState(5);
+  const [activity, setActivity] = useState<ActivityKey | null>(null);
 
   const target = calories ?? 0;
+  // Only once she has picked a multiplier. Defaulting to 'moderate' would put a number on screen
+  // that looks derived from the client's data when half of it is our assumption.
+  const rec = useMemo(() => {
+    if (bmr == null || activity == null) return null;
+    const level = ACTIVITY_LEVELS.find((a) => a.key === activity);
+    if (!level || goal == null) return null;
+    return recommendIntake(bmr, level.pal, goal);
+  }, [bmr, activity, goal]);
   const split = useMemo(() => gramsToSplit(macros), [macros]);
   const recon = useMemo(() => reconcile(macros, target, slotTotals, flex), [macros, target, slotTotals, flex]);
 
@@ -78,6 +94,51 @@ export function MacroPlanner({
           {tdee != null && row(t('mpTdee'), `${Math.round(tdee)} kcal${pal != null ? ` · PAL ${pal.toFixed(2)}` : ''}`)}
           {allergies && row(t('mpAllergies'), allergies)}
           {(avoid?.length ?? 0) > 0 && row(t('mpAvoid'), (avoid ?? []).join(', '))}
+
+          {/* Recommendation, derived from BMR rather than TDEE.
+              265 of her clients have a BMR and exactly ONE has a TDEE, because the Lenus intake
+              never asked an activity question we can score. Keying this off TDEE would leave it
+              blank for 264 people. The multiplier is HER pick, not our guess: how active a client
+              really is, is a coaching judgement. */}
+          {bmr != null && (
+            <div className="mt-2 flex flex-col gap-2">
+              <div className="flex flex-wrap gap-1.5">
+                {ACTIVITY_LEVELS.map((a) => (
+                  <button
+                    key={a.key}
+                    type="button"
+                    onClick={() => setActivity(a.key)}
+                    aria-pressed={activity === a.key}
+                    className={[
+                      'tf-press rounded-full border px-2.5 py-1 text-[11px] font-semibold',
+                      activity === a.key ? 'border-ink bg-ink text-bg' : 'border-line text-soft',
+                    ].join(' ')}
+                  >
+                    {t(`mpActivity_${a.key}`)}
+                  </button>
+                ))}
+              </div>
+              {rec && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[12px] text-muted">
+                    {t('mpRecommends', { tdee: rec.tdee, target: rec.target })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onApply({ calories: rec.target, macros: splitToGrams(rec.target, SPLIT_TEMPLATES[0]) })}
+                    className="tf-press rounded-full bg-ink px-3 py-1 text-[11px] font-semibold text-bg"
+                  >
+                    {t('mpUseThis')}
+                  </button>
+                  {/* Said out loud when it happens. A silently raised target is a coach thinking she
+                      prescribed something she did not. */}
+                  {rec.flooredToMinimum && (
+                    <span className="text-[11px] text-alert-ink">{t('mpFloored', { min: MIN_SAFE_KCAL })}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -1503,7 +1503,15 @@
       "mpNoMeals": "Agrega una comida y esto la compara con tu meta.",
       "mpInTolerance": "Las comidas coinciden con tu meta, dentro de ±{flex}%.",
       "mpOutOfTolerance": "Las comidas no coinciden con tu meta a ±{flex}%. Ajusta las comidas, la meta o la flexibilidad.",
-      "mpAtwaterNote": "Tus macros multiplican a {fromMacros} kcal frente a una meta de {target} kcal. Es normal cuando las calorías vienen de etiquetas; los dos números se guardan como los escribiste."
+      "mpAtwaterNote": "Tus macros multiplican a {fromMacros} kcal frente a una meta de {target} kcal. Es normal cuando las calorías vienen de etiquetas; los dos números se guardan como los escribiste.",
+      "mpActivity_sedentary": "Sedentaria",
+      "mpActivity_light": "Poco activa",
+      "mpActivity_moderate": "Moderada",
+      "mpActivity_high": "Muy activa",
+      "mpActivity_athlete": "Atleta",
+      "mpRecommends": "Mantenimiento cerca de {tdee} kcal, así que empieza en {target}.",
+      "mpUseThis": "Usar esto",
+      "mpFloored": "Subido a {min} kcal, el mínimo que esta herramienta pone."
     },
     "you": {
       "title": "Tú",

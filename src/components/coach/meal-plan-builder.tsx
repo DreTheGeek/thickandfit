@@ -317,7 +317,15 @@ function SlotEditor({
   );
 }
 
-export function MealPlanBuilder({ initial }: { initial: BuilderInitial }): ReactElement {
+export type ForClient = {
+  bmr: number | null;
+  tdee: number | null;
+  pal: number | null;
+  allergies: string | null;
+  goal: string | null;
+} | null;
+
+export function MealPlanBuilder({ initial, forClient = null }: { initial: BuilderInitial; forClient?: ForClient }): ReactElement {
   const t = useTranslations('app.coach');
   const router = useRouter();
   const [plan, setPlan] = useState<BuilderInitial>(initial);
@@ -415,6 +423,23 @@ export function MealPlanBuilder({ initial }: { initial: BuilderInitial }): React
         macros={plan.macros}
         slotTotals={slotTotals}
         onApply={(next) => setPlan({ ...plan, calorieTarget: next.calories, macros: next.macros })}
+        bmr={forClient?.bmr ?? null}
+        tdee={forClient?.tdee ?? null}
+        pal={forClient?.pal ?? null}
+        allergies={forClient?.allergies ?? null}
+        // The stored vocabulary is 'deficit' (225) and 'maintenance' (17), NOT lose/maintain/gain.
+        // Mapping by guesswork sent all 17 maintenance clients into a 20% cut, which is the kind of
+        // error that reads as a working feature. Anything unrecognised stays null rather than
+        // defaulting, so an unknown goal shows no recommendation instead of a confident wrong one.
+        goal={
+          forClient?.goal === 'maintenance' || forClient?.goal === 'maintain'
+            ? 'maintain'
+            : forClient?.goal === 'surplus' || forClient?.goal === 'gain'
+              ? 'gain'
+              : forClient?.goal === 'deficit' || forClient?.goal === 'lose'
+                ? 'lose'
+                : null
+        }
       />
 
       {/* Slots */}
