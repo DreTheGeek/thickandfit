@@ -5,7 +5,7 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createNotification, createNotificationsBulk } from '@/lib/notifications/create';
 import { asNotifLocale, notifText } from '@/lib/notifications/i18n';
-import { COACH_ROLES, COACHING_ROLES } from '@/lib/auth/session';
+import { COACHING_ROLES } from '@/lib/auth/session';
 import type { NotificationPayload, NotificationType } from '@/lib/notifications/types';
 
 type MemberRow = { id: string; ui_locale: string | null };
@@ -191,8 +191,17 @@ export async function notifyCoachOfCheckin(params: {
 }
 
 /**
- * Notify every coach-side user (coach / assistant / operator) that a client replied in the inbox,
- * so a reply is never discovered late. Best-effort.
+ * Notify the coaching side that a client replied in the inbox, so a reply is never discovered late.
+ *
+ * Scoped to COACHING_ROLES, matching notifyCoachOfCheckin above. It used to include operator, which
+ * was a defensible call when the team was three people and "never discovered late" outweighed the
+ * noise. It stops being defensible at 256 clients: every reply would ping the agency's ops accounts
+ * as well as Stephanie's, and the reliable outcome of a channel that fires for things you cannot
+ * act on is that it gets muted. Observed live, driving a real member reply: six recipients, two of
+ * them operators.
+ *
+ * Reverse this by swapping the constant back if the ops team does want inbox coverage; it is a
+ * judgement call about who answers client DMs, not a correctness fix.
  */
 export async function notifyCoachOfReply(params: {
   companyId: string;
@@ -204,7 +213,7 @@ export async function notifyCoachOfReply(params: {
     .from('profiles')
     .select('id, ui_locale')
     .eq('company_id', params.companyId)
-    .in('role', COACH_ROLES)
+    .in('role', COACHING_ROLES)
     .neq('id', params.clientProfileId);
   if (error) {
     console.error('notifyCoachOfReply load coaches:', error.message);
