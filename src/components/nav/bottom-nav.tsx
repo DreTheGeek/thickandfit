@@ -32,11 +32,25 @@ const TABS: Tab[] = [
     key: 'you',
     href: '/you',
     icon: 'user',
+    // Every child of the You hub, so the tab stays lit wherever she landed from it. /inbox and
+    // /coach-chat were missing, which meant the two screens where she talks to her coach, human and
+    // AI, were the only ones in the app with no tab highlighted and no way back down the nav. In a
+    // coaching product that is the wrong screen to make her feel lost on. Both are rows in the You
+    // menu (see you-screen.tsx), so this is the tab that already owns them.
+    //
+    // /messages only ever redirects to /coach-chat, so it is never a resting path; matched anyway
+    // because the redirect is cheap to outlive and a stale entry here is invisible.
+    //
+    // NOT /notifications: the bell lives in the top bar and the desktop rail, not in the You menu,
+    // so it belongs to no tab. Picking one for it would be a guess.
     match: (p) =>
       p.startsWith('/you') ||
       p.startsWith('/progress') ||
       p.startsWith('/account') ||
-      p.startsWith('/evolution'),
+      p.startsWith('/evolution') ||
+      p.startsWith('/inbox') ||
+      p.startsWith('/coach-chat') ||
+      p.startsWith('/messages'),
   },
 ];
 

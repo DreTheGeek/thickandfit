@@ -30,7 +30,23 @@ const TABS: Tab[] = [
       p.startsWith('/workouts') || p.startsWith('/exercises') || p.startsWith('/workout/') || p.startsWith('/history'),
   },
   { key: 'nutrition', href: '/nutrition', icon: 'nutrition', match: (p) => p.startsWith('/nutrition') },
-  { key: 'you', href: '/you', icon: 'user', match: (p) => p.startsWith('/you') || p.startsWith('/progress') || p.startsWith('/account') },
+  {
+    key: 'you',
+    href: '/you',
+    icon: 'user',
+    // Deliberately NOT /inbox, unlike the bottom nav: the rail carries its own Messages link below
+    // this list, so matching /inbox here would light two rows at once.
+    //
+    // /evolution was missing and the bottom nav had it. This list and the one in bottom-nav.tsx are
+    // hand-duplicated and have already drifted once; if a third copy ever appears, they should share
+    // one definition instead.
+    match: (p) =>
+      p.startsWith('/you') ||
+      p.startsWith('/progress') ||
+      p.startsWith('/account') ||
+      p.startsWith('/evolution') ||
+      p.startsWith('/coach-chat'),
+  },
 ];
 
 const HIDDEN = ['/onboarding', '/checkin'];
