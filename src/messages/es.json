@@ -1522,7 +1522,11 @@
       "kpiDays": "{n} días",
       "kpiLifetimeAvg": "promedio {n} días",
       "kpiThisMonth": "Este mes",
-      "kpiStartedEnded": "iniciaron / terminaron"
+      "kpiStartedEnded": "iniciaron / terminaron",
+      "attention_unanswered": "esperan respuesta",
+      "attention_intake": "formularios por revisar",
+      "attention_noPlan": "sin plan de comida",
+      "attention_atRisk": "pagos en riesgo"
     },
     "you": {
       "title": "Tú",

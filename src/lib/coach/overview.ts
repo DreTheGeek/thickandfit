@@ -43,8 +43,15 @@ export type BusinessOverview = {
   topTags: TagStat[];
 };
 
-const AT_RISK_HEALTH = new Set(['lapsed', 'due-soon/late']);
-const AT_RISK_STATUS = new Set(['past_due', 'unpaid']);
+// EXPORTED so the home page's attention chip counts at-risk the same way this page's KPI tile does.
+// Restating the rule by hand produced 9 against the tile's 39 on the same screen, which is the
+// drift that makes a coach stop trusting both numbers.
+export const AT_RISK_HEALTH = new Set(['lapsed', 'due-soon/late']);
+export const AT_RISK_STATUS = new Set(['past_due', 'unpaid']);
+
+export function isAtRisk(status: string | null, health: string | null): boolean {
+  return AT_RISK_HEALTH.has(health ?? '') || AT_RISK_STATUS.has(status ?? '');
+}
 const CHURNED_STATUS = new Set(['canceled', 'churned']);
 const CATEGORY_ORDER = ['program', 'tier', 'health', 'service', 'lifecycle', 'language', 'special', 'custom'];
 

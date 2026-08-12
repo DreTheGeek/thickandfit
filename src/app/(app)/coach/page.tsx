@@ -6,6 +6,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { requireCoach } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { getBusinessOverview, type Bucket, type TagStat } from '@/lib/coach/overview';
+import { getAttention } from '@/lib/coach/attention';
 import { RevenueChart } from '@/components/coach/revenue-chart';
 import { formatCents } from '@/components/coach/money';
 import { Eyebrow } from '@/components/ui/section';
@@ -95,7 +96,7 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
     return <div className="p-8 text-sm text-muted">{t('emptyOverview')}</div>;
   }
   const money = (cents: number): string => formatCents(cents, 'USD', locale, 0);
-  const o = await getBusinessOverview(ctx.companyId);
+  const [o, attention] = await Promise.all([getBusinessOverview(ctx.companyId), getAttention(ctx.companyId)]);
   const revenuePoints = o.revenueByMonth.map((m) => ({
     label: m.label,
     gross: Math.round(m.grossCents / 100),
@@ -173,6 +174,24 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
       <Eyebrow>{t('overviewTitle')}</Eyebrow>
       <h1 className="tf-display mt-1 text-[34px]">{t('welcomeBack', { name: firstName })}</h1>
       <p className="mb-7 mt-1 text-sm text-faint">{dateLabel}</p>
+
+      {/* What is waiting on her, above the numbers. A dashboard that opens on revenue tells her how
+          last month went; this tells her what to do in the next hour. Absent entirely when nothing
+          is waiting, so its presence always means something. */}
+      {attention.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2.5">
+          {attention.map((a) => (
+            <Link
+              key={a.key}
+              href={a.href}
+              className="tf-press inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink hover:border-ink"
+            >
+              <span className="tabular-nums">{a.count}</span>
+              <span className="font-medium text-muted">{t(`attention_${a.key}`)}</span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Hero KPIs */}
       <div className="mb-4 grid grid-cols-2 gap-3.5 sm:grid-cols-3 xl:grid-cols-6">

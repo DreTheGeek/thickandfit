@@ -1522,7 +1522,11 @@
       "kpiDays": "{n} days",
       "kpiLifetimeAvg": "{n} day average",
       "kpiThisMonth": "This month",
-      "kpiStartedEnded": "started / ended"
+      "kpiStartedEnded": "started / ended",
+      "attention_unanswered": "waiting on a reply",
+      "attention_intake": "intake to review",
+      "attention_noPlan": "no meal plan yet",
+      "attention_atRisk": "billing at risk"
     },
     "you": {
       "title": "You",
