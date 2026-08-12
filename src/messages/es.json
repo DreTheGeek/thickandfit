@@ -2407,7 +2407,11 @@
       "stepBaselineBody": "Tu peso y tus primeras fotos. Las vas a querer en seis semanas.",
       "stepCommunityTitle": "Saluda en la comunidad",
       "stepCommunityBody": "Las mujeres de aquí van en lo mismo que tú.",
-      "programNote": "Steph arma tu plan a mano con tus respuestas, así que llega en unos días, no al instante. Ella te avisa cuando esté listo."
+      "programNote": "Steph arma tu plan a mano con tus respuestas, así que llega en unos días, no al instante. Ella te avisa cuando esté listo.",
+      "progress": "{done} de {total} hechos",
+      "foodDone": "Hecho. Sigue así, es lo que le enseña a la app cómo comes.",
+      "baselineDone": "Hecho. En seis semanas te va a dar gusto tenerlo.",
+      "communityDone": "Hecho. Las mujeres de aquí van en lo mismo que tú."
     },
     "coachSettings": {
       "saveChanges": "Guardar cambios",

@@ -2407,7 +2407,11 @@
       "stepBaselineBody": "Weight and your first photos. You will want these in six weeks.",
       "stepCommunityTitle": "Say hi in the community",
       "stepCommunityBody": "The women in here are doing the same thing you are.",
-      "programNote": "Steph writes your plan by hand from your answers, so it lands within a few days rather than instantly. She will message you when it is ready."
+      "programNote": "Steph writes your plan by hand from your answers, so it lands within a few days rather than instantly. She will message you when it is ready.",
+      "progress": "{done} of {total} done",
+      "foodDone": "Done. Keep it going, it is what teaches the app how you eat.",
+      "baselineDone": "Done. You will be glad you took it in six weeks.",
+      "communityDone": "Done. The women here are going through the same thing."
     },
     "coachSettings": {
       "saveChanges": "Save changes",

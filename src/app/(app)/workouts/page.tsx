@@ -6,6 +6,7 @@ import { requireEntitled } from '@/lib/auth/guards';
 import { getAssignedPlans, getProgram } from '@/lib/programs/engine';
 import { fetchHistory } from '@/lib/workout/logging';
 import { createServiceClient } from '@/lib/supabase/service';
+import { getActivation } from '@/lib/member/activation';
 import {
   ActivitiesScreen,
   type ActivitiesProgram,
@@ -182,5 +183,9 @@ export default async function WorkoutsPage({
     };
   }
 
-  return <ActivitiesScreen program={program} history={history} stats={stats} locale={locale} />;
+  // Derived, never stored: the checklist ticks itself from her real rows.
+  const activation = await getActivation(ctx.userId);
+  return (
+    <ActivitiesScreen program={program} history={history} stats={stats} locale={locale} activation={activation} />
+  );
 }

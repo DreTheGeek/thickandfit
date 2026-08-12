@@ -1,6 +1,8 @@
 import type { ReactElement } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { Icon } from '@/components/ui/icons';
+import type { Activation, ActivationStep } from '@/lib/member/activation';
 
 // Day one, for a member whose program has not been written yet.
 //
@@ -17,15 +19,18 @@ import { useTranslations } from 'next-intl';
 // The program note stays, demoted to a footnote and phrased honestly. She should know it is coming
 // and that a human is writing it. She should not be told to sit still until it does.
 
-type Step = { href: string; titleKey: string; bodyKey: string; badge: string };
+// COPY is ours; DONE comes from the database (lib/member/activation.ts). The step list used to live
+// here as three hardcoded cards with no completion state at all, so a member who had logged forty
+// meals and taken her starting photos was still told to go and do both. The playbook's rule is the
+// fix: a stored "I did that" flag for something the database could answer is a lie waiting to
+// happen, so nothing is stored and every tick is a live count.
+const COPY: Record<ActivationStep['key'], { titleKey: string; bodyKey: string }> = {
+  food: { titleKey: 'stepFoodTitle', bodyKey: 'stepFoodBody' },
+  baseline: { titleKey: 'stepBaselineTitle', bodyKey: 'stepBaselineBody' },
+  community: { titleKey: 'stepCommunityTitle', bodyKey: 'stepCommunityBody' },
+};
 
-const STEPS: Step[] = [
-  { href: '/nutrition', titleKey: 'stepFoodTitle', bodyKey: 'stepFoodBody', badge: '1' },
-  { href: '/progress', titleKey: 'stepBaselineTitle', bodyKey: 'stepBaselineBody', badge: '2' },
-  { href: '/community', titleKey: 'stepCommunityTitle', bodyKey: 'stepCommunityBody', badge: '3' },
-];
-
-export function FirstSteps(): ReactElement {
+export function FirstSteps({ activation }: { activation: Activation }): ReactElement {
   const t = useTranslations('app.firstSteps');
 
   return (
@@ -33,25 +38,46 @@ export function FirstSteps(): ReactElement {
       <div>
         <h3 className="font-display text-[22px] leading-tight text-ink">{t('title')}</h3>
         <p className="mt-1 max-w-[46ch] text-[14px] leading-relaxed text-soft">{t('subtitle')}</p>
+        {activation.doneCount > 0 && (
+          <p className="mt-2 text-[13px] font-semibold text-good-ink">
+            {t('progress', { done: activation.doneCount, total: activation.steps.length })}
+          </p>
+        )}
       </div>
 
       <div className="mt-1 flex flex-col gap-2.5">
-        {STEPS.map((s) => (
-          <Link
-            key={s.href}
-            href={s.href}
-            className="tf-press flex items-start gap-3.5 rounded-[14px] border border-line bg-surface px-4 py-3.5 hover:border-ink"
-          >
-            {/* Numbered because these compound in order, not because a list needs decoration. */}
-            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-[12px] font-semibold text-surface">
-              {s.badge}
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[15px] font-semibold text-ink">{t(s.titleKey)}</span>
-              <span className="mt-0.5 block text-[13px] leading-snug text-soft">{t(s.bodyKey)}</span>
-            </span>
-          </Link>
-        ))}
+        {activation.steps.map((s, i) => {
+          const copy = COPY[s.key];
+          return (
+            <Link
+              key={s.key}
+              href={s.href}
+              className={`tf-press flex items-start gap-3.5 rounded-[14px] border px-4 py-3.5 ${
+                s.done ? 'border-line/60 bg-surface/60' : 'border-line bg-surface hover:border-ink'
+              }`}
+            >
+              {/* Numbered because these compound in order, not because a list needs decoration.
+                  A done step keeps its number rather than being struck through or removed: she
+                  should be able to see the whole shape of the start, including the part she has
+                  already finished. Green is the functional signal for complete, nothing else. */}
+              <span
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold ${
+                  s.done ? 'bg-good text-good-ink' : 'bg-ink text-surface'
+                }`}
+              >
+                {s.done ? <Icon name="check" size={13} /> : i + 1}
+              </span>
+              <span className="min-w-0">
+                <span className={`block text-[15px] font-semibold ${s.done ? 'text-muted' : 'text-ink'}`}>
+                  {t(copy.titleKey)}
+                </span>
+                <span className="mt-0.5 block text-[13px] leading-snug text-soft">
+                  {s.done ? t(`${s.key}Done` as never) : t(copy.bodyKey)}
+                </span>
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Demoted to a footnote, and honest: a person is writing it, so it is not instant. The old

@@ -15,6 +15,7 @@ import { ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
 import { EmptyState } from '@/components/states/empty-state';
 import { FirstSteps } from '@/components/states/first-steps';
+import type { Activation } from '@/lib/member/activation';
 import { PlayIcon } from '@/components/ui/icons';
 import { ExerciseBrowser } from '@/components/exercises/exercise-browser';
 
@@ -46,11 +47,13 @@ export function ActivitiesScreen({
   history,
   stats,
   locale,
+  activation,
 }: {
   program: ActivitiesProgram | null;
   history: HistoryItem[];
   stats: WorkoutStats | null;
   locale: string;
+  activation: Activation;
 }): ReactElement {
   const t = useTranslations('app.activities');
   const [tab, setTab] = useState<Tab>('program');
@@ -73,7 +76,7 @@ export function ActivitiesScreen({
         (program == null ? (
           // Not an empty state. "Your program's on the way" was a promise nothing in the system
           // kept, and it made waiting the activity on the one day she is most likely to leave.
-          <FirstSteps />
+          <FirstSteps activation={activation} />
         ) : (
           <>
             <HeroCard
