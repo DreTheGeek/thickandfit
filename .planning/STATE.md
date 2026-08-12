@@ -66,23 +66,30 @@ logged-in tab, `postMessage`s each client to `/lenus-bridge` on our origin, whic
 `/api/internal/lenus-ingest`, which upserts into `lenus.raw_client_extract`. Lenus's CSP is why it
 is shaped that way; see the comments in those three files before changing any of it.
 
-1. `node .qa-visual/lenus-export-test.mjs` first. 22 assertions, no network. If it does not pass, do
-   not paste anything into her browser.
+1. `node .qa-visual/lenus-export-test.mjs` and `node .qa-visual/lenus-checkin-import-test.mjs`
+   first. 51 assertions, no network, no database. If they do not pass, do not paste anything into
+   her browser.
 2. `node scripts/lenus-verify.mjs --snapshot` to record the before state.
 3. Log into `us.lenus.io`, open ANY client (that page load teaches the script every query it needs),
    paste `scripts/lenus-export.js` into the console, run `lenusExport.start()`, paste
    `LENUS_INGEST_TOKEN`. Leave the tab open and awake. Watch for any `ids, 0 bodies` warning.
 4. `node scripts/lenus-verify.mjs --checkins` to confirm bodies actually landed, and
    `--diff <snapshot>` for the run-twice proof.
-5. Then map raw to app tables, idempotent on `lenus_id`, the pattern proven by
+5. `node scripts/import-lenus-checkins.mjs` (dry run, reports what it recognised), then
+   `--apply --limit 5`, then `--apply`. This is the one that puts check-ins in front of her.
+6. Everything else raw-to-app-tables, idempotent, the pattern proven by
    `scripts/import-lenus-programs.mjs`.
 
 **Done means:** run it twice, row counts do not move on the second pass, and no operation shrank.
 
-**The check-in mapper cannot be written until step 3 has run once.** Its payload shape has never
-been observed, because the call was never successfully made. `node scripts/lenus-verify.mjs --shape
-ClientCheckinDashboardView_checkInResponse` prints keys and types with no values, which is what to
-design `form_responses` promotion against without pasting her members' answers into a chat.
+**The one part of step 5 that is a hypothesis.** No check-in body had ever been fetched when the
+importer was written, so its payload shape has never been observed. `extractAnswers()` recognises
+question/answer pairs by shape across six plausible namings and returns nothing when it recognises
+nothing, so the failure mode is zero rows written, never a wall of blank check-ins. If the dry run
+reports every body unrecognised, run `node scripts/import-lenus-checkins.mjs --shape` (keys and
+types only, no values, safe to paste into a chat), read the real key names off it, and add them to
+`Q_KEYS` / `A_KEYS`. The test at `.qa-visual/lenus-checkin-import-test.mjs` pins both halves: that it
+recognises what it should, and that it refuses rather than guesses.
 
 Per-client operations that matter: `ClientWorkoutHistory`, `ClientMeasurements_Profile`,
 `ClientInfoCheckinsContext_CheckInResponses`, `fetchClientChart`, `ChatConversationWeb`,
