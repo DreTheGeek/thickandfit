@@ -423,6 +423,8 @@ export function MealPlanBuilder({ initial, forClient = null }: { initial: Builde
         macros={plan.macros}
         slotTotals={slotTotals}
         onApply={(next) => setPlan({ ...plan, calorieTarget: next.calories, macros: next.macros })}
+        slotBudgets={plan.slots.map((s) => s.kcalTarget)}
+        slotNames={plan.slots.map((s) => s.name)}
         bmr={forClient?.bmr ?? null}
         tdee={forClient?.tdee ?? null}
         pal={forClient?.pal ?? null}

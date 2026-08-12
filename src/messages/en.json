@@ -1511,7 +1511,9 @@
       "mpActivity_athlete": "Athlete",
       "mpRecommends": "Maintenance about {tdee} kcal, so start her at {target}.",
       "mpUseThis": "Use this",
-      "mpFloored": "Raised to {min} kcal, the lowest this tool will set."
+      "mpFloored": "Raised to {min} kcal, the lowest this tool will set.",
+      "mpPerMeal": "Per meal",
+      "mpMeal": "Meal {n}"
     },
     "you": {
       "title": "You",

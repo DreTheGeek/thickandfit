@@ -10,6 +10,7 @@ import {
   gramsToSplit,
   flexRange,
   reconcile,
+  distribute,
   kcalFromMacros,
   recommendIntake,
   ACTIVITY_LEVELS,
@@ -41,6 +42,8 @@ export function MacroPlanner({
   allergies,
   avoid,
   goal,
+  slotBudgets = [],
+  slotNames = [],
 }: {
   calories: number | null;
   macros: Macros;
@@ -54,6 +57,9 @@ export function MacroPlanner({
   avoid?: string[];
   /** Her stored goal, so a recommendation cuts or builds in the right direction. */
   goal?: 'lose' | 'maintain' | 'gain' | null;
+  /** Each slot's kcal budget and name, for the per-meal breakdown. */
+  slotBudgets?: (number | null)[];
+  slotNames?: string[];
 }): ReactElement {
   const t = useTranslations('app.coach');
   const [flex, setFlex] = useState(5);
@@ -68,6 +74,22 @@ export function MacroPlanner({
     if (!level || goal == null) return null;
     return recommendIntake(bmr, level.pal, goal);
   }, [bmr, activity, goal]);
+  /**
+   * Shares taken from HER kcal budgets, not from an assumption of equal meals.
+   *
+   * Her own protocol runs 470 / 160 / 410 / 215 / 300, which is nothing like even, so dividing by
+   * five would describe a plan she does not write. A slot she has not budgeted yet counts as an
+   * equal share so the breakdown is useful before anything is filled in.
+   */
+  const slotShares = useMemo(() => {
+    if (slotBudgets.length === 0 || target <= 0) return [];
+    const anyBudget = slotBudgets.some((b) => (b ?? 0) > 0);
+    const even = target / slotBudgets.length;
+    const shares = slotBudgets.map((b) => (anyBudget ? (b ?? 0) : even));
+    if (shares.every((s) => s === 0)) return [];
+    return distribute(macros, target, shares);
+  }, [slotBudgets, macros, target]);
+
   const split = useMemo(() => gramsToSplit(macros), [macros]);
   const recon = useMemo(() => reconcile(macros, target, slotTotals, flex), [macros, target, slotTotals, flex]);
 
@@ -212,6 +234,31 @@ export function MacroPlanner({
           })}
         </div>
       </div>
+
+      {/* Per-meal breakdown. Each slot's share of the day, with the macros that implies.
+          Shares come from the kcal targets she has already set on the slots, so this reflects HER
+          structure rather than assuming five equal meals: her own protocol runs 470 / 160 / 410 /
+          215 / 300, which is nothing like even. Slots with no target yet fall back to an equal
+          share, so the row is useful before she has budgeted anything. */}
+      {target > 0 && slotShares.length > 0 && (
+        <div className="border-t border-divider pt-4">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-faint">{t('mpPerMeal')}</div>
+          <div className="flex flex-col gap-2">
+            {slotShares.map((s, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <span className="w-16 shrink-0 truncate text-[12px] text-soft">{slotNames[i] || t('mpMeal', { n: i + 1 })}</span>
+                <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-warm">
+                  <span className="block h-full rounded-full bg-ink" style={{ width: `${Math.min(100, s.pct)}%` }} />
+                </span>
+                <span className="w-12 shrink-0 text-right text-[12px] font-semibold tabular-nums text-ink">{s.pct}%</span>
+                <span className="w-40 shrink-0 text-right text-[11px] tabular-nums text-faint">
+                  {s.kcal} kcal · {s.macros.proteinG}/{s.macros.carbG}/{s.macros.fatG}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Does the plan she wrote match the plan she set? */}
       <div className="border-t border-divider pt-4">
