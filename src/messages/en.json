@@ -1650,7 +1650,15 @@
       "esNotConfigured": "Drafting is not switched on yet.",
       "esFailed": "That did not work. Try it again.",
       "navSpanish": "Spanish",
-      "planDays": "{n} days"
+      "planDays": "{n, plural, one {# day} other {# days}}",
+      "famProgression": "Monthly progression",
+      "famTwelveWeek": "12 week series",
+      "famChallenge": "Challenges",
+      "famMembership": "Membership programs",
+      "famClient": "Written for one client",
+      "famOther": "Everything else",
+      "planDaysWeeks": "{d, plural, one {# day} other {# days}} · {w} weeks",
+      "planWeeks": "{w} weeks"
     },
     "you": {
       "title": "You",

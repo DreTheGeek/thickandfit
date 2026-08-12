@@ -6,7 +6,6 @@ import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { PageTitle } from '@/components/ui/section';
 import { ButtonLink } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Icon } from '@/components/ui/icons';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +39,27 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
     plans = ((data ?? []) as Omit<PlanRow, 'days'>[]).map((p) => ({ ...p, days: dayCount.get(p.id) ?? 0 }));
   }
 
+  // Her own families, read off the names she chose. Order is the order she works in: the numbered
+  // progression first, then the 12 week series, then what is attached to a product, then the rest.
+  // A plan lands in the FIRST bucket that claims it, so "Month 2: 8 week 5 day" is progression
+  // rather than being pulled into the 8-week membership group by an accident of wording.
+  const FAMILIES: { key: string; test: (n: string) => boolean }[] = [
+    { key: 'famProgression', test: (n) => /^month\s*\d/i.test(n) },
+    { key: 'famTwelveWeek', test: (n) => /^12\s*week/i.test(n) },
+    { key: 'famChallenge', test: (n) => /challenge/i.test(n) },
+    { key: 'famMembership', test: (n) => /snap\s*back|membership/i.test(n) },
+    { key: 'famClient', test: (n) => /shelise|eddie/i.test(n) },
+  ];
+  const buckets = new Map<string, PlanRow[]>();
+  for (const p of plans) {
+    const fam = FAMILIES.find((f) => f.test(p.name_en))?.key ?? 'famOther';
+    if (!buckets.has(fam)) buckets.set(fam, []);
+    buckets.get(fam)!.push(p);
+  }
+  const groups = [...FAMILIES.map((f) => f.key), 'famOther']
+    .filter((k) => buckets.has(k))
+    .map((k) => ({ key: k, plans: buckets.get(k)! }));
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between gap-4">
@@ -51,24 +71,51 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
       {plans.length === 0 ? (
         <p className="text-sm text-muted">{t('noPrograms')}</p>
       ) : (
-        // Tiles, not full-width rows. A program row carries a name and a duration, so stretched
-        // across a 1600px screen it put the two ends a monitor apart with nothing in between. Same
-        // card grid the exercise library uses.
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {plans.map((p) => (
-            <Link
-              key={p.id}
-              href={`/coach/programs/${p.id}`}
-              className="tf-press flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5 hover:border-ink"
-            >
-              <span className="min-w-0 truncate font-medium">{p.name_en}</span>
-              <span className="flex shrink-0 items-center gap-2 text-[12px] text-faint">
-                {p.days > 0 && <span className="text-muted">{t('planDays', { n: p.days })}</span>}
-                {p.weeks}w
-                {p.is_template && <Badge variant="inactive">{t('template')}</Badge>}
-                <Icon name="chevronRight" size={16} className="text-line" />
-              </span>
-            </Link>
+        // GROUPED, TWO COLUMNS, FULL NAMES.
+        //
+        // The four-column grid was unreadable at 41 programs. Every name truncated, which is fatal
+        // here because her names differ at the END: "12 week 3 day Training Plan 1" and "12 week 3
+        // day Training Plan 1- Beginner/Intermediate @HOME" were the same tile. Every card also
+        // carried a "Template" badge, on a page where all 41 are templates, so it was 41 repetitions
+        // of no information.
+        //
+        // Her library already has a shape and the flat grid hid it: a Month 1-6 progression, the
+        // 12 week series, the membership SNAP BACK programs, the challenges. Grouping is not
+        // decoration, it is the structure she built.
+        <div className="flex flex-col gap-8">
+          {groups.map((g) => (
+            <section key={g.key}>
+              <h2 className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">
+                {t(g.key)} <span className="text-line">·</span> {g.plans.length}
+              </h2>
+              <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
+                {g.plans.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/coach/programs/${p.id}`}
+                    className="tf-press flex items-center justify-between gap-4 rounded-2xl bg-surface px-4 py-3.5 hover:shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                  >
+                    {/* Wraps rather than truncates. Two lines of a name she wrote beats one line
+                        with the distinguishing half cut off. */}
+                    <span className="min-w-0 text-[14px] font-medium leading-snug text-ink">{p.name_en}</span>
+                    <span className="flex shrink-0 items-center gap-2.5 text-[12px] text-muted">
+                      {/* Duration only when SHE stated one. Lenus stores no length on a template,
+                          so the name is the only statement of it and the import defaults to 12.
+                          Printing that default turned "Cardio 4x a week" into a 12 week program on
+                          her screen, which is the app inventing a fact and putting it in her mouth.
+                          plans.weeks is NOT NULL so it cannot be nulled without a migration, and a
+                          migration is the wrong price for a label. */}
+                      <span className="tabular-nums">
+                        {/\d+\s*week/i.test(p.name_en)
+                          ? t('planDaysWeeks', { d: p.days, w: p.weeks })
+                          : t('planDays', { n: p.days })}
+                      </span>
+                      <Icon name="chevronRight" size={16} className="text-line" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}

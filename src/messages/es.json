@@ -1650,7 +1650,15 @@
       "esNotConfigured": "La generación todavía no está activada.",
       "esFailed": "No funcionó. Inténtalo otra vez.",
       "navSpanish": "Español",
-      "planDays": "{n} días"
+      "planDays": "{n, plural, one {# día} other {# días}}",
+      "famProgression": "Progresión por mes",
+      "famTwelveWeek": "Serie de 12 semanas",
+      "famChallenge": "Retos",
+      "famMembership": "Programas de membresía",
+      "famClient": "Escritos para una clienta",
+      "famOther": "Todo lo demás",
+      "planDaysWeeks": "{d, plural, one {# día} other {# días}} · {w} semanas",
+      "planWeeks": "{w} semanas"
     },
     "you": {
       "title": "Tú",
