@@ -75,3 +75,16 @@ ios/DerivedData/
 # Lenus captures land here (Chrome downloads to .planning on this machine).
 # Her programming and client data: large and her IP. Keep on disk, never in git.
 .planning/lenus-*.json
+
+# Client exports from /coach/clients. Same rule as the Lenus captures above, and it matters more
+# here: these carry every member's email and phone. A commit puts them in history permanently, so
+# removing one later means rewriting history, not deleting a file.
+/thickandfit-clients-*.csv
+
+# Dev server log and shell-redirect debris. Regenerated on every run, useful to nobody else.
+/dev.log
+/0
+
+# Supabase CLI local state. cli-latest and linked-project.json are already tracked and stay that
+# way; everything else here is per-machine (pooler URL, installed component versions).
+supabase/.temp/
