@@ -2081,7 +2081,20 @@
       "repairing": "Repairing...",
       "repairDone": "Repaired {fixed} of {missing}.",
       "repairFailed": "Repaired {fixed} of {missing}. {failed} still failed, so try again in a moment.",
-      "errorRepair": "Could not repair those. Please try again."
+      "errorRepair": "Could not repair those. Please try again.",
+      "fileDropTitle": "Drop a file here to read it in",
+      "fileDropHint": "A PDF, a screenshot, a Word doc or a spreadsheet. We pull the text out and put it in the box above so you can check it before anything is saved.",
+      "fileChoose": "Choose a file",
+      "fileReading": "Reading {name}…",
+      "fileRead": "Read {name}. Check it above, then save.",
+      "fileErrScanned": "That PDF has no text in it, it is a scan. Screenshot the pages and drop those in instead.",
+      "fileErrUnreadable": "We could not get clean text out of that file. Screenshots of the pages will work.",
+      "fileErrEmpty": "There was nothing readable in that file.",
+      "fileErrCorrupt": "That file would not open. It may be damaged.",
+      "fileErrUnsupported": "We cannot read that kind of file yet. PDFs, screenshots, Word docs, CSV and Excel all work.",
+      "fileErrTooLarge": "That file is over 4 MB. Split it up, or drop the pages in as screenshots.",
+      "fileErrNotConfigured": "Reading screenshots is not switched on yet.",
+      "fileErrError": "Something went wrong reading that file. Try it again."
     },
     "coachInsights": {
       "title": "Your weekly read",

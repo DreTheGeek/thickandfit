@@ -2081,7 +2081,20 @@
       "repairing": "Reparando...",
       "repairDone": "Se repararon {fixed} de {missing}.",
       "repairFailed": "Se repararon {fixed} de {missing}. Fallaron {failed}, inténtalo de nuevo en un momento.",
-      "errorRepair": "No se pudieron reparar. Inténtalo de nuevo."
+      "errorRepair": "No se pudieron reparar. Inténtalo de nuevo.",
+      "fileDropTitle": "Suelta un archivo aquí para leerlo",
+      "fileDropHint": "Un PDF, una captura, un documento de Word o una hoja de cálculo. Sacamos el texto y lo ponemos en el cuadro de arriba para que lo revises antes de guardar nada.",
+      "fileChoose": "Elegir archivo",
+      "fileReading": "Leyendo {name}…",
+      "fileRead": "Leído {name}. Revísalo arriba y guarda.",
+      "fileErrScanned": "Ese PDF no tiene texto, es un escaneo. Haz capturas de las páginas y suéltalas aquí.",
+      "fileErrUnreadable": "No pudimos sacar texto limpio de ese archivo. Las capturas de las páginas sí funcionan.",
+      "fileErrEmpty": "No había nada legible en ese archivo.",
+      "fileErrCorrupt": "Ese archivo no se pudo abrir. Puede estar dañado.",
+      "fileErrUnsupported": "Todavía no podemos leer ese tipo de archivo. Sí funcionan PDF, capturas, documentos de Word, CSV y Excel.",
+      "fileErrTooLarge": "Ese archivo pasa de 4 MB. Divídelo o suelta las páginas como capturas.",
+      "fileErrNotConfigured": "La lectura de capturas todavía no está activada.",
+      "fileErrError": "Algo falló al leer ese archivo. Inténtalo otra vez."
     },
     "coachInsights": {
       "title": "Tu resumen semanal",

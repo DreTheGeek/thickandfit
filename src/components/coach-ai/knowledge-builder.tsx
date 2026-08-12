@@ -3,7 +3,7 @@
 // Coach Knowledge Base builder UI. A titled-text paste form (chunk -> embed -> store) plus the list
 // of ingested sources with a delete control. Bilingual via next-intl. Mirrors the create-challenge
 // form pattern (useTransition + router.refresh on success).
-import { useState, useTransition, type ReactElement } from 'react';
+import { useRef, useState, useTransition, type DragEvent, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -33,6 +33,9 @@ export function KnowledgeBuilder({ sources }: { sources: KnowledgeSourceView[] }
   const [pending, start] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [repairing, setRepairing] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [reading, setReading] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   const valid = title.trim().length >= 2 && text.trim().length >= 20;
   // Chunks that were stored but never indexed. match_coach_knowledge skips them, so they are dead
@@ -53,6 +56,64 @@ export function KnowledgeBuilder({ sources }: { sources: KnowledgeSourceView[] }
         setErr(t('errorIngest'));
       }
     });
+  }
+
+  /**
+   * Read a dropped file into the box above, and STOP there.
+   *
+   * The extracted text lands in the same textarea she would have pasted into, so the save path is
+   * unchanged and she sees exactly what the file gave us before any of it is stored. Extraction is
+   * never perfect, and a knowledge base is the one place a half-read document does lasting damage:
+   * it answers her clients in fragments and looks identical to a good source in the list below.
+   */
+  async function readFile(file: File): Promise<void> {
+    setErr('');
+    setNote('');
+    setReading(file.name);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await fetch('/api/coach/documents/read', { method: 'POST', body });
+      const data = (await res.json()) as
+        | { ok: true; text: string; title: string; note: string | null }
+        | { ok: false; reason: string };
+
+      if (!data.ok) {
+        setErr(fileError(data.reason));
+        return;
+      }
+      // Never overwrite what she has already typed. A second file appends, so a five-page protocol
+      // dropped page by page builds up one source instead of replacing itself four times.
+      setTitle((cur) => cur.trim() || data.title);
+      setText((cur) => (cur.trim() ? `${cur.trim()}\n\n${data.text}` : data.text));
+      setNote(t('fileRead', { name: file.name }) + (data.note ? ` (${data.note})` : ''));
+    } catch {
+      setErr(t('fileErrError'));
+    } finally {
+      setReading(null);
+    }
+  }
+
+  // Every reason the reader can return maps to something she can act on. A generic "upload failed"
+  // is the difference between her retrying pointlessly and her taking screenshots of a scan.
+  function fileError(reason: string): string {
+    const keys: Record<string, string> = {
+      scanned: 'fileErrScanned',
+      unreadable: 'fileErrUnreadable',
+      empty: 'fileErrEmpty',
+      corrupt: 'fileErrCorrupt',
+      unsupported: 'fileErrUnsupported',
+      tooLarge: 'fileErrTooLarge',
+      notConfigured: 'fileErrNotConfigured',
+    };
+    return t(keys[reason] ?? 'fileErrError');
+  }
+
+  function onDrop(e: DragEvent<HTMLDivElement>): void {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) void readFile(file);
   }
 
   function repair(): void {
@@ -113,6 +174,50 @@ export function KnowledgeBuilder({ sources }: { sources: KnowledgeSourceView[] }
             onChange={(e) => setText(e.target.value)}
             maxLength={100_000}
           />
+          {/* Drop a file in and it is read into the box above for her to check. Sits under the
+              textarea, not above it, because the box is the thing that gets saved and the file is
+              one way of filling it, not a separate feature. */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+            className={`rounded-xl border border-dashed px-4 py-4 text-center transition-colors ${
+              dragging ? 'border-ink bg-warm/40' : 'border-line'
+            }`}
+          >
+            <p className="text-[13px] text-muted">
+              {reading ? t('fileReading', { name: reading }) : t('fileDropTitle')}
+            </p>
+            {!reading && (
+              <>
+                <p className="mt-0.5 text-[12px] text-faint">{t('fileDropHint')}</p>
+                <button
+                  type="button"
+                  onClick={() => fileInput.current?.click()}
+                  className="tf-press mt-2.5 rounded-full border border-line px-3.5 py-1.5 text-[12px] font-semibold text-ink"
+                >
+                  {t('fileChoose')}
+                </button>
+              </>
+            )}
+            <input
+              ref={fileInput}
+              type="file"
+              hidden
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.docx,.csv,.tsv,.xlsx,.xlsm,.txt,.md"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                // Reset first: picking the same file twice in a row fires no change event, which
+                // reads as the button being broken.
+                e.target.value = '';
+                if (f) void readFile(f);
+              }}
+            />
+          </div>
+
           {err ? <p className="text-[12px] text-alert-ink">{err}</p> : null}
           {note ? <p className="text-[12px] text-accent-ink">{note}</p> : null}
           <button
