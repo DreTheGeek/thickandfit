@@ -9,6 +9,7 @@ import { Icon, type IconName } from '@/components/ui/icons';
 import { Tag } from '@/components/ui/badge';
 import { signOutAction } from '@/lib/auth/actions';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { CommandPalette } from '@/components/nav/command-palette';
 
 type Tab = {
   key: 'today' | 'community' | 'activities' | 'nutrition' | 'you';
@@ -56,9 +57,12 @@ export function SubscriberRail({
         <Link href="/dashboard">
           <Wordmark height={22} />
         </Link>
-        {profileId ? (
-          <NotificationBell initialUnread={initialUnread} profileId={profileId} />
-        ) : null}
+        <div className="flex items-center gap-1">
+          <CommandPalette audience="member" />
+          {profileId ? (
+            <NotificationBell initialUnread={initialUnread} profileId={profileId} />
+          ) : null}
+        </div>
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 p-3">
         {TABS.map((tab) => {

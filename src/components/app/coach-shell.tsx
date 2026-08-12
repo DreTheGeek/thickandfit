@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { CoachNav, CoachTopWordmark } from '@/components/nav/coach-nav';
+import { CommandPalette } from '@/components/nav/command-palette';
 import { Icon } from '@/components/ui/icons';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
@@ -30,6 +31,9 @@ export function CoachShell({ children, bell }: { children: ReactNode; bell?: Rea
             <CoachTopWordmark />
           </div>
           <div className="ml-auto flex items-center gap-3">
+            {/* Thirty-one nav items in six collapsible sections is a lot to scan when you already
+                know where you are going. */}
+            <CommandPalette audience="coach" />
             {bell}
             <ThemeToggle />
             <button

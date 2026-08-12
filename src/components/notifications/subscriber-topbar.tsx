@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { Icon } from '@/components/ui/icons';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { CommandPalette } from '@/components/nav/command-palette';
 
 /**
  * Phone/tablet top bar holding the notification bell. Hidden on immersive flows (onboarding,
@@ -30,6 +31,10 @@ export function SubscriberTopBar({
 
   return (
     <div className="flex h-12 flex-none items-center justify-end gap-1 border-b border-line/60 bg-surface px-2 lg:hidden">
+      {/* Search sits with the bell rather than in the bottom nav: the five tabs are the five
+          places she goes daily, and spending one of them on a search icon would cost her a
+          destination to gain a way of reaching one. */}
+      <CommandPalette audience="member" withShortcut={false} />
       <Link
         href="/inbox"
         aria-label={t('messages')}
