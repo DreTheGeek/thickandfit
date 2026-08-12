@@ -1513,7 +1513,11 @@
       "mpUseThis": "Usar esto",
       "mpFloored": "Subido a {min} kcal, el mínimo que esta herramienta pone.",
       "mpPerMeal": "Por comida",
-      "mpMeal": "Comida {n}"
+      "mpMeal": "Comida {n}",
+      "mbPreview": "Vista previa",
+      "mbPreviewLabel": "Lo que ella verá",
+      "mbPreviewClose": "Cerrar",
+      "mbPreviewEmpty": "Agrega una receta primero."
     },
     "you": {
       "title": "Tú",

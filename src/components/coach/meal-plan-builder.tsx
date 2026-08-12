@@ -11,6 +11,7 @@ import { saveStructuredPlanAction } from '@/lib/coach/meal-plan-actions';
 import { blankRecipe, blankSlot, type PlanIngredient, type PlanRecipe, type PlanSlot } from '@/lib/coach/meal-plan-structured';
 import { Icon } from '@/components/ui/icons';
 import { MacroPlanner } from '@/components/coach/macro-planner';
+import { PlanPreview } from '@/components/coach/plan-preview';
 import type { SlotTotals } from '@/lib/meal-plans/macros';
 
 export type BuilderInitial = {
@@ -466,6 +467,7 @@ export function MealPlanBuilder({ initial, forClient = null }: { initial: Builde
       {/* Save bar */}
       <div className="sticky bottom-0 z-10 -mx-5 flex items-center justify-end gap-3 border-t border-line bg-bg/90 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8">
         {status === 'error' && <span className="text-[12px] text-alert-ink">{t('mbError')}</span>}
+        <PlanPreview name={plan.name} slots={plan.slots} goal={plan.goal || null} calorieTarget={plan.calorieTarget} macros={plan.macros} />
         <button
           type="button"
           onClick={save}
