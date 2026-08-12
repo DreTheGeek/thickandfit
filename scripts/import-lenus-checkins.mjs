@@ -1,293 +1,225 @@
-// Promote Lenus check-in bodies out of lenus.raw_client_extract into form_responses, which is where
-// her coach portal actually reads them from.
+// Import Stephanie's Lenus weekly check-ins.
 //
-// WHY THIS IS SEPARATE FROM THE SWEEP. Raw capture first, mapping second: the network pass against
-// an account that dies on 31 August cannot be repeated, turning JSON into rows can be redone any
-// evening. Same doctrine as scripts/import-lenus-programs.mjs.
+// Source: .capture/sweep/lenus-checkins.json, 859 submitted responses across 247 clients, captured
+// 2026-08-12. Before this ran, public.form_responses held TWO rows, both belonging to the sample QA
+// subscriber. The July extract fetched only the check-in IDs (765 of them) and never the bodies,
+// so every answer she has ever read in Lenus was missing from her own app.
 //
-// WHAT IT DEPENDS ON. scripts/lenus-export.js must have run AFTER the 2026-08-12 fix. Before that
-// fix the check-in fan-out sent a profile id where a check-in response id belonged, so
-// ClientCheckinDashboardView_checkInResponse stored nothing for anybody. If this script reports
-// "0 bodies found", the sweep has not been re-run, not that the mapping is broken.
+// Writes three places, because one check-in IS three things:
+//   form_responses     the answers, keyed to the fields 0129 rebuilt from her real question set
+//   weight_entries     the weight, so the trend chart has points
+//   body_measurements  the five circumferences
 //
-// THE ONE THING HERE THAT IS NOT VERIFIED. Every structural piece below is checked against the live
-// schema: the lenus_profile_id join, the answers-keyed-by-field-id contract that
-// src/lib/coach/client-checkin.ts reads, the check_in form type. The ANSWER EXTRACTION is not,
-// because no check-in body had ever been fetched when this was written, so its shape has never been
-// observed. extractAnswers() below is therefore written to RECOGNISE rather than assume, and to
-// refuse rather than guess. Run without --apply first and read what it says it found.
+// IDEMPOTENT. form_responses on (company_id, external_id); the other two on the per-day partial
+// indexes from 0131. Re-run freely: this runs again before the 31 August cutoff.
 //
-// Usage:
-//   node scripts/import-lenus-checkins.mjs                 dry run: report only, writes nothing
-//   node scripts/import-lenus-checkins.mjs --shape         print one body's keys, no values
-//   node scripts/import-lenus-checkins.mjs --apply         write
-//   node scripts/import-lenus-checkins.mjs --apply --limit 5   write a handful first
-//
-// IDEMPOTENT with no migration. form_responses has no natural key for an imported row and
-// supabase/migrations/ is a protected path, so the row id is derived deterministically from the
-// Lenus check-in response id (uuidFor below). Re-running updates in place instead of duplicating.
+// Run: node scripts/import-lenus-checkins.mjs [--apply]
 
+import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { pathToFileURL } from 'node:url';
 
-const argv = process.argv.slice(2);
-const APPLY = argv.includes('--apply');
-const SHAPE = argv.includes('--shape');
-const LIMIT = (() => {
-  const i = argv.indexOf('--limit');
-  return i >= 0 ? Number(argv[i + 1]) : Infinity;
-})();
-
+const APPLY = process.argv.includes('--apply');
+const SRC = '.capture/sweep/lenus-checkins.json';
 const COMPANY = 'c0ffee00-0000-4000-8000-000000000001';
-const OP = 'ClientCheckinDashboardView_checkInResponse';
+const FORM = '6b22fe6e-3b90-4910-b437-3bc0640b92eb';
 
 const sql = (q) => {
-  const out = execFileSync('node', ['.qa-visual/sql.cjs', q], {
-    encoding: 'utf8',
-    maxBuffer: 256 * 1024 * 1024,
-  });
+  const out = execFileSync('node', ['.qa-visual/sql.cjs', q], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   const parsed = JSON.parse(out);
   if (parsed && parsed.message) throw new Error(parsed.message);
   return parsed;
 };
 const lit = (v) =>
-  v === null || v === undefined ? 'null' : typeof v === 'number' ? String(v) : `'${String(v).replace(/'/g, "''")}'`;
-const jsonLit = (v) => `${lit(JSON.stringify(v))}::jsonb`;
+  v === null || v === undefined || v === '' ? 'null' : typeof v === 'number' ? String(v) : `'${String(v).replace(/'/g, "''")}'`;
+const jlit = (o) => `'${JSON.stringify(o).replace(/'/g, "''")}'::jsonb`;
 
-// Deterministic UUID from a stable source string. Formatted as a v5 UUID (version nibble 5, RFC
-// variant bits) so it is a legal uuid and cannot collide with gen_random_uuid()'s v4 output.
-export function uuidFor(source) {
-  const h = createHash('sha256').update(`lenus:checkin:${source}`).digest('hex');
-  const v = `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-${((parseInt(h.slice(16, 17), 16) & 0x3) | 0x8).toString(16)}${h.slice(17, 20)}-${h.slice(20, 32)}`;
-  return v;
+// --- lookups ----------------------------------------------------------------
+// Lenus profile id -> our contact id. Migrated rows key on contact_id: profile_id is only set once
+// a member claims an app account, and these members have not.
+const contacts = sql(`select id, lenus_id from contacts where company_id = '${COMPANY}' and lenus_id is not null`);
+const byLenus = new Map(contacts.map((c) => [c.lenus_id, c.id]));
+
+// Field lookup keyed by the Lenus block title AND type. Both are needed: "Steps" and "Water" are
+// each TWO questions in her form, a yes/no select and a free-text amount, and keying on title alone
+// would collapse them into one and lose whichever came second.
+const fields = sql(
+  `select id, type, label_en, config->'lenus'->>'title' as l_title, config->'lenus'->>'type' as l_type
+   from form_fields where company_id = '${COMPANY}' and form_id = '${FORM}'`,
+);
+const fieldKey = (title, type) => `${String(title || '').trim()}|${type}`;
+const byField = new Map(fields.map((f) => [fieldKey(f.l_title, f.l_type), f.id]));
+
+// --- value mapping ----------------------------------------------------------
+// Selects answer with an OPTION ID, and the human label lives in question.data[].value[]. Storing
+// the raw id would render "9346de21-c997-..." where she expects "Good", so resolve it here and
+// fall back to the id only if the option list is missing.
+function resolveSelect(answer) {
+  const q = answer?.question || {};
+  const opts = (q.data || []).find((d) => d.type === 'options');
+  const list = Array.isArray(opts?.value) ? opts.value : [];
+  const hit = list.find((o) => o.id === answer.value);
+  if (!hit) return answer.value ?? null;
+  // Sleep quality is a 0-10 scale where the label is the number and the description is the word.
+  return hit.description ? `${hit.label} (${hit.description})` : hit.label;
 }
 
-// --- answer extraction, the unverified part ---------------------------------
-// Recognises a question/answer pair by SHAPE, because the field names are unknown. Anything with a
-// question-ish key and an answer-ish key counts. Returns [] when it recognises nothing, and the
-// caller treats [] as "do not write", never as "an empty check-in".
-const Q_KEYS = ['question', 'questionText', 'label', 'title', 'name', 'prompt', 'text'];
-const A_KEYS = ['answer', 'answerText', 'value', 'response', 'reply', 'content'];
+const num = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
-export function extractAnswers(body) {
-  const found = [];
-  const walk = (n) => {
-    if (Array.isArray(n)) return n.forEach(walk);
-    if (!n || typeof n !== 'object') return;
-    const keys = Object.keys(n);
-    const qKey = Q_KEYS.find((k) => keys.includes(k) && typeof n[k] === 'string' && n[k].trim());
-    const aKey = A_KEYS.find((k) => keys.includes(k) && n[k] !== null && n[k] !== undefined && n[k] !== '');
-    if (qKey && aKey) found.push({ question: String(n[qKey]).trim(), answer: n[aKey] });
-    Object.values(n).forEach(walk);
-  };
-  walk(body);
-  // De-duplicate on the question: a nested payload can surface the same pair at two depths.
-  const seen = new Set();
-  return found.filter((f) => (seen.has(f.question) ? false : seen.add(f.question)));
-}
+const CIRC = {
+  waistCircumference: 'waist_cm',
+  hipCircumference: 'hips_cm',
+  chestCircumference: 'chest_cm',
+  upperArmCircumference: 'arms_cm',
+  thighCircumference: 'thighs_cm',
+  fatPercent: 'body_fat_pct',
+};
 
-// The first timestamp that looks like a submission. Falls back to null rather than now(), because a
-// check-in dated today that actually happened in May is worse than one with no date.
-export function extractSubmittedAt(body) {
-  let best = null;
-  const walk = (n) => {
-    if (Array.isArray(n)) return n.forEach(walk);
-    if (!n || typeof n !== 'object') return;
-    for (const [k, v] of Object.entries(n)) {
-      if (/^(submitted|created|completed|answered)(_?at)$|^date$/i.test(k) && typeof v === 'string') {
-        if (!best || v > best) best = v;
-      }
-    }
-    Object.values(n).forEach(walk);
-  };
-  walk(body);
-  return best;
-}
+// Two sites she has measured but our table has no column for: glutes (1 row) and stomach (1 row).
+// Counted and reported rather than silently dropped, and deliberately NOT given columns: two rows
+// across 859 check-ins does not justify widening the schema, but it does justify saying so.
+const CIRC_NO_COLUMN = new Set(['glutesCircumference', 'stomachCircumference']);
 
-export function extractId(body) {
-  let id = null;
-  const walk = (n) => {
-    if (id || !n) return;
-    if (Array.isArray(n)) return n.forEach(walk);
-    if (typeof n !== 'object') return;
-    if (typeof n.id === 'string' && n.id.length >= 8) { id = n.id; return; }
-    Object.values(n).forEach(walk);
-  };
-  walk(body);
-  return id;
-}
+// --- walk -------------------------------------------------------------------
+const doc = JSON.parse(readFileSync(SRC, 'utf8'));
+const statements = [];
+const stat = { responses: 0, answers: 0, weights: 0, measures: 0, noContact: 0, noField: new Map(), photos: 0, whys: 0, noColumn: new Map() };
 
-// Conservative on type. form_fields.type drives how client-checkin.ts renders the value, and a wrong
-// type actively corrupts the display (a 'rating' renders "x/5" whatever the value is), while 'text'
-// always renders the raw answer. So: text, or multiline when it is long enough to need the room.
-// Retyping a field by hand later is a one-row update; un-garbling a rendered answer is not.
-export const typeFor = (answer) => (typeof answer === 'string' && answer.length > 120 ? 'multiline' : 'text');
-export const asText = (a) => (a === null || a === undefined ? '' : typeof a === 'string' ? a : JSON.stringify(a));
+// "Your why" is asked once, at intake, inside the same check-in machinery as the weekly questions.
+// It is not a weekly answer and does not belong on the weekly form: it belongs on the client's
+// record, in client_intake.client_why, which 0117 added and which is empty for all 267 rows.
+const whys = new Map();
 
-function main() {
-  // --- load -------------------------------------------------------------------
-  console.log(APPLY ? 'APPLY: writing.\n' : 'DRY RUN: nothing is written. Add --apply once the numbers look right.\n');
+for (const c of doc.checkins) {
+  const contactId = byLenus.get(c.profileId);
+  if (!contactId) { stat.noContact += 1; continue; }
+  const submittedAt = new Date(c.response.submittedAt).toISOString();
+  const day = submittedAt.slice(0, 10);
 
-  const holders = sql(`
-    select profile_id, full_name
-    from lenus.raw_client_extract
-    where operation = ${lit(OP)}
-    order by profile_id
-  `);
+  const answers = {};
+  let weightKg = null;
+  const circ = {};
 
-  if (!holders.length) {
-    console.log(`No ${OP} rows in lenus.raw_client_extract.`);
-    console.log('The sweep has not been re-run since the 2026-08-12 fan-out fix. Run the sweep first:');
-    console.log('  1. node .qa-visual/lenus-export-test.mjs');
-    console.log('  2. paste scripts/lenus-export.js into her logged-in us.lenus.io tab, lenusExport.start()');
-    console.log('  3. node scripts/lenus-verify.mjs --checkins');
-    process.exit(0);
-  }
-  console.log(`${holders.length} clients carry check-in bodies.`);
+  for (const block of c.response.blocks || []) {
+    const fb = block.formBlock || {};
+    const title = String(fb.title || '').trim();
+    for (const a of block.answers || []) {
+      const la = a.latestAnswer;
+      if (!la || la.value == null || la.value === '') continue;
+      const q = la.question || {};
+      const metric = q.metricType;
 
-  if (SHAPE) {
-    const one = sql(`select data from lenus.raw_client_extract where operation = ${lit(OP)} order by pg_column_size(data) desc limit 1`);
-    const keysOnly = (node, d = 0) => {
-      if (d > 8) return '...';
-      if (Array.isArray(node)) return node.length ? [keysOnly(node[0], d + 1), `+${node.length - 1} more`] : [];
-      if (node && typeof node === 'object') {
-        const o = {};
-        for (const [k, v] of Object.entries(node)) o[k] = keysOnly(v, d + 1);
-        return o;
-      }
-      return typeof node;
-    };
-    console.log('\nkeys and types only, no values:\n');
-    console.log(JSON.stringify(keysOnly(one[0]?.data), null, 2));
-    process.exit(0);
-  }
+      // Numbers that belong in their own tables. They are NOT written to answers as well: the
+      // trend charts read the dedicated tables, and two copies drift the first time one is edited.
+      if (metric === 'weight') { weightKg = num(la.value); continue; }
+      if (CIRC[metric]) { circ[CIRC[metric]] = num(la.value); continue; }
+      if (CIRC_NO_COLUMN.has(metric)) { stat.noColumn.set(metric, (stat.noColumn.get(metric) || 0) + 1); continue; }
 
-  // Lenus profile id -> our profile. A client who has not been created in our system yet simply has no
-  // row, and is reported rather than skipped silently.
-  const profiles = sql(`select id, lenus_profile_id from profiles where lenus_profile_id is not null`);
-  const byLenusId = new Map(profiles.map((p) => [p.lenus_profile_id, p.id]));
-  console.log(`${byLenusId.size} of our profiles carry a lenus_profile_id.\n`);
-
-  // --- the form ---------------------------------------------------------------
-  // One check-in form for the imported history. Her live check-in form is a separate thing she edits;
-  // mixing imported Lenus questions into it would rewrite a form she is actively using.
-  const TITLE = 'Check-in (imported from Lenus)';
-  let form = sql(`select id, version from forms where company_id = ${lit(COMPANY)} and title_en = ${lit(TITLE)} limit 1`)[0];
-  if (!form) {
-    if (APPLY) {
-      sql(`insert into forms (company_id, title_en, title_es, type, status)
-           values (${lit(COMPANY)}, ${lit(TITLE)}, ${lit('Check-in (importado de Lenus)')}, 'check_in', 'published')`);
-      form = sql(`select id, version from forms where company_id = ${lit(COMPANY)} and title_en = ${lit(TITLE)} limit 1`)[0];
-      console.log(`created form ${form.id}`);
-    } else {
-      console.log(`would create form "${TITLE}" (type check_in, published)`);
-    }
-  }
-
-  const fieldByLabel = new Map();
-  if (form) {
-    for (const f of sql(`select id, label_en from form_fields where form_id = ${lit(form.id)}`)) {
-      fieldByLabel.set(f.label_en, f.id);
-    }
-  }
-
-  // --- walk the clients --------------------------------------------------------
-  let bodiesSeen = 0;
-  let unrecognised = 0;
-  let noProfile = 0;
-  let written = 0;
-  const newQuestions = new Set();
-  const samples = [];
-  let processed = 0;
-
-  for (const h of holders) {
-    if (processed >= LIMIT) break;
-    processed++;
-
-    const row = sql(`
-      select data from lenus.raw_client_extract
-      where operation = ${lit(OP)} and profile_id = ${lit(h.profile_id)}
-      limit 1
-    `)[0];
-    if (!row) continue;
-
-    // The fixed extractor stores an ARRAY of bodies. A single object is tolerated in case a future
-    // capture stores one.
-    const bodies = Array.isArray(row.data) ? row.data : [row.data];
-    const profileId = byLenusId.get(h.profile_id) ?? null;
-    if (!profileId) noProfile++;
-
-    for (const body of bodies) {
-      bodiesSeen++;
-      const pairs = extractAnswers(body);
-      if (!pairs.length) {
-        unrecognised++;
+      // Asked once at intake, not weekly. Newest submission wins if a client answered twice.
+      if (title === 'Your "why"') {
+        const prev = whys.get(contactId);
+        if (!prev || prev.at < submittedAt) whys.set(contactId, { at: submittedAt, value: String(la.value) });
         continue;
       }
-      if (samples.length < 3) samples.push({ who: h.full_name, pairs: pairs.slice(0, 4) });
-      for (const p of pairs) if (!fieldByLabel.has(p.question)) newQuestions.add(p.question);
+      // Progress photos are already migrated (2,289 rows in progress_photos) and these URLs are
+      // signed and expiring, so recording the fact is useful and recording the link is not.
+      if (q.type === 'media') { stat.photos += 1; continue; }
 
-      if (!APPLY || !profileId || !form) continue;
-
-      // Create any field this question needs, once, and reuse its id from then on. The answers object
-      // is keyed by field id: that is the contract client-checkin.ts reads.
-      const answers = {};
-      for (const p of pairs) {
-        let fieldId = fieldByLabel.get(p.question);
-        if (!fieldId) {
-          sql(`insert into form_fields (company_id, form_id, type, label_en, sort_order)
-               values (${lit(COMPANY)}, ${lit(form.id)}, ${lit(typeFor(p.answer))}, ${lit(p.question)}, ${fieldByLabel.size})`);
-          fieldId = sql(`select id from form_fields where form_id = ${lit(form.id)} and label_en = ${lit(p.question)} limit 1`)[0]?.id;
-          if (!fieldId) continue;
-          fieldByLabel.set(p.question, fieldId);
-        }
-        answers[fieldId] = asText(p.answer);
+      const fid = byField.get(fieldKey(title, fb.type));
+      if (!fid) {
+        stat.noField.set(fieldKey(title, fb.type), (stat.noField.get(fieldKey(title, fb.type)) || 0) + 1);
+        continue;
       }
-
-      const lenusResponseId = extractId(body);
-      if (!lenusResponseId) { unrecognised++; continue; }
-      const submittedAt = extractSubmittedAt(body);
-
-      sql(`
-        insert into form_responses (id, company_id, form_id, profile_id, answers, form_version, submitted_at)
-        values (${lit(uuidFor(lenusResponseId))}, ${lit(COMPANY)}, ${lit(form.id)}, ${lit(profileId)},
-                ${jsonLit(answers)}, ${form.version ?? 1},
-                ${submittedAt ? lit(submittedAt) : 'now()'})
-        on conflict (id) do update set answers = excluded.answers, submitted_at = excluded.submitted_at
-      `);
-      written++;
+      const value =
+        fb.type === 'select' || fb.type === 'sleepQuality' ? resolveSelect(la)
+        : fb.type === 'rating' ? num(la.value)
+        : la.value;
+      if (value === null || value === '') continue;
+      answers[fid] = value;
+      stat.answers += 1;
     }
   }
 
-  // --- report -------------------------------------------------------------------
-  console.log(`\nclients processed   ${processed}`);
-  console.log(`bodies seen         ${bodiesSeen}`);
-  console.log(`unrecognised        ${unrecognised}${unrecognised ? '   <-- extractAnswers did not find a question/answer pair' : ''}`);
-  console.log(`no local profile    ${noProfile}${noProfile ? '   <-- these clients have no profiles.lenus_profile_id yet' : ''}`);
-  console.log(`distinct questions  ${fieldByLabel.size + newQuestions.size}${newQuestions.size ? ` (${newQuestions.size} new)` : ''}`);
-  console.log(APPLY ? `responses written   ${written}` : 'responses written   0 (dry run)');
+  stat.responses += 1;
+  statements.push(
+    `insert into form_responses (company_id, form_id, contact_id, external_id, answers, submitted_at)
+     values (${lit(COMPANY)}, ${lit(FORM)}, ${lit(contactId)}, ${lit(c.response.id)}, ${jlit(answers)}, ${lit(submittedAt)})
+     on conflict (company_id, external_id) where external_id is not null
+     do update set answers = excluded.answers, submitted_at = excluded.submitted_at;`,
+  );
 
-  if (samples.length) {
-    console.log('\nwhat it recognised, first few:');
-    for (const s of samples) {
-      console.log(`  ${s.who}`);
-      for (const p of s.pairs) console.log(`    ${p.question}  ->  ${asText(p.answer).slice(0, 60)}`);
-    }
+  if (weightKg !== null) {
+    stat.weights += 1;
+    statements.push(
+      `insert into weight_entries (company_id, contact_id, recorded_on, weight_kg, source)
+       values (${lit(COMPANY)}, ${lit(contactId)}, ${lit(day)}, ${lit(weightKg)}, 'lenus')
+       on conflict (company_id, contact_id, recorded_on) where source = 'lenus' and contact_id is not null
+       do update set weight_kg = excluded.weight_kg;`,
+    );
   }
 
-  if (bodiesSeen && unrecognised === bodiesSeen) {
-    console.log('\nEVERY body was unrecognised, so nothing was written. That means the payload does not use');
-    console.log('any of the question/answer key names guessed in Q_KEYS / A_KEYS. Run --shape, read the');
-    console.log('real key names off it, and add them to those two lists. This is the one part of this');
-    console.log('script that was written before a single body had ever been fetched.');
-    process.exit(1);
+  if (Object.keys(circ).length) {
+    stat.measures += 1;
+    const cols = Object.keys(circ);
+    statements.push(
+      `insert into body_measurements (company_id, contact_id, recorded_on, ${cols.join(', ')}, source)
+       values (${lit(COMPANY)}, ${lit(contactId)}, ${lit(day)}, ${cols.map((k) => lit(circ[k])).join(', ')}, 'lenus')
+       on conflict (company_id, contact_id, recorded_on) where source = 'lenus' and contact_id is not null
+       do update set ${cols.map((k) => `${k} = excluded.${k}`).join(', ')};`,
+    );
   }
-  if (!APPLY && bodiesSeen) {
-    console.log('\nNumbers look right? Re-run with --apply. Start with --apply --limit 5.');
-  }
-
 }
 
-// Run only when invoked directly, so the test can import the extractors without touching the DB.
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
+// Only client_why is set on conflict, so an existing intake row keeps every other answer. Writing
+// a subset of client_intake with a full-row upsert is how migrated Lenus data gets blanked.
+for (const [contactId, w] of whys) {
+  stat.whys += 1;
+  statements.push(
+    `insert into client_intake (company_id, contact_id, client_why)
+     values (${lit(COMPANY)}, ${lit(contactId)}, ${lit(w.value)})
+     on conflict (company_id, contact_id) do update set client_why = excluded.client_why;`,
+  );
+}
+
+console.log(`responses ${stat.responses} | answers ${stat.answers} | weights ${stat.weights} | measurements ${stat.measures}`);
+console.log(`client "why" statements ${stat.whys} | photo answers skipped (already migrated) ${stat.photos} | check-ins with no matching contact ${stat.noContact}`);
+if (stat.noColumn.size) {
+  console.log('measured but no column (reported, not dropped silently):');
+  for (const [k, n] of stat.noColumn) console.log(`   ${n}x  ${k}`);
+}
+if (stat.noField.size) {
+  console.log('UNMAPPED BLOCKS (these answers would be dropped):');
+  for (const [k, n] of [...stat.noField.entries()].sort((a, b) => b[1] - a[1])) console.log(`   ${n}x  ${k}`);
+}
+
+if (!APPLY) {
+  console.log(`\nDRY RUN. ${statements.length} statements, nothing written. Re-run with --apply.`);
+  process.exit(0);
+}
+
+// Batched by CHARACTER budget: one call per statement rate-limits the Management API, and batching
+// by statement count blows the OS argument limit because the query travels as an argv entry.
+const MAX_CHARS = 6000;
+let done = 0;
+let buf = [];
+let bufLen = 0;
+const flush = () => {
+  if (!buf.length) return;
+  sql(buf.join('\n'));
+  done += buf.length;
+  if (done % 200 < buf.length) console.log(`  ${done}/${statements.length}`);
+  buf = [];
+  bufLen = 0;
+};
+for (const st of statements) {
+  if (bufLen + st.length > MAX_CHARS) {
+    flush();
+    execFileSync(process.execPath, ['-e', 'setTimeout(() => {}, 150)']);
+  }
+  buf.push(st);
+  bufLen += st.length;
+}
+flush();
+console.log(`applied ${done} statements`);

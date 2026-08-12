@@ -62,7 +62,9 @@
       "Skill(launchproof:chrome)",
       "Skill(launchproof:chrome:*)",
       "Skill(artifact-design)",
-      "Skill(artifact-design:*)"
+      "Skill(artifact-design:*)",
+      "mcp__claude_ai_Google_Drive__search_files",
+      "mcp__claude_ai_Google_Drive__read_file_content"
     ],
     "deny": [
       "PowerShell"

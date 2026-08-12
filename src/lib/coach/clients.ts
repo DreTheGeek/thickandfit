@@ -583,8 +583,9 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     })
     .filter((p): p is { url: string; on: string; pose: string | null; weightKg: number | null } => p != null);
 
-  // Habits, check-ins and the cycle are keyed by profile, so a client who never claimed an app
-  // account simply has none of them.
+  // Habits and the cycle are keyed by profile, so a client who never claimed an app account has
+  // none of them. CHECK-INS ARE NOT, any more: the August sweep recovered 851 submissions belonging
+  // to contacts with no profile, so that one is asked separately and by both keys.
   //
   // The cycle window is 60 days: long enough to span two cycles for most members, short enough that
   // a symptom count reads as "lately" rather than as a lifetime total. loadCoachCycle returns null
@@ -592,13 +593,15 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
   // on purpose: telling a coach that a member opted out is itself a disclosure about her.
   const today = new Date().toISOString().slice(0, 10);
   const cycleSince = new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
-  const [habits, latestCheckin, cycle] = raw.profile_id
-    ? await Promise.all([
-        getClientHabits(companyId, raw.profile_id),
-        getLatestCheckin(companyId, raw.profile_id),
-        loadCoachCycle(raw.profile_id, companyId, cycleSince, today),
-      ])
-    : [null, null, null];
+  const [[habits, cycle], latestCheckin] = await Promise.all([
+    raw.profile_id
+      ? Promise.all([
+          getClientHabits(companyId, raw.profile_id),
+          loadCoachCycle(raw.profile_id, companyId, cycleSince, today),
+        ])
+      : Promise.resolve([null, null] as const),
+    getLatestCheckin(companyId, { profileId: raw.profile_id, contactId }),
+  ]);
 
   // Migrated Lenus workout history (session summaries): total + the most recent handful.
   const [{ count: workoutCount }, { data: woRows }] = await Promise.all([
