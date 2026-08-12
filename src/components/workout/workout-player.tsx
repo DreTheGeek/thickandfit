@@ -147,6 +147,8 @@ export function WorkoutPlayer({
   const [subsOpen, setSubsOpen] = useState(false);
   const [subs, setSubs] = useState<Substitute[] | null>(null);
   const [finished, setFinished] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const [elapsed, setElapsed] = useState(0); // total workout seconds, counts up from start
   const [difficulty, setDifficulty] = useState<Difficulty>('moderate'); // this set's RPE, resets each set
   const [showComplete, setShowComplete] = useState(false); // post-workout rating sheet
@@ -240,10 +242,23 @@ export function WorkoutPlayer({
   // Persist the whole session (sets carry per-set difficulty; the sheet adds enjoyment/effort),
   // fire the celebration, and head back. Called from the completion sheet, not on the last set.
   const submitLog = useCallback(async (): Promise<void> => {
-    setFinished(true);
-    fire();
+    // EVERY SET OF THIS SESSION LIVES IN logged.current UNTIL THIS CALL SUCCEEDS. Buffering is the
+    // right design for a gym (she may have no signal in a basement), but it makes this one request
+    // the only thing standing between an hour of work and nothing.
+    //
+    // It used to fire the confetti first, ignore the response entirely, swallow the catch as
+    // "best-effort; the celebration already played", and route away on a timer. A dropped request
+    // therefore looked EXACTLY like a saved workout: celebration, redirect, and the session gone.
+    // She would find out days later, from a history that has a hole in it, and have no idea which
+    // day it was.
+    //
+    // Now the save is awaited and checked, and she only leaves this screen if it worked. A failure
+    // keeps her here with her sets still in memory and a button that tries again, which is the only
+    // moment they can still be rescued.
+    setSaveFailed(false);
+    setSaving(true);
     try {
-      await fetch('/api/workouts/log', {
+      const res = await fetch('/api/workouts/log', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -254,9 +269,18 @@ export function WorkoutPlayer({
           sets: logged.current,
         }),
       });
-    } catch {
-      // best-effort; the celebration already played
+      if (!res.ok) throw new Error(`save failed: ${res.status}`);
+    } catch (e) {
+      console.error('workout submitLog:', e instanceof Error ? e.message : e);
+      setSaving(false);
+      setSaveFailed(true);
+      return;
     }
+    setSaving(false);
+    // Celebrate only once it is actually hers. She earned the confetti by finishing; she has not
+    // earned it while the work is still in a variable.
+    setFinished(true);
+    fire();
     setTimeout(() => router.push('/workouts'), 1300);
   }, [fire, router, sessionId, enjoyment, effort]);
 
@@ -578,8 +602,13 @@ export function WorkoutPlayer({
             </div>
           </div>
           <div className="flex-none px-[22px] pb-7 pt-2">
-            <Button size="block" onClick={() => void submitLog()}>
-              {t('finish')}
+            {saveFailed && (
+              <p role="alert" className="mb-2 rounded-xl bg-alert px-3 py-2 text-[13px] text-alert-ink">
+                {t('saveFailed')}
+              </p>
+            )}
+            <Button size="block" disabled={saving} onClick={() => void submitLog()}>
+              {saving ? t('saving') : saveFailed ? t('tryAgain') : t('finish')}
             </Button>
           </div>
         </div>

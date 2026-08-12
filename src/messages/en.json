@@ -734,7 +734,10 @@
       "effortLabel": "How hard was it?",
       "effortLow": "Easy",
       "effortHigh": "All out",
-      "untitled": "Exercise"
+      "untitled": "Exercise",
+      "saveFailed": "That did not save. Your sets are still here, tap to try again.",
+      "saving": "Saving…",
+      "tryAgain": "Try again"
     },
     "coach": {
       "overview": "Overview",

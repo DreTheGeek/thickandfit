@@ -734,7 +734,10 @@
       "effortLabel": "¿Qué tan intenso fue?",
       "effortLow": "Suave",
       "effortHigh": "Al máximo",
-      "untitled": "Ejercicio"
+      "untitled": "Ejercicio",
+      "saveFailed": "No se guardó. Tus series siguen aquí, toca para reintentar.",
+      "saving": "Guardando…",
+      "tryAgain": "Reintentar"
     },
     "coach": {
       "overview": "Resumen",
