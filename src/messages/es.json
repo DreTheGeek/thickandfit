@@ -2203,7 +2203,9 @@
         "physiqueFlagTitle": "Seguimiento de bienestar",
         "physiqueFlagBody": "La lectura de {name} se marcó para un seguimiento de bienestar. Toca para escribirle y ver cómo está.",
         "cycleReminderTitle": "¿Cómo te sentiste hoy?",
-        "cycleReminderBody": "Anota tus síntomas y tu ánimo para que tu plan se ajuste a ti."
+        "cycleReminderBody": "Anota tus síntomas y tu ánimo para que tu plan se ajuste a ti.",
+        "checkinDoneTitle": "Nuevo check-in",
+        "checkinDoneBody": "{name} envió su check-in de la semana."
       }
     },
     "forms": {
@@ -2212,7 +2214,9 @@
       "error": "No se pudo enviar.",
       "selectPlaceholder": "Elige una...",
       "photoUploading": "Subiendo foto...",
-      "photoUploaded": "Foto agregada"
+      "photoUploaded": "Foto agregada",
+      "successNext": "Steph lo recibe y lo lee antes de tu próxima sesión.",
+      "backHome": "Volver al inicio"
     },
     "claim": {
       "title": "Bienvenida de nuevo",

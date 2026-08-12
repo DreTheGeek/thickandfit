@@ -4,6 +4,7 @@
 // upload to the private progress-photos bucket under the member's own folder and store the object path.
 import { useState } from 'react';
 import type { FormEvent, ReactElement } from 'react';
+import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -74,7 +75,22 @@ export function FormRenderer({
   }
 
   if (state === 'success') {
-    return <p className="rounded-xl bg-warm px-4 py-3 text-sm text-soft">{t('success')}</p>;
+    // A confirmation with no way out is a dead end, and this one sat at the end of the single most
+    // important thing a member does each week: she finishes her check-in, reads "thank you", and the
+    // app gives her nothing to tap. Home is the way back, and telling her Steph will read it is the
+    // honest close, since the coach now actually gets a notification for it.
+    return (
+      <div className="rounded-xl bg-warm px-4 py-4 text-center">
+        <p className="text-sm text-soft">{t('success')}</p>
+        <p className="mt-1 text-[13px] text-faint">{t('successNext')}</p>
+        <Link
+          href="/dashboard"
+          className="tf-press mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-[13px] font-semibold text-bg"
+        >
+          {t('backHome')}
+        </Link>
+      </div>
+    );
   }
 
   const anyUploading = Object.values(uploading).some(Boolean);

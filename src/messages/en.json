@@ -2203,7 +2203,9 @@
         "physiqueFlagTitle": "Wellbeing check-in",
         "physiqueFlagBody": "{name}'s physique read was flagged for a wellbeing follow-up. Tap to reach out and check in.",
         "cycleReminderTitle": "How did today feel?",
-        "cycleReminderBody": "Log your symptoms and mood so your plan can work around them."
+        "cycleReminderBody": "Log your symptoms and mood so your plan can work around them.",
+        "checkinDoneTitle": "New check-in",
+        "checkinDoneBody": "{name} sent her weekly check-in."
       }
     },
     "forms": {
@@ -2212,7 +2214,9 @@
       "error": "Could not submit.",
       "selectPlaceholder": "Choose one...",
       "photoUploading": "Uploading photo...",
-      "photoUploaded": "Photo added"
+      "photoUploaded": "Photo added",
+      "successNext": "Steph gets this in her inbox and will read it before your next session.",
+      "backHome": "Back to home"
     },
     "claim": {
       "title": "Welcome back",

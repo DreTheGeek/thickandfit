@@ -5,7 +5,7 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createNotification, createNotificationsBulk } from '@/lib/notifications/create';
 import { asNotifLocale, notifText } from '@/lib/notifications/i18n';
-import { COACH_ROLES } from '@/lib/auth/session';
+import { COACH_ROLES, COACHING_ROLES } from '@/lib/auth/session';
 import type { NotificationPayload, NotificationType } from '@/lib/notifications/types';
 
 type MemberRow = { id: string; ui_locale: string | null };
@@ -136,6 +136,58 @@ export async function notifyClientMessage(params: {
     body: notifText(locale, 'messageBody', { name: params.senderName }),
     link: '/inbox',
   });
+}
+
+/**
+ * A member submitted her check-in. Tell her coach.
+ *
+ * This did not exist. The response was written to form_responses correctly and then nothing
+ * happened: no notification, no email, no bell. The only way Stephanie ever saw a check-in was by
+ * opening that specific client's page and noticing. With 256 clients that is not a workflow, and
+ * the check-in is the heartbeat of the coaching relationship, the one thing a member does every
+ * week expecting to be read.
+ *
+ * Note the asymmetry this closes. Coach-to-member was already wired: assigning a program fires
+ * notifyMember with a bell and a push. Member-to-coach had one wire (a chat reply) and the check-in
+ * was not on it.
+ */
+export async function notifyCoachOfCheckin(params: {
+  companyId: string;
+  clientProfileId: string;
+  clientName: string;
+  formTitle: string;
+}): Promise<void> {
+  const svc = createServiceClient();
+  const { data, error } = await svc
+    .from('profiles')
+    .select('id, ui_locale')
+    .eq('company_id', params.companyId)
+    // COACHING_ROLES, not COACH_ROLES. The first version used the access set, which includes
+    // operator, so one member's check-in pinged the agency's ops accounts alongside Stephanie.
+    // Verified against the live DB: four recipients for one submission, two of them operators.
+    .in('role', COACHING_ROLES)
+    // Guard against a coach who is somehow also the submitting profile notifying herself.
+    .neq('id', params.clientProfileId);
+  if (error) {
+    console.error('notifyCoachOfCheckin load coaches:', error.message);
+    return;
+  }
+  const coaches = (data as MemberRow[]) ?? [];
+  if (coaches.length === 0) return;
+
+  const recipients = coaches.map((c) => {
+    const locale = asNotifLocale(c.ui_locale);
+    const payload: NotificationPayload = {
+      type: 'checkin',
+      title: notifText(locale, 'checkinDoneTitle'),
+      body: notifText(locale, 'checkinDoneBody', { name: params.clientName }),
+      // Straight to the woman's own record, not to a list she then has to search. The point of the
+      // notification is that the next tap is reading what she wrote.
+      link: `/coach/subscribers/${params.clientProfileId}`,
+    };
+    return { profileId: c.id, payload };
+  });
+  await createNotificationsBulk(params.companyId, recipients);
 }
 
 /**
