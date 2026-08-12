@@ -1,196 +1,125 @@
-# STATE: Thick & Fit
+# STATE — 2026-08-12
 
-## CURRENT STATUS (2026-07-21) — read this first; the sections below are historical build notes
+Current, verified state of the build. Written at the end of a long session so work can resume
+without re-deriving anything. Everything below was measured against the live database or observed
+in the running app, not inferred.
 
-**Launch branch is `main`.** All Phase 2 work already landed on `main`; `phase-2` is 95 commits
-BEHIND main with nothing ahead, so the old "merge phase-2 -> main" step is a no-op. The `branches`
-memory note is superseded by this.
+---
 
-**Code is verified airtight** (full live-DB + observed-behavior sweep, 2026-07-21). A 5-agent review
-+ launch-readiness pass found and FIXED, all re-verified same day:
-- P0 coach-chat stream deadlock (replies streamed then vanished; 0 assistant rows ever persisted) —
-  root cause was a ReadableStream pull() that enqueues nothing never being re-called. Fixed +
-  proven end to end.
-- HIGH billing: payments unrecordable (partial index vs ON CONFLICT, error swallowed) + resubscribe
-  crashed the webhook (UNIQUE customer index). Migration 0085 applied live; probes green.
-- Checkout webhook-race reconciliation, dashboard tz bug, silent cron_job_log death (since 7/8),
-  onboarding loop-on-failure, rate-limiter atomic+fail-closed (0083), auth-hook search_path (0084),
-  Stripe dispute/trial/dunning handlers, brand dead-code, and ~10 more. See git log on `main`.
+## THE LIVE WIRE: the Lenus sweep
 
-**The runbook is the source of truth for launch:** `.planning/LAUNCH-RUNBOOK.md` (env-var inventory,
-deploy sequence, cut list, decisions).
+**Deadline 31 August. 19 days. This is the only item with a clock that does not move.**
 
-**Gates to launch are NOT engineering** — they are: Stephanie's content (AI knowledge base = long
-pole, 369 demo videos, approved recipe/exercise lists, offer blueprint), external account keys
-(Stripe/OpenRouter-in-prod/Resend/Mux/Sentry/PostHog/VAPID/Twilio), the domain cutover
-(www.teamthickandfit.com not yet attached; re-register the 5 pg_cron URLs at cutover), and two
-decisions before arming Stripe: (1) the ~256 migrated Lenus clients (client_subscriptions) have no
-native subscription row and would be paywalled — comp-grant or union the tables FIRST; (2) pin the
-Stripe webhook to a pre-Basil API version.
+### Where it stands
 
-Migrations applied live beyond the on-disk history: 0083, 0084, 0085 (all forward-compatible).
-Next migration number: 0086.
+Discovery is DONE. The replay has not run.
 
-## Project Reference
+- `.planning/lenus-recipes.json` — **66 operations** with full query documents, sample variables,
+  auth headers and the endpoint. Captured 2026-08-12 by driving the user's own Chrome.
+- `.planning/lenus-programs.json` — her 40 training programs, 9.6 MB. Already imported.
+- `.planning/lenus-plan-products.json` — the 6 plan-to-product mappings.
 
-See: .planning/PROJECT.md (updated 2026-06-18)
+**Chrome on this machine downloads to `.planning`, not `~/Downloads`.** Two hours were lost to this.
 
-**Core value:** Accurate low-friction bilingual nutrition tracking must work; convert Stephanie's
-trust into a retained subscriber base.
-**Current focus:** Phase 2 launch build on the `phase-2` branch (nutrition wedge, billing, AI coach,
-community, mid-ticket, plus launch-readiness: paywall, legal, monitoring, scheduling). See
-`.planning/LAUNCH-PLAN.md` and the 14-WP launch-ready build plan.
+### The root cause of "I still don't see everything from every client"
 
-## Current Position
+The July extract took page one of every list and stopped. Measured today, per client across 265:
 
-Phase: Phase 2 launch build IN PROGRESS on `phase-2`, executing the 14-WP plan (~/.claude/plans + LAUNCH-PLAN.md).
-DONE + verified in-browser (committed): WP0 stabilize (merge main, build green, RLS 28/28); WP1 payments (tier
-ladder STRIPE_PRICE_LOW/MID + trial; live Stripe is the last step); WP2 entitlement/paywall (comped-full +
-pay-to-enter, profiles.comp_access_until, requireEntitled on gated pages, verified non-entitled->/checkout +
-comped->access); WP3 AI coach RESTORED (revert of 1402144; chat/insights/RAG; entitlement-gated; graceful
-no-OPENROUTER-key state) + AI endpoints rate-limited; WP4 text-to-macro (reuses photo resolve pipeline; in the
-"Snap your meal" modal).
-Bugs fixed en route: dotted i18n keys (next-intl INVALID_KEY); subscriber app failing to render in dev (CSP
-needed unsafe-eval + wss for realtime); notification-bell realtime channel ordering.
-ALSO DONE since (committed, verified): WP5 habits (0036 habits + habit_logs, dashboard check-off persists);
-WP6 check-ins (/checkin lists assigned check_in forms -> /forms/[id]); WP7 parts Billing & Renewals view
-(/coach/billing, real CRM data) + Create-challenge (/coach/challenges -> community leaderboard); WP10 part 1
-GDPR account deletion (/account danger zone, cascade-delete); WP12 part 1 bilingual 404 page. Test data seeded
-for sam: 2 habits + 1 check-in form. WP7 COMPLETE (billing&renewals + create-challenge + inbox w/ 0037 Realtime
-messages + coach community view w/ broadcast composer). WP9 COMPLETE (coach nav trimmed to shipped routes, all 13
-"soon" dead links removed, verified clean). WP10 medical disclaimer DONE (0038 health_ack_at + /disclaimer gate
-in requireEntitled; bilingual; timestamped acceptance). NOTE: every subscriber now hits /disclaimer once before
-app access; for sam QA, set profiles.health_ack_at via sql.cjs.
-WP11 COMPLETE + verified (mig 0039 profiles.timezone + reminder_hour; localDay() helper + IANA-validation
-trigger + tz-aware safety-net triggers on food_log/weight_entries; local-day fix across diary/habits/gamification;
-notification GENERATORS in src/lib/notifications/generators.ts + 3 CRON_SECRET-gated routes /api/internal/notify-*;
-cron.schedule registration DEFERRED to supabase/deploy/cron-register.sql, NOT applied = needs prod URL + CRON_SECRET).
-Verified: DB safety-net wrote local day 2026-06-29 for a Kiritimati user while UTC=06-28; check-in generator selects
-sam. BUG FOUND + FIXED in verification: generator filtered form_responses on created_at (col is submitted_at) =>
-silently re-nudged answered members; fixed + added error guard (commit b7f571f).
+| | held | should be |
+|---|---|---|
+| Workouts | 15.8 | one client shows `fullCount: 482` |
+| Check-ins | 0.01 (2 rows total) | weekly over months |
+| Weigh-ins | 2.9 | ~52 for a year of weekly |
+| Photos | 8.6 | 30+ for monthly over a year |
+| Messages | 45.4 | likely one page too |
 
-ORCHESTRATION (NEW, per user "build it all using gsd and ralph loops with research"): remaining WPs driven by a
-research-then-execute loop. Phase 1 ran 6 gsd-phase-researcher agents -> .planning/research/wpNN-*.md + the synthesized
-.planning/research/EXECUTION-ROADMAP.md (migration numbers 0039-0042 assigned, shared-file conflict map, dependency
-order WP11->WP12->WP3->WP8->WP10->WP13). Phase 2 = per-WP gsd-executor builds (background) + MY in-browser/SQL
-launchproof verification before each is accepted. Migration ladder from roadmap: 0039 WP11(done), 0040 WP3(done),
-0041 WP8 mid-ticket, 0042 WP13 legacy_claim; WP10 needs no migration (notification_preferences already exists 0001).
-WP12 COMPLETE + verified (no migration; @sentry/nextjs + posthog-js; src/instrumentation*.ts + sentry.{server,edge}.config
-+ posthog-pageview; global-error now bilingual via ui_locale cookie + Sentry capture; next.config withSentryConfig +
-CSP widened for *.posthog.com/*.sentry.io/*.ingest.sentry.io. Verified: 5 headers+HSTS live, build green WITHOUT keys).
-WP3 COMPLETE + verified (mig 0040 coach_knowledge vector(1536) + match_coach_knowledge RPC, RLS 29/29; knowledge.ts
-chunk->embed->store graceful null-embedding; safety.ts; plan-gen.ts MEAL PLANS ONLY; chat Layer-4 knowledge block;
-/coach/settings/knowledge page + /api/coach-ai/plan; in-chat AI disclaimer banner; navKnowledge link). Verified:
-knowledge ingest store/list/RLS-read path renders "Macro Philosophy 2 chunks not embedded yet"; disclaimer banner +
-notConfigured state render on /coach-chat. BUGS FIXED: meal_plans macro cols are GENERATED (executor); ES disclaimer
-accents (me, f13e4f3). LESSON: a dev server left running while executors edit client components goes STALE ("module
-factory is not available" false errors); RESTART dev clean (kill PID on :3000 + rm -rf .next + pnpm dev) before each
-verification pass. WP8 executor running now (mid-ticket 0041; bypass-block = the marquee check). Assistant seeded:
-sample.dani@thickandfit.test = assistant_coach (id 71e13451-fabf-4e2d-a346-57a69dd8bd65, company c0ffee00, pw TFSample2026!).
-ALL FEATURE WPs DONE + verified (WP0-13). WP8 (0041 mid-ticket) verified: bypass-block proven at the DB layer
-(approval_queue has SELECT+INSERT policies, NO UPDATE policy; is_approver() = coach/operator only; INSERT WITH CHECK
-forces status=pending + drafted_by=auth.uid()) + draft->approve->publish writes the real messages row (sender=drafter);
-no bugs. WP10 (no migration; 0043 email-sync trigger added) verified: /account hub (Security email/pw, Notifications
-matrix w/ billing+email locked-on, Download-my-data, Danger zone) + /account/billing ARL auto-renew disclosure + cancel/
-refund terms; export allowlist redacts security/audit/push secrets; FIXED a completeness gap (added messages table to
-the export, commit). WP13 (0042 claim_legacy_contact SECURITY DEFINER RPC) verified: claim RPC (claimed->idempotent->
-tenant-safe, executor-proven) + ES search now matches name_es + 35 ES-accent fixes + photo-import mechanics; Mux pipeline
-+ webhook + real-invite batch BUILT but launch-gated (need MUX/Resend/OpenRouter keys + Stephanie go-ahead). WP14 ship
-gate: clean `pnpm build` PASS (all WPs compile for prod); RLS isolation 31/31; no service-role key in client code; 9
-migrations 0035-0043 applied.
-6 BUGS CAUGHT + FIXED in verification (typecheck-invisible): WP11 created_at->submitted_at over-notify; WP3 GENERATED
-macro cols + ES accents; WP10 messages missing from export; plus the stale-dev-chunk false-error diagnosis.
-SHIP STEPS REMAINING (gated on the user + external keys, NOT autonomous): connect external accounts (live Stripe +
-prices, OPENROUTER_API_KEY, Sentry DSN + PostHog key, Mux token+webhook secret + 369 demo manifest, Resend verified
-domain, VAPID push, CRON_SECRET in Vercel, Twilio); run the launch-gated jobs (cron-register.sql, the 256-client invite
-batch, AI ES bulk-fill + human review, Mux import); then ship Phase 1 to prod first, merge phase-2->main, vercel deploy
---prod. Optional pre-ship: /audit (Fort Knox) + full launchproof:run across all 3 roles.
-Next migration number: 0044. The "Snap your meal" modal hosts both photo + text-to-macro.
-Test note: `sample.sam` comped + health-acked; sam tz America/New_York. Seeded sample.dani = assistant_coach for WP8 QA.
-Last activity: 2026-06-28, ALL feature WPs (0-13) done + verified via research-driven Ralph loop; prod build green; ship
-gated on external keys.
+**The proof, and the fix, is one variable.** `ClientWorkoutHistory` is called with
+`{ pageSize: 3, offset: 0, profileId }`. The UI asks for THREE. Raise `pageSize`, loop `offset`, and
+the history is complete. `useClientListInfiniteScrolling_clientList` uses `{ offset, limit: 20 }`.
 
-## PRD-12 result (commit 01e4482)
-- 3 tables: workout_logs (completion_pct/enjoyment/effort), set_logs (per-set reps/weight/difficulty, indexed for overload), workout_completion_history. RLS tenant.
-- saveWorkoutLog, fetchHistory (own + coach ?profile_id w/ 403 guard), recommendForExercise (getExerciseHistory -> recommendNext). Full loop proven on real data. /history page.
+### How to run it
 
-## PRD-11 result (commit 2ab86fe)
-- No new tables. lib/overload/recommend.ts: deterministic double-progression (no-history->hold, easy->+rep/+weight, failed->deload, 2-hard->hold). Unit-verified 6/6. AC-3 proven.
-- lib/overload/explain.ts: lazy OpenRouter AI explanation (falls back to deterministic rationale w/o key; never invents the number).
-- components/workout/workout-player.tsx: Web Audio beep timer, Wake Lock (+ visibility re-acquire), set flow, inline substitution (calls PRD-09). /workout/[planId] guarded 307. AC-1/2/5 (timer/wakelock/Mux/follow-along) browser-verifiable; follow-along add-on gate is PRD-36.
+1. Load `.planning/lenus-recipes.json`. It carries the endpoint, headers and every query document.
+2. For each of 265 client profile ids, for each per-client operation, loop `offset` with a raised
+   `pageSize`/`limit` until a page returns nothing new.
+3. Import idempotently on `lenus_id`, the pattern proven by `scripts/import-lenus-programs.mjs`.
+4. **Done means:** run it twice, row counts do not move on the second pass.
 
-## PRD-10 result (commit 79e161c)
-- 4 tables: plans, sessions, session_exercises (format enum straight/circuit/superset, sets/reps/time/weight/rest/rounds/notes/config), plan_assignments. RLS tenant.
-- Engine: saveProgram (nested, sort_order), getProgram (ordered reload), markTemplate, assignProgram, getAssignedPlans. AC-1/2/3 proven end-to-end (coach + 2 clients).
-- UI: minimal /coach/programs list. Full 3-pane interactive builder is the remaining browser-heavy UI polish on the proven engine. Substitution chain-builder also surfaces here (engine from PRD-09 ready).
+Per-client operations that matter: `ClientWorkoutHistory`, `ClientMeasurements_Profile`,
+`ClientInfoCheckinsContext_CheckInResponses`, `fetchClientChart`, `ChatConversationWeb`,
+`UseFetchFoodDiaryOverview_FoodDiary`, `PaymentsOverview_Payments`, `HealthAssessmentFormResults`,
+`ProfileHistory_Profile`, `FitnessPackageCoachFiles_FILES`.
 
-## PRD-09 result (commit f4004a4)
-- 2 tables: exercise_substitutions (5-context enum gym/bodyweight/bands/freeweights/machines), substitution_reason_tags (KALDR:GLOBAL, bilingual). RLS tenant.
-- Engine: saveChain (replace-by-context, sort_order=index), resolveSubstitutions (ordered + reason tags, or fallback to original w/ note). AC-1/2/3 proven end-to-end with coach+client.
-- UI deferred to PRD-10 (coach chain builder in program builder) + PRD-11 (client picker in player), per the PRD.
+### Traps already paid for
 
-## PRD-08 result (commit 9819df9)
-- 3 tables: exercises (company_id NULL = shared seed), muscle_groups + exercise_equipment_types (KALDR:GLOBAL, bilingual labels). RLS: read system seed + own company.
-- 873 exercises imported (free-exercise-db; PRD said 2619 but the canonical dataset is 873). /api/exercises search proven (muscle/equipment/name filters, 401 unauth). Browser UI with 4 states.
-- Gaps: AC-2 Mux demo playback needs Mux key + uploaded demos (video_mux_id column + Demo badge ready). AC-3 Spanish exercise NAMES pending a translation pass (lookup labels are bilingual; name_es null on the English seed).
+- **Typenames do not match the page's noun.** The plan list returns `WorkoutPlan`, not
+  `WorkoutPlanTemplate`. Filtering on the obvious one silently returns zero.
+- **The Management API throttles** at roughly 800 single-statement calls. Batch writes by a ~6 KB
+  CHARACTER budget; batching by statement COUNT blew the OS argument limit (ENAMETOOLONG) because
+  the query travels as an argv entry.
+- **`javascript_tool` returns are filtered** if they contain cookie or query-string data, and async
+  IIFE returns often come back `{}`. Park results on `window.__x`, read them in a second call.
+- **A full `navigate` destroys an installed recorder.** Click in-app links instead; the Toolbox is
+  the wrench in the left rail.
+- **The renderer wedges** if a tab holds a multi-MB capture in memory. Reload before reusing a tab.
 
-## PRD-07 result (commit 1318aef)
-- No new tables. lib/dashboard/summary.ts aggregates onboarding targets now; workout/streak/activity null until PRD-10/11/12 + community.
-- /api/dashboard/summary (authed). DashboardWidgets: loading/error(retry)/first-run/content. Proven: new user hasOnboarded:false -> first-run; after onboarding -> macros content. Guard 307.
+---
 
-## PRD-04c result (commits 2b9b305, 491eceb)
-- onboarding_responses table (RLS). Prediction engine (lib/onboarding/prediction.ts): BMR/TDEE/calories/macros/weekly-delta/12wk curve, pure + reusable client+server.
-- /api/onboarding/submit computes + stores per profile. Math proven via API (sane numbers).
-- UI: OnboardingFlow with live recharts chart (recomputes on input, AC-1), plan preview + /checkout CTA (AC-3, paywall lands in PRD-05/06). Guard 307 verified. recharts builds with React 19.
+## Shipped today
 
-## PRD-04b result (commits 1901f4c, d34d613)
-- 4 tables: forms, form_fields, form_responses, form_assignments (all RLS). 23 tables total live.
-- Engine + routes: save (reorder via sort_order), publish, assign, submit (Zod + required validation + assignment check), fetch. Full lifecycle proven (AC-1/2/3) with coach + client users.
-- UI: coach FormBuilder (block palette, up/down reorder, save/publish), client FormRenderer, page guards (requireCoach/requireAuth) verified 307 -> sign-in.
+Member app, all verified in the running app as a real subscriber:
 
-## PRD-04 result (commits 011ceb6, def41a7)
-- Migration 0004: handle_new_user trigger (profile on signup, tenant + subscriber), custom_access_token_hook (injects company_id + user_role into JWT), enabled in Supabase Auth config.
-- Role guard layer (resolveAuth/hasRole), coach-only route proven: subscriber 403, coach 200, no auth 401.
-- Auth UI: bilingual sign-in/sign-up/forgot pages, OAuth buttons, /auth/callback (exchangeCodeForSession). Pages + callback runtime-verified.
-- Pending external config (scaffolded, inactive until keyed): Google/Apple OAuth provider config, Resend for email verification + password reset. Magic Link is a logged deviation (kept).
+- Opening the app no longer flips a Spanish member to English (`/` was rewriting `ui_locale` for
+  signed-in users; `manifest.json` start_url is `/`, so it hit on every PWA launch)
+- A failed workout save no longer fires confetti and discards the session
+- Check-in submissions now reach the coach; the member gets a way out of the confirmation
+- Logging 154.4 lb no longer stores 154.3
+- Her exercise library describes movements in her member's language
+- First-steps checklist ticks itself from live rows instead of showing three hardcoded cards
 
-## PRD-03 result (commits d88fa37, fbb6b97)
-- Table waitlist_leads (RLS) + real Thick & Fit tenant seeded (slug thick-and-fit).
-- /api/waitlist: Zod-validated, idempotent upsert, lazy Resend (magnet) + GHL (drip) skip without keys. Lead capture proven (201, DB row; 422 bad email).
-- /join bilingual landing + WaitlistForm (4 states) + thank-you. AC-2 (design) + AC-3 (Googlebot 200) proven.
-- Note: Resend/GHL keys not set, so email + drip are coded-but-inactive until keys added. Google/Apple OAuth (PRD-04) will likewise need provider config.
+Coach portal:
 
-## PRD-02 result (commit 0b44b2e)
-- next-intl (cookie-driven, no URL routing). Catalogs src/messages/en.json + es.json.
-- Independent locales: ui_locale (interface) vs content_locale (content), both cookie + profile backed. Proven independent at runtime.
-- LATAM/ES IP default via middleware (x-vercel-ip-country), user-overridable. LanguageToggle component.
-- Note: root layout now dynamic (reads locale cookie); marketing static-prerender can be re-optimized in PRD-03.
+- Her 40 Lenus programs imported: 229 sessions, 2,497 prescriptions, 1,531 supersets
+- The player performs supersets as supersets (badge, "then straight into", rep ranges, AMRAP)
+- Program library grouped and readable; day counts match her Lenus list
+- Revenue chart unfrozen — `monthly_revenue` now unions `payments`, so it will not sit on June
+  through launch
+- Her home screen names Stephanie as the coach, not the agency's operator account
+- Command palette over every screen, both portals
+- Test rows removed from her inbox (12,026 real messages remain)
 
-## PRD-47 result (commits b506754, fcfbca6)
-- REST: lib/api/auth.ts (Node SHA-256 key validation), /api/v1/ping (200), /api/v1/me (401 on bad key). Runtime curl verified.
-- MCP: /api/mcp JSON-RPC (initialize/tools/list/tools/call), tools scoped to the calling key company. Proven: key A sees only company-a, key B only company-b, no key -> Unauthorized.
-- Docs: /api-docs (noindex; role-gating deferred to PRD-04).
-- No new tables (uses PRD-01 api_keys + api_usage_log).
+Migrations 0124-0128. All pushed to main and deployed.
 
-## PRD-01 result (commits 9e8bf35 .. 5df6ccb)
+---
 
-- DB: migrations 0001+0002 applied via Management API. 18/18 tables, RLS on all, 15+ policies. Cross-tenant proof: company A JWT sees only company-a, company B sees only company-b.
-- 5-role RBAC seeded, is_legacy_client firewall + deployment-blocking comment, money columns bigint cents.
-- Code: lib/supabase (client/server/service), _shared/api.ts (SHA-256 key validation), run-ai-eval + resend-webhook edge fns, 4 UI states, PWA shell (manifest + sw.js + install components + layout meta). pnpm build green.
-- Open gaps (environmental / deferred): (1) blocking hooks are installed in .claude/hooks and one verified exit-2, but NOT wired into .claude/settings.json yet (that write was declined), so they do not block live during the build. (2) PWA real-device install on iPhone/Android not testable in this environment. (3) no endpoints deployed yet to curl the 401/no-stack-trace check. (4) PWA icons point at the Webflow jpgs as placeholders, real 192/512 maskable PNGs needed.
+## Open, in priority order
 
-## Accumulated Context
+1. **The sweep.** Above. Everything is ready; only the replay remains.
+2. **Page descriptions, 23 remaining.** 15 of 39 coach pages explain themselves. `/coach/programs`
+   was done as the pattern. Re-run the audit with:
+   `for f in $(find "src/app/(app)/coach" -name page.tsx|sort); do grep -qE "Subtitle|subtitle|Intro|intro=|tf-measure" "$f" || echo "$f"; done`
+   Copy rule: answer the question a newcomer actually has, never restate the title.
+3. **ADHD-friendly pass, both portals.** Not started, deliberately not faked. It is information
+   hierarchy, not a toggle. The member Today screen is close; the coach console is the work
+   (31 nav items, six sections, all equal weight, no "what needs you today"). `/coach/spanish` is
+   the model that already works: finite, visible, "899/1259, 360 to go".
+4. **Program builder redesign.** Rows are a bare name plus two unlabelled number boxes, so nothing
+   says which is sets and which is reps. Supersets are invisible despite the data carrying them.
+   No rep range, rest, tempo or note, all of which are now stored and which she uses.
+5. **Coach builder cannot CREATE a superset.** The player renders them and the schema holds them;
+   this is a builder-UI gap only.
+6. **Supplement reading into the client file.** The document reader already handles label photos and
+   `member_memory` is the client file. Missing is the wire from "client sends a photo in chat" to
+   "read it, extract macros, file it".
+7. **Plan-to-product mapping** is captured but not stored. Which program a paid tier receives is an
+   entitlement decision, not a data one, and needs the owner's call.
 
-- Only the Webflow lift (v0.1) is committed. Real build (PRD-00-12) not yet started.
-- Build kit lives in `Build/` — research, foundation docs, 48 PRDs, planning scaffold (specs,
-  ledger, wiring-graph, hooks). Authoritative spec per capability = its PRD + living spec.
-- Local branches: only `main`. `phase-2`/`phase-3` not yet created (needed for later milestones).
-- kaldr-build-system skill not installed → GSD runs stock over PRDs; blocking hooks still enforce.
+---
 
-## Open Blockers (do not block PRD-01 foundation)
+## Working notes
 
-- Lenus data loaded into Supabase (cpwesaeyhklmjbqppeah) — Rodney — blocks PRD-00 migration
-- Supabase / Stripe Connect / Resend / GHL / Twilio / Mux / OpenRouter / Sentry / PostHog not configured
-- 8 team decisions (pricing $16.99 vs $19.99, $250 vs $275, $2.99 add-on, live streaming, digital
-  products) — Stephanie — isolated to PRD-05/06/28/35/36
-- Shakira AI Knowledge Base questionnaire — blocks PRD-31 (Phase 3, runway exists)
+- QA accounts are all English now. `sample.sam@thickandfit.test` (subscriber, Maria Garcia),
+  `sample.casey@thickandfit.test` (coach). Password `TFSample2026!`.
+- A stale service worker causes MISSING_MESSAGE, hydration failures and dead buttons in dev. Clear
+  caches and unregister before believing any of them.
+- Clean up test rows after every end-to-end run. Several were written and deleted today.
