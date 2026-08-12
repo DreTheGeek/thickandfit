@@ -17,6 +17,17 @@ export type BusinessOverview = {
   totalClients: number;
   convertedFromLeads: number;
   newThisMonth: number;
+  /** Subscriptions that ended this calendar month, the other half of a starting/ending pair. */
+  endedThisMonth: number;
+  /**
+   * Retention, in days. MEAN AND MEDIAN BOTH, because on the live data they are 87 and 43: a
+   * handful of long-tenured clients pull the average to double the typical experience. Reporting
+   * only the mean would tell her clients stay three months when half leave inside six weeks.
+   */
+  avgLifetimeDays: number | null;
+  medianLifetimeDays: number | null;
+  /** Clients per owner. Not a person in every case: "thickandfit" is the company account. */
+  clientsByOwner: Bucket[];
   openLeads: number;
   wonLeads: number;
   lostLeads: number;
@@ -56,10 +67,10 @@ export async function getBusinessOverview(companyId: string): Promise<BusinessOv
   const [subsRes, clientsRes, leadsRes, txnRes, tagRes] = await Promise.all([
     sb
       .from('client_subscriptions')
-      .select('status, billing_health, grandfathered_price_cents, product_type, started_at')
+      .select('status, billing_health, grandfathered_price_cents, product_type, started_at, ended_at')
       .eq('company_id', companyId)
       .limit(ROW_CAP),
-    sb.from('contacts').select('was_lead').eq('company_id', companyId).eq('type', 'client').limit(ROW_CAP),
+    sb.from('contacts').select('was_lead, owner').eq('company_id', companyId).eq('type', 'client').limit(ROW_CAP),
     sb.from('contacts').select('lead_stage, lost_reason').eq('company_id', companyId).eq('type', 'lead').limit(ROW_CAP),
     sb
       .from('monthly_revenue')
@@ -81,9 +92,10 @@ export async function getBusinessOverview(companyId: string): Promise<BusinessOv
     grandfathered_price_cents: number | null;
     product_type: string | null;
     started_at: string | null;
+    ended_at: string | null;
   };
   const subs = (subsRes.data ?? []) as SubRow[];
-  const clients = (clientsRes.data ?? []) as { was_lead: boolean | null }[];
+  const clients = (clientsRes.data ?? []) as { was_lead: boolean | null; owner: string | null }[];
   const leads = (leadsRes.data ?? []) as { lead_stage: string | null; lost_reason: string | null }[];
   const months = (txnRes.data ?? []) as { month: string; gross_cents: number | null; coach_cents: number | null }[];
   const tagRows = (tagRes.data ?? []) as {
@@ -98,6 +110,8 @@ export async function getBusinessOverview(companyId: string): Promise<BusinessOv
   let atRisk = 0;
   let churned = 0;
   let newThisMonth = 0;
+  let endedThisMonth = 0;
+  const lifetimes: number[] = [];
   const now = new Date();
   const ymNow = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   for (const s of subs) {
@@ -111,7 +125,30 @@ export async function getBusinessOverview(companyId: string): Promise<BusinessOv
     if (AT_RISK_HEALTH.has(health) || AT_RISK_STATUS.has(status)) atRisk += 1;
     if (CHURNED_STATUS.has(status)) churned += 1;
     if (s.started_at && s.started_at.slice(0, 7) === ymNow) newThisMonth += 1;
+    if (s.ended_at && s.ended_at.slice(0, 7) === ymNow) endedThisMonth += 1;
+    // An open subscription counts its life SO FAR. Excluding them would measure only people who
+    // left, which reads as a retention figure and is the opposite of one.
+    if (s.started_at) {
+      const end = s.ended_at ? Date.parse(s.ended_at) : now.getTime();
+      const days = Math.round((end - Date.parse(s.started_at)) / 86400000);
+      if (Number.isFinite(days) && days >= 0) lifetimes.push(days);
+    }
   }
+
+  // MEAN AND MEDIAN BOTH. On the live data they are 87 and 43 days: a handful of long-tenured
+  // clients pull the average to double the typical experience. Reporting only the mean would tell
+  // her clients stay nearly three months when half are gone inside six weeks, and the whole point
+  // of the number is deciding where retention work goes.
+  lifetimes.sort((a, b) => a - b);
+  const avgLifetimeDays = lifetimes.length
+    ? Math.round(lifetimes.reduce((a, b) => a + b, 0) / lifetimes.length)
+    : null;
+  const medianLifetimeDays = lifetimes.length
+    ? lifetimes.length % 2
+      ? lifetimes[(lifetimes.length - 1) / 2]
+      : Math.round((lifetimes[lifetimes.length / 2 - 1] + lifetimes[lifetimes.length / 2]) / 2)
+    : null;
+  const clientsByOwner = tally(clients.map((c) => ({ v: c.owner })));
 
   const statusBreakdown = tally(subs.map((s) => ({ v: s.status })));
   const productBreakdown = tally(subs.map((s) => ({ v: s.product_type })));
@@ -177,6 +214,10 @@ export async function getBusinessOverview(companyId: string): Promise<BusinessOv
     totalClients,
     convertedFromLeads,
     newThisMonth,
+    endedThisMonth,
+    avgLifetimeDays,
+    medianLifetimeDays,
+    clientsByOwner,
     openLeads,
     wonLeads,
     lostLeads,

@@ -1517,7 +1517,12 @@
       "mbPreview": "Preview",
       "mbPreviewLabel": "What she will see",
       "mbPreviewClose": "Close",
-      "mbPreviewEmpty": "Add a recipe first."
+      "mbPreviewEmpty": "Add a recipe first.",
+      "kpiLifetime": "Typical stay",
+      "kpiDays": "{n} days",
+      "kpiLifetimeAvg": "{n} day average",
+      "kpiThisMonth": "This month",
+      "kpiStartedEnded": "started / ended"
     },
     "you": {
       "title": "You",

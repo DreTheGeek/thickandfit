@@ -139,6 +139,33 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
       dark: false,
       warn: true,
     },
+    // Retention, which her Lenus home leads on and this page did not show at all.
+    // The MEDIAN is the headline and the mean is the subtitle, because on her real book they are 43
+    // and 87 days: leading with the average would say clients stay nearly three months when half
+    // are gone inside six weeks.
+    ...(o.medianLifetimeDays != null
+      ? [
+          {
+            label: t('kpiLifetime'),
+            value: t('kpiDays', { n: o.medianLifetimeDays }),
+            sub:
+              o.avgLifetimeDays != null
+                ? t('kpiLifetimeAvg', { n: o.avgLifetimeDays })
+                : '',
+            dark: false,
+            warn: false,
+          },
+        ]
+      : []),
+    // Starting and ending in one tile: a month with 4 joins and 9 leaves is not a growth month, and
+    // two separate numbers on opposite sides of a dashboard never get subtracted.
+    {
+      label: t('kpiThisMonth'),
+      value: `+${o.newThisMonth} / -${o.endedThisMonth}`,
+      sub: t('kpiStartedEnded'),
+      dark: false,
+      warn: o.endedThisMonth > o.newThisMonth,
+    },
   ];
 
   return (

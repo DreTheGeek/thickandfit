@@ -1517,7 +1517,12 @@
       "mbPreview": "Vista previa",
       "mbPreviewLabel": "Lo que ella verá",
       "mbPreviewClose": "Cerrar",
-      "mbPreviewEmpty": "Agrega una receta primero."
+      "mbPreviewEmpty": "Agrega una receta primero.",
+      "kpiLifetime": "Permanencia típica",
+      "kpiDays": "{n} días",
+      "kpiLifetimeAvg": "promedio {n} días",
+      "kpiThisMonth": "Este mes",
+      "kpiStartedEnded": "iniciaron / terminaron"
     },
     "you": {
       "title": "Tú",
