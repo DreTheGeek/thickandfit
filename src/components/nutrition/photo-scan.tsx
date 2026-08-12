@@ -47,7 +47,21 @@ type ApiResult =
   | { status: 'noFood' }
   | { status: 'error' };
 
-const MAX_BYTES = 8_000_000; // 8MB upload ceiling before encoding.
+/**
+ * Ceiling on the RAW file, and it is about decode memory, not upload size.
+ *
+ * Nothing this large is ever sent anywhere: onDataUrl downscales every photo to 1280px at q0.82
+ * before the vision call, which lands at roughly 200-500KB. The old ceiling was 8MB, applied to the
+ * original file BEFORE that downscale, so a photo the pipeline would have shrunk and read perfectly
+ * was rejected outright. That is not a rare case: a 48MP phone routinely writes 10-15MB JPEGs, and
+ * those are exactly the members with the best cameras pointed at their food.
+ *
+ * What remains is a real limit: readAsDataUrl holds the whole file as a base64 string (~1.33x) and
+ * then decodes it into a canvas, so a genuinely enormous file can exhaust memory on a cheap Android
+ * before the downscale can help. 25MB is above every normal phone photo, including ProRAW-adjacent
+ * sizes, and still short of the range where the decode falls over.
+ */
+const MAX_BYTES = 25_000_000;
 
 // Fire-and-forget prewarm so the vision Lambda is hot by the time the user submits the photo (biggest
 // prod latency win: it removes the cold start from the critical path). Never awaited.
@@ -175,7 +189,7 @@ export function PhotoScan({
     if (open) warmupScan();
   }, [open]);
   const [preview, setPreview] = useState<string | null>(null);
-  const [phase, setPhase] = useState<'idle' | 'analyzing' | 'lowQuality' | 'review' | 'product' | 'clarify' | 'notConfigured' | 'noFood' | 'error'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'analyzing' | 'lowQuality' | 'review' | 'product' | 'clarify' | 'notConfigured' | 'noFood' | 'tooLarge' | 'error'>('idle');
   // K2: when a captured photo trips the quality gate we stash it here so [Scan anyway] can proceed
   // without a re-encode. Cleared on retake / new photo. `qualityInfo` drives the message tone.
   const [qualityInfo, setQualityInfo] = useState<ImageQuality | null>(null);
@@ -283,7 +297,9 @@ export function PhotoScan({
 
   async function onFile(file: File): Promise<void> {
     if (file.size > MAX_BYTES) {
-      setPhase('error');
+      // Its own state, not the generic error. "Something went wrong, try again" invites her to
+      // retry the one photo that cannot work, and she retries it, and it fails identically.
+      setPhase('tooLarge');
       return;
     }
     warmupScan(); // belt-and-suspenders: warms during the barcode-decode + downscale window (~1-2s)
@@ -662,6 +678,18 @@ export function PhotoScan({
                 <p className="text-[14px] font-semibold text-alert-ink">{t('photoError')}</p>
                 <button type="button" onClick={reset} className="tf-press mt-4 rounded-full border border-line px-4 py-2 text-[13px] font-semibold">
                   {t('photoTryAgain')}
+                </button>
+              </div>
+            )}
+
+            {/* Says what happened and points at the one action that works. Retrying the same file is
+                deliberately NOT offered here: it is the only thing guaranteed to fail again. */}
+            {phase === 'tooLarge' && (
+              <div className="rounded-2xl border border-line bg-surface p-5 text-center">
+                <p className="text-[14px] font-semibold text-alert-ink">{t('photoTooLarge')}</p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-soft">{t('photoTooLargeNote')}</p>
+                <button type="button" onClick={reset} className="tf-press mt-4 rounded-full border border-line px-4 py-2 text-[13px] font-semibold">
+                  {t('photoChooseAnother')}
                 </button>
               </div>
             )}
