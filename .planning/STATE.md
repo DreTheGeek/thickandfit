@@ -91,6 +91,30 @@ Getting bytes off her Lenus tab is the hard part. Both obvious routes fail:
 `http://localhost:8877/` (a browser-level navigation, which no page CSP governs). The collector page
 posts it back same-origin. Verified at 9.3 MB. `/inject` runs it in reverse to get the id list in.
 
+### The older bridge path, still in the tree, now defensive rather than live
+
+The August sweep used the `window.name` transport above. It did NOT go through
+`scripts/lenus-export.js` -> `/lenus-bridge` -> `/api/internal/lenus-ingest` -> `raw_client_extract`,
+which is the path the July run used and which is still in the codebase. Two things were fixed on it
+the same day, and they are worth knowing about because that path still works and someone will
+eventually reach for it:
+
+- **The check-in fan-out was addressed with the wrong id.**
+  `ClientCheckinDashboardView_checkInResponse` takes a check-in RESPONSE id in a variable named
+  `id`, and the resolver matched `id` against one flat list of profile-id names. It sent the PROFILE
+  id, Lenus errored, `gql()` turned the error into `null`, and `if (d)` dropped the operation
+  silently, 265 times. That is the code-level reason the July run captured 765 ids and zero bodies.
+- **`/api/internal/lenus-ingest` now refuses a shrinking write.** It upserts on
+  `(profile_id, operation)`, so a page-one response would REPLACE a complete one. Any write more
+  than 10% smaller than what is stored is rejected unless `allowShrink: true` is passed. If a future
+  re-run through that route reports fewer rows written than expected, this is why: check the
+  function logs for `refused shrinking writes` before assuming Lenus lost the rows.
+
+Covered by `.qa-visual/lenus-export-test.mjs`, 22 assertions against a mock Lenus, which fails if
+either bug is reintroduced. `scripts/lenus-verify.mjs` audits that same `raw_client_extract` table
+(counts per operation, the ids-vs-bodies gap, a snapshot/diff for the run-twice proof); it is not
+the checker for the new `.capture/sweep/` path.
+
 ### Other traps already paid for
 
 - **`Message.type` and `TrackingActivityLog.type` collide** in one selection set: same response key,
