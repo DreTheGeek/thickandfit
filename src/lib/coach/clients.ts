@@ -514,14 +514,33 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
       }
     : null;
 
+  /**
+   * ONE CLIENT, TWO KEYS. This is the split that made her live app activity invisible to her coach.
+   *
+   * Everything migrated from Lenus is keyed by contact_id: 6,940 food logs, 2,286 photos, 758
+   * weights. Everything a member writes from the app today is keyed by profile_id. These reads used
+   * `.eq('contact_id', ...)` only, so a member could log a weight, a meal and a progress photo and
+   * her coach's page would show none of it while happily displaying two years of Lenus history.
+   *
+   * It was nearly invisible at audit time (11 weights, 8 food logs, 3 photos) ONLY because almost
+   * nobody is using the app yet. At launch every one of her 265 clients starts writing profile-keyed
+   * rows on day one and the page shows the past instead of the present.
+   *
+   * A member with no claimed account has no profile, so the filter degrades to contact-only rather
+   * than matching every row with a null profile_id.
+   */
+  const memberScope = raw.profile_id
+    ? `contact_id.eq.${contactId},profile_id.eq.${raw.profile_id}`
+    : `contact_id.eq.${contactId}`;
+
   // Load the MOST RECENT window (desc + reverse to chronological) so "latest" is truly latest, plus the
   // exact totals and the true first weigh-in, so the coach never sees a stale value labeled current.
   const [{ data: wRows, count: weightCount }, { data: mRows, count: measureCount }, { data: pRows, count: photoCount }, { data: wFirst }, { count: foodDays }] = await Promise.all([
-    sb.from('weight_entries').select('recorded_on, weight_kg', { count: 'exact' }).eq('contact_id', contactId).order('recorded_on', { ascending: false }).limit(120),
-    sb.from('body_measurements').select('recorded_on, waist_cm, hips_cm, chest_cm, arms_cm, thighs_cm', { count: 'exact' }).eq('contact_id', contactId).order('recorded_on', { ascending: false }).limit(120),
-    sb.from('progress_photos').select('storage_path, taken_on, pose_source, weight_kg', { count: 'exact' }).eq('contact_id', contactId).order('taken_on', { ascending: false }).limit(60),
-    sb.from('weight_entries').select('weight_kg').eq('contact_id', contactId).order('recorded_on', { ascending: true }).limit(1),
-    sb.from('food_log').select('log_date', { count: 'exact', head: true }).eq('contact_id', contactId),
+    sb.from('weight_entries').select('recorded_on, weight_kg', { count: 'exact' }).or(memberScope).order('recorded_on', { ascending: false }).limit(120),
+    sb.from('body_measurements').select('recorded_on, waist_cm, hips_cm, chest_cm, arms_cm, thighs_cm', { count: 'exact' }).or(memberScope).order('recorded_on', { ascending: false }).limit(120),
+    sb.from('progress_photos').select('storage_path, taken_on, pose_source, weight_kg', { count: 'exact' }).or(memberScope).order('taken_on', { ascending: false }).limit(60),
+    sb.from('weight_entries').select('weight_kg').or(memberScope).order('recorded_on', { ascending: true }).limit(1),
+    sb.from('food_log').select('log_date', { count: 'exact', head: true }).or(memberScope),
   ]);
   const weights = (((wRows ?? []) as { recorded_on: string; weight_kg: number }[]).map((w) => ({ on: w.recorded_on, kg: Number(w.weight_kg) }))).reverse();
   const nnn = (v: number | string | null): number | null => (v == null ? null : Number(v));
@@ -537,7 +556,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
   const { data: pOldest } = await sb
     .from('progress_photos')
     .select('storage_path, taken_on, pose_source, weight_kg')
-    .eq('contact_id', contactId)
+    .or(memberScope)
     .order('taken_on', { ascending: true })
     .limit(20);
 
@@ -586,16 +605,52 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     sb.from('client_workout_history').select('id', { count: 'exact', head: true }).eq('contact_id', contactId),
     sb.from('client_workout_history').select('performed_at, session_name, plan_name, completion_pct').eq('contact_id', contactId).order('performed_at', { ascending: false }).limit(8),
   ]);
-  const recentWorkouts = ((woRows ?? []) as { performed_at: string; session_name: string | null; plan_name: string | null; completion_pct: number | null }[]).map((w) => ({
+  /**
+   * LIVE workouts, merged with the migrated Lenus history.
+   *
+   * workout_logs is what the app writes when a member finishes a session, and this page did not read
+   * it AT ALL. A client could train in the app every day and her coach's Training History would show
+   * only what she did on Lenus before the migration, with no indication anything was missing.
+   *
+   * Two tables rather than one because they carry different things: the migrated rows have a session
+   * NAME and a plan name, the live rows have enjoyment and effort the member rated herself. Merged
+   * by date so the coach reads one timeline.
+   */
+  // Exact count as well as the recent rows: a header reading "Training history (5)" above 8 rows is
+  // the same class of lie as the missing data itself.
+  const [{ data: liveWo }, { count: liveWorkoutCount }] = raw.profile_id
+    ? await Promise.all([
+        sb
+          .from('workout_logs')
+          .select('performed_at, completion_pct, enjoyment, effort')
+          .eq('profile_id', raw.profile_id)
+          .order('performed_at', { ascending: false })
+          .limit(8),
+        sb
+          .from('workout_logs')
+          .select('id', { count: 'exact', head: true })
+          .eq('profile_id', raw.profile_id),
+      ])
+    : [{ data: null }, { count: 0 }];
+
+  const migrated = ((woRows ?? []) as { performed_at: string; session_name: string | null; plan_name: string | null; completion_pct: number | null }[]).map((w) => ({
     on: w.performed_at, name: w.session_name, plan: w.plan_name, pct: w.completion_pct,
   }));
+  const live = ((liveWo ?? []) as { performed_at: string; completion_pct: number | null }[]).map((w) => ({
+    // No session name on a live log yet: it points at a session_id rather than carrying a title.
+    // Null renders as "-" instead of inventing a name, which is the honest state.
+    on: w.performed_at, name: null as string | null, plan: null as string | null, pct: w.completion_pct,
+  }));
+  const recentWorkouts = [...migrated, ...live]
+    .sort((a, b) => String(b.on).localeCompare(String(a.on)))
+    .slice(0, 8);
 
   const progress = {
     weights, weightCount: weightCount ?? weights.length, weightStartKg,
     measures, measureCount: measureCount ?? measures.length,
     photos, photoCount: photoCount ?? photos.length,
     foodDays: foodDays ?? 0,
-    workoutCount: workoutCount ?? recentWorkouts.length,
+    workoutCount: (workoutCount ?? 0) + (liveWorkoutCount ?? 0),
     recentWorkouts,
   };
 
