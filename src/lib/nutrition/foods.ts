@@ -62,12 +62,29 @@ export async function getFoodDetail(id: string, locale: string): Promise<FoodDet
     isDefault: p.is_default,
   }));
 
+  // PER-FOOD FIRST, then the category average.
+  //
+  // cooked_uncooked_ratios has had a food_id column since it was created and nothing ever selected
+  // on it, so every per-food yield was unreachable and the whole table behaved as seven category
+  // constants. That is fine for meat, where a category average is close enough, and useless for
+  // vegetables: boiled broccoli holds 90% of its raw weight and boiled spinach 36%, so 0125 adds
+  // the per-food rows and this reads them.
   let cookedFactor: number | null = null;
-  if (raw.category) {
+  const { data: byFood } = await sb
+    .from('cooked_uncooked_ratios')
+    .select('factor')
+    .eq('food_id', raw.id)
+    .eq('state_from', 'raw')
+    .eq('state_to', 'cooked')
+    .limit(1)
+    .maybeSingle();
+  if (byFood) cookedFactor = Number((byFood as { factor: number }).factor);
+  else if (raw.category) {
     const { data: rData } = await sb
       .from('cooked_uncooked_ratios')
       .select('factor')
       .eq('category', raw.category)
+      .is('food_id', null)
       .eq('state_from', 'raw')
       .eq('state_to', 'cooked')
       .limit(1)
@@ -75,7 +92,15 @@ export async function getFoodDetail(id: string, locale: string): Promise<FoodDet
     cookedFactor = rData ? Number((rData as { factor: number }).factor) : null;
   }
 
-  return { food, portions, cookedFactor, foodState: foodStateFromName(`${raw.name_en} ${raw.name_es ?? ''}`) };
+  // A food whose name states no cooking method ("Spinach", "Broccoli") is the RAW entry by USDA
+  // convention, and that is the only reading under which a raw->cooked factor means anything. Left
+  // as null the toggle never appeared, so every per-food yield above would have stayed invisible
+  // even once it was reachable. Only inferred when a factor exists, so this cannot start guessing
+  // about foods nobody has given a yield for.
+  const named = foodStateFromName(`${raw.name_en} ${raw.name_es ?? ''}`);
+  const foodState = named ?? (cookedFactor != null ? ('raw' as const) : null);
+
+  return { food, portions, cookedFactor, foodState };
 }
 
 export async function searchFoods(query: string, locale: string): Promise<FoodLite[]> {
