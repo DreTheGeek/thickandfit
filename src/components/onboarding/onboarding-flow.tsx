@@ -92,9 +92,21 @@ return d.toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', { month: 'long'
 export function OnboardingFlow({
   initialFirstName = '',
   initialLastName = '',
+  selfPrice,
 }: {
   initialFirstName?: string;
   initialLastName?: string;
+  /**
+   * The live Self-Guided price, formatted, computed by the server component.
+   *
+   * Passed in rather than read here for two reasons. The offer depends on the clock
+   * (founding for the first days after doors open, standard after), and reading a clock inside a
+   * render body breaks the project's purity rule. And it has to be the SAME number the checkout
+   * action will bill: this card is where she chooses a plan, and the price on it used to be the
+   * hardcoded string "$19.97/mo", which silently became wrong for every new member the day the
+   * founding window shut.
+   */
+  selfPrice: string;
 }): ReactElement {
   const t = useTranslations('app.onboarding');
   // Second namespace: the health/safety step reuses the /you/health copy verbatim (EN + ES already
@@ -698,7 +710,7 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
           <div className="flex flex-col gap-3">
             <TierCard
               name={t('tierSelfName')}
-              price={t('tierSelfPrice')}
+              price={t('tierSelfPrice', { price: selfPrice })}
               blurb={t('tierSelfBlurb')}
               active={tier === 'self'}
               onClick={() => setTier('self')}

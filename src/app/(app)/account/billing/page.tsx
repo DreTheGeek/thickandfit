@@ -10,6 +10,7 @@ import { PageTitle } from '@/components/ui/section';
 import { Card } from '@/components/ui/card';
 import { BillingActions } from '@/components/billing/billing-actions';
 import { isStripeConfigured } from '@/lib/billing/stripe';
+import { currentOffer, priceCentsForOffer, formatPriceCents } from '@/lib/billing/offer';
 import {
   getSubscriptionForProfile,
   getPaymentsForProfile,
@@ -88,7 +89,12 @@ export default async function BillingPage({
     const tk = tier ? tierKeys[tier] : null;
     if (tk) {
       tierName = tApp(tk.name as never);
-      tierPrice = tApp(tk.price as never);
+      // tierSelfPrice carries a {price} placeholder so this cannot show a stale number: the string
+      // used to be a hardcoded "$19.97/mo", which went wrong for every member the day the founding
+      // window shut. team/steph carry no placeholder and ignore the value.
+      tierPrice = tApp(tk.price as never, {
+        price: formatPriceCents(priceCentsForOffer(currentOffer(new Date()))),
+      } as never);
     }
   }
 

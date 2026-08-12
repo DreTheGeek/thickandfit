@@ -619,7 +619,7 @@
       "tierTitle": "How do you want me in your corner?",
       "tierSub": "Start anywhere. You can change or move up whenever you're ready.",
       "tierSelfName": "Self-Guided",
-      "tierSelfPrice": "$19.97/mo",
+      "tierSelfPrice": "{price}/mo",
       "tierSelfBlurb": "The full app: workouts, photo nutrition tracking, and progress tracking. Coach yourself with Stephanie's system.",
       "tierTeamName": "Team Thick & Fit",
       "tierTeamPrice": "From $200/mo",

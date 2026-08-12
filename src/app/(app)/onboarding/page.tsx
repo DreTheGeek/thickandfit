@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/auth/guards';
 import { getSessionUser } from '@/lib/auth/session';
 import { createServiceClient } from '@/lib/supabase/service';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
+import { currentOffer, priceCentsForOffer, formatPriceCents } from '@/lib/billing/offer';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,5 +46,10 @@ export default async function OnboardingPage(): Promise<ReactElement> {
     first = parts[0] ?? '';
     last = parts.slice(1).join(' ');
   }
-  return <OnboardingFlow initialFirstName={first} initialLastName={last} />;
+  // The Self-Guided price the tier step shows must be the one checkout will actually bill. Read the
+  // clock ONCE here in the server component (the purity rule, same as checkout/page.tsx) rather than
+  // inside the wizard's render body.
+  const selfPrice = formatPriceCents(priceCentsForOffer(currentOffer(new Date())));
+
+  return <OnboardingFlow initialFirstName={first} initialLastName={last} selfPrice={selfPrice} />;
 }

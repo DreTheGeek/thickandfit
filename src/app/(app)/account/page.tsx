@@ -17,6 +17,7 @@ import { NotificationPrefs } from '@/components/account/notification-prefs';
 import { ReminderHour } from '@/components/account/reminder-hour';
 import { ExportData } from '@/components/account/export-data';
 import { readMyNotificationPrefs } from '@/lib/account/notification-preferences';
+import { currentOffer, priceCentsForOffer, formatPriceCents } from '@/lib/billing/offer';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +52,9 @@ export default async function AccountPage(): Promise<ReactElement> {
     steph: { name: 'onboarding.tierStephName', price: 'onboarding.tierStephPrice' },
   };
   const tk = tier ? tierKeys[tier] : null;
+  // tierSelfPrice carries a {price} placeholder so this card cannot drift from what checkout bills.
+  // Clock read once, here, not in a render body. team/steph carry no placeholder and ignore the value.
+  const selfPrice = formatPriceCents(priceCentsForOffer(currentOffer(new Date())));
 
   return (
     <div className="px-[22px] pb-7 pt-3">
@@ -70,7 +74,7 @@ export default async function AccountPage(): Promise<ReactElement> {
           <div className="mt-1.5 flex items-end justify-between gap-3">
             <div className="min-w-0">
               <div className="tf-display text-[24px] leading-none text-white">{t(tk.name)}</div>
-              <div className="mt-1 text-[13px] text-white/70">{t(tk.price)}</div>
+              <div className="mt-1 text-[13px] text-white/70">{t(tk.price, { price: selfPrice })}</div>
             </div>
             <Link
               href="/account/billing"

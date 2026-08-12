@@ -619,7 +619,7 @@
       "tierTitle": "¿Cómo quieres que te acompañe?",
       "tierSub": "Empieza donde quieras. Puedes cambiar o subir de nivel cuando estés lista.",
       "tierSelfName": "Autoguiado",
-      "tierSelfPrice": "$19.97/mes",
+      "tierSelfPrice": "{price}/mes",
       "tierSelfBlurb": "La app completa: entrenos, seguimiento de nutrición por foto y seguimiento de progreso. Guíate con el sistema de Stephanie.",
       "tierTeamName": "Equipo Thick & Fit",
       "tierTeamPrice": "Desde $200/mes",
