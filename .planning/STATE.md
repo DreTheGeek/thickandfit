@@ -11,7 +11,23 @@ observed in the running app, not inferred.
 
 ### Where it stands
 
-Captured and importing. The three payloads are on disk in `.capture/sweep/` (gitignored):
+**DONE for this pass. 272 of 272 people complete, zero gaps.** Verified two ways:
+
+```
+node scripts/audit-lenus-coverage.mjs
+  people checked: 272
+  check-ins 859/859 | messages 13338/13338 | workouts 4678/4678
+  complete: 272 | with a gap: 0
+```
+
+and every one of the 272 client pages fetched from the running app: 272 HTTP 200, zero application
+errors, and for the 86 clients whose latest check-in has free text, that client's own answer found
+in their own page's HTML.
+
+The other 646 Lenus contacts are leads (595 open, 51 lost) with zero client data, so the sweep did
+cover everyone who was ever a client.
+
+The three payloads are on disk in `.capture/sweep/` (gitignored):
 
 | file | size | contents |
 |---|---|---|
@@ -70,9 +86,24 @@ The whole thing is scripted and idempotent. Before the cutoff:
 3. Run the phases (see the js in the session transcript, or rebuild from `.planning/lenus-recipes.json`).
 4. Ship each phase: `window.name = JSON.stringify(payload)`, then navigate to
    `http://localhost:8877/?name=<file>.json`.
-5. `node scripts/import-lenus-sweep.mjs --apply` then `node scripts/import-lenus-checkins.mjs --apply`.
-6. **Done means:** run both twice and confirm row counts do not move. Already proven for check-ins
-   (853 / 863 / 588 / 49 identical on the second pass).
+5. `node scripts/import-lenus-sweep.mjs --apply` **then** `node scripts/import-lenus-checkins.mjs
+   --apply`. **That order matters.** The sweep creates contacts; the check-in importer keys on
+   them. Running check-ins first skips every new client silently, which is exactly what happened on
+   the first run and cost eight check-ins across the six people who joined after July.
+6. `node scripts/audit-lenus-coverage.mjs` must print `with a gap: 0`.
+7. **Done means:** run both twice and confirm row counts do not move.
+
+Reference numbers after the 2026-08-12 pass, for the next diff:
+
+| table | rows |
+|---|---|
+| contacts | 923 |
+| client_messages | 13,343 |
+| client_workout_history | 4,678 |
+| form_responses | 861 |
+| weight_entries | 871 |
+| body_measurements | 592 |
+| client_intake.client_why | 49 |
 
 ### Transport, and why it is this strange
 
@@ -106,6 +137,12 @@ posts it back same-origin. Verified at 9.3 MB. `/inject` runs it in reverse to g
 - **`javascript_tool` returns come back `{}`** for async IIFEs and anything resembling cookie or
   query-string data. Park on `window.__x`, read it in a second call.
 - **A full `navigate` destroys the injected engine.** Budget for re-injecting it.
+- **The Management API returns an HTML error page under load.** `JSON.parse` on it killed a
+  13,338-statement run at 10,502. That response means the request never reached Postgres, so
+  `scripts/lib/mgmt-sql.mjs` retries it with backoff while still throwing immediately on a real
+  Postgres error, which arrives as JSON with a `message`.
+- **Do not run the dev server against the same project during a big import.** They contend, page
+  renders drop to about one per four seconds, and the dev server died outright once.
 
 ---
 
