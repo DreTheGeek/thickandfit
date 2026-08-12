@@ -71,3 +71,7 @@ ios/DerivedData/
 # video footage; neither belongs in git. The recipe book is a set of query templates plus auth
 # headers, so it is a credential too.
 /.capture/
+
+# Lenus captures land here (Chrome downloads to .planning on this machine).
+# Her programming and client data: large and her IP. Keep on disk, never in git.
+.planning/lenus-*.json
