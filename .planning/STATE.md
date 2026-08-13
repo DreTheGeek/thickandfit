@@ -1,4 +1,41 @@
-# STATE — 2026-08-12
+# STATE — 2026-08-13
+
+## THE LENUS MIGRATION IS COMPLETE
+
+All nine remaining workstreams imported and verified 2026-08-13. `node scripts/audit-lenus-coverage.mjs`
+exits 0 with `with a gap: 0` and every coach-side dataset at parity:
+
+```
+people checked: 272   check-ins 859/859  messages 13338/13338  workouts 4678/4678
+lessons 24/24 · tiny habits 126/126 · settled payments 726/726 · food log 8419/8419
+her demos playable 366/366  (1 never filmed, no video key)
+```
+
+| what | before | after |
+|---|---|---|
+| Her content library | **no table, no rows** | 24 lessons, 43 assets, 3 sequences, 1,668 sends |
+| Revenue recorded | $297,716, stopped 13 June | **$339,873**, runs to August |
+| Client plan PDFs | 0 | 114 (74 training, 40 meal) on their records |
+| Food diary | 6,924 rows, 105 people, to 2 July | **8,419**, 113 people, to 12 August |
+| Her filmed demos | 286 of 367 | **366 of 367** |
+| Tracked activity | 0 | 2,659 across 196 clients |
+| Tiny habits | 0 | 126, plus 149 sets of her habit notes |
+| Files in Storage | 0 | 873 (470 MB), every one verified present |
+
+Migrations 0133-0138. Every importer proven idempotent by a second full pass.
+
+**Re-run before 31 August, in this order:**
+`import-lenus-sweep` → `import-lenus-checkins` → `import-lenus-lessons` → `import-lenus-billing` →
+`import-lenus-activity` → `import-lenus-food` → `import-lenus-files`, then `audit-lenus-coverage`.
+Contacts first, always: everything else keys on them.
+
+**One thing cannot be replayed from disk.** `lenus-exercise-videos.json` holds SIGNED URLs that
+expire within hours. Re-capture `CoachExercises_Data` from her live session before running
+`import-lenus-exercise-videos`. Everything else replays from `.capture/sweep/` indefinitely.
+
+---
+
+# Earlier: STATE — 2026-08-12
 
 Current, verified state of the build. Everything below was measured against the live database or
 observed in the running app, not inferred.
@@ -11,7 +48,23 @@ observed in the running app, not inferred.
 
 ### Where it stands
 
-Captured and importing. The three payloads are on disk in `.capture/sweep/` (gitignored):
+**DONE for this pass. 272 of 272 people complete, zero gaps.** Verified two ways:
+
+```
+node scripts/audit-lenus-coverage.mjs
+  people checked: 272
+  check-ins 859/859 | messages 13338/13338 | workouts 4678/4678
+  complete: 272 | with a gap: 0
+```
+
+and every one of the 272 client pages fetched from the running app: 272 HTTP 200, zero application
+errors, and for the 86 clients whose latest check-in has free text, that client's own answer found
+in their own page's HTML.
+
+The other 646 Lenus contacts are leads (595 open, 51 lost) with zero client data, so the sweep did
+cover everyone who was ever a client.
+
+The three payloads are on disk in `.capture/sweep/` (gitignored):
 
 | file | size | contents |
 |---|---|---|
@@ -70,9 +123,24 @@ The whole thing is scripted and idempotent. Before the cutoff:
 3. Run the phases (see the js in the session transcript, or rebuild from `.planning/lenus-recipes.json`).
 4. Ship each phase: `window.name = JSON.stringify(payload)`, then navigate to
    `http://localhost:8877/?name=<file>.json`.
-5. `node scripts/import-lenus-sweep.mjs --apply` then `node scripts/import-lenus-checkins.mjs --apply`.
-6. **Done means:** run both twice and confirm row counts do not move. Already proven for check-ins
-   (853 / 863 / 588 / 49 identical on the second pass).
+5. `node scripts/import-lenus-sweep.mjs --apply` **then** `node scripts/import-lenus-checkins.mjs
+   --apply`. **That order matters.** The sweep creates contacts; the check-in importer keys on
+   them. Running check-ins first skips every new client silently, which is exactly what happened on
+   the first run and cost eight check-ins across the six people who joined after July.
+6. `node scripts/audit-lenus-coverage.mjs` must print `with a gap: 0`.
+7. **Done means:** run both twice and confirm row counts do not move.
+
+Reference numbers after the 2026-08-12 pass, for the next diff:
+
+| table | rows |
+|---|---|
+| contacts | 923 |
+| client_messages | 13,343 |
+| client_workout_history | 4,678 |
+| form_responses | 861 |
+| weight_entries | 871 |
+| body_measurements | 592 |
+| client_intake.client_why | 49 |
 
 ### Transport, and why it is this strange
 
@@ -130,6 +198,12 @@ the checker for the new `.capture/sweep/` path.
 - **`javascript_tool` returns come back `{}`** for async IIFEs and anything resembling cookie or
   query-string data. Park on `window.__x`, read it in a second call.
 - **A full `navigate` destroys the injected engine.** Budget for re-injecting it.
+- **The Management API returns an HTML error page under load.** `JSON.parse` on it killed a
+  13,338-statement run at 10,502. That response means the request never reached Postgres, so
+  `scripts/lib/mgmt-sql.mjs` retries it with backoff while still throwing immediately on a real
+  Postgres error, which arrives as JSON with a `message`.
+- **Do not run the dev server against the same project during a big import.** They contend, page
+  renders drop to about one per four seconds, and the dev server died outright once.
 
 ---
 

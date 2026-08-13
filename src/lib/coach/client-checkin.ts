@@ -28,6 +28,55 @@ function ownerFilter(owner: CheckinOwner): string | null {
 }
 
 export type CheckinField = { label: string; type: string; value: string };
+export type CheckinSubmission = { id: string; submittedAt: string; fields: CheckinField[] };
+
+/**
+ * EVERY check-in she has submitted, newest first.
+ *
+ * The client page showed only the latest, which for Shelise meant 1 of 62. A coach reads a check-in
+ * against the last one ("energy was 3 last week, it's 5 now"), so one submission in isolation is
+ * the least useful way to show 859 of them.
+ *
+ * No paging: the busiest client in her book has 62. Loading all of them costs less than the round
+ * trip a "load more" button would need.
+ */
+export async function getAllCheckins(companyId: string, owner: CheckinOwner): Promise<CheckinSubmission[]> {
+  const filter = ownerFilter(owner);
+  if (!filter) return [];
+  const sb = createServiceClient();
+  const { data } = await sb
+    .from('form_responses')
+    .select('id, form_id, answers, submitted_at, forms!inner(type)')
+    .eq('company_id', companyId)
+    .or(filter)
+    .eq('forms.type', 'check_in')
+    .order('submitted_at', { ascending: false })
+    .limit(200);
+
+  const rows = (data ?? []) as { id: string; form_id: string; answers: Record<string, unknown>; submitted_at: string }[];
+  if (!rows.length) return [];
+
+  // One form fetch for the whole set: every check-in points at the same form.
+  const forms = new Map<string, Awaited<ReturnType<typeof getForm>>>();
+  for (const formId of new Set(rows.map((r) => r.form_id))) {
+    forms.set(formId, await getForm(companyId, formId));
+  }
+
+  return rows.map((row) => {
+    const form = forms.get(row.form_id);
+    return {
+      id: row.id,
+      submittedAt: row.submitted_at,
+      fields: (form?.fields ?? [])
+        .map((f) => ({
+          label: (f.label_en as string) || 'Field',
+          type: f.type as string,
+          value: fmtAnswer(f.type as string, row.answers?.[f.id as string]),
+        }))
+        .filter((f) => f.value !== '-'),
+    };
+  });
+}
 export type CheckinPhoto = { id: string; url: string | null; pose: string | null; takenOn: string; weightLb: number | null };
 export type ClientCheckin = {
   latest: { submittedAt: string; fields: CheckinField[] } | null;

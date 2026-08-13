@@ -7,7 +7,7 @@ import { getTranslations } from 'next-intl/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getClientHabits } from '@/lib/coach/client-habits';
 import { loadCoachCycle } from '@/lib/coach/client-cycle';
-import { getLatestCheckin } from '@/lib/coach/client-checkin';
+import { getAllCheckins, getLatestCheckin } from '@/lib/coach/client-checkin';
 import { deriveStanding } from '@/lib/coach/standing';
 import { mapIntakeToHealthProfile } from '@/lib/health-profile/data';
 import { scoffPositive } from '@/lib/health-profile/screening';
@@ -385,6 +385,25 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     if (n) sub = nativeToFullSub(n);
   }
   const snap = one(raw.legacy_client_snapshot);
+
+  /**
+   * ONE CLIENT, TWO KEYS. This is the split that made her live app activity invisible to her coach.
+   *
+   * Everything migrated from Lenus is keyed by contact_id: 6,940 food logs, 2,286 photos, 758
+   * weights. Everything a member writes from the app today is keyed by profile_id. These reads used
+   * `.eq('contact_id', ...)` only, so a member could log a weight, a meal and a progress photo and
+   * her coach's page would show none of it while happily displaying two years of Lenus history.
+   *
+   * It was nearly invisible at audit time (11 weights, 8 food logs, 3 photos) ONLY because almost
+   * nobody is using the app yet. At launch every one of her 265 clients starts writing profile-keyed
+   * rows on day one and the page shows the past instead of the present.
+   *
+   * A member with no claimed account has no profile, so the filter degrades to contact-only rather
+   * than matching every row with a null profile_id.
+   */
+  const memberScope = raw.profile_id
+    ? `contact_id.eq.${contactId},profile_id.eq.${raw.profile_id}`
+    : `contact_id.eq.${contactId}`;
   const tags: TagLite[] = (raw.contact_tags ?? []).map((t) => one(t.tag)).filter((t): t is TagLite => t != null);
 
   const { data: txnData } = await sb
@@ -415,6 +434,89 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     return entry;
   });
 
+  // EVERY meal plan, with contents. The card below still shows the newest as a summary; this is
+  // what makes the meals she actually wrote reachable. Her busiest client has three.
+  const { data: allPlanRows } = await sb
+    .from('meal_plans')
+    .select('id, name, calorie_goal, plan_jsonb')
+    .eq('company_id', companyId)
+    .eq('contact_id', contactId)
+    .order('updated_at', { ascending: false })
+    .limit(20);
+
+  type PlanJson = {
+    publishedAt?: string | null;
+    mealGroups?: { meals?: { name?: string; kcal?: number | null; protein?: number | null; carb?: number | null; fat?: number | null; procedure?: string | null; comment?: string | null; prepTime?: number | null; cookingTime?: number | null; ingredients?: { name?: string; print?: string | null }[] }[] }[];
+  };
+  const mealPlans = ((allPlanRows ?? []) as { id: string; name: string; calorie_goal: number | null; plan_jsonb: PlanJson | null }[])
+    .map((p) => {
+      const j = p.plan_jsonb ?? {};
+      return {
+        id: p.id,
+        name: p.name,
+        calorieGoal: p.calorie_goal,
+        publishedAt: j.publishedAt ?? null,
+        groups: (j.mealGroups ?? []).map((g) => ({
+          meals: (g.meals ?? []).map((m) => ({
+            name: m.name ?? 'Meal',
+            kcal: m.kcal ?? null,
+            protein: m.protein ?? null,
+            carb: m.carb ?? null,
+            fat: m.fat ?? null,
+            ingredients: (m.ingredients ?? []).map((x) => ({ name: x.name ?? '', print: x.print ?? null })).filter((x) => x.name),
+            procedure: m.procedure || null,
+            comment: m.comment || null,
+            prepMinutes: m.prepTime ?? null,
+            cookMinutes: m.cookingTime ?? null,
+          })),
+        })),
+      };
+    })
+    // A plan with no meals is a header row from the older import; it adds nothing to read.
+    .filter((p) => p.groups.some((g) => g.meals.length));
+
+  // Lessons already delivered on Lenus. Read-only history; nothing here sends anything.
+  const { data: sendRows } = await sb
+    .from('lesson_sends')
+    .select('state, lessons(title_en, category)')
+    .eq('company_id', companyId)
+    .eq('contact_id', contactId)
+    .limit(100);
+  type SendRaw = { state: string; lessons: { title_en: string; category: string | null }[] | { title_en: string; category: string | null } | null };
+  const lessonsSent = ((sendRows ?? []) as SendRaw[])
+    .map((r) => {
+      const l = Array.isArray(r.lessons) ? r.lessons[0] : r.lessons;
+      return l ? { title: l.title_en, category: l.category, state: r.state } : null;
+    })
+    .filter((x): x is { title: string; category: string | null; state: string } => x != null)
+    .sort((a, b) => a.title.localeCompare(b.title));
+
+  // Her food diary, rolled up per day. The page showed a COUNT of days and nothing eaten.
+  const { data: foodRows } = await sb
+    .from('food_log')
+    .select('log_date, name, meal_slot, kcal, protein_g, carb_g, fat_g')
+    .or(memberScope)
+    .order('log_date', { ascending: false })
+    .limit(1500);
+  type FoodRaw = { log_date: string; name: string | null; meal_slot: string | null; kcal: number | string; protein_g: number | string; carb_g: number | string; fat_g: number | string };
+  const byDay = new Map<string, { date: string; kcal: number; protein: number; carb: number; fat: number; entries: { name: string | null; slot: string | null; kcal: number }[] }>();
+  for (const f of (foodRows ?? []) as FoodRaw[]) {
+    if (!byDay.has(f.log_date)) byDay.set(f.log_date, { date: f.log_date, kcal: 0, protein: 0, carb: 0, fat: 0, entries: [] });
+    const d = byDay.get(f.log_date)!;
+    const k = Math.round(Number(f.kcal) || 0);
+    d.kcal += k;
+    d.protein += Number(f.protein_g) || 0;
+    d.carb += Number(f.carb_g) || 0;
+    d.fat += Number(f.fat_g) || 0;
+    d.entries.push({ name: f.name, slot: f.meal_slot, kcal: k });
+  }
+  const foodDaysDetail = [...byDay.values()].map((d) => ({
+    ...d,
+    protein: Math.round(d.protein),
+    carb: Math.round(d.carb),
+    fat: Math.round(d.fat),
+  }));
+
   // The client's most recent assigned meal plan (Lenus import linked plans by contact).
   const { data: mpData } = await sb
     .from('meal_plans')
@@ -437,19 +539,54 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     ? { id: mp.id, name: mp.name, calorieGoal: mp.calorie_goal, proteinG: mp.protein_g, carbG: mp.carb_g, fatG: mp.fat_g, macroTiming: mp.macro_timing_name }
     : null;
 
-  // Client files + progress photos (imported from Lenus media, re-hosted on R2).
+  // Client files + progress photos.
+  //
+  // TWO STORAGE ERAS, and the reader has to serve both. The July import re-hosted media on public
+  // Cloudflare R2 and put the durable link in `url`. The August sweep put her 114 per-client
+  // training and meal plan PDFs in a PRIVATE Supabase bucket, where a raw URL resolves to nothing,
+  // so those rows carry `storage_path` and get a signed URL minted here instead. A row has one or
+  // the other, never both.
   const { data: fileData } = await sb
     .from('contact_files')
-    .select('category, url, bytes')
+    .select('category, url, storage_path, bucket, bytes')
     .eq('company_id', companyId)
     .eq('contact_id', contactId)
     .order('created_at', { ascending: false })
     .limit(300);
-  const files = ((fileData ?? []) as { category: string | null; url: string; bytes: number | null }[]).map((f) => ({
-    category: f.category,
-    url: f.url,
-    bytes: f.bytes,
-  }));
+  const fileRaw = (fileData ?? []) as {
+    category: string | null;
+    url: string;
+    storage_path: string | null;
+    bucket: string | null;
+    bytes: number | null;
+  }[];
+
+  // One round trip per bucket rather than one per file.
+  const pathsByBucket = new Map<string, string[]>();
+  for (const f of fileRaw) {
+    if (!f.storage_path || !f.bucket) continue;
+    if (!pathsByBucket.has(f.bucket)) pathsByBucket.set(f.bucket, []);
+    pathsByBucket.get(f.bucket)!.push(f.storage_path);
+  }
+  const signedFileUrls = new Map<string, string>();
+  await Promise.all(
+    [...pathsByBucket].map(async ([bucket, paths]) => {
+      const { data: rows } = await sb.storage.from(bucket).createSignedUrls(paths, 3600);
+      for (const r of rows ?? []) {
+        if (r.path && r.signedUrl && !r.error) signedFileUrls.set(r.path, r.signedUrl);
+      }
+    }),
+  );
+
+  const files = fileRaw
+    .map((f) => ({
+      category: f.category,
+      url: f.storage_path ? (signedFileUrls.get(f.storage_path) ?? '') : f.url,
+      bytes: f.bytes,
+    }))
+    // A private-bucket row whose object is missing signs to nothing. Dropping it beats rendering a
+    // link that goes nowhere, which is how a coach learns to distrust the whole tab.
+    .filter((f) => f.url);
 
   // Intake / health profile.
   //
@@ -464,7 +601,8 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     .select(
       'sex, birth_date, height_cm, starting_weight_kg, goal_type, goal_intensity, target_weight_kg, bmr, tdee, pal, ' +
         'calorie_goal_kcal, activity_level, injuries, injuries_description, medical_conditions, dietary_exclusions, ' +
-        'allergies, training_experience, bad_habits, client_why, sessions_per_week, equipment, ' +
+        'allergies, training_experience, bad_habits, good_habits, client_why, sessions_per_week, equipment, ' +
+        'cycle_type, cycle_length_days, ' +
         'eating_disorder_screening, sleep_assessment, custom_fields, intake_notes, needs_coach_review, questionnaire_filled_at',
     )
     .eq('company_id', companyId)
@@ -477,7 +615,9 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     activity_level: string | null;
     injuries: string[] | null; injuries_description: string | null; medical_conditions: string | null;
     dietary_exclusions: string[] | null; allergies: string | null; training_experience: string | null;
-    bad_habits: string | null; client_why: string | null; sessions_per_week: number | null; equipment: string[] | null;
+    bad_habits: string | null; good_habits: string | null; client_why: string | null;
+    sessions_per_week: number | null; equipment: string[] | null;
+    cycle_type: string | null; cycle_length_days: number | null;
     eating_disorder_screening: Record<string, unknown> | null;
     intake_notes: string | null; needs_coach_review: boolean | null; questionnaire_filled_at: string | null;
   };
@@ -506,7 +646,8 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
         activityLevel: ir.activity_level,
         injuries: ir.injuries, injuriesDescription: ir.injuries_description, medicalConditions: ir.medical_conditions,
         dietaryExclusions: ir.dietary_exclusions, allergies: ir.allergies,
-        trainingExperience: ir.training_experience, badHabits: ir.bad_habits,
+        trainingExperience: ir.training_experience, badHabits: ir.bad_habits, goodHabits: ir.good_habits,
+        cycleType: ir.cycle_type, cycleLengthDays: ir.cycle_length_days,
         clientWhy: ir.client_why, sessionsPerWeek: ir.sessions_per_week, equipment: ir.equipment,
         edsRisk, intakeNotes: ir.intake_notes, needsCoachReview: ir.needs_coach_review === true,
         questionnaireFilledAt: ir.questionnaire_filled_at,
@@ -514,24 +655,6 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
       }
     : null;
 
-  /**
-   * ONE CLIENT, TWO KEYS. This is the split that made her live app activity invisible to her coach.
-   *
-   * Everything migrated from Lenus is keyed by contact_id: 6,940 food logs, 2,286 photos, 758
-   * weights. Everything a member writes from the app today is keyed by profile_id. These reads used
-   * `.eq('contact_id', ...)` only, so a member could log a weight, a meal and a progress photo and
-   * her coach's page would show none of it while happily displaying two years of Lenus history.
-   *
-   * It was nearly invisible at audit time (11 weights, 8 food logs, 3 photos) ONLY because almost
-   * nobody is using the app yet. At launch every one of her 265 clients starts writing profile-keyed
-   * rows on day one and the page shows the past instead of the present.
-   *
-   * A member with no claimed account has no profile, so the filter degrades to contact-only rather
-   * than matching every row with a null profile_id.
-   */
-  const memberScope = raw.profile_id
-    ? `contact_id.eq.${contactId},profile_id.eq.${raw.profile_id}`
-    : `contact_id.eq.${contactId}`;
 
   // Load the MOST RECENT window (desc + reverse to chronological) so "latest" is truly latest, plus the
   // exact totals and the true first weigh-in, so the coach never sees a stale value labeled current.
@@ -593,21 +716,83 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
   // on purpose: telling a coach that a member opted out is itself a disclosure about her.
   const today = new Date().toISOString().slice(0, 10);
   const cycleSince = new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
-  const [[habits, cycle], latestCheckin] = await Promise.all([
-    raw.profile_id
-      ? Promise.all([
-          getClientHabits(companyId, raw.profile_id),
-          loadCoachCycle(raw.profile_id, companyId, cycleSince, today),
-        ])
-      : Promise.resolve([null, null] as const),
+  // Only the CYCLE still needs a profile: coach_cycle_window is a security-definer RPC keyed on
+  // profile_id and consent lives on cycle_profiles. Habits and check-ins take either key now, and
+  // both are asked unconditionally so a migrated client is not silently blanked.
+  const [cycle, habits, latestCheckin, checkins] = await Promise.all([
+    raw.profile_id ? loadCoachCycle(raw.profile_id, companyId, cycleSince, today) : Promise.resolve(null),
+    getClientHabits(companyId, { profileId: raw.profile_id, contactId }),
     getLatestCheckin(companyId, { profileId: raw.profile_id, contactId }),
+    getAllCheckins(companyId, { profileId: raw.profile_id, contactId }),
   ]);
 
   // Migrated Lenus workout history (session summaries): total + the most recent handful.
-  const [{ count: workoutCount }, { data: woRows }] = await Promise.all([
+  const [{ count: workoutCount }, { data: woRows }, { data: goalRows }, { count: activityCount }, { data: actRows }] = await Promise.all([
     sb.from('client_workout_history').select('id', { count: 'exact', head: true }).eq('contact_id', contactId),
-    sb.from('client_workout_history').select('performed_at, session_name, plan_name, completion_pct').eq('contact_id', contactId).order('performed_at', { ascending: false }).limit(8),
+    sb.from('client_workout_history').select('performed_at, session_name, plan_name, completion_pct').eq('contact_id', contactId).order('performed_at', { ascending: false }).limit(600),
+    // Her per-client targets (0139), newest first so a revised goal wins over the one it replaced.
+    sb.from('tracking_goals').select('goal_type, target, display_unit, frequency, created_by_client, starts_on').or(memberScope).order('starts_on', { ascending: false }).limit(30),
+    // Device-tracked activity (0136). Both keys, so it keeps working when she claims an account.
+    sb.from('activity_logs').select('id', { count: 'exact', head: true }).or(memberScope),
+    sb
+      .from('activity_logs')
+      .select('tracked_at, activity_type, custom_name, duration_seconds, distance_meters, energy_kcal')
+      .or(memberScope)
+      .order('tracked_at', { ascending: false })
+      .limit(400),
   ]);
+  type ActRaw = {
+    tracked_at: string;
+    activity_type: string;
+    custom_name: string | null;
+    duration_seconds: number | null;
+    distance_meters: number | null;
+    energy_kcal: number | null;
+  };
+  // One goal per type: she revises a target rather than adding a second one, so the newest wins.
+  type GoalRaw = { goal_type: string; target: number | string; display_unit: string | null; frequency: string | null; created_by_client: boolean };
+
+  /**
+   * Lenus stores the target in a BASE unit and names the unit to SHOW it in, which are not the
+   * same thing. Printing the raw number beside display_unit produced "Water 2,000 l · daily" and
+   * "Active time 5,400 min" on a real client: a woman drinking two thousand litres a day and
+   * training ninety hours. Both are the base value (ml, seconds) wearing the display label.
+   *
+   * Distance is metres and her account is imperial, so 4828.03 m is the 3 miles she actually set.
+   */
+  const toDisplay = (value: number, unit: string | null): number => {
+    switch ((unit || '').toLowerCase()) {
+      case 'l': return value / 1000; // stored ml
+      case 'min': return value / 60; // stored seconds
+      case 'h': return value / 3600;
+      case 'mi': return value / 1609.344; // stored metres
+      case 'km': return value / 1000;
+      default: return value; // steps and kcal are already the displayed unit
+    }
+  };
+  // Whole numbers for counts, one decimal for a converted measure: "3 mi", "2 l", "90 min".
+  const tidy = (n: number): number => (Number.isInteger(n) ? n : Math.round(n * 10) / 10);
+
+  const goalSeen = new Set<string>();
+  const goals = ((goalRows ?? []) as GoalRaw[])
+    .filter((g) => (goalSeen.has(g.goal_type) ? false : (goalSeen.add(g.goal_type), true)))
+    .map((g) => ({
+      type: g.goal_type,
+      target: tidy(toDisplay(Number(g.target), g.display_unit)),
+      unit: g.display_unit,
+      frequency: g.frequency,
+      selfSet: Boolean(g.created_by_client),
+    }));
+
+  const recentActivity = ((actRows ?? []) as ActRaw[]).map((a) => ({
+    on: a.tracked_at,
+    type: a.activity_type,
+    name: a.custom_name,
+    minutes: a.duration_seconds ? Math.round(a.duration_seconds / 60) : null,
+    // One decimal: 3.2 km is a walk she recognises, 3188 m is a number she has to convert.
+    km: a.distance_meters ? Math.round(a.distance_meters / 100) / 10 : null,
+    kcal: a.energy_kcal,
+  }));
   /**
    * LIVE workouts, merged with the migrated Lenus history.
    *
@@ -628,7 +813,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
           .select('performed_at, completion_pct, enjoyment, effort')
           .eq('profile_id', raw.profile_id)
           .order('performed_at', { ascending: false })
-          .limit(8),
+          .limit(300),
         sb
           .from('workout_logs')
           .select('id', { count: 'exact', head: true })
@@ -644,9 +829,10 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     // Null renders as "-" instead of inventing a name, which is the honest state.
     on: w.performed_at, name: null as string | null, plan: null as string | null, pct: w.completion_pct,
   }));
-  const recentWorkouts = [...migrated, ...live]
-    .sort((a, b) => String(b.on).localeCompare(String(a.on)))
-    .slice(0, 8);
+  // Her whole training history, not a preview of it. The busiest client in the book has 510
+  // sessions; the UI shows ten and opens the rest, so the count in the header is the count on
+  // screen. A slice here was the last place the page still decided what she was allowed to see.
+  const recentWorkouts = [...migrated, ...live].sort((a, b) => String(b.on).localeCompare(String(a.on)));
 
   const progress = {
     weights, weightCount: weightCount ?? weights.length, weightStartKg,
@@ -655,6 +841,9 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     foodDays: foodDays ?? 0,
     workoutCount: (workoutCount ?? 0) + (liveWorkoutCount ?? 0),
     recentWorkouts,
+    activityCount: activityCount ?? 0,
+    recentActivity,
+    goals,
   };
 
   // Migrated conversation history: most recent 200 messages + full count.
@@ -662,33 +851,40 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     .from('client_messages')
     .select('id', { count: 'exact', head: true })
     .eq('contact_id', contactId);
+  // 1,000, not 200: only 2 of her 146 threads run longer, and the notice above the list still
+  // states the true total for those. The old cap was set when every attachment was signed with its
+  // own round trip, which is what made a long thread expensive; the batch below removed that cost.
   const { data: msgRows } = await sb
     .from('client_messages')
     .select('id, is_from_coach, sender_name, body, msg_type, sent_at, attachments')
     .eq('contact_id', contactId)
     .order('sent_at', { ascending: false })
-    .limit(200);
+    .limit(1000);
   type MsgRaw = { id: string; is_from_coach: boolean; sender_name: string | null; body: string | null; msg_type: string | null; sent_at: string; attachments: { name: string | null; kind: string | null; storage_path: string | null }[] | null };
-  const messages = await Promise.all(
-    ((msgRows ?? []) as MsgRaw[]).map(async (m) => {
-      const atts = await Promise.all(
-        (m.attachments ?? []).filter((a) => a.storage_path).map(async (a) => {
-          const { data: s } = await sb.storage.from('chat-attachments').createSignedUrl(a.storage_path as string, 3600);
-          return s?.signedUrl ? { url: s.signedUrl, name: a.name, kind: a.kind } : null;
-        }),
-      );
-      return {
-        id: m.id,
-        isFromCoach: m.is_from_coach,
-        senderName: m.sender_name,
-        body: m.body,
-        type: m.msg_type,
-        sentAt: m.sent_at,
-        attachments: atts.filter((a): a is { url: string; name: string | null; kind: string | null } => a != null),
-        attachmentCount: (m.attachments ?? []).length,
-      };
-    }),
-  );
+  const msgRaw = (msgRows ?? []) as MsgRaw[];
+  // ONE signing call for the whole thread. Per-message signing was 3,229 sequential round trips
+  // across her book, and it is the same batched pattern the check-in photos already use.
+  const attPaths = [...new Set(msgRaw.flatMap((m) => (m.attachments ?? []).map((a) => a.storage_path).filter((x): x is string => !!x)))];
+  const attUrls = new Map<string, string>();
+  if (attPaths.length > 0) {
+    const { data: signed } = await sb.storage.from('chat-attachments').createSignedUrls(attPaths, 3600);
+    for (const x of signed ?? []) if (x.path && x.signedUrl) attUrls.set(x.path, x.signedUrl);
+  }
+  const messages = msgRaw.map((m) => ({
+    id: m.id,
+    isFromCoach: m.is_from_coach,
+    senderName: m.sender_name,
+    body: m.body,
+    type: m.msg_type,
+    sentAt: m.sent_at,
+    attachments: (m.attachments ?? [])
+      .map((a) => {
+        const url = a.storage_path ? attUrls.get(a.storage_path) : undefined;
+        return url ? { url, name: a.name, kind: a.kind } : null;
+      })
+      .filter((a): a is { url: string; name: string | null; kind: string | null } => a != null),
+    attachmentCount: (m.attachments ?? []).length,
+  }));
 
   const t = await getTranslations('app.coach');
   const name = [raw.first_name, raw.last_name].filter(Boolean).join(' ').trim() || raw.email || t('noName');
@@ -732,6 +928,9 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     createdAt: raw.created_at,
     tags,
     mealPlan,
+    mealPlans,
+    lessonsSent,
+    foodDays: foodDaysDetail,
     snapshot: snap
       ? {
           mealPlans: snap.meal_plans,
@@ -759,6 +958,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     profileId: raw.profile_id,
     habits,
     latestCheckin,
+    checkins,
     cycle,
   };
 }

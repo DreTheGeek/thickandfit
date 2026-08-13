@@ -16,19 +16,14 @@
 // Run: node scripts/import-lenus-checkins.mjs [--apply]
 
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { makeSql, runBatched } from './lib/mgmt-sql.mjs';
 
 const APPLY = process.argv.includes('--apply');
 const SRC = '.capture/sweep/lenus-checkins.json';
 const COMPANY = 'c0ffee00-0000-4000-8000-000000000001';
 const FORM = '6b22fe6e-3b90-4910-b437-3bc0640b92eb';
 
-const sql = (q) => {
-  const out = execFileSync('node', ['.qa-visual/sql.cjs', q], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  const parsed = JSON.parse(out);
-  if (parsed && parsed.message) throw new Error(parsed.message);
-  return parsed;
-};
+const sql = makeSql();
 const lit = (v) =>
   v === null || v === undefined || v === '' ? 'null' : typeof v === 'number' ? String(v) : `'${String(v).replace(/'/g, "''")}'`;
 const jlit = (o) => `'${JSON.stringify(o).replace(/'/g, "''")}'::jsonb`;
@@ -201,25 +196,9 @@ if (!APPLY) {
 
 // Batched by CHARACTER budget: one call per statement rate-limits the Management API, and batching
 // by statement count blows the OS argument limit because the query travels as an argv entry.
-const MAX_CHARS = 6000;
-let done = 0;
-let buf = [];
-let bufLen = 0;
-const flush = () => {
-  if (!buf.length) return;
-  sql(buf.join('\n'));
-  done += buf.length;
-  if (done % 200 < buf.length) console.log(`  ${done}/${statements.length}`);
-  buf = [];
-  bufLen = 0;
-};
-for (const st of statements) {
-  if (bufLen + st.length > MAX_CHARS) {
-    flush();
-    execFileSync(process.execPath, ['-e', 'setTimeout(() => {}, 150)']);
-  }
-  buf.push(st);
-  bufLen += st.length;
-}
-flush();
-console.log(`applied ${done} statements`);
+runBatched(sql, 'check-ins', statements, {
+  pauseMs: 150,
+  onProgress: (done, total) => {
+    if (done % 400 < 10) console.log(`  ${done}/${total}`);
+  },
+});

@@ -82,10 +82,23 @@ export async function getCoachFoodDiaryWeek(profileId: string, companyId: string
   const today = localToday(tz);
   const start = addDays(today, -6);
 
+  // BOTH KEYS. profile_id is set only once a member claims an app account, and every one of the
+  // 8,419 entries migrated from Lenus carries contact_id with a null profile. Filtering on
+  // profile_id alone made her clients' entire food history invisible on this page, which is the
+  // same defect that hid the check-ins and the progress photos.
+  const { data: contactRow } = await sb
+    .from('contacts')
+    .select('id')
+    .eq('profile_id', profileId)
+    .maybeSingle<{ id: string }>();
+  const scope = contactRow?.id
+    ? `profile_id.eq.${profileId},contact_id.eq.${contactRow.id}`
+    : `profile_id.eq.${profileId}`;
+
   const { data } = await sb
     .from('food_log')
     .select('id, log_date, name, meal_slot, grams, kcal, protein_g, carb_g, fat_g, source')
-    .eq('profile_id', profileId)
+    .or(scope)
     .gte('log_date', start)
     .order('logged_at', { ascending: true });
   const rows = (data ?? []) as LogRaw[];

@@ -24,6 +24,12 @@ const OWNER = [
   ['entitlements', 'profile_id'],
   ['cycle_logs', 'profile_id'],
   ['community_blocks', 'blocker_profile_id'],
+  // Added 2026-08-12 with migration 0136. Owner-scoped rather than coach-only: this is her own
+  // training, and the policy is the same shape as workout_logs. Every migrated row is contact-keyed
+  // with a null profile_id, so a member must see none of them until she claims her account.
+  ['activity_logs', 'profile_id'],
+  // Added 2026-08-13 with migration 0139. Same owner gate: her target, her coach can see it.
+  ['tracking_goals', 'profile_id'],
 ];
 const FORBIDDEN = [
   'contacts', 'client_subscriptions', 'contact_transactions', 'opportunities', 'pipelines',
@@ -31,6 +37,11 @@ const FORBIDDEN = [
   'sessions', 'forms', 'ai_evals', 'email_send_log', 'legacy_client_snapshot', 'coach_knowledge',
   'coaching_assignments', 'approval_queue', 'coach_interview_answers', 'ai_inferences', 'qa_checklist',
   'domain_events',
+  // Added 2026-08-12 with migration 0133, her recovered Lenus content library. Coach-only for two
+  // reasons: the library is her IP and is not published to members yet, and lesson_sends is a list
+  // of who received what, which is client PII. This list is the only thing that makes the isolation
+  // test look at a new table, so a table added without a line here passes by not being checked.
+  'lessons', 'lesson_assets', 'lesson_plans', 'lesson_plan_items', 'lesson_sends',
   // Added 2026-08-09 with migration 0115. A member never reads this directly: every member-facing
   // reader goes through the service client. Her email-notification preferences and her client-handling
   // defaults must not be on the wire for a subscriber who opens PostgREST.
