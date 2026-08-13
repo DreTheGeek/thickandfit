@@ -195,6 +195,43 @@ function Section({ title, children }: { title: string; children: ReactNode }): R
   );
 }
 
+/**
+ * A long list, opened by the coach rather than truncated by us.
+ *
+ * Her busiest client has 510 training sessions and 1,105 food entries. Showing the newest 8 and
+ * dropping the rest is what made these records read as half-empty; dumping 510 rows into a card is
+ * unreadable. The first `initial` are always visible and every remaining row is one click away, so
+ * nothing is withheld and nothing has to be hunted for.
+ */
+function MoreList({
+  children,
+  initial,
+  moreLabel,
+  lessLabel,
+}: {
+  children: ReactNode[];
+  initial: number;
+  moreLabel: (n: number) => string;
+  lessLabel: string;
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  const shown = open ? children : children.slice(0, initial);
+  return (
+    <>
+      {shown}
+      {children.length > initial && (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="tf-press w-full py-2.5 text-[12px] font-semibold uppercase tracking-[1px] text-faint hover:text-ink"
+        >
+          {open ? lessLabel : moreLabel(children.length)}
+        </button>
+      )}
+    </>
+  );
+}
+
 export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; locale: string }): ReactElement {
   const t = useTranslations('app.coach');
   // The member's own health form owns the slug labels (app.health.opt.*). Borrowing them keeps the
@@ -315,6 +352,21 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               ))}
             </Section>
           )}
+          {/* What this client has already been taught. 1,757 of these came across and none of them
+              reached a client record, so the same lesson could be sent twice. History only: opening
+              this page delivers nothing. */}
+          {detail.lessonsSent.length > 0 && (
+            <Section title={`${t('lessonsSentTitle')} (${detail.lessonsSent.length})`}>
+              <MoreList initial={8} moreLabel={(n) => t('showAllN', { n })} lessLabel={t('showFewer')}>
+                {detail.lessonsSent.map((l, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3 border-b border-divider py-2 text-[13px] last:border-0">
+                    <span className="min-w-0 truncate text-ink">{l.title}</span>
+                    <span className="shrink-0 text-[11px] text-faint">{l.category || t('lessonNoCategory')}</span>
+                  </div>
+                ))}
+              </MoreList>
+            </Section>
+          )}
         </div>
       )}
 
@@ -417,6 +469,33 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               </div>
             </Section>
           )}
+          {/* Every earlier check-in, under the latest one. A coach reads this week against last
+              week ("energy was 3, it is 5 now"), so a single submission in isolation is the least
+              useful way to show the 62 she has written. Each opens in place. */}
+          {detail.checkins.length > 1 && (
+            <Section title={`${t('checkinHistory')} (${detail.checkins.length})`}>
+              <MoreList initial={6} moreLabel={(n) => t('showAllN', { n })} lessLabel={t('showFewer')}>
+                {detail.checkins.slice(1).map((c) => (
+                  <details key={c.id} className="group border-b border-divider py-2 last:border-0">
+                    <summary className="tf-press flex cursor-pointer list-none items-center justify-between gap-3 text-[13px]">
+                      <span className="font-medium text-ink">{fmtDate(c.submittedAt.slice(0, 10), locale)}</span>
+                      <span className="flex items-center gap-2 text-[11px] text-faint">
+                        {/* Some submissions carry no answers at all: she opened the form and sent
+                            it empty. Saying so beats a bare "0" that reads like a broken row. */}
+                        {c.fields.length === 0 ? t('checkinEmpty') : c.fields.length}
+                        <Icon name="chevronRight" size={14} className="transition-transform group-open:rotate-90" />
+                      </span>
+                    </summary>
+                    <div className="pt-1">
+                      {c.fields.map((f, i) => (
+                        <Row key={i} label={f.label} value={<span className="whitespace-pre-wrap text-left">{f.value}</span>} />
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </MoreList>
+            </Section>
+          )}
           {/* Habits, on the canonical record. These are keyed by profile_id and until now only
               existed on /coach/subscribers/[id], so a coach had to know which of two URLs held
               which half of a client. */}
@@ -448,18 +527,20 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
           )}
           {detail.progress.workoutCount > 0 && (
             <Section title={`${t('progressTraining')} (${detail.progress.workoutCount})`}>
-              {detail.progress.recentWorkouts.map((w, i) => (
-                <div key={i} className="flex items-center justify-between border-b border-divider py-2 text-[13px] last:border-0">
-                  <div className="min-w-0">
-                    <span className="font-medium text-ink">{w.name ?? '-'}</span>
-                    {w.plan && <span className="ml-1.5 text-[11px] text-faint">{w.plan}</span>}
+              <MoreList initial={10} moreLabel={(n) => t('showAllN', { n })} lessLabel={t('showFewer')}>
+                {detail.progress.recentWorkouts.map((w, i) => (
+                  <div key={i} className="flex items-center justify-between border-b border-divider py-2 text-[13px] last:border-0">
+                    <div className="min-w-0">
+                      <span className="font-medium text-ink">{w.name ?? '-'}</span>
+                      {w.plan && <span className="ml-1.5 text-[11px] text-faint">{w.plan}</span>}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 text-faint">
+                      {w.pct != null && <span className={w.pct >= 80 ? 'text-good-ink' : ''}>{w.pct}%</span>}
+                      <span>{fmtDate(w.on.slice(0, 10), locale)}</span>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2 text-faint">
-                    {w.pct != null && <span className={w.pct >= 80 ? 'text-good-ink' : ''}>{w.pct}%</span>}
-                    <span>{fmtDate(w.on.slice(0, 10), locale)}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </MoreList>
             </Section>
           )}
           {/* Her targets, immediately above the activity they are measured against. The check-in
@@ -488,19 +569,21 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               the training count answer a question nobody asked. */}
           {detail.progress.activityCount > 0 && (
             <Section title={`${t('activityTitle')} (${detail.progress.activityCount})`}>
-              {detail.progress.recentActivity.map((a, i) => (
-                <div key={i} className="flex items-center justify-between border-b border-divider py-2 text-[13px] last:border-0">
-                  <div className="min-w-0">
-                    <span className="font-medium text-ink">{a.name ?? t(`activityType.${a.type}`)}</span>
+              <MoreList initial={10} moreLabel={(n) => t('showAllN', { n })} lessLabel={t('showFewer')}>
+                {detail.progress.recentActivity.map((a, i) => (
+                  <div key={i} className="flex items-center justify-between border-b border-divider py-2 text-[13px] last:border-0">
+                    <div className="min-w-0">
+                      <span className="font-medium text-ink">{a.name ?? t(`activityType.${a.type}`)}</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 text-faint">
+                      {a.minutes != null && <span>{t('activityMinutes', { n: a.minutes })}</span>}
+                      {a.km != null && <span>{a.km} km</span>}
+                      {a.kcal != null && <span>{a.kcal} kcal</span>}
+                      <span>{fmtDate(a.on.slice(0, 10), locale)}</span>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2 text-faint">
-                    {a.minutes != null && <span>{t('activityMinutes', { n: a.minutes })}</span>}
-                    {a.km != null && <span>{a.km} km</span>}
-                    {a.kcal != null && <span>{a.kcal} kcal</span>}
-                    <span>{fmtDate(a.on.slice(0, 10), locale)}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </MoreList>
             </Section>
           )}
           {detail.progress.photos.length > 0 && (
@@ -628,6 +711,106 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
         <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
           {mealPlanCard(true)}
           {planDelivery}
+          {/* The plans themselves, not just the newest one's header. 1,265 meals and 5,717
+              ingredients came across in her own portion wording; until now the page linked to one
+              plan and said nothing about the rest. Each plan opens in place. */}
+          {detail.mealPlans.length > 0 && (
+            <div className="xl:col-span-2">
+              <Section title={`${t('mealPlansAll')} (${detail.mealPlans.length})`}>
+                {detail.mealPlans.map((plan, pi) => {
+                  const meals = plan.groups.flatMap((g) => g.meals);
+                  return (
+                    <details key={plan.id} className="group border-b border-divider py-2 last:border-0" open={pi === 0}>
+                      <summary className="tf-press flex cursor-pointer list-none items-center justify-between gap-3 text-[13px]">
+                        <span className="min-w-0 truncate font-medium text-ink">{plan.name}</span>
+                        <span className="flex shrink-0 items-center gap-2 text-[11px] text-faint">
+                          {plan.calorieGoal != null && <span>{plan.calorieGoal} kcal</span>}
+                          <span>{t('mealPlanMeals', { n: meals.length })}</span>
+                          <span>{plan.publishedAt ? fmtDate(plan.publishedAt.slice(0, 10), locale) : t('planUndated')}</span>
+                          <Icon name="chevronRight" size={14} className="transition-transform group-open:rotate-90" />
+                        </span>
+                      </summary>
+                      <div className="flex flex-col gap-3 py-3">
+                        {meals.map((m, mi) => (
+                          <div key={mi} className="rounded-xl border border-line bg-warm/40 px-4 py-3">
+                            <div className="flex items-baseline justify-between gap-3">
+                              <span className="min-w-0 font-display text-[15px] leading-tight">{m.name}</span>
+                              <span className="shrink-0 text-[11px] text-faint">
+                                {m.kcal != null && <>{Math.round(m.kcal)} kcal</>}
+                                {m.protein != null && <> · {Math.round(m.protein)}p / {Math.round(m.carb ?? 0)}c / {Math.round(m.fat ?? 0)}f</>}
+                              </span>
+                            </div>
+                            {m.ingredients.length > 0 && (
+                              <ul className="mt-1.5 flex flex-col gap-0.5">
+                                {m.ingredients.map((ing, ii) => (
+                                  <li key={ii} className="flex items-baseline justify-between gap-3 text-[12px]">
+                                    <span className="min-w-0 text-muted">{ing.name}</span>
+                                    {/* Her own wording for the portion ("1 scoop", "80 g raw"),
+                                        never a recomputed number. */}
+                                    {ing.print && <span className="shrink-0 text-faint">{ing.print}</span>}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {m.comment && <p className="mt-2 whitespace-pre-wrap text-[12px] italic text-muted">{m.comment}</p>}
+                            {m.procedure && (
+                              <details className="group/m mt-2">
+                                <summary className="tf-press flex cursor-pointer list-none items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[1px] text-faint hover:text-ink">
+                                  {t('mealMethod')}
+                                  {(m.prepMinutes != null || m.cookMinutes != null) && (
+                                    <span className="normal-case tracking-normal">
+                                      · {t('mealMinutes', { n: (m.prepMinutes ?? 0) + (m.cookMinutes ?? 0) })}
+                                    </span>
+                                  )}
+                                  <Icon name="chevronRight" size={12} className="transition-transform group-open/m:rotate-90" />
+                                </summary>
+                                <p className="whitespace-pre-wrap pt-1.5 text-[12px] leading-relaxed text-muted">{m.procedure}</p>
+                              </details>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                })}
+              </Section>
+            </div>
+          )}
+          {/* What she actually ate, against the plan above it. The page counted her logging days
+              and showed none of the food, which is the half a coach reads. */}
+          {detail.foodDays.length > 0 && (
+            <div className="xl:col-span-2">
+              <Section
+                title={`${t('foodDiaryTitle')} · ${t('foodDiaryDays', { n: detail.foodDays.length })} · ${t('foodDiaryEntries', { n: detail.progress.foodDays })}`}
+              >
+                <MoreList initial={7} moreLabel={(n) => t('showAllN', { n })} lessLabel={t('showFewer')}>
+                  {detail.foodDays.map((d) => (
+                    <details key={d.date} className="group border-b border-divider py-2 last:border-0">
+                      <summary className="tf-press flex cursor-pointer list-none items-center justify-between gap-3 text-[13px]">
+                        <span className="font-medium text-ink">{fmtDate(d.date, locale)}</span>
+                        <span className="flex shrink-0 items-center gap-2 text-[11px] text-faint">
+                          <span className="font-medium text-ink">{d.kcal.toLocaleString(locale)} kcal</span>
+                          <span>{d.protein}p / {d.carb}c / {d.fat}f</span>
+                          <Icon name="chevronRight" size={14} className="transition-transform group-open:rotate-90" />
+                        </span>
+                      </summary>
+                      <div className="py-1">
+                        {d.entries.map((e, ei) => (
+                          <div key={ei} className="flex items-center justify-between gap-3 border-b border-divider py-1.5 text-[12px] last:border-0">
+                            <span className="min-w-0 truncate text-muted">
+                              {e.slot && <span className="mr-1.5 text-[10px] uppercase tracking-[1px] text-faint">{e.slot}</span>}
+                              {e.name ?? '-'}
+                            </span>
+                            <span className="shrink-0 text-faint">{e.kcal} kcal</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  ))}
+                </MoreList>
+              </Section>
+            </div>
+          )}
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import type { CoachCycleView } from '@/lib/coach/client-cycle';
 import type { ClientHabits } from '@/lib/coach/client-habits';
-import type { ClientCheckin } from '@/lib/coach/client-checkin';
+import type { ClientCheckin, CheckinSubmission } from '@/lib/coach/client-checkin';
 // Pure, client-safe types + constants + filter parsing for the Clients CRM. No server imports,
 // so client components can import these without dragging in the service client. The server data
 // layer (clients.ts) re-exports everything from here.
@@ -153,6 +153,17 @@ export type ClientDetail = {
     fatG: number | null;
     macroTiming: string | null;
   } | null;
+  /**
+   * EVERY meal plan she has written for this client, with the meals inside it.
+   *
+   * The card above shows the newest plan's header only. 1,265 meals and 5,717 ingredients were
+   * imported and rendered nowhere, which is the plan she is paid to write.
+   */
+  mealPlans: ClientMealPlan[];
+  /** Lessons already delivered on Lenus. History, never a send queue. */
+  lessonsSent: { title: string; category: string | null; state: string }[];
+  /** Her food diary, newest day first, so the coach sees what was eaten and not just how often. */
+  foodDays: ClientFoodDay[];
   snapshot: {
     mealPlans: number | null;
     measurements: number | null;
@@ -214,6 +225,8 @@ export type ClientDetail = {
   habits: ClientHabits | null;
   /** Her most recent check-in submission, so the coach can read and answer it on one page. */
   latestCheckin: ClientCheckin['latest'];
+  /** EVERY check-in she has submitted, newest first. Latest-only showed 1 of 62 for her busiest client. */
+  checkins: CheckinSubmission[];
   /**
    * Her cycle, last 60 days. Null when she has no app account, has logged nothing, OR has turned
    * coach sharing off. Those are deliberately not distinguished here: reporting an opt-out to the
@@ -354,3 +367,38 @@ export const SEGMENT_PRESETS: SegmentPreset[] = [
   { slug: 'health-flags', labelKey: 'segHealthFlags', filter: { tags: ['pcos', 'glp-1'] } },
   { slug: 'spanish', labelKey: 'segSpanishSpeaking', filter: { tags: ['spanish'] } },
 ];
+
+
+/** One meal plan with its contents, as she wrote it. */
+export type ClientMealPlan = {
+  id: string;
+  name: string;
+  calorieGoal: number | null;
+  publishedAt: string | null;
+  groups: {
+    meals: {
+      name: string;
+      kcal: number | null;
+      protein: number | null;
+      carb: number | null;
+      fat: number | null;
+      /** Her own portion wording, e.g. "35g (1/4 pc)". The grams alone lose the household measure. */
+      ingredients: { name: string; print: string | null }[];
+      /** How to cook it, and her note beside it. Both are hers and both were being dropped. */
+      procedure: string | null;
+      comment: string | null;
+      prepMinutes: number | null;
+      cookMinutes: number | null;
+    }[];
+  }[];
+};
+
+/** A day of her food diary, with the entries rolled up. */
+export type ClientFoodDay = {
+  date: string;
+  kcal: number;
+  protein: number;
+  carb: number;
+  fat: number;
+  entries: { name: string | null; slot: string | null; kcal: number }[];
+};
