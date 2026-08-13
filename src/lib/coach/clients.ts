@@ -437,19 +437,54 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     ? { id: mp.id, name: mp.name, calorieGoal: mp.calorie_goal, proteinG: mp.protein_g, carbG: mp.carb_g, fatG: mp.fat_g, macroTiming: mp.macro_timing_name }
     : null;
 
-  // Client files + progress photos (imported from Lenus media, re-hosted on R2).
+  // Client files + progress photos.
+  //
+  // TWO STORAGE ERAS, and the reader has to serve both. The July import re-hosted media on public
+  // Cloudflare R2 and put the durable link in `url`. The August sweep put her 114 per-client
+  // training and meal plan PDFs in a PRIVATE Supabase bucket, where a raw URL resolves to nothing,
+  // so those rows carry `storage_path` and get a signed URL minted here instead. A row has one or
+  // the other, never both.
   const { data: fileData } = await sb
     .from('contact_files')
-    .select('category, url, bytes')
+    .select('category, url, storage_path, bucket, bytes')
     .eq('company_id', companyId)
     .eq('contact_id', contactId)
     .order('created_at', { ascending: false })
     .limit(300);
-  const files = ((fileData ?? []) as { category: string | null; url: string; bytes: number | null }[]).map((f) => ({
-    category: f.category,
-    url: f.url,
-    bytes: f.bytes,
-  }));
+  const fileRaw = (fileData ?? []) as {
+    category: string | null;
+    url: string;
+    storage_path: string | null;
+    bucket: string | null;
+    bytes: number | null;
+  }[];
+
+  // One round trip per bucket rather than one per file.
+  const pathsByBucket = new Map<string, string[]>();
+  for (const f of fileRaw) {
+    if (!f.storage_path || !f.bucket) continue;
+    if (!pathsByBucket.has(f.bucket)) pathsByBucket.set(f.bucket, []);
+    pathsByBucket.get(f.bucket)!.push(f.storage_path);
+  }
+  const signedFileUrls = new Map<string, string>();
+  await Promise.all(
+    [...pathsByBucket].map(async ([bucket, paths]) => {
+      const { data: rows } = await sb.storage.from(bucket).createSignedUrls(paths, 3600);
+      for (const r of rows ?? []) {
+        if (r.path && r.signedUrl && !r.error) signedFileUrls.set(r.path, r.signedUrl);
+      }
+    }),
+  );
+
+  const files = fileRaw
+    .map((f) => ({
+      category: f.category,
+      url: f.storage_path ? (signedFileUrls.get(f.storage_path) ?? '') : f.url,
+      bytes: f.bytes,
+    }))
+    // A private-bucket row whose object is missing signs to nothing. Dropping it beats rendering a
+    // link that goes nowhere, which is how a coach learns to distrust the whole tab.
+    .filter((f) => f.url);
 
   // Intake / health profile.
   //
