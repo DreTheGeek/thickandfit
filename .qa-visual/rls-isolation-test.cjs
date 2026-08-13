@@ -24,6 +24,10 @@ const OWNER = [
   ['entitlements', 'profile_id'],
   ['cycle_logs', 'profile_id'],
   ['community_blocks', 'blocker_profile_id'],
+  // Added 2026-08-12 with migration 0136. Owner-scoped rather than coach-only: this is her own
+  // training, and the policy is the same shape as workout_logs. Every migrated row is contact-keyed
+  // with a null profile_id, so a member must see none of them until she claims her account.
+  ['activity_logs', 'profile_id'],
 ];
 const FORBIDDEN = [
   'contacts', 'client_subscriptions', 'contact_transactions', 'opportunities', 'pipelines',
