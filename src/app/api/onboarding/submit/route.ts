@@ -12,6 +12,7 @@ import { ensureCrmContact } from '@/lib/crm/ensure-contact';
 import { upsertGhlContact } from '@/lib/ghl/client';
 import { sendWelcomeEmail } from '@/lib/email/welcome';
 import { seedIntroMessage } from '@/lib/coach/intro-message';
+import { assignDefaultCheckin } from '@/lib/checkins/assign-default';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
 import { extractIntakeNotes, mergeSlugs } from '@/lib/onboarding/intake-notes';
 import {
@@ -255,6 +256,14 @@ async function POST_h(req: Request) {
         locale: language === 'es' ? 'es' : 'en',
         goalLb: nowKg && goalKg ? { from: toLb(nowKg), to: toLb(goalKg) } : null,
       });
+
+      // Her weekly check-in, assigned now, so the biggest button on her first Today screen works.
+      // The hero's primary CTA is "Start Check-in" and /checkin lists only ASSIGNED forms, so
+      // without this the loudest control in the product opened "No check-ins assigned yet. Your
+      // coach will add one soon." on day one. Same class of fix as the intro message above: the
+      // thing that should already be there when she arrives. Idempotent, and it never fails
+      // onboarding.
+      await assignDefaultCheckin(companyId, userId);
 
       // goal:* tags use the same vocabulary as the waitlist quiz, so a lead who said "lose_fat" at the
       // giveaway lands in the same GHL segment after they become a member.
