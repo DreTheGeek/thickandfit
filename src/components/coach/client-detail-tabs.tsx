@@ -462,6 +462,27 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               ))}
             </Section>
           )}
+          {/* Her targets, immediately above the activity they are measured against. The check-in
+              asks "did you hit your step goal?" and stores yes or no; without the number, that
+              answer cannot be read. */}
+          {detail.progress.goals.length > 0 && (
+            <Section title={t('goalsTitle')}>
+              {detail.progress.goals.map((g, i) => (
+                <Row
+                  key={i}
+                  label={t(`goalType.${g.type}`)}
+                  value={
+                    <span>
+                      {g.target.toLocaleString(locale)}
+                      {g.unit ? ` ${g.unit}` : ''}
+                      {g.frequency ? ` · ${t(`goalFreq.${g.frequency}`)}` : ''}
+                      {g.selfSet ? ` · ${t('goalSelfSet')}` : ''}
+                    </span>
+                  }
+                />
+              ))}
+            </Section>
+          )}
           {/* Device-tracked activity, its own section rather than merged into Training history:
               a walk her watch logged is not a session she was written, and mixing them would make
               the training count answer a question nobody asked. */}

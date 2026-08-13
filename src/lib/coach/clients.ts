@@ -642,9 +642,11 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
   ]);
 
   // Migrated Lenus workout history (session summaries): total + the most recent handful.
-  const [{ count: workoutCount }, { data: woRows }, { count: activityCount }, { data: actRows }] = await Promise.all([
+  const [{ count: workoutCount }, { data: woRows }, { data: goalRows }, { count: activityCount }, { data: actRows }] = await Promise.all([
     sb.from('client_workout_history').select('id', { count: 'exact', head: true }).eq('contact_id', contactId),
     sb.from('client_workout_history').select('performed_at, session_name, plan_name, completion_pct').eq('contact_id', contactId).order('performed_at', { ascending: false }).limit(8),
+    // Her per-client targets (0139), newest first so a revised goal wins over the one it replaced.
+    sb.from('tracking_goals').select('goal_type, target, display_unit, frequency, created_by_client, starts_on').or(memberScope).order('starts_on', { ascending: false }).limit(30),
     // Device-tracked activity (0136). Both keys, so it keeps working when she claims an account.
     sb.from('activity_logs').select('id', { count: 'exact', head: true }).or(memberScope),
     sb
@@ -662,6 +664,41 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     distance_meters: number | null;
     energy_kcal: number | null;
   };
+  // One goal per type: she revises a target rather than adding a second one, so the newest wins.
+  type GoalRaw = { goal_type: string; target: number | string; display_unit: string | null; frequency: string | null; created_by_client: boolean };
+
+  /**
+   * Lenus stores the target in a BASE unit and names the unit to SHOW it in, which are not the
+   * same thing. Printing the raw number beside display_unit produced "Water 2,000 l · daily" and
+   * "Active time 5,400 min" on a real client: a woman drinking two thousand litres a day and
+   * training ninety hours. Both are the base value (ml, seconds) wearing the display label.
+   *
+   * Distance is metres and her account is imperial, so 4828.03 m is the 3 miles she actually set.
+   */
+  const toDisplay = (value: number, unit: string | null): number => {
+    switch ((unit || '').toLowerCase()) {
+      case 'l': return value / 1000; // stored ml
+      case 'min': return value / 60; // stored seconds
+      case 'h': return value / 3600;
+      case 'mi': return value / 1609.344; // stored metres
+      case 'km': return value / 1000;
+      default: return value; // steps and kcal are already the displayed unit
+    }
+  };
+  // Whole numbers for counts, one decimal for a converted measure: "3 mi", "2 l", "90 min".
+  const tidy = (n: number): number => (Number.isInteger(n) ? n : Math.round(n * 10) / 10);
+
+  const goalSeen = new Set<string>();
+  const goals = ((goalRows ?? []) as GoalRaw[])
+    .filter((g) => (goalSeen.has(g.goal_type) ? false : (goalSeen.add(g.goal_type), true)))
+    .map((g) => ({
+      type: g.goal_type,
+      target: tidy(toDisplay(Number(g.target), g.display_unit)),
+      unit: g.display_unit,
+      frequency: g.frequency,
+      selfSet: Boolean(g.created_by_client),
+    }));
+
   const recentActivity = ((actRows ?? []) as ActRaw[]).map((a) => ({
     on: a.tracked_at,
     type: a.activity_type,
@@ -720,6 +757,7 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     recentWorkouts,
     activityCount: activityCount ?? 0,
     recentActivity,
+    goals,
   };
 
   // Migrated conversation history: most recent 200 messages + full count.

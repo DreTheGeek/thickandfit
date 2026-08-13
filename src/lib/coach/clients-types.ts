@@ -190,6 +190,11 @@ export type ClientDetail = {
      * neither, and folding it into either would change what those counts mean to her coach.
      */
     activityCount: number;
+    /**
+     * Her targets: steps, water, active time. What the check-in's "did you hit your step goal?"
+     * has been measured against all along.
+     */
+    goals: { type: string; target: number; unit: string | null; frequency: string | null; selfSet: boolean }[];
     recentActivity: {
       on: string;
       type: string;

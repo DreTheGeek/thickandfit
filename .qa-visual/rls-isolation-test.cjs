@@ -28,6 +28,8 @@ const OWNER = [
   // training, and the policy is the same shape as workout_logs. Every migrated row is contact-keyed
   // with a null profile_id, so a member must see none of them until she claims her account.
   ['activity_logs', 'profile_id'],
+  // Added 2026-08-13 with migration 0139. Same owner gate: her target, her coach can see it.
+  ['tracking_goals', 'profile_id'],
 ];
 const FORBIDDEN = [
   'contacts', 'client_subscriptions', 'contact_transactions', 'opportunities', 'pipelines',

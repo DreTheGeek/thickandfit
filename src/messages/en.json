@@ -1701,6 +1701,21 @@
         "regular": "Regular",
         "irregular": "Irregular",
         "unsure": "Not sure"
+      },
+      "goalsTitle": "Her targets",
+      "goalSelfSet": "set by her",
+      "goalType": {
+        "steps": "Steps",
+        "water": "Water",
+        "activeTime": "Active time",
+        "walking": "Walking",
+        "running": "Running",
+        "caloriesBurned": "Calories burned",
+        "sleep": "Sleep"
+      },
+      "goalFreq": {
+        "daily": "daily",
+        "weekly": "weekly"
       }
     },
     "you": {

@@ -1701,6 +1701,21 @@
         "regular": "Regular",
         "irregular": "Irregular",
         "unsure": "No está segura"
+      },
+      "goalsTitle": "Sus metas",
+      "goalSelfSet": "puesta por ella",
+      "goalType": {
+        "steps": "Pasos",
+        "water": "Agua",
+        "activeTime": "Tiempo activo",
+        "walking": "Caminata",
+        "running": "Correr",
+        "caloriesBurned": "Calorías quemadas",
+        "sleep": "Sueño"
+      },
+      "goalFreq": {
+        "daily": "diario",
+        "weekly": "semanal"
       }
     },
     "you": {
