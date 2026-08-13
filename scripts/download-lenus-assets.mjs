@@ -48,6 +48,17 @@ const extFor = (mime, url) => {
   return /^\.[a-z0-9]{2,4}$/i.test(fromUrl) ? fromUrl : '.bin';
 };
 
+/**
+ * The last 8 of the asset id, appended to every filename.
+ *
+ * Without it the first run lost 60 of 114 plan PDFs in silence: the name comes from the history
+ * event, and two clients who both have a "Training Plan 1" wrote to the same path, so the second
+ * clobbered the first. The ledger recorded 114 fetched because 114 distinct ids WERE fetched; only
+ * 54 distinct paths existed on disk. A ledger that counts downloads is not a ledger that counts
+ * files, and the difference is invisible unless you compare the two.
+ */
+const uniq = (id) => String(id).replace(/-/g, '').slice(-8);
+
 // --- build the work list -----------------------------------------------------
 const jobs = [];
 const extra = existsSync('.capture/sweep/lenus-extra.json') ? JSON.parse(readFileSync('.capture/sweep/lenus-extra.json', 'utf8')) : null;
@@ -58,10 +69,10 @@ if ((WHICH === 'lessons' || WHICH === 'all') && extra) {
     for (const a of l.attachments || []) {
       const url = (a.convertedVersion && a.convertedVersion.publicPath) || a.publicPath;
       if (!url) continue;
-      jobs.push({ set: 'lessons', id: a.id, url, name: `${safe(l.name)}__${safe(a.name || a.kind || a.id)}`, mime: a.mimeType });
+      jobs.push({ set: 'lessons', id: a.id, url, name: `${safe(l.name)}__${safe(a.name || a.kind || a.id)}__${uniq(a.id)}`, mime: a.mimeType });
     }
     if (l.coverImage && l.coverImage.thumbnailPath) {
-      jobs.push({ set: 'lessons', id: 'cover-' + l.id, url: l.coverImage.thumbnailPath, name: `${safe(l.name)}__cover`, mime: 'image/jpeg' });
+      jobs.push({ set: 'lessons', id: 'cover-' + l.id, url: l.coverImage.thumbnailPath, name: `${safe(l.name)}__cover__${uniq(l.id)}`, mime: 'image/jpeg' });
     }
   }
 }
@@ -73,7 +84,7 @@ if ((WHICH === 'plans' || WHICH === 'all') && detail) {
       if (isBilling(h.name)) continue;
       for (const f of h.files || []) {
         if (!f.publicPath) continue;
-        jobs.push({ set: 'plans', id: f.id, url: f.publicPath, name: `${safe(h.name)}__${safe(f.name || f.id)}`, mime: 'application/pdf', pid });
+        jobs.push({ set: 'plans', id: f.id, url: f.publicPath, name: `${safe(h.name)}__${uniq(f.id)}`, mime: 'application/pdf', pid });
       }
     }
   }
@@ -91,15 +102,33 @@ if ((WHICH === 'receipts' || WHICH === 'all') && extra) {
 // De-dupe: the same file can hang off several history events.
 const seen = new Set();
 const work = jobs.filter((j) => (seen.has(j.id) ? false : (seen.add(j.id), true)));
+
+// Resolve each job's destination up front so two things become checkable rather than assumed:
+// whether any two jobs would collide, and whether the file a ledger entry claims is really there.
+for (const j of work) j.path = join(OUT, j.set, `${j.name}${extFor(j.mime, j.url)}`);
+
+const byPath = new Map();
+for (const j of work) byPath.set(j.path, (byPath.get(j.path) || 0) + 1);
+const collisions = [...byPath.entries()].filter(([, n]) => n > 1);
+if (collisions.length) {
+  console.error(`ABORT: ${collisions.length} destination paths are claimed by more than one asset.`);
+  for (const [p, n] of collisions.slice(0, 10)) console.error(`   ${n}x  ${p}`);
+  process.exit(1);
+}
+
+// "Done" means the BYTES are on disk, not that the ledger once said so. This is what re-fetches
+// the 60 plan PDFs the old naming scheme overwrote: their ledger entries survive, their files do
+// not, and only checking the filesystem can tell the difference.
 const pending = work.filter((j) => {
-  if (ledger.done[j.id]) return false;
+  if (ledger.done[j.id] && existsSync(j.path)) return false;
   if (ledger.failed[j.id] && !RETRY_FAILED) return false;
   return true;
 });
 
 const bySet = {};
 for (const j of work) bySet[j.set] = (bySet[j.set] || 0) + 1;
-console.log(`assets ${work.length} ${JSON.stringify(bySet)} | already on disk ${Object.keys(ledger.done).length} | to fetch ${pending.length}`);
+const onDisk = work.filter((j) => existsSync(j.path)).length;
+console.log(`assets ${work.length} ${JSON.stringify(bySet)} | verified on disk ${onDisk} | to fetch ${pending.length}`);
 if (!RETRY_FAILED && Object.keys(ledger.failed).length) {
   console.log(`previously failed ${Object.keys(ledger.failed).length}, skipped. Re-run with --retry-failed to try them again.`);
 }
@@ -123,9 +152,10 @@ for (let i = 0; i < pending.length; i += 1) {
         continue;
       }
       const buf = Buffer.from(await r.arrayBuffer());
-      const path = join(OUT, j.set, `${j.name}${extFor(j.mime || r.headers.get('content-type'), j.url)}`);
-      writeFileSync(path, buf);
-      ledger.done[j.id] = { path, bytes: buf.length };
+      // j.path, decided up front and collision-checked, rather than recomputed here from a
+      // content-type header that may disagree with the manifest.
+      writeFileSync(j.path, buf);
+      ledger.done[j.id] = { path: j.path, bytes: buf.length };
       delete ledger.failed[j.id];
       bytes += buf.length;
       ok += 1;
@@ -147,4 +177,16 @@ if (bad) {
   const kinds = {};
   for (const v of Object.values(ledger.failed)) kinds[v] = (kinds[v] || 0) + 1;
   console.log('failures:', JSON.stringify(kinds));
+}
+
+// Close the loop the first run left open: assert every expected file is actually present. A
+// download count is not a file count, and reporting the former as the latter is how 60 of her
+// client plan PDFs went missing while the run said it succeeded.
+const missing = work.filter((j) => !existsSync(j.path));
+if (missing.length) {
+  console.log(`\nWARNING: ${missing.length} of ${work.length} expected files are not on disk.`);
+  for (const m of missing.slice(0, 10)) console.log(`   ${m.set}  ${m.id}  ${ledger.failed[m.id] || 'no reason recorded'}`);
+  process.exitCode = 1;
+} else {
+  console.log(`verified: all ${work.length} expected files present on disk.`);
 }
