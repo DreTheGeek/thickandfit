@@ -130,6 +130,84 @@ export async function buildDailyRecap(
   const spendCents = ((spendRows ?? []) as { cost_cents: number | null }[]).reduce((a, r) => a + Number(r.cost_cents ?? 0), 0);
   const oldestOpen = (oldest ?? [])[0] as { ticket_number: number; subject: string; created_at: string } | undefined;
 
+  // ---- the four client queues ----------------------------------------------------------------
+  //
+  // WHY THESE ARE HERE. This recap is the only thing that reports when nobody opens the console,
+  // and it reported tickets and crons while saying nothing about the four queues that decay in
+  // exactly that situation. A member who finished onboarding and is waiting on a program is the
+  // day-one failure of the whole product, and it was invisible here. Someone away for a week saw a
+  // clean recap every night while four queues filled.
+  //
+  // DRIFT HAZARD, read this before editing. These definitions are RESTATED rather than imported,
+  // because this function deliberately does not share Vercel's failure domain (see the module
+  // header: a monitor must not depend on the thing it monitors) and therefore cannot import from
+  // src/. src/lib/coach/attention.ts warns about precisely this: a hand-written copy of the at-risk
+  // rule once counted 9 where the tile beside it read 39. The sources of truth are:
+  //   awaiting            src/lib/coach/awaiting-program.ts   (OVERDUE_DAYS, oldest-first)
+  //   unanswered, intake  src/lib/coach/attention.ts          (14-day window)
+  //   at risk             src/lib/coach/overview.ts           (isAtRisk)
+  // Change a rule there and change it here, or the beach report and the console disagree.
+  const AT_RISK_STATUS = ['past_due', 'unpaid'];
+  const AT_RISK_HEALTH = ['lapsed', 'due-soon/late'];
+  const MSG_WINDOW_DAYS = 14;
+  const OVERDUE_DAYS = 3;
+
+  const [{ data: onbRows }, { data: assignedRows }, { data: msgRows }, intakeReview, { data: subRows }] =
+    await Promise.all([
+      svc
+        .from('onboarding_responses')
+        .select('profile_id, completed_at, profiles(role)')
+        .eq('company_id', companyId)
+        .not('completed_at', 'is', null)
+        .order('completed_at', { ascending: true })
+        .limit(500),
+      svc.from('plan_assignments').select('profile_id').eq('company_id', companyId).limit(5000),
+      svc
+        .from('client_messages')
+        .select('contact_id, sent_at, is_from_coach')
+        .eq('company_id', companyId)
+        .gte('sent_at', new Date(now.getTime() - MSG_WINDOW_DAYS * 86_400_000).toISOString())
+        .order('sent_at', { ascending: false })
+        .limit(2000),
+      count(
+        svc
+          .from('client_intake')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', companyId)
+          .eq('needs_coach_review', true),
+      ),
+      svc.from('client_subscriptions').select('status, billing_health').eq('company_id', companyId).limit(20000),
+    ]);
+
+  // Staff onboard too while testing, and they are not waiting on a program from anyone.
+  const hasProgram = new Set(((assignedRows ?? []) as { profile_id: string }[]).map((r) => r.profile_id));
+  type OnbRow = { profile_id: string; completed_at: string; profiles: { role: string | null } | { role: string | null }[] | null };
+  const awaiting = ((onbRows ?? []) as OnbRow[]).filter((r) => {
+    const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+    return (p?.role === 'subscriber' || p?.role === 'free') && !hasProgram.has(r.profile_id);
+  });
+  // Ordered oldest-first above, so [0] is the person who has waited longest. Days since she
+  // FINISHED ONBOARDING, which is when the promise was made to her, not since she signed up.
+  const awaitingOldestDays = awaiting.length
+    ? Math.floor((now.getTime() - new Date(awaiting[0].completed_at).getTime()) / 86_400_000)
+    : 0;
+
+  // Newest message per contact wins: if it is hers, nobody has replied.
+  const latestMsg = new Map<string, { fromCoach: boolean; at: string }>();
+  for (const m of (msgRows ?? []) as { contact_id: string | null; sent_at: string; is_from_coach: boolean | null }[]) {
+    if (!m.contact_id || latestMsg.has(m.contact_id)) continue;
+    latestMsg.set(m.contact_id, { fromCoach: Boolean(m.is_from_coach), at: m.sent_at });
+  }
+  const unansweredList = [...latestMsg.values()].filter((v) => !v.fromCoach);
+  const unanswered = unansweredList.length;
+  const unansweredOldestH = unanswered
+    ? Math.round((now.getTime() - Math.min(...unansweredList.map((v) => new Date(v.at).getTime()))) / 3_600_000)
+    : 0;
+
+  const atRiskClients = ((subRows ?? []) as { status: string | null; billing_health: string | null }[]).filter(
+    (r) => AT_RISK_STATUS.includes(r.status ?? '') || AT_RISK_HEALTH.includes(r.billing_health ?? ''),
+  ).length;
+
   const pretty = new Date(`${etDate}T12:00:00Z`).toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC',
   });
@@ -157,6 +235,12 @@ export async function buildDailyRecap(
     `• Posts: ${posts}`,
     `• Reports: ${reports}`,
     '',
+    '<b>Clients</b>',
+    `• Waiting on a program: ${awaiting.length}${awaiting.length ? `, oldest ${awaitingOldestDays}d` : ''}`,
+    `• Unanswered messages: ${unanswered}`,
+    `• Intake to review: ${intakeReview}`,
+    `• At risk: ${atRiskClients}`,
+    '',
     '<b>Support</b>',
     `• New tickets: ${newTickets}`,
     `• Open now: ${openTickets}`,
@@ -168,7 +252,27 @@ export async function buildDailyRecap(
   ];
 
   // The section that makes this worth reading. Only real, actionable items; silence when clean.
+  //
+  // Client queues come FIRST and tickets after, because the order here is the order someone reads
+  // it on a phone, and a member who has been waiting four days for the program she paid for
+  // outranks an infrastructure note.
   const todo: string[] = [];
+  if (awaiting.length > 0) {
+    // OVERDUE_DAYS is the line between a backlog and a broken promise, so the wording changes at it.
+    const overdue = awaitingOldestDays >= OVERDUE_DAYS;
+    todo.push(
+      `${overdue ? '⚠️ ' : ''}${awaiting.length} member${awaiting.length === 1 ? '' : 's'} waiting on a program` +
+        `, oldest ${awaitingOldestDays}d${overdue ? ` (over the ${OVERDUE_DAYS}d line)` : ''} → /coach/awaiting`,
+    );
+  }
+  if (unanswered > 0) {
+    todo.push(
+      `${unanswered} unanswered client message${unanswered === 1 ? '' : 's'}` +
+        `, oldest ${unansweredOldestH}h → /coach/inbox`,
+    );
+  }
+  if (intakeReview > 0) todo.push(`${intakeReview} intake${intakeReview === 1 ? '' : 's'} to review → /coach/intake`);
+  if (atRiskClients > 0) todo.push(`${atRiskClients} client${atRiskClients === 1 ? '' : 's'} at risk (billing) → /coach/billing`);
   if (openTickets > 0) {
     const age = oldestOpen ? Math.round((now.getTime() - new Date(oldestOpen.created_at).getTime()) / 3_600_000) : 0;
     todo.push(
