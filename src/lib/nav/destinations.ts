@@ -194,6 +194,9 @@ export const DESTINATIONS: NavDestination[] = [
   { key: 'coachMealPlans', href: '/coach/tool/meal-plans', icon: 'nutrition', audience: 'coach', keywords: ['meal plans', 'macros', 'nutrition', 'diet', 'builder', 'plan de comidas'] },
   { key: 'coachRecipeBooks', href: '/coach/tool/recipe-books', icon: 'book', audience: 'coach', keywords: ['recipe books', 'cookbook', 'recetario'] },
   { key: 'coachRecipes', href: '/coach/tool/recipes', icon: 'nutrition', audience: 'coach', keywords: ['recipes', 'food', 'ingredients', 'recetas'] },
+  // Keywords are what she would actually type looking for one of these: the titles, not the noun
+  // "lesson". "fast food guide" and "nutrition guide" are how she refers to them in chat.
+  { key: 'coachLessons', href: '/coach/tool/lessons', icon: 'book', audience: 'coach', keywords: ['lessons', 'guides', 'nutrition guide', 'fast food guide', 'videos', 'content', 'lecciones'] },
   { key: 'coachPrograms', href: '/coach/programs', icon: 'clipboard', audience: 'coach', keywords: ['programs', 'training plans', 'workout builder', 'assign', 'programas'] },
   { key: 'coachBilling', href: '/coach/billing', icon: 'card', audience: 'coach', keywords: ['billing', 'revenue', 'payments', 'stripe', 'subscriptions', 'renewals'] },
   { key: 'coachSettings', href: '/coach/settings', icon: 'gear', audience: 'coach', keywords: ['settings', 'preferences', 'account', 'ajustes'] },

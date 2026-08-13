@@ -88,6 +88,7 @@ const SECTIONS: NavSection[] = [
       { key: 'toolMealPlans', href: '/coach/tool/meal-plans', icon: 'nutrition' },
       { key: 'toolRecipeBooks', href: '/coach/tool/recipe-books', icon: 'book' },
       { key: 'toolRecipes', href: '/coach/tool/recipes', icon: 'nutrition' },
+      { key: 'toolLessons', href: '/coach/tool/lessons', icon: 'book' },
       { key: 'programs', href: '/coach/programs', icon: 'clipboard' },
     ],
   },

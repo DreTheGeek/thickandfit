@@ -365,6 +365,7 @@
         "coachMealPlans": "Meal plans",
         "coachRecipeBooks": "Recipe books",
         "coachRecipes": "Recipes",
+        "coachLessons": "Lessons",
         "coachPrograms": "Programs",
         "coachBilling": "Billing",
         "coachSettings": "Settings",
@@ -1659,7 +1660,8 @@
       "famOther": "Everything else",
       "planDaysWeeks": "{d, plural, one {# day} other {# days}} · {w} weeks",
       "planWeeks": "{w} weeks",
-      "programsIntro": "Your training programs. Open one to see its days and exercises, or build a new one. Assigning a program to a client happens inside the program itself."
+      "programsIntro": "Your training programs. Open one to see its days and exercises, or build a new one. Assigning a program to a client happens inside the program itself.",
+      "toolLessons": "Lessons"
     },
     "you": {
       "title": "You",
