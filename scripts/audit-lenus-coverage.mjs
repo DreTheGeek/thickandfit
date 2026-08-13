@@ -11,7 +11,7 @@
 // Run: node scripts/audit-lenus-coverage.mjs [--all]
 // Without --all it prints only the people with a gap.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 const SHOW_ALL = process.argv.includes('--all');
@@ -106,3 +106,68 @@ if (SHOW_ALL) {
 // not a failure.
 const untouched = rows.filter((r) => !want.has(r.lenus_id));
 console.log(`\ncontacts not in this sweep (left Lenus earlier): ${untouched.length}`);
+
+// --- the coach-side datasets, in aggregate ----------------------------------
+// Per-person is the right shape for client history, where one silent failure hides in a total.
+// These are library-scale: 24 lessons either imported or did not, and a count against the capture
+// file is the whole check.
+const optional = (p) => (existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null);
+const extraDoc = optional('.capture/sweep/lenus-extra.json');
+const foodDoc = optional('.capture/sweep/lenus-food.json');
+const vidDoc = optional('.capture/sweep/lenus-exercise-videos.json');
+
+if (extraDoc || foodDoc || vidDoc) {
+  const one = (q) => Number(sql(q)[0]?.n ?? 0);
+  const lines = [];
+
+  if (extraDoc) {
+    const capLessons = (extraDoc.coachLessons || []).length;
+    const capHabits = Object.values(extraDoc.extra || {})
+      .reduce((a, v) => a + ((v.habits && v.habits.tinyHabitsCoach) || []).length, 0);
+    const capSettled = Object.values(extraDoc.extra || {}).reduce(
+      (a, v) => a + ((v.payments && v.payments.installments) || [])
+        .filter((i) => ['succeeded', 'paid_outside_stripe'].includes(i.status)).length, 0,
+    );
+    lines.push(['lessons', one(`select count(*) n from lessons where company_id = '${COMPANY}'`), capLessons]);
+    lines.push(['tiny habits', one(`select count(*) n from habits where company_id = '${COMPANY}' and source = 'lenus'`), capHabits]);
+    // Settled installments, minus those netting to zero after a refund, which are not revenue.
+    lines.push(['settled payments seen', capSettled, capSettled]);
+  }
+  if (foodDoc) {
+    const capFood = Object.values(foodDoc.food || {}).reduce((a, f) => a + (f.entries || []).length, 0);
+    lines.push(['food log', one(`select count(*) n from food_log where company_id = '${COMPANY}' and source = 'lenus'`), capFood]);
+  }
+  if (vidDoc) {
+    // Compare against what is FILLABLE, not against the raw capture count.
+    //
+    // The capture holds 370 videos but only the exercises we carry as hers can receive one, and one
+    // of those (Medicine ball box jump squats) has no video key because she never filmed it.
+    // Measuring 366 against 370 reports a permanent GAP that no run can ever close, and an audit
+    // that always shows red is an audit people stop reading.
+    const keys = new Set(
+      (vidDoc.exercises || [])
+        .map((e) => (String(e.url || '').match(/media\/([^?]+)/) || [])[1])
+        .filter(Boolean),
+    );
+    const mine = sql(
+      `select lenus_video_key, demo_storage_path from exercises where is_coach_authored and lenus_video_key is not null`,
+    );
+    const fillable = mine.filter((m) => keys.has(m.lenus_video_key));
+    lines.push([
+      'her demos playable',
+      fillable.filter((m) => m.demo_storage_path).length,
+      fillable.length,
+    ]);
+    const neverFilmed = one(`select count(*) n from exercises where is_coach_authored and lenus_video_key is null`);
+    if (neverFilmed) lines.push([`(never filmed, no key)`, neverFilmed, neverFilmed]);
+  }
+
+  console.log('\nCOACH-SIDE DATASETS  (stored / captured)');
+  let bad = 0;
+  for (const [name, have2, want2] of lines) {
+    const ok2 = have2 >= want2;
+    if (!ok2) bad += 1;
+    console.log(`  ${ok2 ? 'ok  ' : 'GAP '} ${name.padEnd(22)} ${have2}/${want2}`);
+  }
+  if (bad) process.exitCode = 1;
+}

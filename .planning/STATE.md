@@ -1,4 +1,41 @@
-# STATE — 2026-08-12
+# STATE — 2026-08-13
+
+## THE LENUS MIGRATION IS COMPLETE
+
+All nine remaining workstreams imported and verified 2026-08-13. `node scripts/audit-lenus-coverage.mjs`
+exits 0 with `with a gap: 0` and every coach-side dataset at parity:
+
+```
+people checked: 272   check-ins 859/859  messages 13338/13338  workouts 4678/4678
+lessons 24/24 · tiny habits 126/126 · settled payments 726/726 · food log 8419/8419
+her demos playable 366/366  (1 never filmed, no video key)
+```
+
+| what | before | after |
+|---|---|---|
+| Her content library | **no table, no rows** | 24 lessons, 43 assets, 3 sequences, 1,668 sends |
+| Revenue recorded | $297,716, stopped 13 June | **$339,873**, runs to August |
+| Client plan PDFs | 0 | 114 (74 training, 40 meal) on their records |
+| Food diary | 6,924 rows, 105 people, to 2 July | **8,419**, 113 people, to 12 August |
+| Her filmed demos | 286 of 367 | **366 of 367** |
+| Tracked activity | 0 | 2,659 across 196 clients |
+| Tiny habits | 0 | 126, plus 149 sets of her habit notes |
+| Files in Storage | 0 | 873 (470 MB), every one verified present |
+
+Migrations 0133-0138. Every importer proven idempotent by a second full pass.
+
+**Re-run before 31 August, in this order:**
+`import-lenus-sweep` → `import-lenus-checkins` → `import-lenus-lessons` → `import-lenus-billing` →
+`import-lenus-activity` → `import-lenus-food` → `import-lenus-files`, then `audit-lenus-coverage`.
+Contacts first, always: everything else keys on them.
+
+**One thing cannot be replayed from disk.** `lenus-exercise-videos.json` holds SIGNED URLs that
+expire within hours. Re-capture `CoachExercises_Data` from her live session before running
+`import-lenus-exercise-videos`. Everything else replays from `.capture/sweep/` indefinitely.
+
+---
+
+# Earlier: STATE — 2026-08-12
 
 Current, verified state of the build. Everything below was measured against the live database or
 observed in the running app, not inferred.
