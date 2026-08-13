@@ -332,7 +332,20 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               {detail.intake.injuriesDescription && <Row label={t('intakeInjuryNotes')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.injuriesDescription}</span>} />}
               {detail.intake.medicalConditions && <Row label={t('intakeConditions')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.medicalConditions}</span>} />}
               {detail.intake.dietaryExclusions && detail.intake.dietaryExclusions.length > 0 && <Row label={t('intakeDietary')} value={detail.intake.dietaryExclusions.join(', ')} />}
-              {detail.intake.badHabits && <Row label={t('intakeBadHabits')} value={detail.intake.badHabits} />}
+              {/* Good habits before bad. She wrote both at intake and only the bad half was ever
+                  stored, which reads as a list of what is wrong with a person. */}
+              {detail.intake.goodHabits && <Row label={t('intakeGoodHabits')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.goodHabits}</span>} />}
+              {detail.intake.badHabits && <Row label={t('intakeBadHabits')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.badHabits}</span>} />}
+              {detail.intake.cycleType && (
+                <Row
+                  label={t('intakeCycle')}
+                  value={
+                    detail.intake.cycleLengthDays
+                      ? `${t(`intakeCycleType.${detail.intake.cycleType}`)} · ${t('intakeCycleDays', { n: detail.intake.cycleLengthDays })}`
+                      : t(`intakeCycleType.${detail.intake.cycleType}`)
+                  }
+                />
+              )}
               {detail.intake.trainingExperience && <Row label={t('intakeTraining')} value={<span className="whitespace-pre-wrap text-left">{detail.intake.trainingExperience}</span>} />}
             </Section>
           )}
@@ -409,19 +422,28 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               which half of a client. */}
           {detail.habits && detail.habits.habitCount > 0 && (
             <Section title={t('habitsTitle')}>
-              <HabitCalendar
-                days={detail.habits.days}
-                habitCount={detail.habits.habitCount}
-                streak={detail.habits.streak}
-                locale={locale}
-                labels={{
-                  legendFull: t('habitsLegendFull'),
-                  legendPartial: t('habitsLegendPartial'),
-                  legendNone: t('habitsLegendNone'),
-                  streak: t('habitsStreak', { days: detail.habits.streak }),
-                  ofHabits: t('habitsOf'),
-                }}
-              />
+              {detail.habits.hasHistory ? (
+                <HabitCalendar
+                  days={detail.habits.days}
+                  habitCount={detail.habits.habitCount}
+                  streak={detail.habits.streak}
+                  locale={locale}
+                  labels={{
+                    legendFull: t('habitsLegendFull'),
+                    legendPartial: t('habitsLegendPartial'),
+                    legendNone: t('habitsLegendNone'),
+                    streak: t('habitsStreak', { days: detail.habits.streak }),
+                    ofHabits: t('habitsOf'),
+                  }}
+                />
+              ) : (
+                // Habits exist but nothing recorded whether they were done. Lenus does not export
+                // that, so a calendar here would paint eight weeks of misses she never had.
+                <Row
+                  label={t('habitsOf')}
+                  value={`${detail.habits.habitCount} · ${t('habitsNoHistory')}`}
+                />
+              )}
             </Section>
           )}
           {detail.progress.workoutCount > 0 && (
@@ -435,6 +457,26 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
                   <div className="flex shrink-0 items-center gap-2 text-faint">
                     {w.pct != null && <span className={w.pct >= 80 ? 'text-good-ink' : ''}>{w.pct}%</span>}
                     <span>{fmtDate(w.on.slice(0, 10), locale)}</span>
+                  </div>
+                </div>
+              ))}
+            </Section>
+          )}
+          {/* Device-tracked activity, its own section rather than merged into Training history:
+              a walk her watch logged is not a session she was written, and mixing them would make
+              the training count answer a question nobody asked. */}
+          {detail.progress.activityCount > 0 && (
+            <Section title={`${t('activityTitle')} (${detail.progress.activityCount})`}>
+              {detail.progress.recentActivity.map((a, i) => (
+                <div key={i} className="flex items-center justify-between border-b border-divider py-2 text-[13px] last:border-0">
+                  <div className="min-w-0">
+                    <span className="font-medium text-ink">{a.name ?? t(`activityType.${a.type}`)}</span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 text-faint">
+                    {a.minutes != null && <span>{t('activityMinutes', { n: a.minutes })}</span>}
+                    {a.km != null && <span>{a.km} km</span>}
+                    {a.kcal != null && <span>{a.kcal} kcal</span>}
+                    <span>{fmtDate(a.on.slice(0, 10), locale)}</span>
                   </div>
                 </div>
               ))}

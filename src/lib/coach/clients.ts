@@ -499,7 +499,8 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     .select(
       'sex, birth_date, height_cm, starting_weight_kg, goal_type, goal_intensity, target_weight_kg, bmr, tdee, pal, ' +
         'calorie_goal_kcal, activity_level, injuries, injuries_description, medical_conditions, dietary_exclusions, ' +
-        'allergies, training_experience, bad_habits, client_why, sessions_per_week, equipment, ' +
+        'allergies, training_experience, bad_habits, good_habits, client_why, sessions_per_week, equipment, ' +
+        'cycle_type, cycle_length_days, ' +
         'eating_disorder_screening, sleep_assessment, custom_fields, intake_notes, needs_coach_review, questionnaire_filled_at',
     )
     .eq('company_id', companyId)
@@ -512,7 +513,9 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     activity_level: string | null;
     injuries: string[] | null; injuries_description: string | null; medical_conditions: string | null;
     dietary_exclusions: string[] | null; allergies: string | null; training_experience: string | null;
-    bad_habits: string | null; client_why: string | null; sessions_per_week: number | null; equipment: string[] | null;
+    bad_habits: string | null; good_habits: string | null; client_why: string | null;
+    sessions_per_week: number | null; equipment: string[] | null;
+    cycle_type: string | null; cycle_length_days: number | null;
     eating_disorder_screening: Record<string, unknown> | null;
     intake_notes: string | null; needs_coach_review: boolean | null; questionnaire_filled_at: string | null;
   };
@@ -541,7 +544,8 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
         activityLevel: ir.activity_level,
         injuries: ir.injuries, injuriesDescription: ir.injuries_description, medicalConditions: ir.medical_conditions,
         dietaryExclusions: ir.dietary_exclusions, allergies: ir.allergies,
-        trainingExperience: ir.training_experience, badHabits: ir.bad_habits,
+        trainingExperience: ir.training_experience, badHabits: ir.bad_habits, goodHabits: ir.good_habits,
+        cycleType: ir.cycle_type, cycleLengthDays: ir.cycle_length_days,
         clientWhy: ir.client_why, sessionsPerWeek: ir.sessions_per_week, equipment: ir.equipment,
         edsRisk, intakeNotes: ir.intake_notes, needsCoachReview: ir.needs_coach_review === true,
         questionnaireFilledAt: ir.questionnaire_filled_at,
@@ -628,21 +632,45 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
   // on purpose: telling a coach that a member opted out is itself a disclosure about her.
   const today = new Date().toISOString().slice(0, 10);
   const cycleSince = new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
-  const [[habits, cycle], latestCheckin] = await Promise.all([
-    raw.profile_id
-      ? Promise.all([
-          getClientHabits(companyId, raw.profile_id),
-          loadCoachCycle(raw.profile_id, companyId, cycleSince, today),
-        ])
-      : Promise.resolve([null, null] as const),
+  // Only the CYCLE still needs a profile: coach_cycle_window is a security-definer RPC keyed on
+  // profile_id and consent lives on cycle_profiles. Habits and check-ins take either key now, and
+  // both are asked unconditionally so a migrated client is not silently blanked.
+  const [cycle, habits, latestCheckin] = await Promise.all([
+    raw.profile_id ? loadCoachCycle(raw.profile_id, companyId, cycleSince, today) : Promise.resolve(null),
+    getClientHabits(companyId, { profileId: raw.profile_id, contactId }),
     getLatestCheckin(companyId, { profileId: raw.profile_id, contactId }),
   ]);
 
   // Migrated Lenus workout history (session summaries): total + the most recent handful.
-  const [{ count: workoutCount }, { data: woRows }] = await Promise.all([
+  const [{ count: workoutCount }, { data: woRows }, { count: activityCount }, { data: actRows }] = await Promise.all([
     sb.from('client_workout_history').select('id', { count: 'exact', head: true }).eq('contact_id', contactId),
     sb.from('client_workout_history').select('performed_at, session_name, plan_name, completion_pct').eq('contact_id', contactId).order('performed_at', { ascending: false }).limit(8),
+    // Device-tracked activity (0136). Both keys, so it keeps working when she claims an account.
+    sb.from('activity_logs').select('id', { count: 'exact', head: true }).or(memberScope),
+    sb
+      .from('activity_logs')
+      .select('tracked_at, activity_type, custom_name, duration_seconds, distance_meters, energy_kcal')
+      .or(memberScope)
+      .order('tracked_at', { ascending: false })
+      .limit(8),
   ]);
+  type ActRaw = {
+    tracked_at: string;
+    activity_type: string;
+    custom_name: string | null;
+    duration_seconds: number | null;
+    distance_meters: number | null;
+    energy_kcal: number | null;
+  };
+  const recentActivity = ((actRows ?? []) as ActRaw[]).map((a) => ({
+    on: a.tracked_at,
+    type: a.activity_type,
+    name: a.custom_name,
+    minutes: a.duration_seconds ? Math.round(a.duration_seconds / 60) : null,
+    // One decimal: 3.2 km is a walk she recognises, 3188 m is a number she has to convert.
+    km: a.distance_meters ? Math.round(a.distance_meters / 100) / 10 : null,
+    kcal: a.energy_kcal,
+  }));
   /**
    * LIVE workouts, merged with the migrated Lenus history.
    *
@@ -690,6 +718,8 @@ export async function getClientDetail(companyId: string, contactId: string): Pro
     foodDays: foodDays ?? 0,
     workoutCount: (workoutCount ?? 0) + (liveWorkoutCount ?? 0),
     recentWorkouts,
+    activityCount: activityCount ?? 0,
+    recentActivity,
   };
 
   // Migrated conversation history: most recent 200 messages + full count.

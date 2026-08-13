@@ -26,7 +26,19 @@ export type ClientHabits = {
   habitCount: number;
   /** Consecutive days ending today (or yesterday) with everything done. */
   streak: number;
+  /**
+   * Whether ANY completion history exists.
+   *
+   * The 126 habits migrated from Lenus arrive as definitions with no per-day record: Lenus returns
+   * the habit and says nothing about whether it was ever done. Rendering the calendar anyway paints
+   * 56 days of "none" and tells her coach the client failed every day for eight weeks, which is a
+   * lie the data does not support. False here means "not known"; the UI says so instead.
+   */
+  hasHistory: boolean;
 };
+
+/** Who the habits belong to. Both keys: migrated rows carry contact_id and a null profile. */
+export type HabitOwner = { profileId?: string | null; contactId?: string | null };
 
 const WINDOW_DAYS = 56; // eight weeks reads as a block of full rows in a 7-wide grid.
 
@@ -34,7 +46,17 @@ function isoDay(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export async function getClientHabits(companyId: string, profileId: string): Promise<ClientHabits> {
+export async function getClientHabits(companyId: string, owner: HabitOwner): Promise<ClientHabits> {
+  // BOTH KEYS. profile_id is set only once a member claims an app account, and all 126 habits
+  // migrated from Lenus carry contact_id with a null profile. Filtering on profile_id alone made
+  // every one of them invisible: imported, indexed, unreachable.
+  const parts: string[] = [];
+  if (owner.profileId) parts.push(`profile_id.eq.${owner.profileId}`);
+  if (owner.contactId) parts.push(`contact_id.eq.${owner.contactId}`);
+  const empty: ClientHabits = { days: [], habitCount: 0, streak: 0, hasHistory: false };
+  if (!parts.length) return empty;
+  const scope = parts.join(',');
+
   const sb = createServiceClient();
 
   const [{ data: habits }, { data: logs }] = await Promise.all([
@@ -45,7 +67,7 @@ export async function getClientHabits(companyId: string, profileId: string): Pro
       .from('habits')
       .select('id, created_at')
       .eq('company_id', companyId)
-      .eq('profile_id', profileId)
+      .or(scope)
       .eq('is_active', true),
     (async () => {
       const from = new Date();
@@ -54,7 +76,7 @@ export async function getClientHabits(companyId: string, profileId: string): Pro
         .from('habit_logs')
         .select('logged_date, done, habit_id')
         .eq('company_id', companyId)
-        .eq('profile_id', profileId)
+        .or(scope)
         .gte('logged_date', isoDay(from))
         .limit(2000);
     })(),
@@ -62,13 +84,18 @@ export async function getClientHabits(companyId: string, profileId: string): Pro
 
   const habitRows = (habits ?? []) as { id: string; created_at: string }[];
   const habitCount = habitRows.length;
-  if (!habitCount) return { days: [], habitCount: 0, streak: 0 };
+  if (!habitCount) return empty;
+
+  // Habits but no logs at all means Lenus history, which carries no completion record. Return the
+  // count so her coach can see WHAT was assigned, and no calendar, so nothing implies she failed.
+  const logRows = (logs ?? []) as { logged_date: string; done: boolean }[];
+  if (!logRows.length) return { days: [], habitCount, streak: 0, hasHistory: false };
 
   // The earliest habit's creation date bounds "no data": before it, the client had nothing to do.
   const earliest = habitRows.map((h) => h.created_at.slice(0, 10)).sort()[0];
 
   const doneByDate = new Map<string, number>();
-  for (const l of (logs ?? []) as { logged_date: string; done: boolean }[]) {
+  for (const l of logRows) {
     if (!l.done) continue;
     doneByDate.set(l.logged_date, (doneByDate.get(l.logged_date) ?? 0) + 1);
   }
@@ -95,5 +122,5 @@ export async function getClientHabits(companyId: string, profileId: string): Pro
     else break;
   }
 
-  return { days, habitCount, streak };
+  return { days, habitCount, streak, hasHistory: true };
 }

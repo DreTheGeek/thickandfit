@@ -182,6 +182,22 @@ export type ClientDetail = {
     foodDays: number;
     workoutCount: number; // migrated Lenus workout sessions
     recentWorkouts: { on: string; name: string | null; plan: string | null; pct: number | null }[];
+    /**
+     * Activity her phone or watch recorded, outside the programme she was written.
+     *
+     * A THIRD kind of training, kept apart from the two above on purpose: workoutCount is Lenus
+     * programme sessions and workout_logs is sessions finished in this app. A 47-minute walk is
+     * neither, and folding it into either would change what those counts mean to her coach.
+     */
+    activityCount: number;
+    recentActivity: {
+      on: string;
+      type: string;
+      name: string | null;
+      minutes: number | null;
+      km: number | null;
+      kcal: number | null;
+    }[];
   };
   // Migrated coach<->client conversation history (most recent first). totalMessages is the full count.
   messages: ClientMessage[];
@@ -239,6 +255,14 @@ export type ClientIntake = {
   allergies: string | null;
   trainingExperience: string | null;
   badHabits: string | null;
+  /** What is already working, in her words. The counterpart to badHabits, from the Lenus intake. */
+  goodHabits: string | null;
+  /**
+   * Her cycle, as Lenus summarised it. A SUMMARY only: no day or period logs came with it, so this
+   * feeds nothing and is shown as a fact she told her coach, not as a tracked series.
+   */
+  cycleType: string | null;
+  cycleLengthDays: number | null;
   clientWhy: string | null;
   sessionsPerWeek: number | null;
   equipment: string[] | null;
