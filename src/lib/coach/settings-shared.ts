@@ -43,6 +43,54 @@ export type MeasurementUnit = (typeof MEASUREMENT_UNIT_OPTIONS)[number];
 export const REMINDER_PERIOD_OPTIONS = ['week', 'month'] as const;
 export type ReminderPeriod = (typeof REMINDER_PERIOD_OPTIONS)[number];
 
+// ---------------------------------------------------------------------------------------------
+// Turning the settings into days
+//
+// These two functions are the whole reason the settings screen stopped being decorative. Every
+// column they read has existed since migration 0115 and had a form control on /coach/settings, and
+// nothing in the app read any of them: the check-in generator used a hardcoded 7 days, and
+// settings-actions.ts says out loud that follow-ups are "CONFIGURED here and nothing in the app
+// schedules one yet". Stephanie runs check-ins every TWO weeks (2026-08-13), so the hardcoded 7 was
+// about to nag 256 women at twice her real cadence.
+// ---------------------------------------------------------------------------------------------
+
+/** A month is 30 days here. Calendar months would make "every 2 months" drift by up to 6 days a
+ *  year against a reminder the coach thinks of as regular, and nobody sets this expecting the 31st. */
+const DAYS_PER_PERIOD: Record<ReminderPeriod, number> = { week: 7, month: 30 };
+
+/** How many days one check-in cycle covers. Clamped to the 1..12 CHECK on reminder_every. */
+export function checkinCadenceDays(every: number, period: ReminderPeriod): number {
+  const n = Number.isFinite(every) ? Math.min(12, Math.max(1, Math.floor(every))) : 1;
+  return n * (DAYS_PER_PERIOD[period] ?? 7);
+}
+
+/** A follow-up window in days, or null for 'none' — which means the coach wants no reminder at all
+ *  and must not be quietly turned into a default. */
+export function followUpDays(option: FollowUpOption): number | null {
+  switch (option) {
+    case 'three_days':
+      return 3;
+    case 'one_week':
+      return 7;
+    case 'two_weeks':
+      return 14;
+    case 'one_month':
+      return 30;
+    case 'three_months':
+      return 90;
+    case 'none':
+    default:
+      return null;
+  }
+}
+
+/** 'HH:MM' -> hour 0..23. Anything unparseable falls back to 18:00, the column default. */
+export function reminderHourOf(timeLocal: string): number {
+  const m = /^(\d{1,2}):(\d{2})$/.exec((timeLocal ?? '').trim());
+  const h = m ? Number(m[1]) : NaN;
+  return Number.isFinite(h) && h >= 0 && h <= 23 ? h : 18;
+}
+
 export const ONBOARDING_SEND_OPTIONS = ['after_offer', 'immediately', 'manually'] as const;
 export type OnboardingSendWhen = (typeof ONBOARDING_SEND_OPTIONS)[number];
 

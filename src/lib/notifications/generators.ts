@@ -9,7 +9,13 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createNotificationsBulk } from '@/lib/notifications/create';
 import { asNotifLocale, notifText, type NotifLocale } from '@/lib/notifications/i18n';
-import { localHour } from '@/lib/datetime/local-day';
+import { localHour, localWeekday } from '@/lib/datetime/local-day';
+import { readCoachSettings } from '@/lib/coach/settings';
+import {
+  checkinCadenceDays,
+  reminderHourOf,
+  type CoachSettings,
+} from '@/lib/coach/settings-shared';
 import { recomputeChallengeBoard } from '@/lib/community/challenge-progress';
 import { notifyNewChallenge } from '@/lib/notifications/triggers';
 import { getEngagementSweep } from '@/lib/engagement/risk';
@@ -35,8 +41,6 @@ const ACTIVE_SUB_STATUSES = ['trialing', 'active', 'past_due'];
 // forgotten before it matters.
 const RENEWAL_LEAD_DAYS = 2;
 const COMP_LEAD_DAYS = 3;
-// A check-in is "due" if there is no response within this window.
-const CHECKIN_QUIET_DAYS = 7;
 
 /** Format an ISO/date string as a short localized date (e.g. "Jun 28" / "28 jun"). */
 function shortDate(iso: string, locale: NotifLocale): string {
@@ -151,14 +155,14 @@ export async function generateCompExpiryReminders(): Promise<GeneratorResult> {
 }
 
 // ---------------------------------------------------------------------------
-// Check-in due: published check-in forms assigned to a member with no response in CHECKIN_QUIET_DAYS.
+// Check-in due: published check-in forms, at the cadence the coach configured in coach_settings.
 // ---------------------------------------------------------------------------
 type AssignmentRow = {
   profile_id: string;
   company_id: string;
   form_id: string;
   forms: { title_en: string; title_es: string | null; type: string; status: string } | null;
-  profiles: { ui_locale: string | null } | null;
+  profiles: { ui_locale: string | null; timezone: string | null } | null;
 };
 
 // Abandoned-onboarding nudge: a member signed up but never finished onboarding (no
@@ -223,43 +227,127 @@ export async function generateOnboardingNudges(): Promise<GeneratorResult> {
   return { ok: true, job: 'onboarding-nudge', selected: targets.length, notified };
 }
 
-export async function generateCheckinReminders(): Promise<GeneratorResult> {
+/**
+ * Check-in due, at HER cadence, in the member's local evening.
+ *
+ * WHAT THIS USED TO DO. A hardcoded CHECKIN_QUIET_DAYS = 7, sent from the daily job at whatever UTC
+ * hour pg_cron happened to fire, to anyone holding a published check-in assignment. It read none of
+ * the seven columns migration 0115 added for exactly this and put on /coach/settings: the on/off
+ * switch, the cadence, the weekday, the local time, and the skip-when-done pair. Stephanie runs
+ * check-ins EVERY TWO WEEKS (2026-08-13), so the hardcoded 7 was about to nag 256 women at twice her
+ * real cadence, on a settings screen that already had the right answer typed into it.
+ *
+ * NOW RUNS HOURLY, off notify-reminders rather than notify-checkins, because reminder_time_local and
+ * reminder_weekday cannot be honoured by a job that fires once a day at a UTC hour. That route
+ * already exists and already fires every hour precisely so per-timezone delivery works from one
+ * schedule — the same mechanism generateLocalTimeReminders uses. No new pg_cron entry.
+ *
+ * OFF BY DEFAULT, and that is the column default, not a decision made here: is_checkin_reminder_on
+ * defaults false in 0115. A coach who never opened the settings screen gets no automated check-in
+ * nudges, which is the safe direction — the failure of sending nothing is a missed prompt, and the
+ * failure of sending something is a message in Stephanie's voice that she did not authorise.
+ */
+export async function generateCheckinReminders(at: Date = new Date()): Promise<GeneratorResult> {
   const svc = createServiceClient();
+  const job = 'checkins';
 
   const { data, error } = await svc
     .from('form_assignments')
     .select(
-      'profile_id, company_id, form_id, forms!inner ( title_en, title_es, type, status ), profiles!inner ( ui_locale )',
+      'profile_id, company_id, form_id, forms!inner ( title_en, title_es, type, status ), profiles!inner ( ui_locale, timezone )',
     )
     .eq('forms.type', 'check_in')
     .eq('forms.status', 'published');
-  if (error) return { ok: false, job: 'checkins', selected: 0, notified: 0, error: error.message };
+  if (error) return { ok: false, job, selected: 0, notified: 0, error: error.message };
 
   const rows = ((data ?? []) as unknown as AssignmentRow[]).filter((r) => r.forms);
-  if (rows.length === 0) return { ok: true, job: 'checkins', selected: 0, notified: 0 };
+  if (rows.length === 0) return { ok: true, job, selected: 0, notified: 0 };
 
-  // Pull recent responses once, then exclude any (form, profile) answered within the quiet window.
-  const since = new Date(Date.now() - CHECKIN_QUIET_DAYS * 86_400_000).toISOString();
-  const formIds = [...new Set(rows.map((r) => r.form_id))];
-  const profileIds = [...new Set(rows.map((r) => r.profile_id))];
-  const { data: resp, error: respError } = await svc
-    .from('form_responses')
-    .select('form_id, profile_id')
-    .in('form_id', formIds)
-    .in('profile_id', profileIds)
-    .gte('submitted_at', since);
-  // Fail loud rather than silently treating everyone as un-answered (which would re-nudge people
-  // who just checked in). A null/errored response set must not become an empty "answered" set.
-  if (respError)
-    return { ok: false, job: 'checkins', selected: rows.length, notified: 0, error: respError.message };
-  const answered = new Set(
-    ((resp ?? []) as { form_id: string; profile_id: string }[]).map(
-      (r) => `${r.form_id}:${r.profile_id}`,
+  // Settings are per company and every row carries its company, so read each one once.
+  const companyIds = [...new Set(rows.map((r) => r.company_id))];
+  const settingsByCompany = new Map<string, CoachSettings>();
+  for (const companyId of companyIds) {
+    settingsByCompany.set(companyId, await readCoachSettings(companyId));
+  }
+
+  // Her clock, not the server's. A member in Guadalajara whose coach set "Monday 6pm" must get it
+  // Monday at 6pm where she is; at 23:00 Sunday there it is already Monday in UTC.
+  const dueNow = rows.filter((r) => {
+    const settings = settingsByCompany.get(r.company_id);
+    if (!settings?.isCheckinReminderOn) return false;
+    const tz = r.profiles?.timezone ?? null;
+    if (localHour(tz, at) !== reminderHourOf(settings.reminderTimeLocal)) return false;
+    // The weekday gate applies to weekly AND monthly cadences: "every 2 months on a Monday" is a
+    // Monday either way, and the every-N spacing is enforced by the dedupe below rather than here.
+    return localWeekday(tz, at) === settings.reminderWeekday;
+  });
+  if (dueNow.length === 0) return { ok: true, job, selected: 0, notified: 0 };
+
+  const formIds = [...new Set(dueNow.map((r) => r.form_id))];
+  const profileIds = [...new Set(dueNow.map((r) => r.profile_id))];
+
+  // The widest window any company on this list needs, fetched once. Filtering per member happens
+  // below against that company's own numbers.
+  const widestDays = Math.max(
+    ...[...settingsByCompany.values()].map((s) =>
+      Math.max(checkinCadenceDays(s.reminderEvery, s.reminderPeriod), s.reminderSkipDays),
     ),
   );
+  const since = new Date(at.getTime() - widestDays * 86_400_000).toISOString();
 
-  const due = rows.filter((r) => !answered.has(`${r.form_id}:${r.profile_id}`));
-  if (due.length === 0) return { ok: true, job: 'checkins', selected: 0, notified: 0 };
+  const [respRes, sentRes] = await Promise.all([
+    svc
+      .from('form_responses')
+      .select('form_id, profile_id, submitted_at')
+      .in('form_id', formIds)
+      .in('profile_id', profileIds)
+      .gte('submitted_at', since),
+    // Cadence is enforced against what we already SENT, not against a stored schedule. That is what
+    // makes "every two weeks" survive a missed cron run: the next hour it fires, the gap is still
+    // open and she gets it, one hour late instead of two weeks late.
+    svc
+      .from('notifications')
+      .select('profile_id, created_at')
+      .eq('type', 'checkin')
+      .in('profile_id', profileIds)
+      .gte('created_at', since),
+  ]);
+  // Fail loud rather than silently treating everyone as un-answered (which would re-nudge people
+  // who just checked in). A null/errored response set must not become an empty "answered" set.
+  if (respRes.error)
+    return { ok: false, job, selected: dueNow.length, notified: 0, error: respRes.error.message };
+  if (sentRes.error)
+    return { ok: false, job, selected: dueNow.length, notified: 0, error: sentRes.error.message };
+
+  const answeredAt = new Map<string, string>();
+  for (const r of (respRes.data ?? []) as { form_id: string; profile_id: string; submitted_at: string }[]) {
+    const key = `${r.form_id}:${r.profile_id}`;
+    const prev = answeredAt.get(key);
+    if (!prev || r.submitted_at > prev) answeredAt.set(key, r.submitted_at);
+  }
+  const lastSentAt = new Map<string, string>();
+  for (const r of (sentRes.data ?? []) as { profile_id: string; created_at: string }[]) {
+    const prev = lastSentAt.get(r.profile_id);
+    if (!prev || r.created_at > prev) lastSentAt.set(r.profile_id, r.created_at);
+  }
+
+  const ms = (days: number): number => days * 86_400_000;
+  const due = dueNow.filter((r) => {
+    const settings = settingsByCompany.get(r.company_id) as CoachSettings;
+
+    // Already reminded inside this cycle? Then this is the same cycle, not the next one.
+    const sent = lastSentAt.get(r.profile_id);
+    const cadence = checkinCadenceDays(settings.reminderEvery, settings.reminderPeriod);
+    if (sent && at.getTime() - Date.parse(sent) < ms(cadence - 1)) return false;
+
+    // "Skip the reminder if she has already done it." Reminding someone to do a thing she just did
+    // is the fastest way to teach her the reminders are not worth reading.
+    const answered = answeredAt.get(`${r.form_id}:${r.profile_id}`);
+    if (!answered) return true;
+    const window = settings.isReminderSkippedWhenDone ? settings.reminderSkipDays : cadence;
+    return at.getTime() - Date.parse(answered) >= ms(window);
+  });
+  if (due.length === 0) return { ok: true, job, selected: dueNow.length, notified: 0 };
 
   const byCompany = new Map<string, Array<{ profileId: string; payload: NotificationPayload }>>();
   for (const r of due) {
@@ -282,7 +370,7 @@ export async function generateCheckinReminders(): Promise<GeneratorResult> {
     await createNotificationsBulk(companyId, recipients);
     notified += recipients.length;
   }
-  return { ok: true, job: 'checkins', selected: due.length, notified };
+  return { ok: true, job, selected: due.length, notified };
 }
 
 // ---------------------------------------------------------------------------

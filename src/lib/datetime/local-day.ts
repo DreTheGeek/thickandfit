@@ -10,9 +10,32 @@
 
 const DEFAULT_TIMEZONE = 'America/New_York';
 
-/** Normalize a possibly-null tz to a usable IANA name, falling back to the app default. */
+// Intl.DateTimeFormat THROWS on an unrecognised timeZone rather than falling back, and the value
+// here comes from profiles.timezone — a text column with no CHECK, written from a browser guess.
+// One member with a stale or mistyped zone would take down a whole roster sweep: the reminder cron
+// iterates every member, so the exception ends the run and everybody after her gets nothing. That
+// failure is silent from the outside (cron_job_log records an error nobody reads) and looks exactly
+// like a quiet evening. Validate once per distinct string and cache; the set of zones across a
+// roster is tiny and stable.
+const zoneValidity = new Map<string, boolean>();
+
+function isUsableZone(tz: string): boolean {
+  const cached = zoneValidity.get(tz);
+  if (cached !== undefined) return cached;
+  let valid = true;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz }).format(new Date(0));
+  } catch {
+    valid = false;
+  }
+  zoneValidity.set(tz, valid);
+  return valid;
+}
+
+/** Normalize a possibly-null or invalid tz to a usable IANA name, falling back to the app default. */
 export function resolveTimezone(tz: string | null | undefined): string {
-  return tz && tz.length > 0 ? tz : DEFAULT_TIMEZONE;
+  if (!tz || tz.length === 0) return DEFAULT_TIMEZONE;
+  return isUsableZone(tz) ? tz : DEFAULT_TIMEZONE;
 }
 
 /**
@@ -28,6 +51,26 @@ export function localDay(timeZone: string | null | undefined, at: Date = new Dat
     month: '2-digit',
     day: '2-digit',
   }).format(at);
+}
+
+/**
+ * The local weekday (0 = Sunday .. 6 = Saturday) for an IANA timezone at a given instant.
+ *
+ * Zero-indexed from Sunday to match JS getDay(), Postgres extract(dow) AND
+ * coach_settings.reminder_weekday, which migration 0115 chose that basing for precisely this
+ * reason. A reminder set for "Monday" has to mean Monday where the member lives, not where the
+ * server is: at 23:00 Sunday in Guadalajara it is already Monday in UTC.
+ */
+export function localWeekday(timeZone: string | null | undefined, at: Date = new Date()): number {
+  const day = new Intl.DateTimeFormat('en-US', {
+    timeZone: resolveTimezone(timeZone),
+    weekday: 'short',
+  }).format(at);
+  const index = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(day);
+  // -1 would silently match nothing (or, worse, weekday 6 after a modulo). Fall back to the UTC
+  // weekday, which is wrong by at most a day rather than wrong always. Unreachable while the locale
+  // stays 'en-US', which is why it is a fallback and not a throw.
+  return index >= 0 ? index : at.getUTCDay();
 }
 
 /**
