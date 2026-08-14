@@ -9,6 +9,8 @@ export type DashboardSummary = {
   macros: { calories: number; protein_g: number; carbs_g: number; fat_g: number } | null;
   streak: number;
   todaysWorkout: { name: string; done: boolean } | null;
+  /** A program is assigned. NOT the same as "she trains today": see hasProgram in the query below. */
+  hasProgram: boolean;
   recentActivity: { label: string; at: string }[];
   // Active weight plateau from the latest nightly insight (null when not flat / no insights yet).
   // Drives the dismissible dashboard banner. Deterministic; populated by the insight engine.
@@ -58,6 +60,11 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
     .maybeSingle();
   const plan = assignment?.plan as { name_en: string } | { name_en: string }[] | null | undefined;
   const planName = Array.isArray(plan) ? plan[0]?.name_en : plan?.name_en;
+  // Whether a program exists AT ALL, which is a different question from what she trains today and
+  // has to be answered separately. todaysWorkout is null in two situations that mean opposite
+  // things, and the home screen was reading the absence as a prescription: with nothing assigned it
+  // told her "Rest day", which sounds like Steph programmed rest and is a reason to skip training.
+  const hasProgram = Boolean(planName);
 
   // Latest nightly insight: surface an active plateau for the dismissible dashboard banner.
   // Strictly 'plateau'. A member whose plan holds her at maintenance is recorded as 'holding', which
@@ -101,6 +108,7 @@ export async function getDashboardSummary(companyId: string, userId: string): Pr
     macros,
     streak,
     todaysWorkout: planName ? { name: planName, done: workoutToday } : null,
+    hasProgram,
     recentActivity: [],
     plateau,
     pace,

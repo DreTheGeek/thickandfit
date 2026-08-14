@@ -229,13 +229,35 @@ export function TodayScreen({
   const moveDone = daily.steps != null && daily.steps >= STEP_GOAL;
   const recoverDone = daily.sleepMinutes != null && daily.sleepMinutes >= SLEEP_GOAL_MIN;
   const missionItems: MissionItem[] = [
-    {
-      key: 'train',
-      label: t('today.missionTrain'),
-      detail: summary.todaysWorkout?.name ?? t('today.missionRestDay'),
-      href: '/workouts',
-      done: Boolean(summary.todaysWorkout?.done),
-    },
+    // TRAIN appears only once a program exists, and both halves of that matter.
+    //
+    // It used to render unconditionally, falling back to "Rest day" when todaysWorkout was null.
+    // That string was never right: todaysWorkout is derived from the ASSIGNED PROGRAM's name, so it
+    // is null only when nothing is assigned at all, never because a real programme scheduled a rest
+    // day. The one state the copy could reach was the one it described incorrectly, and it read as
+    // "Steph programmed rest for you" to a member who in fact had no program, three rows above a
+    // "No program yet" row saying the opposite.
+    //
+    // Omitted rather than reworded, because Mission is the list of things she can finish today and
+    // its percentage is done/length (mission.tsx). An impossible row is both a to-do she cannot do
+    // and a permanent cap at 75%, so a member doing everything available still reads as failing.
+    // "No program yet · Start here" already has a home in Things To Do; a second copy here would be
+    // redundant, and this way the denominator fixes itself.
+    //
+    // NOT FIXED HERE: once she HAS a program this row shows the program name every day, including
+    // genuine rest days, and can only be ticked by training. Distinguishing that needs today's
+    // session rather than the plan name, which summary.ts does not currently load.
+    ...(summary.hasProgram
+      ? [
+          {
+            key: 'train' as const,
+            label: t('today.missionTrain'),
+            detail: summary.todaysWorkout?.name ?? '',
+            href: '/workouts',
+            done: Boolean(summary.todaysWorkout?.done),
+          },
+        ]
+      : []),
     {
       key: 'fuel',
       label: t('today.missionFuel'),
