@@ -50,6 +50,10 @@ const SECTIONS: NavSection[] = [
       // waiting on the plan we told her you were writing". Adjacent because they are the same member
       // on the same day, and separating them by three sections is how one of them gets forgotten.
       { key: 'navAwaiting', href: '/coach/awaiting', icon: 'clipboard' },
+      // The third queue about a specific member on a specific day. Awaiting is "she is still waiting
+      // on you"; this is "she stopped waiting". Same section because they are the same person a few
+      // weeks apart, and the whole value of this one is being seen before billing notices.
+      { key: 'navQuiet', href: '/coach/quiet', icon: 'user' },
       // Leads is a sibling of Clients on her old top-level nav, not a child. It stays in this
       // section rather than getting a header of its own, because a one-item section is a header
       // with nothing under it.

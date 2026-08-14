@@ -1,6 +1,7 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isAtRisk } from '@/lib/coach/overview';
+import { countEngagementRisk } from '@/lib/engagement/risk';
 
 /**
  * What is waiting on her, counted once, on the page she opens first.
@@ -15,7 +16,7 @@ import { isAtRisk } from '@/lib/coach/overview';
  */
 
 export type AttentionItem = {
-  key: 'noPlan' | 'intake' | 'atRisk' | 'unanswered';
+  key: 'noPlan' | 'intake' | 'atRisk' | 'unanswered' | 'quiet';
   count: number;
   href: string;
 };
@@ -23,7 +24,7 @@ export type AttentionItem = {
 export async function getAttention(companyId: string): Promise<AttentionItem[]> {
   const sb = createServiceClient();
 
-  const [clientsRes, plansRes, intakeRes, riskRes, msgRes] = await Promise.all([
+  const [clientsRes, plansRes, intakeRes, riskRes, msgRes, quiet] = await Promise.all([
     sb.from('contacts').select('id').eq('company_id', companyId).eq('type', 'client').limit(5000),
     sb.from('meal_plans').select('contact_id').eq('company_id', companyId).not('contact_id', 'is', null).limit(5000),
     sb
@@ -49,6 +50,11 @@ export async function getAttention(companyId: string): Promise<AttentionItem[]> 
       .gte('sent_at', new Date(Date.now() - 14 * 86_400_000).toISOString())
       .order('sent_at', { ascending: false })
       .limit(2000),
+    // Engagement risk, which is a different question from the billing risk two entries up. Both
+    // chips can be on this row at once and they are not the same people: the billing one fires when
+    // a card declines, this one fires weeks earlier when she stops opening the app. Counted through
+    // the same function the page uses, so the chip and the page can never disagree.
+    countEngagementRisk(companyId),
   ]);
 
   const withPlan = new Set(
@@ -72,6 +78,9 @@ export async function getAttention(companyId: string): Promise<AttentionItem[]> 
     { key: 'unanswered', count: unanswered, href: '/coach/inbox' },
     { key: 'intake', count: intakeRes.count ?? 0, href: '/coach/intake' },
     { key: 'noPlan', count: noPlan, href: '/coach/awaiting' },
+    // Above billing risk on purpose. Chronologically it comes first, and it is the one where doing
+    // something still changes the outcome.
+    { key: 'quiet', count: quiet, href: '/coach/quiet' },
     { key: 'atRisk', count: atRisk, href: '/coach/billing' },
   ];
 

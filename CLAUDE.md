@@ -323,6 +323,54 @@ false, in different ways, and they fail differently:
   is not. Setting it also means the trial can end with no card on file, which is a different product
   decision. Do not fix the copy by flipping the env var alone.
 
+## "At risk" now means two different things, and they are not the same people
+
+Until 2026-08-14 every use of "at risk" in this app meant BILLING: `isAtRisk` in
+`src/lib/coach/overview.ts` reads `client_subscriptions.status` (`past_due`, `unpaid`) and
+`billing_health` (`lapsed`, `due-soon/late`). The coach home tile, the attention chip and the 9pm
+recap all read that one definition, correctly. Its limitation is not accuracy, it is timing: a
+declined card is the LAST event in a churn. She decided weeks earlier.
+
+`src/lib/engagement/` is the earlier signal, built from activity rather than payments. **Both chips
+can be lit at once and they describe different women.** When you touch either, keep them distinct —
+the failure mode is someone "simplifying" them into one number that means neither thing.
+
+| | reads | fires | surface |
+|---|---|---|---|
+| billing risk | subscription status + `billing_health` | card declines | `/coach/billing`, `attention_atRisk` |
+| engagement risk | workouts, food, weight, habits, check-ins, her messages | she stops showing up | `/coach/quiet`, `attention_quiet` |
+
+- **Thresholds live in `risk-shared.ts`** (7 / 14 / 28 quiet days; weak first month = fewer than 4
+  workouts, evaluated days 21-30). They are round numbers, not tuned ones. Tuning needs churn
+  outcomes this app has not collected yet — revisit when there are cancellations to score against.
+  49 boundary assertions: `npx tsx .qa-visual/engagement-risk-test.mts`.
+- **Precedence is not the declaration order.** ghost > at_risk > weak_start > slipping. A member can
+  satisfy several at once and must appear on the queue exactly once, under the description that
+  changes what the coach does.
+- **"Last active" takes two sources.** `user_streaks.last_active_on` is one row per member and
+  covers all history, but it is only written when she opens `/dashboard` or `/you` and it counts
+  three things. The sweep takes the MAX of it and a 30-day window over six activity tables. Neither
+  source can make a member look quieter than she is, which is the direction that matters.
+- **Profile-keyed only.** Migrated Lenus members who have not claimed an account have no profile,
+  cannot log and cannot be notified. Reading contact-keyed history here would put 250 women who have
+  never opened the app at the top of a churn queue on day one. Their queue is `invite-legacy`.
+- **The ladder ships ON, unlike the other two flags in this file.** Three in-app + push messages at
+  7 / 14 / 28 quiet days, bilingual, once per rung per quiet spell (the dedupe asks "since she was
+  last active", not "ever", so a member who returns and lapses again gets it again). It rides the
+  existing daily `notify-checkins` cron rather than a new pg_cron entry, deliberately: a feature
+  whose purpose is to work while nobody is watching must not depend on someone remembering to
+  register a schedule. There is no kill switch beyond reverting; if one is wanted, gate
+  `generateReengagementNudges` on an env var the same way `STARTER_PROGRAM_ID` gates auto-assign.
+- **The day-28 message promises a human.** "Your coach is going to reach out personally." What makes
+  that true is `/coach/quiet` being read, exactly as `/coach/awaiting` is what keeps "Steph writes
+  your plan by hand" honest. If that page stops being read, the message becomes a lie.
+- **Deliberately NOT in the 9pm ops-bot recap.** The recap is Deno and cannot import from `src/`, so
+  adding it would mean re-implementing the whole sweep — six tables, two "last active" sources and
+  the classifier — in a second language, and this file already documents where that goes. Revisit
+  only with a shared SQL view both sides read.
+- Cost: `getAttention` now runs the sweep (~9 queries) on every coach home load. Fine at 270
+  members. If the roster reaches thousands, materialize it nightly next to `user_state` instead.
+
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
 Gemini free-tier limits. Document limits and deferral decisions here as they approach.

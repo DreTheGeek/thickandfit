@@ -9,6 +9,7 @@ import { logCronRun } from '@/lib/monitoring/cron-log';
 import {
   generateCheckinReminders,
   generateOnboardingNudges,
+  generateReengagementNudges,
 } from '@/lib/notifications/generators';
 
 export const dynamic = 'force-dynamic';
@@ -21,15 +22,26 @@ async function run(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  // Two daily member nudges: due check-ins, and a one-time "finish onboarding" for abandoned signups.
+  // Three daily member nudges: due check-ins, a one-time "finish onboarding" for abandoned signups,
+  // and the re-engagement ladder for members who have gone quiet.
+  //
+  // The ladder rides this existing job rather than getting a pg_cron entry of its own, deliberately.
+  // A new schedule is a manual Supabase registration, and a feature whose whole purpose is to work
+  // while nobody is watching must not ship depending on somebody remembering to switch it on. This
+  // job already runs daily, which is exactly the cadence the ladder wants.
+  //
+  // Sequential, not Promise.all: each generator writes notifications and the last one sweeps the
+  // whole roster, so running them together only makes the slow one contend with the others.
   const result = await generateCheckinReminders();
   const onboarding = await generateOnboardingNudges();
-  const combined = { ...result, onboarding };
-  const ok = result.ok && onboarding.ok;
+  const reengagement = await generateReengagementNudges();
+  const combined = { ...result, onboarding, reengagement };
+  const ok = result.ok && onboarding.ok && reengagement.ok;
 
   after(() => logCronRun('notify-checkins-cron', ok ? 'success' : 'error', combined)); // survives the frozen lambda; insert failures now hit the function logs
 
-  const body = ok ? combined : { ok: false as const, job: result.ok ? onboarding.job : result.job };
+  const failed = [result, onboarding, reengagement].find((r) => !r.ok);
+  const body = ok ? combined : { ok: false as const, job: failed?.job ?? result.job };
   return NextResponse.json(body, { status: ok ? 200 : 500 });
 }
 

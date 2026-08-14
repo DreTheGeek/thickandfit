@@ -19,7 +19,13 @@ export type NotificationType =
   | 'habit_assigned'
   | 'meal_plan_assigned'
   | 'form_assigned'
-  | 'onboarding_nudge';
+  | 'onboarding_nudge'
+  // The three rungs of the re-engagement ladder. Distinct types rather than one 'reengage' with a
+  // stage in the body: the dedupe asks "has THIS rung been sent since she was last active", and a
+  // single type would make rung 14 suppress rung 28.
+  | 'reengage_7'
+  | 'reengage_14'
+  | 'reengage_28';
 
 export type AppNotification = {
   id: string;

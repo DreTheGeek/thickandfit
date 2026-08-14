@@ -38,6 +38,12 @@ export function categoryForNotificationType(type: string): NotificationCategory 
     case 'plateau':
     case 'reminder':
     case 'onboarding_nudge':
+    // A win-back message is a reminder, not a coach message. Filing it under 'coach' would make it
+    // undismissable-by-preference, and pushing a woman who has muted reminders and stopped opening
+    // the app is the exact behaviour that turns a lapse into an uninstall.
+    case 'reengage_7':
+    case 'reengage_14':
+    case 'reengage_28':
       return 'reminders';
     case 'renewal':
     case 'comp_expiring':

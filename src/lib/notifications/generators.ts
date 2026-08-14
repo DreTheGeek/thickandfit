@@ -12,6 +12,8 @@ import { asNotifLocale, notifText, type NotifLocale } from '@/lib/notifications/
 import { localHour } from '@/lib/datetime/local-day';
 import { recomputeChallengeBoard } from '@/lib/community/challenge-progress';
 import { notifyNewChallenge } from '@/lib/notifications/triggers';
+import { getEngagementSweep } from '@/lib/engagement/risk';
+import { reengageStage, REENGAGE_TYPES, REENGAGE_TYPE_LIST } from '@/lib/engagement/risk-shared';
 import type { NotificationPayload } from '@/lib/notifications/types';
 
 export type GeneratorResult = {
@@ -555,4 +557,105 @@ export async function generateCycleReminders(at: Date = new Date()): Promise<Gen
     notified += recipients.length;
   }
   return { ok: true, job: 'cycle-reminders', selected: targets.length, notified };
+}
+
+// ---------------------------------------------------------------------------
+// Re-engagement ladder: the automated half of engagement risk.
+//
+// WHAT THIS CLOSES. Every other generator in this file is calendar-driven — a renewal date, a comp
+// expiry, a check-in window, a reminder hour. None of them notice that a member stopped showing up,
+// and the only thing in the app that used the word "risk" meant her card. So the first moment the
+// system reacted to a woman quietly drifting away was the moment her payment failed, weeks after
+// the decision was made. That is the wrong end of the problem: roughly half of the people who quit
+// a gym do it inside 90 days, and a lapsing member stays winnable for about six weeks.
+//
+// THREE RUNGS, THEN A HUMAN. 7 days is a nudge, 14 asks what changed, 28 says a person will reach
+// out and stops. Automation gets three tries because a fourth is nagging, and nagging a woman who
+// is already avoiding the app is how "I'll come back next month" becomes "unsubscribe".
+//
+// THE 28-DAY MESSAGE MAKES A PROMISE THIS FILE CANNOT KEEP. It tells her a coach will reach out.
+// What makes that true is /coach/quiet, the queue this same sweep feeds, in the same way
+// /coach/awaiting is what keeps "Steph writes your plan by hand" honest. If that page stops being
+// read, this message becomes a lie, and it is better to know that than to discover it from her.
+//
+// ONCE PER RUNG PER QUIET SPELL. The guard is not "have we ever sent this", it is "have we sent
+// this since she was last active". A member who comes back in March and lapses again in June gets
+// the whole ladder again, which is correct: it is a new lapse, and the old messages are why the
+// naive version would have let her leave in silence the second time.
+// ---------------------------------------------------------------------------
+const REENGAGE_COPY: Record<7 | 14 | 28, { key: string; link: string }> = {
+  7: { key: 'reengage7', link: '/dashboard' },
+  // Sends her to the coach thread rather than the workout list on purpose. At two weeks the barrier
+  // is almost never "she forgot where the button is", it is that the plan stopped fitting her week,
+  // and the only thing that fixes that is telling someone.
+  14: { key: 'reengage14', link: '/coach-chat' },
+  28: { key: 'reengage28', link: '/dashboard' },
+};
+
+export async function generateReengagementNudges(at: Date = new Date()): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+  const job = 'reengagement';
+
+  const { data: companyData, error: companyErr } = await svc.from('companies').select('id');
+  if (companyErr) return { ok: false, job, selected: 0, notified: 0, error: companyErr.message };
+  const companyIds = ((companyData ?? []) as { id: string }[]).map((c) => c.id);
+
+  let selected = 0;
+  let notified = 0;
+
+  for (const companyId of companyIds) {
+    const { rows } = await getEngagementSweep(companyId);
+    const due = rows
+      .map((r) => ({ row: r, stage: reengageStage(r.daysQuiet) }))
+      .filter((d): d is { row: (typeof rows)[number]; stage: 7 | 14 | 28 } => d.stage !== null);
+    if (due.length === 0) continue;
+    selected += due.length;
+
+    // One query for the whole cohort's ladder history. Bounded to 90 days: a rung older than the
+    // longest quiet spell this ladder can describe cannot suppress anything.
+    const since = new Date(at.getTime() - 90 * 86_400_000).toISOString();
+    const { data: sentData, error: sentErr } = await svc
+      .from('notifications')
+      .select('profile_id, type, created_at')
+      .eq('company_id', companyId)
+      .in('profile_id', due.map((d) => d.row.profileId))
+      .in('type', [...REENGAGE_TYPE_LIST])
+      .gte('created_at', since);
+    // Fail loud. An errored history read that fell through as "nothing sent" would re-send every
+    // rung to every quiet member on every run, which is the single worst thing this file could do.
+    if (sentErr) return { ok: false, job, selected, notified, error: sentErr.message };
+    // profile+rung -> the most recent day that rung was delivered.
+    const lastSent = new Map<string, string>();
+    for (const r of (sentData ?? []) as { profile_id: string; type: string; created_at: string }[]) {
+      const key = `${r.profile_id}|${r.type}`;
+      const day = r.created_at.slice(0, 10);
+      const prev = lastSent.get(key);
+      if (!prev || day > prev) lastSent.set(key, day);
+    }
+
+    const recipients: Array<{ profileId: string; payload: NotificationPayload }> = [];
+    for (const { row, stage } of due) {
+      const type = REENGAGE_TYPES[stage];
+      // Sent since she was last active? Then this rung is spent for this quiet spell.
+      const already = lastSent.get(`${row.profileId}|${type}`);
+      if (already && already >= row.quietSince) continue;
+      const locale = asNotifLocale(row.locale);
+      const copy = REENGAGE_COPY[stage];
+      recipients.push({
+        profileId: row.profileId,
+        payload: {
+          type,
+          title: notifText(locale, `${copy.key}Title`),
+          body: notifText(locale, `${copy.key}Body`),
+          link: copy.link,
+        },
+      });
+    }
+
+    if (recipients.length === 0) continue;
+    await createNotificationsBulk(companyId, recipients);
+    notified += recipients.length;
+  }
+
+  return { ok: true, job, selected, notified };
 }
