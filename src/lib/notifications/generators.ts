@@ -845,3 +845,75 @@ export async function generatePlanFollowupReminders(at: Date = new Date()): Prom
 
   return { ok: true, job, selected, notified };
 }
+
+// ---------------------------------------------------------------------------
+// Auto-resume: end a pause on the day it was agreed to end.
+//
+// A pause with a resume date that nobody actions is a cancellation with extra steps. Stephanie
+// agrees "back on 9-8" with a member; if 9-8 arrives and the app still shows her a break page, the
+// promise the pause was built on is broken by silence, on the exact day she was ready to come back.
+//
+// REVOKES the pause grant, and grants NOTHING. Her access after the break is whatever Stripe, Apple
+// or a comp already says it is. A resume that minted an active grant would keep serving a member
+// whose subscription lapsed during the pause, which is how a break turns into free coaching.
+//
+// Rides the existing daily job. Same reason as the re-engagement ladder: a feature whose entire
+// value is working while nobody is watching must not depend on someone registering a schedule.
+// ---------------------------------------------------------------------------
+export async function resumeDuePauses(at: Date = new Date()): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+  const job = 'auto-resume';
+
+  // Due = the agreed date has arrived. Open-ended pauses (expires_at null) are never auto-resumed:
+  // "pause me until I say" means until she says.
+  const { data, error } = await svc
+    .from('entitlements')
+    .select('id, company_id, profile_id')
+    .eq('status', 'paused')
+    .not('expires_at', 'is', null)
+    .lte('expires_at', at.toISOString());
+  if (error) return { ok: false, job, selected: 0, notified: 0, error: error.message };
+
+  const due = (data ?? []) as { id: string; company_id: string; profile_id: string }[];
+  if (due.length === 0) return { ok: true, job, selected: 0, notified: 0 };
+
+  const { error: updateErr } = await svc
+    .from('entitlements')
+    .update({ status: 'revoked', updated_at: at.toISOString() })
+    .in('id', due.map((d) => d.id));
+  if (updateErr) return { ok: false, job, selected: due.length, notified: 0, error: updateErr.message };
+
+  // Tell her she is back. Landing on a normal dashboard with no explanation after weeks away is
+  // fine; being told "your break is over, here is where you left off" is the difference between an
+  // app that ran a state machine and a coach who remembered.
+  const byCompany = new Map<string, Array<{ profileId: string; payload: NotificationPayload }>>();
+  const { data: profileData } = await svc
+    .from('profiles')
+    .select('id, ui_locale')
+    .in('id', due.map((d) => d.profile_id));
+  const localeBy = new Map(
+    ((profileData ?? []) as { id: string; ui_locale: string | null }[]).map((p) => [p.id, p.ui_locale]),
+  );
+
+  for (const d of due) {
+    const locale = asNotifLocale(localeBy.get(d.profile_id));
+    const list = byCompany.get(d.company_id) ?? [];
+    list.push({
+      profileId: d.profile_id,
+      payload: {
+        type: 'system',
+        title: notifText(locale, 'resumeTitle'),
+        body: notifText(locale, 'resumeBody'),
+        link: '/dashboard',
+      },
+    });
+    byCompany.set(d.company_id, list);
+  }
+
+  let notified = 0;
+  for (const [companyId, recipients] of byCompany) {
+    await createNotificationsBulk(companyId, recipients);
+    notified += recipients.length;
+  }
+  return { ok: true, job, selected: due.length, notified };
+}

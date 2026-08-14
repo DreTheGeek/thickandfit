@@ -19,6 +19,9 @@ export type EntitlementStatus =
   | 'active'
   | 'trialing'
   | 'past_due'
+  // A coach-granted break (0140). Grants nothing, but is NOT canceled: expires_at holds the resume
+  // date and her own records stay readable. See isPaused below.
+  | 'paused'
   | 'canceled'
   | 'expired'
   | 'revoked';
@@ -104,6 +107,43 @@ export async function pastDueOnly(profileId: string): Promise<boolean> {
   // access, and telling her to fix a card would be a false alarm.
   const rows = (data ?? []) as { status: string }[];
   return routeForEntitlements(rows.map((r) => r.status)) === 'fixCard';
+}
+
+/**
+ * Is she on a coach-granted break, and until when?
+ *
+ * A pause is not a cancellation and must not be shown as one. She asked for a break, she is coming
+ * back on a date somebody agreed with her, and the worst thing this app can do in the meantime is
+ * meet her with a paywall — that turns a pause into a decision she had not made.
+ *
+ * The resume date rides expires_at, matching how manual comp grants already use the column. Null
+ * means paused with no agreed date, which is a real case ("pause me until I say") and renders as an
+ * open-ended break rather than a blank.
+ */
+export async function isPaused(
+  profileId: string,
+): Promise<{ paused: boolean; resumesOn: string | null }> {
+  const svc = createServiceClient();
+  const { data, error } = await svc
+    .from('entitlements')
+    .select('status, expires_at')
+    .eq('profile_id', profileId);
+  // Fail to NOT paused. Wrong in the direction that shows her the normal app rather than stranding
+  // her on a break page she cannot leave, which is the failure she would have to email about.
+  if (error) {
+    console.error('isPaused:', error.message);
+    return { paused: false, resumesOn: null };
+  }
+
+  const rows = (data ?? []) as { status: string; expires_at: string | null }[];
+  // The same table the guard routes on, so "is she paused" and "where does she go" cannot disagree.
+  // A live grant wins: someone holding both a paused row and an active one has access, and locking
+  // her out over a stale row would be the worse error.
+  if (routeForEntitlements(rows.map((r) => r.status)) !== 'paused') {
+    return { paused: false, resumesOn: null };
+  }
+  const paused = rows.find((r) => r.status === 'paused');
+  return { paused: true, resumesOn: paused?.expires_at ?? null };
 }
 
 /**

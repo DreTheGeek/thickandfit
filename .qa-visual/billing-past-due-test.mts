@@ -90,6 +90,27 @@ check('live grant beside a stale past_due one reaches the app', routes(['past_du
 check('two dead grants still go to checkout', routes(['canceled', 'expired']), 'checkout');
 check('past_due beside a cancelled one is still a card fix', routes(['canceled', 'past_due']), 'fixCard');
 
+// --- pauses (0140) --------------------------------------------------------------
+// A break she agreed to is not a lapse. Meeting her with a paywall re-opens a decision she already
+// made in our favour, which is the whole reason 'paused' has its own outcome.
+check('a paused member sees her break, not checkout', routes(['paused']), 'paused');
+check('paused does not grant access', isActiveEntitlementStatus('paused'), false);
+// Precedence, in both directions. Paused outranks past_due: a card that expired DURING an agreed
+// break is not something to demand she fix for coaching she is not receiving.
+check('paused outranks past_due', routes(['past_due', 'paused']), 'paused');
+check('order of the rows does not matter', routes(['paused', 'past_due']), 'paused');
+// But a live grant still outranks a stale pause row, or resuming someone would lock her out until
+// the revoke landed.
+check('an active grant beats a leftover pause', routes(['paused', 'active']), 'app');
+check('a revoked pause falls through to checkout', routes(['revoked']), 'checkout');
+check('paused beside a cancelled one is still a pause', routes(['canceled', 'paused']), 'paused');
+// Every outcome is reachable, or one of these branches is dead code nobody will notice.
+check(
+  'all four outcomes are reachable',
+  new Set([routes(['active']), routes(['paused']), routes(['past_due']), routes([])]).size,
+  4,
+);
+
 // --- the renewal warning window she asked for ---------------------------------
 const gen = readFileSync(new URL('../src/lib/notifications/generators.ts', import.meta.url), 'utf8');
 const lead = Number(gen.match(/RENEWAL_LEAD_DAYS\s*=\s*(\d+)/)?.[1]);

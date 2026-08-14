@@ -15,6 +15,7 @@ import {
   generateOnboardingNudges,
   generateReengagementNudges,
   generatePlanFollowupReminders,
+  resumeDuePauses,
 } from '@/lib/notifications/generators';
 
 export const dynamic = 'force-dynamic';
@@ -42,18 +43,22 @@ async function run(req: NextRequest): Promise<NextResponse> {
   //
   // Sequential, not Promise.all: each generator writes notifications and the last one sweeps the
   // whole roster, so running them together only makes the slow one contend with the others.
+  // Pauses end FIRST. A member whose break was agreed to finish today should be back before
+  // anything else in this job looks at her, or the same run that resumes her also decides she has
+  // been quiet for six weeks. The engagement sweep excludes paused members for the same reason.
+  const resumed = await resumeDuePauses();
   const result = await generateOnboardingNudges();
   const reengagement = await generateReengagementNudges();
   // The only one addressed at the coach rather than a member. Daily is the right cadence: the
   // window she configures is measured in days, and an hourly nudge about a plan ending next week
   // would be noise.
   const planFollowups = await generatePlanFollowupReminders();
-  const combined = { ...result, reengagement, planFollowups };
-  const ok = result.ok && reengagement.ok && planFollowups.ok;
+  const combined = { ...result, reengagement, planFollowups, resumed };
+  const ok = result.ok && reengagement.ok && planFollowups.ok && resumed.ok;
 
   after(() => logCronRun('notify-checkins-cron', ok ? 'success' : 'error', combined)); // survives the frozen lambda; insert failures now hit the function logs
 
-  const failed = [result, reengagement, planFollowups].find((r) => !r.ok);
+  const failed = [result, reengagement, planFollowups, resumed].find((r) => !r.ok);
   const body = ok ? combined : { ok: false as const, job: failed?.job ?? result.job };
   return NextResponse.json(body, { status: ok ? 200 : 500 });
 }

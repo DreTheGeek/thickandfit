@@ -2,7 +2,7 @@
 import 'server-only';
 import { redirect } from 'next/navigation';
 import { resolveAuth, hasRole, COACH_ROLES, APPROVER_ROLES, type AuthContext } from '@/lib/auth/session';
-import { isEntitled, hasAckedHealth, pastDueOnly } from '@/lib/billing/entitlement';
+import { isEntitled, hasAckedHealth, pastDueOnly, isPaused } from '@/lib/billing/entitlement';
 import { isStripeConfigured } from '@/lib/billing/stripe';
 
 export async function requireAuth(): Promise<AuthContext> {
@@ -48,13 +48,41 @@ export async function requireEntitled(): Promise<AuthContext> {
   const ctx = await requireAuth();
   if (hasRole(ctx.role, COACH_ROLES)) return ctx;
   if (isStripeConfigured() && !(await isEntitled(ctx.userId))) {
-    // NOT everyone who fails the gate needs the same screen. A member whose card declined is being
-    // dunned on a subscription she still wants; sending her to checkout offers to sell her a second
-    // one, and startCheckoutAction would have created it. She needs the card-update flow, and the
-    // page needs to say why she is there rather than leaving her to guess.
+    // NOT everyone who fails the gate needs the same screen. Three different women land here and
+    // each needs a different page; sending all of them to checkout is how a fixable problem and an
+    // agreed break both turn into a cancellation.
+    //
+    //   paused    she asked for this break and is coming back on a date. Anything that looks like a
+    //             paywall re-opens a decision she already made in our favour.
+    //   past_due  her card declined on a subscription she still wants. Checkout would sell her a
+    //             SECOND one, which startCheckoutAction would have happily created.
+    //   otherwise she has never subscribed, and checkout is genuinely her screen.
+    if ((await isPaused(ctx.userId)).paused) redirect('/paused');
     redirect((await pastDueOnly(ctx.userId)) ? '/account/billing?fix=card' : '/checkout');
   }
   // Health / assumption-of-risk disclaimer must be accepted before any training content.
   if (!(await hasAckedHealth(ctx.userId))) redirect('/disclaimer');
   return ctx;
+}
+
+/**
+ * Her own records, reachable during a pause.
+ *
+ * The decision (2026-08-14): a paused member keeps everything of her own and can reach nothing else.
+ * requireEntitled is the wrong guard for those screens — it would bounce her to /paused when the
+ * whole point is that her history is still hers — and requireAuth is too loose, because it would
+ * also admit a lapsed member who never paused.
+ *
+ * Use on: her progress, her history, her messages, her account. NOT on training, the AI coach, or
+ * anything that costs money to serve. A pause stops the coaching, not the record of it.
+ */
+export async function requireAuthOrPaused(): Promise<AuthContext> {
+  const ctx = await requireAuth();
+  if (hasRole(ctx.role, COACH_ROLES)) return ctx;
+  if (!isStripeConfigured()) return ctx;
+  if (await isEntitled(ctx.userId)) return ctx;
+  if ((await isPaused(ctx.userId)).paused) return ctx;
+  // Not entitled and not paused: same three-way routing as requireEntitled, so a declined card does
+  // not get sent to checkout from here either.
+  redirect((await pastDueOnly(ctx.userId)) ? '/account/billing?fix=card' : '/checkout');
 }

@@ -2134,6 +2134,18 @@
       "reminderHourLabel": "Hora del recordatorio diario",
       "reminderHourHint": "Cuándo llega tu recordatorio diario, en tu hora local."
     },
+    "paused": {
+      "title": "Tu coaching está en pausa",
+      "bodyWithDate": "Steph y tú pausaron tu coaching hasta el {date}. Ese día todo vuelve solo: no tienes que hacer nada.",
+      "bodyOpenEnded": "Steph y tú pausaron tu coaching. Vuelve cuando le digas que estás lista.",
+      "reassurance": "No se ha borrado nada. Tu progreso, tus fotos, tus medidas y todos tus mensajes están justo donde los dejaste.",
+      "stillYours": "Sigue siendo tuyo",
+      "linkProgress": "Tu progreso y tus fotos",
+      "linkHistory": "Tu historial de entrenamientos",
+      "linkMessages": "Tus mensajes",
+      "linkAccount": "Cuenta y facturación",
+      "comeBackEarly": "¿Lista antes? Escríbele a Steph y te reactiva."
+    },
     "checkout": {
       "title": "Desbloquea tu plan",
       "subtitle": "Tu plan personalizado está listo. Suscríbete para entrenar con Stephanie, contar tus macros por foto y tener a tu entrenadora en su voz.",
@@ -2365,6 +2377,8 @@
         "planExpiringTitle": "Un plan está por terminar",
         "planExpiringBody": "El {plan} de {name} termina en {days} días. Toca para escribir el siguiente bloque.",
         "planExpiredBody": "El {plan} de {name} terminó hace {days} días. Está entrenando un plan que ya se acabó.",
+        "resumeTitle": "Bienvenida de vuelta: tu pausa terminó",
+        "resumeBody": "Tu coaching está activo otra vez y todo está donde lo dejaste. Abre tu día y seguimos. 🤍",
         "challengeEndedTitle": "Un reto acaba de terminar",
         "challengeEndedBody": "\"{title}\" terminó. {winner} se llevó la corona. Toca para ver la tabla final.",
         "challengeWonTitle": "¡Ganaste! 🏆",

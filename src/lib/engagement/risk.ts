@@ -127,7 +127,7 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
 
   const ids = profiles.map((p) => p.id);
 
-  const [onbRes, streakRes, workoutRes, foodRes, weightRes, habitRes, formRes, msgRes, contactRes] =
+  const [onbRes, streakRes, workoutRes, foodRes, weightRes, habitRes, formRes, msgRes, contactRes, pausedRes] =
     await Promise.all([
       // The clock starts at onboarding, not signup: before she finishes it the app owes her nothing
       // and generateOnboardingNudges owns her. Members with no completed row are dropped entirely.
@@ -178,7 +178,20 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
         .gte('sent_at', sinceIso)
         .limit(ROW_CAP),
       svc.from('contacts').select('id, profile_id').eq('company_id', companyId).in('profile_id', ids),
+      // Members on a coach-agreed break. They are not quiet, they are away on purpose, and both the
+      // /coach/quiet queue and the re-engagement ladder read this sweep — so without this exclusion
+      // the app spends a pause telling her she has vanished and promising a coach will chase her.
+      svc
+        .from('entitlements')
+        .select('profile_id')
+        .eq('company_id', companyId)
+        .eq('status', 'paused')
+        .in('profile_id', ids),
     ]);
+
+  const paused = new Set(
+    ((pausedRes.data ?? []) as { profile_id: string }[]).map((r) => r.profile_id),
+  );
 
   const onboarded = new Map(
     ((onbRes.data ?? []) as { profile_id: string; completed_at: string }[]).map((r) => [
@@ -232,6 +245,7 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
   for (const p of profiles) {
     const completedAt = onboarded.get(p.id);
     if (!completedAt) continue;
+    if (paused.has(p.id)) continue;
 
     // null means "nothing in the 30-day window and no streak row", which is UNKNOWN rather than
     // never: a member who logged 45 days ago and has never loaded the dashboard since the streak

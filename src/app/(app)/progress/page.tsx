@@ -2,7 +2,7 @@
 // weekly recap, measurements), Compare (before/after). Coaches see imported Lenus photos in the
 // client Files tab separately.
 import type { ReactElement } from 'react';
-import { requireEntitled } from '@/lib/auth/guards';
+import { requireAuthOrPaused } from '@/lib/auth/guards';
 import { listPhotosAction } from '@/lib/progress-photos/actions';
 import { getLegacySnapshot } from '@/lib/legacy/snapshot';
 import { getBodyStats } from '@/lib/body/stats';
@@ -19,7 +19,7 @@ export default async function ProgressPage({
 }: {
   searchParams: Promise<{ tab?: string }>;
 }): Promise<ReactElement> {
-  const ctx = await requireEntitled();
+  const ctx = await requireAuthOrPaused();
   const sp = await searchParams;
   const initialTab: Tab = sp.tab === 'body' || sp.tab === 'compare' ? sp.tab : 'gallery';
   const tz = await getProfileTimezone(ctx.userId);

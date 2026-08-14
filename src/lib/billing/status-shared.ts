@@ -51,8 +51,15 @@ export const LIVE_SUBSCRIPTION_STATUSES = ['trialing', 'active', 'past_due', 'un
  * A live grant always wins. A member holding a working subscription and a stale past_due row from
  * some earlier failure is not a card problem, and raising one at her would be a false alarm on
  * somebody who is paying fine.
+ *
+ * And a pause is not a lapse. She asked for the break, a date was agreed, and meeting her with a
+ * paywall re-opens a decision she already made in our favour — which is why 'paused' has its own
+ * outcome instead of falling through to checkout.
  */
-export function routeForEntitlements(statuses: string[]): 'app' | 'fixCard' | 'checkout' {
+export function routeForEntitlements(statuses: string[]): 'app' | 'paused' | 'fixCard' | 'checkout' {
   if (statuses.some(isActiveEntitlementStatus)) return 'app';
+  // Paused outranks past_due. A member on an agreed break whose card also happens to have expired
+  // during it should see her break, not a demand to fix a card for coaching she is not receiving.
+  if (statuses.includes('paused')) return 'paused';
   return statuses.includes('past_due') ? 'fixCard' : 'checkout';
 }

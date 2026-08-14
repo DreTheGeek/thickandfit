@@ -2134,6 +2134,18 @@
       "reminderHourLabel": "Daily reminder time",
       "reminderHourHint": "When your daily nudge arrives, in your local time."
     },
+    "paused": {
+      "title": "Your coaching is paused",
+      "bodyWithDate": "You and Steph put your coaching on hold until {date}. Everything picks back up on its own that day — you don\u2019t have to do anything.",
+      "bodyOpenEnded": "You and Steph put your coaching on hold. It picks back up whenever you tell her you\u2019re ready.",
+      "reassurance": "Nothing has been deleted. Your progress, your photos, your measurements and every message are exactly where you left them.",
+      "stillYours": "Still yours",
+      "linkProgress": "Your progress and photos",
+      "linkHistory": "Your workout history",
+      "linkMessages": "Your messages",
+      "linkAccount": "Account and billing",
+      "comeBackEarly": "Ready sooner? Message Steph and she\u2019ll switch you back on."
+    },
     "checkout": {
       "title": "Unlock your plan",
       "subtitle": "Your personalized plan is ready. Subscribe to train with Stephanie, track nutrition by photo, and get your coach in her voice.",
@@ -2365,6 +2377,8 @@
         "planExpiringTitle": "A plan is running out",
         "planExpiringBody": "{name}’s {plan} ends in {days} days. Tap to write the next block.",
         "planExpiredBody": "{name}’s {plan} ended {days} days ago. She is training a plan that has finished.",
+        "resumeTitle": "Welcome back — your break is over",
+        "resumeBody": "Your coaching is switched back on and everything is where you left it. Open today and let’s pick it up. 🤍",
         "challengeEndedTitle": "A challenge just wrapped up",
         "challengeEndedBody": "\"{title}\" has ended. {winner} took the crown. Tap to see the final leaderboard.",
         "challengeWonTitle": "You won! 🏆",
