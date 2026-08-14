@@ -1,9 +1,9 @@
 // Daily member-nudge job. Triggered by pg_cron via net.http_post (POST) with the CRON_SECRET
 // bearer; also callable as GET for manual verification. Secret-gated, service role.
 //
-// Runs the one-time "finish onboarding" nudge for abandoned signups and the re-engagement ladder
-// for members who have gone quiet. Logs each run to cron_job_log. Never requires CRON_SECRET at
-// import time (build-safe).
+// Runs the one-time "finish onboarding" nudge for abandoned signups, the re-engagement ladder for
+// members who have gone quiet, and the coach-facing plan-expiry reminder. Logs each run to
+// cron_job_log. Never requires CRON_SECRET at import time (build-safe).
 //
 // The name is now a misnomer and stays anyway: check-ins moved to the hourly notify-reminders job
 // on 2026-08-14, and renaming a route that pg_cron already points at is how a cron silently stops.
@@ -14,6 +14,7 @@ import { logCronRun } from '@/lib/monitoring/cron-log';
 import {
   generateOnboardingNudges,
   generateReengagementNudges,
+  generatePlanFollowupReminders,
 } from '@/lib/notifications/generators';
 
 export const dynamic = 'force-dynamic';
@@ -43,12 +44,16 @@ async function run(req: NextRequest): Promise<NextResponse> {
   // whole roster, so running them together only makes the slow one contend with the others.
   const result = await generateOnboardingNudges();
   const reengagement = await generateReengagementNudges();
-  const combined = { ...result, reengagement };
-  const ok = result.ok && reengagement.ok;
+  // The only one addressed at the coach rather than a member. Daily is the right cadence: the
+  // window she configures is measured in days, and an hourly nudge about a plan ending next week
+  // would be noise.
+  const planFollowups = await generatePlanFollowupReminders();
+  const combined = { ...result, reengagement, planFollowups };
+  const ok = result.ok && reengagement.ok && planFollowups.ok;
 
   after(() => logCronRun('notify-checkins-cron', ok ? 'success' : 'error', combined)); // survives the frozen lambda; insert failures now hit the function logs
 
-  const failed = [result, reengagement].find((r) => !r.ok);
+  const failed = [result, reengagement, planFollowups].find((r) => !r.ok);
   const body = ok ? combined : { ok: false as const, job: failed?.job ?? result.job };
   return NextResponse.json(body, { status: ok ? 200 : 500 });
 }

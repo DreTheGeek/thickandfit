@@ -54,6 +54,10 @@ const SECTIONS: NavSection[] = [
       // on you"; this is "she stopped waiting". Same section because they are the same person a few
       // weeks apart, and the whole value of this one is being seen before billing notices.
       { key: 'navQuiet', href: '/coach/quiet', icon: 'user' },
+      // The fourth queue in the same section, and the one she asked for by name: a program reaching
+      // the end of its weeks. Awaiting is "she never got one", quiet is "she stopped showing up",
+      // this is "hers is finishing".
+      { key: 'navPlanRenewals', href: '/coach/plan-renewals', icon: 'clipboard' },
       // Leads is a sibling of Clients on her old top-level nav, not a child. It stays in this
       // section rather than getting a header of its own, because a one-item section is a header
       // with nothing under it.

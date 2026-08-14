@@ -25,7 +25,11 @@ export type NotificationType =
   // single type would make rung 14 suppress rung 28.
   | 'reengage_7'
   | 'reengage_14'
-  | 'reengage_28';
+  | 'reengage_28'
+  // Addressed at the COACH, not a member: a plan reaching the end of its weeks. The first
+  // coach-facing notification in the app, and it needed no schema change because notifications are
+  // profile-keyed and coaches have profiles.
+  | 'plan_expiring';
 
 export type AppNotification = {
   id: string;

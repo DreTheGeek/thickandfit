@@ -2,6 +2,7 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isAtRisk } from '@/lib/coach/overview';
 import { countEngagementRisk } from '@/lib/engagement/risk';
+import { countExpiringPlans } from '@/lib/coach/plan-followups';
 
 /**
  * What is waiting on her, counted once, on the page she opens first.
@@ -16,7 +17,7 @@ import { countEngagementRisk } from '@/lib/engagement/risk';
  */
 
 export type AttentionItem = {
-  key: 'noPlan' | 'intake' | 'atRisk' | 'unanswered' | 'quiet';
+  key: 'noPlan' | 'intake' | 'atRisk' | 'unanswered' | 'quiet' | 'planRenewals';
   count: number;
   href: string;
 };
@@ -24,7 +25,7 @@ export type AttentionItem = {
 export async function getAttention(companyId: string): Promise<AttentionItem[]> {
   const sb = createServiceClient();
 
-  const [clientsRes, plansRes, intakeRes, riskRes, msgRes, quiet] = await Promise.all([
+  const [clientsRes, plansRes, intakeRes, riskRes, msgRes, quiet, planRenewals] = await Promise.all([
     sb.from('contacts').select('id').eq('company_id', companyId).eq('type', 'client').limit(5000),
     sb.from('meal_plans').select('contact_id').eq('company_id', companyId).not('contact_id', 'is', null).limit(5000),
     sb
@@ -55,6 +56,9 @@ export async function getAttention(companyId: string): Promise<AttentionItem[]> 
     // a card declines, this one fires weeks earlier when she stops opening the app. Counted through
     // the same function the page uses, so the chip and the page can never disagree.
     countEngagementRisk(companyId),
+    // Zero whenever the coach has follow-ups switched off, which is the honest answer: the chip
+    // means "this is waiting on you", and nothing is waiting if nothing is being tracked.
+    countExpiringPlans(companyId),
   ]);
 
   const withPlan = new Set(
@@ -81,6 +85,7 @@ export async function getAttention(companyId: string): Promise<AttentionItem[]> 
     // Above billing risk on purpose. Chronologically it comes first, and it is the one where doing
     // something still changes the outcome.
     { key: 'quiet', count: quiet, href: '/coach/quiet' },
+    { key: 'planRenewals', count: planRenewals, href: '/coach/plan-renewals' },
     { key: 'atRisk', count: atRisk, href: '/coach/billing' },
   ];
 

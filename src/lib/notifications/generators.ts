@@ -19,6 +19,7 @@ import {
 import { recomputeChallengeBoard } from '@/lib/community/challenge-progress';
 import { notifyNewChallenge } from '@/lib/notifications/triggers';
 import { getEngagementSweep } from '@/lib/engagement/risk';
+import { listExpiringPlans } from '@/lib/coach/plan-followups';
 import { reengageStage, REENGAGE_TYPES, REENGAGE_TYPE_LIST } from '@/lib/engagement/risk-shared';
 import type { NotificationPayload } from '@/lib/notifications/types';
 
@@ -744,6 +745,97 @@ export async function generateReengagementNudges(at: Date = new Date()): Promise
           link: copy.link,
         },
       });
+    }
+
+    if (recipients.length === 0) continue;
+    await createNotificationsBulk(companyId, recipients);
+    notified += recipients.length;
+  }
+
+  return { ok: true, job, selected, notified };
+}
+
+// ---------------------------------------------------------------------------
+// Plan follow-ups: the first notification in this app addressed at the COACH.
+//
+// Every other generator here fires at a member. On 2026-08-13 Stephanie asked for a reminder a week
+// before a 12-week program ends, and the answer on the call was that reminders were already built.
+// They were, for members. Nothing had ever told the coach anything, which is why a program could
+// quietly expire under a client who was still paying.
+//
+// NO SCHEMA CHANGE NEEDED. notifications is profile-keyed and coaches have profiles, so the existing
+// bell, the existing push and the existing preference gate all work as-is. That is worth more than a
+// dedicated coach-tasks table would have been: she already knows where the bell is.
+//
+// DEDUPE PER PLAN PER CYCLE. The assignment id goes in the link, and a rung is spent once a
+// notification carrying that link exists. Without it, an hourly-ish daily job would tell her about
+// the same expiring program every morning for a week, which is how a person learns to ignore the
+// bell.
+// ---------------------------------------------------------------------------
+export async function generatePlanFollowupReminders(at: Date = new Date()): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+  const job = 'plan-followups';
+
+  const { data: companyData, error: companyErr } = await svc.from('companies').select('id');
+  if (companyErr) return { ok: false, job, selected: 0, notified: 0, error: companyErr.message };
+  const companyIds = ((companyData ?? []) as { id: string }[]).map((c) => c.id);
+
+  let selected = 0;
+  let notified = 0;
+
+  for (const companyId of companyIds) {
+    const { items } = await listExpiringPlans(companyId, at);
+    if (items.length === 0) continue;
+    selected += items.length;
+
+    // Who to tell. COACH_ROLES excludes operators on purpose: an operator is ops, not the person who
+    // writes the next block, and a queue that pages everybody is a queue nobody owns.
+    const { data: coachData, error: coachErr } = await svc
+      .from('profiles')
+      .select('id, ui_locale')
+      .eq('company_id', companyId)
+      .in('role', ['coach', 'assistant_coach']);
+    if (coachErr) return { ok: false, job, selected, notified, error: coachErr.message };
+    const coaches = (coachData ?? []) as { id: string; ui_locale: string | null }[];
+    if (coaches.length === 0) continue;
+
+    const links = items.map((i) => `/coach/plan-renewals#${i.kind}-${i.id}`);
+    const { data: sentData, error: sentErr } = await svc
+      .from('notifications')
+      .select('profile_id, link')
+      .eq('company_id', companyId)
+      .in('type', ['plan_expiring'])
+      .in('link', links);
+    // Fail loud. Treating an errored read as "nothing sent" would re-announce every expiring plan to
+    // every coach on every run.
+    if (sentErr) return { ok: false, job, selected, notified, error: sentErr.message };
+    const already = new Set(
+      ((sentData ?? []) as { profile_id: string; link: string | null }[]).map(
+        (r) => `${r.profile_id}|${r.link ?? ''}`,
+      ),
+    );
+
+    const recipients: Array<{ profileId: string; payload: NotificationPayload }> = [];
+    for (const item of items) {
+      const link = `/coach/plan-renewals#${item.kind}-${item.id}`;
+      for (const coach of coaches) {
+        if (already.has(`${coach.id}|${link}`)) continue;
+        const locale = asNotifLocale(coach.ui_locale);
+        const key = item.daysLeft < 0 ? 'planExpiredBody' : 'planExpiringBody';
+        recipients.push({
+          profileId: coach.id,
+          payload: {
+            type: 'plan_expiring',
+            title: notifText(locale, 'planExpiringTitle'),
+            body: notifText(locale, key, {
+              name: item.memberName,
+              plan: item.planName,
+              days: String(Math.abs(item.daysLeft)),
+            }),
+            link,
+          },
+        });
+      }
     }
 
     if (recipients.length === 0) continue;

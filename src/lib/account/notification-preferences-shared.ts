@@ -53,6 +53,10 @@ export function categoryForNotificationType(type: string): NotificationCategory 
     case 'habit_assigned':
     case 'meal_plan_assigned':
     case 'form_assigned':
+    // A coach-facing work reminder. 'coach' rather than 'reminders' on purpose: this is the queue
+    // that keeps a paying client from training week 13 of a finished plan, and it should not be
+    // silenced by a member-facing preference toggle.
+    case 'plan_expiring':
     case 'system':
     default:
       return 'coach';

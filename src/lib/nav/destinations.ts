@@ -182,6 +182,7 @@ export const DESTINATIONS: NavDestination[] = [
   { key: 'coachIntake', href: '/coach/intake', icon: 'clipboard', audience: 'coach', keywords: ['intake', 'review', 'new', 'health forms', 'flags'] },
   { key: 'coachAwaiting', href: '/coach/awaiting', icon: 'clipboard', audience: 'coach', keywords: ['awaiting', 'waiting', 'needs a program', 'queue', 'owed'] },
   { key: 'coachQuiet', href: '/coach/quiet', icon: 'user', audience: 'coach', keywords: ['quiet', 'churn', 'at risk', 'inactive', 'lapsed', 'ghosted', 'stopped', 'retention', 'win back'] },
+  { key: 'coachPlanRenewals', href: '/coach/plan-renewals', icon: 'clipboard', audience: 'coach', keywords: ['renewals', 'expiring', 'plan ends', '12 week', 'rewrite', 'next block', 'follow up', 'program ending'] },
   { key: 'coachLeads', href: '/coach/leads', icon: 'funnel', audience: 'coach', keywords: ['leads', 'pipeline', 'prospects', 'waitlist', 'sales'] },
   { key: 'coachInbox', href: '/coach/inbox', icon: 'chat', audience: 'coach', keywords: ['inbox', 'chat', 'messages', 'replies', 'mensajes'] },
   { key: 'coachCommunity', href: '/coach/community', icon: 'community', audience: 'coach', keywords: ['community', 'feed', 'broadcast', 'moderation', 'posts'] },
