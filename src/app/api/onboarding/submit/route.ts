@@ -13,6 +13,7 @@ import { upsertGhlContact } from '@/lib/ghl/client';
 import { sendWelcomeEmail } from '@/lib/email/welcome';
 import { seedIntroMessage } from '@/lib/coach/intro-message';
 import { assignDefaultCheckin } from '@/lib/checkins/assign-default';
+import { autoAssignStarterProgram } from '@/lib/programs/auto-assign';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
 import { extractIntakeNotes, mergeSlugs } from '@/lib/onboarding/intake-notes';
 import {
@@ -264,6 +265,11 @@ async function POST_h(req: Request) {
       // thing that should already be there when she arrives. Idempotent, and it never fails
       // onboarding.
       await assignDefaultCheckin(companyId, userId);
+
+      // A starting program, IF one is configured. Off unless STARTER_PROGRAM_ID is set, so this is
+      // inert until someone decides to turn it on; see the module header for why that is a decision
+      // rather than a default. Never overrides a coach's own assignment.
+      await autoAssignStarterProgram(companyId, userId);
 
       // goal:* tags use the same vocabulary as the waitlist quiz, so a lead who said "lose_fat" at the
       // giveaway lands in the same GHL segment after they become a member.

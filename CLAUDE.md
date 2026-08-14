@@ -144,6 +144,33 @@ nothing by itself.
 - Verify after flipping either switch: `node .qa-visual/prelaunch-gate-test.mjs` (unit, 139 cases)
   then curl the real matrix on prod. A gate is not proven by the flag being set.
 
+## Starter program on signup (`STARTER_PROGRAM_ID`) — built, OFF
+
+Nothing in this app assigns a training program automatically: a plan reaches a member only when a
+coach opens the console. `/coach/awaiting` exists to keep the "Steph writes your plan by hand"
+promise visible and `OVERDUE_DAYS = 3` concedes it slips. The cost is that a woman who pays on
+Tuesday can still be waiting on Friday with 40 imported programs sitting in a library she cannot
+reach, and nobody is reading that queue during a holiday.
+
+`src/lib/programs/auto-assign.ts` closes it, and is **inert until `STARTER_PROGRAM_ID` is set to a
+plan uuid** in Vercel. Absent var = off, same shape as the scan flag below. It runs at onboarding
+completion, verifies the plan belongs to this company, and **never overrides a coach**: a member who
+already holds any plan assignment is skipped.
+
+**Flipping it on is a product decision, not a config change.** It makes "she writes your plan by
+hand" a half-truth, so the member-facing copy in `first-steps.tsx` (`programNote`) and on the
+checkout page should be revisited in the same change. The honest framing is "here is your starting
+week, Steph is personalising it", which is both true and better than silence.
+
+It takes an ID rather than matching on her onboarding answers (goal, experience, gym or home) on
+purpose: choosing well requires seeing the 40 programs, and a name-pattern matcher written without
+looking at them would be a guess. A matcher can replace the lookup later without touching the call
+site in `/api/onboarding/submit`.
+
+| flipped | plan | by |
+|---|---|---|
+| not yet | — | built 2026-08-13, off |
+
 ## Scan auto-accept (`NEXT_PUBLIC_SCAN_AUTO_ACCEPT`)
 Confidence-gated auto-logging: a scan where EVERY item is matched and >= 0.9 confidence is logged
 without the confirm screen, with an Undo. Built in PRD-D and shipped **OFF** (absent env var = off).
