@@ -2243,7 +2243,10 @@
       "emptyTitle": "Saluda a tu entrenadora",
       "emptyBody": "Pregúntale de tus entrenamientos, de tu nutrición o de cómo llegar a tu meta. Conoce tu progreso, así que no empiezas de cero cada vez que le escribes.",
       "disclaimerTitle": "Orientación de coaching, no consejo médico.",
-      "disclaimerBody": "Tu entrenadora te da orientación general de fitness y nutrición, no consejo médico. Para lesiones, embarazo, condiciones médicas o trastornos alimenticios, consulta a un profesional licenciado."
+      "disclaimerBody": "Tu entrenadora te da orientación general de fitness y nutrición, no consejo médico. Para lesiones, embarazo, condiciones médicas o trastornos alimenticios, consulta a un profesional licenciado.",
+      "quotaTitle": "Eso es todo por hoy",
+      "quotaBody": "Tu plan incluye cierto número de preguntas al día y ya las usaste. Se reinician mañana, o sube de plan para tener más y que una persona real lea tus check-ins.",
+      "quotaCta": "Ver planes"
     },
     "coachKnowledge": {
       "pageTitle": "Base de Conocimiento",

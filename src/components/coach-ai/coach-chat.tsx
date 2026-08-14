@@ -11,6 +11,7 @@ import {
   type FormEvent,
   type ReactElement,
 } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/ui/avatar';
 import { Icon } from '@/components/ui/icons';
@@ -43,6 +44,9 @@ export function CoachChat({
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [notConfigured, setNotConfigured] = useState(!configured);
+  // Today's questions are used up. A product state with an offer attached, not an error: the whole
+  // point of the quota is that hitting it is the moment to say what more costs.
+  const [quotaReached, setQuotaReached] = useState(false);
 
   const listEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -78,6 +82,15 @@ export function CoachChat({
       if (contentType.includes('application/json')) {
         const json = (await res.json()) as { status?: string; message?: string; error?: string };
         if (json.status === 'notConfigured') setNotConfigured(true);
+        if (json.status === 'quotaReached') {
+          setQuotaReached(true);
+          // Take her question back out of the thread. Leaving it there beside an empty reply reads
+          // as the coach ignoring her, and she typed it in good faith — the app said yes, then
+          // changed its mind. The upgrade card below is the answer, not a silent bubble.
+          setMessages((prev) => prev.filter((m) => m.id !== userMsg.id && m.id !== assistantId));
+          setInput(trimmed);
+          return;
+        }
         const fallback = json.message ?? json.error ?? t('error');
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, content: fallback } : m)),
@@ -157,7 +170,24 @@ export function CoachChat({
           </div>
         )}
 
-        {showEmpty && !notConfigured && (
+        {/* Not an error bubble. She has used what her plan includes, so the honest thing is to say
+            so plainly, keep what she typed in the box, and put the upgrade one tap away. Persists
+            for the rest of the session rather than clearing on the next keystroke: the limit is
+            still there, and letting her retype into a wall would be worse than saying it once. */}
+        {quotaReached && (
+          <div className="rounded-2xl border border-line bg-warm/40 px-4 py-3.5">
+            <p className="text-[14px] font-semibold text-ink">{t('quotaTitle')}</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-soft">{t('quotaBody')}</p>
+            <Link
+              href="/account/billing"
+              className="tf-press mt-3 inline-block rounded-full bg-ink px-4 py-2 text-[12px] font-semibold text-surface"
+            >
+              {t('quotaCta')}
+            </Link>
+          </div>
+        )}
+
+        {showEmpty && !notConfigured && !quotaReached && (
           <div className="flex flex-col items-center gap-2 px-6 pt-10 text-center">
             <Icon name="sparkles" size={28} className="text-accent" />
             <p className="text-[15px] font-semibold text-ink">{t('emptyTitle')}</p>

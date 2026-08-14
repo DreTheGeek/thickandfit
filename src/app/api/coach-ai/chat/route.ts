@@ -16,6 +16,22 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+/**
+ * Questions a member gets per day. 0 or a negative disables the quota entirely.
+ *
+ * The default is 20, not the 3 discussed on the call. Three is a real product decision about what
+ * the low tier includes, and shipping it as a code default would silently make that decision for
+ * Stephanie the moment this deploys. 20 is a spend ceiling nobody honest will reach — the point of
+ * a default is to stop a runaway bill, not to price the product. Set COACH_AI_DAILY_LIMIT in Vercel
+ * to whatever the answer turns out to be.
+ */
+function dailyChatLimit(): number {
+  const raw = process.env.COACH_AI_DAILY_LIMIT;
+  if (raw === undefined || raw.trim() === '') return 20;
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.floor(n) : 20;
+}
+
 async function POST_h(req: Request): Promise<Response> {
   const ctx = await resolveAuth(req);
   if (!ctx) return apiError('Unauthorized', 401);
@@ -27,9 +43,38 @@ async function POST_h(req: Request): Promise<Response> {
     return apiError('An active subscription is required.', 403);
   }
 
-  // Cost control: cap AI chat turns per user so OpenRouter spend cannot run away (fails open).
+  // Burst control: 30 turns per 5 minutes stops a script, not a spender (fails open).
   if (!(await checkRateLimit(ctx.userId, 'coach-ai-chat', 30, 300))) {
     return apiError('You are sending messages too fast. Please wait a moment.', 429);
+  }
+
+  // THE DAILY QUOTA, which is a different thing from the burst limit above.
+  //
+  // Asked for on 2026-08-13. LaSean: "it can't be more than three back and forth messages a day or
+  // something like that, so AI usage isn't random because it costs money." Stephanie, immediately
+  // after: "you know how ChatGPT gives you that free feature? Hey, you've already asked a sufficient
+  // amount of questions these days. You could upgrade." Answer on the call: "I'm about to now."
+  //
+  // A quota is not a rate limit. Hitting the burst limit means "slow down"; hitting this means "you
+  // have used today's questions", which is a product state with an offer attached — so it returns
+  // HTTP 200 with a status the client renders as an upgrade card, following the notConfigured
+  // precedent below, rather than a 429 the UI can only show as an error.
+  //
+  // NOT PER-TIER YET, deliberately. contacts.product_type carries two incompatible vocabularies at
+  // once — the Lenus migration wrote 'bootcamp' / 'personalCoaching' / 'basic' / 'solon' and new
+  // signups write 'Self-Guided' / 'Team Thick & Fit' / '1-on-1 with Steph' — and nothing in the repo
+  // says which Lenus value maps to which tier. Guessing would cap a member paying for 1-on-1
+  // coaching at the free-tier number, which is the worse of the two possible mistakes. The limit is
+  // therefore one generous number for every member, and per-tier differentiation is a small change
+  // once somebody who knows the book confirms the mapping.
+  if (!hasRole(ctx.role, COACH_ROLES)) {
+    const limit = dailyChatLimit();
+    if (limit > 0 && !(await checkRateLimit(ctx.userId, 'coach-ai-daily', limit, 86_400))) {
+      return Response.json(
+        { ok: false, status: 'quotaReached', limit },
+        { status: 200 },
+      );
+    }
   }
 
   let raw: unknown;

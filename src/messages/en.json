@@ -2243,7 +2243,10 @@
       "emptyTitle": "Say hi to your coach",
       "emptyBody": "Ask about your workouts, nutrition, or how to hit your goal. She knows your progress.",
       "disclaimerTitle": "Coaching guidance, not medical advice.",
-      "disclaimerBody": "This gives general fitness and nutrition guidance, not medical advice. For injuries, pregnancy, medical conditions, or eating-disorder concerns, talk to a licensed professional."
+      "disclaimerBody": "This gives general fitness and nutrition guidance, not medical advice. For injuries, pregnancy, medical conditions, or eating-disorder concerns, talk to a licensed professional.",
+      "quotaTitle": "That’s your questions for today",
+      "quotaBody": "Your plan includes a set number of coach questions a day, and you’ve used them. They reset tomorrow — or move up a plan for more, plus a real person reading your check-ins.",
+      "quotaCta": "See plans"
     },
     "coachKnowledge": {
       "pageTitle": "Knowledge Base",
