@@ -139,6 +139,15 @@ const PATHS = {
       <circle cx="12" cy="12" r="3.5" />
     </>
   ),
+  // Dictation. The capsule-on-a-stand is the one shape everyone reads as "talk to this" without a
+  // label, which matters on a button that has to be obvious to someone who does not want to type.
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 18v3" />
+    </>
+  ),
   card: (
     <>
       <rect x="3" y="5.5" width="18" height="13" rx="2" />

@@ -440,6 +440,8 @@
       "notifications": "Notifications",
       "cancel": "Cancel",
       "save": "Save",
+      "dictateStart": "Start dictation",
+      "dictateStop": "Stop dictation",
       "theme_light": "Light",
       "theme_dark": "Dark",
       "theme_system": "System",

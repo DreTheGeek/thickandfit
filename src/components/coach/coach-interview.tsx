@@ -6,6 +6,7 @@
 import { useState, useTransition, type ReactElement } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui/card';
+import { DictateButton } from '@/components/ui/dictate-button';
 import { Icon } from '@/components/ui/icons';
 import { ProgressBar } from '@/components/ui/ring';
 import { saveInterviewSectionAction } from '@/app/(app)/coach/settings/knowledge/interview/interview-actions';
@@ -193,13 +194,22 @@ function QuestionField({ q, value, onSet, t }: { q: InterviewQuestion; value: st
 
       <div className="mt-2.5">
         {q.type === 'text' || q.type === 'scenario' ? (
-          <textarea
-            value={value}
-            rows={q.type === 'scenario' ? 3 : 2}
-            placeholder={q.placeholder}
-            onChange={(e) => onSet(q.key, e.target.value)}
-            className={`${inputCls} resize-none`}
-          />
+          <>
+            <textarea
+              value={value}
+              rows={q.type === 'scenario' ? 3 : 2}
+              placeholder={q.placeholder}
+              onChange={(e) => onSet(q.key, e.target.value)}
+              className={`${inputCls} resize-none`}
+            />
+            {/* Per box, which is what Rodney described and what this component's shape already
+                supports. These are the questions that teach the AI to answer as her, and they are
+                paragraphs — the ones she is least likely to sit down and type. Renders nothing
+                where the browser has no speech engine. */}
+            <div className="mt-1.5">
+              <DictateButton value={value} onAppend={(next) => onSet(q.key, next)} />
+            </div>
+          </>
         ) : q.type === 'choice' ? (
           <div className="flex flex-wrap gap-2">
             {(q.choices ?? []).map((c) => (
