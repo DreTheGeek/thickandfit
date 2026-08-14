@@ -74,11 +74,10 @@ export type PaymentRow = {
   created_at: string;
 };
 
-const ACTIVE_STATUSES = ['trialing', 'active', 'past_due'];
-
-export function isActiveStatus(status: string | null | undefined): boolean {
-  return Boolean(status && ACTIVE_STATUSES.includes(status));
-}
+// Definition lives in status-shared.ts (no server-only, so the boundary test can reach it).
+// Imported for use below and re-exported so every existing import site keeps working.
+import { isActiveStatus } from '@/lib/billing/status-shared';
+export { isActiveStatus };
 
 /** The subscriber's subscription row: an ACTIVE one if any exists, else the most recent. A customer
  *  can hold a history of rows (cancel -> resubscribe keeps the old row per 0085), so "newest" alone

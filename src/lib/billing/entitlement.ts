@@ -11,6 +11,7 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isStripeConfigured } from '@/lib/billing/stripe';
 import { readCoachSettingsForProfile } from '@/lib/coach/settings';
+import { isActiveEntitlementStatus, routeForEntitlements } from '@/lib/billing/status-shared';
 
 /** Entitlement source vocabulary, matching the CHECK constraint on entitlements.source. */
 export type EntitlementSource = 'apple' | 'stripe' | 'ghl' | 'manual';
@@ -22,12 +23,8 @@ export type EntitlementStatus =
   | 'expired'
   | 'revoked';
 
-/** The only statuses that grant access. Must stay in sync with 0095's status CHECK.
- *  past_due deliberately does NOT grant: Stripe retries for days, and serving paid content through a
- *  failed payment is how involuntary churn turns into unpaid usage. */
-export function isActiveEntitlementStatus(status: string): boolean {
-  return status === 'active' || status === 'trialing';
-}
+// Definition lives in status-shared.ts alongside the two lists it must never be collapsed into.
+export { isActiveEntitlementStatus } from '@/lib/billing/status-shared';
 
 /** True if this profile may use the paid app right now. Single query against the authoritative table. */
 export async function isEntitled(profileId: string): Promise<boolean> {
@@ -72,6 +69,41 @@ export async function isEntitled(profileId: string): Promise<boolean> {
 
   const { isAccessRevokedOnExpiry } = await readCoachSettingsForProfile(profileId);
   return !isAccessRevokedOnExpiry;
+}
+
+/**
+ * True when she HAS a grant and the only thing wrong with it is that a payment failed.
+ *
+ * "Not entitled" is one boolean covering two situations that call for opposite screens. A woman who
+ * never subscribed should see the checkout page. A woman whose card expired should see a button that
+ * replaces the card — sending her to checkout offers to sell her a second subscription alongside the
+ * one she is already being dunned for, and startCheckoutAction would happily create it, because it
+ * reads her existing subscription only for the customer id.
+ *
+ * Narrow on purpose. Only past_due qualifies. `canceled`, `expired` and `revoked` are settled states
+ * where checkout is the right destination, and `unpaid` is Stripe's terminal give-up after the whole
+ * retry schedule has failed — by then the subscription itself needs recreating, not the card.
+ */
+export async function pastDueOnly(profileId: string): Promise<boolean> {
+  if (!isStripeConfigured()) return false;
+
+  const svc = createServiceClient();
+  const { data, error } = await svc
+    .from('entitlements')
+    .select('status')
+    .eq('profile_id', profileId);
+  // Fail to FALSE, which routes her to checkout. Wrong, but the safe wrong: it shows a working page
+  // rather than a card-update flow for a subscription we could not confirm exists.
+  if (error) {
+    console.error('pastDueOnly:', error.message);
+    return false;
+  }
+
+  // routeForEntitlements holds the whole table, including the case that makes this self-contained
+  // rather than order-dependent: a live grant beside a stale past_due one is a member with working
+  // access, and telling her to fix a card would be a false alarm.
+  const rows = (data ?? []) as { status: string }[];
+  return routeForEntitlements(rows.map((r) => r.status)) === 'fixCard';
 }
 
 /**

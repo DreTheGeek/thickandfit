@@ -17,10 +17,19 @@ import {
   reactivate,
 } from '@/lib/billing/stripe';
 import { getSubscriptionForProfile } from '@/lib/billing/subscriptions';
+import { LIVE_SUBSCRIPTION_STATUSES } from '@/lib/billing/status-shared';
 import { normalizeTier, isSelfServe, type CheckoutTier } from '@/lib/billing/tiers';
 import { currentOffer, productKeyForOffer, type Offer } from '@/lib/billing/offer';
 
-export type BillingState = { error?: string; ok?: boolean; checkoutUrl?: string };
+export type BillingState = {
+  error?: string;
+  ok?: boolean;
+  checkoutUrl?: string;
+  /** Set with error 'alreadySubscribed' so the page can say WHICH problem she has. */
+  existingStatus?: string;
+};
+
+// The list, and the reason it is not isActiveStatus, live in status-shared.ts.
 
 const CONSENT_VERSION = '2026-06';
 
@@ -125,6 +134,22 @@ export async function startCheckoutAction(
 
   // Reuse an existing customer id if we have one.
   const existing = await getSubscriptionForProfile(ctx.userId);
+
+  // NEVER sell a second subscription to someone who already holds one.
+  //
+  // This block is the fix for a real, reachable double-billing path. A member whose card declined is
+  // past_due, isEntitled stops granting, requireEntitled ejects her from the app to /checkout, and
+  // this action ran happily: it read her existing subscription ONLY for the customer id and created
+  // a whole new subscription against the same Stripe customer. She would then be dunned on the old
+  // one and charged on the new one, and the bug reads to her as the app taking her money twice.
+  //
+  // past_due and unpaid are included on purpose. Those are exactly the states that route her here,
+  // and the answer to both is the billing portal, not a second sale. `canceled` and `incomplete`
+  // are deliberately absent: resubscribing after a cancellation is the flow working as intended.
+  if (existing && LIVE_SUBSCRIPTION_STATUSES.includes(existing.status)) {
+    return { error: 'alreadySubscribed', existingStatus: existing.status };
+  }
+
   let customerId = existing?.stripe_customer_id ?? null;
   if (!customerId) {
     const created = await createCustomer({

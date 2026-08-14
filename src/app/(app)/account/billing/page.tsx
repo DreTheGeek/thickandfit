@@ -60,11 +60,20 @@ export default async function BillingPage({
 
   const active = isActiveStatus(sub?.status);
   const cancelling = active && Boolean(sub?.cancel_at_period_end);
-  const mode: 'none' | 'active' | 'cancelling' = !active
-    ? 'none'
-    : cancelling
-      ? 'cancelling'
-      : 'active';
+  // past_due is pulled OUT of 'active' here. isActiveStatus includes it (correctly, for "is this a
+  // live membership") but a failed payment is not a state where the useful control is Cancel, which
+  // is the only thing this page offered her before. requireEntitled now lands her here with
+  // ?fix=card, so this branch is the screen she arrives on.
+  const pastDue = sub?.status === 'past_due';
+  const mode: 'none' | 'active' | 'cancelling' | 'pastDue' = pastDue
+    ? 'pastDue'
+    : !active
+      ? 'none'
+      : cancelling
+        ? 'cancelling'
+        : 'active';
+  // A card can be replaced whenever Stripe knows about her, not only when something is wrong.
+  const canUpdateCard = Boolean(sub?.stripe_customer_id) && isStripeConfigured();
 
   // Pre-launch: billing is not live yet, so "no subscription" + a Start button that dead-ends at an
   // unconfigured checkout is both wrong and alarming. Mirror the Account membership card instead:
@@ -132,6 +141,20 @@ export default async function BillingPage({
           </span>
         </div>
 
+        {/* Say what happened and what fixes it, before anything else on the card. She was thrown
+            off the app to get here; leaving her to infer why from a one-word status label is how a
+            fixable card decline turns into a cancellation. */}
+        {pastDue ? (
+          <div className="mt-4 rounded-[10px] bg-alert px-4 py-3">
+            <p className="text-[14px] font-semibold text-alert-ink">{t('pastDueTitle')}</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-alert-ink">
+              {sub?.card_last4
+                ? t('pastDueBodyCard', { brand: sub.card_brand ?? t('card'), last4: sub.card_last4 })
+                : t('pastDueBody')}
+            </p>
+          </div>
+        ) : null}
+
         {sub && active ? (
           <div className="mt-4 space-y-2">
             {/* The honest core: next charge is ALWAYS visible. */}
@@ -178,7 +201,9 @@ export default async function BillingPage({
           <p className="mt-3 text-[13px] font-semibold text-accent">{t('checkoutSuccess')}</p>
         ) : null}
 
-        {preLaunch || (returnedFromCheckout && !active) ? null : <BillingActions mode={mode} />}
+        {preLaunch || (returnedFromCheckout && !active) ? null : (
+          <BillingActions mode={mode} canUpdateCard={canUpdateCard} />
+        )}
       </Card>
 
       {/* Payment history */}

@@ -27,7 +27,13 @@ export type GeneratorResult = {
 // Active subscription statuses that still warrant a renewal nudge (mirrors billing ACTIVE_STATUSES).
 const ACTIVE_SUB_STATUSES = ['trialing', 'active', 'past_due'];
 // How many days ahead to nudge for renewals and comp expiry.
-const RENEWAL_LEAD_DAYS = 3;
+//
+// 2 days, not 3, because Stephanie named the number on 2026-08-13: "hey, friendly reminder, your
+// payment is gonna be due in the next 48 hours, make sure you have sufficient funds." Her declines
+// are insufficient funds, not dead cards, so the window is the point — three days out is before
+// payday for some of her book, and a reminder that arrives too early is a reminder that gets
+// forgotten before it matters.
+const RENEWAL_LEAD_DAYS = 2;
 const COMP_LEAD_DAYS = 3;
 // A check-in is "due" if there is no response within this window.
 const CHECKIN_QUIET_DAYS = 7;

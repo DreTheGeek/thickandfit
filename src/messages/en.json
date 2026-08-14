@@ -2175,6 +2175,10 @@
       "checkoutSuccess": "Payment confirmed. Your membership is active.",
       "preLaunchNote": "Billing hasn't started yet. You won't be charged anything until launch, and your plan activates automatically when billing goes live.",
       "cardOnFile": "{brand} ending in {last4}",
+      "updateCardCta": "Update payment method",
+      "pastDueTitle": "Your last payment didn’t go through",
+      "pastDueBody": "Nothing is lost — update your payment method and everything comes straight back.",
+      "pastDueBodyCard": "Your {brand} ending in {last4} was declined. Nothing is lost — update it and everything comes straight back.",
       "card": "Card",
       "history": "Payment history",
       "reasonLabel": "Why are you leaving? (optional)",
@@ -2218,7 +2222,9 @@
         "noCompany": "Account not ready.",
         "generic": "Something went wrong. Please try again.",
         "rateLimited": "Too many attempts. Please wait a few minutes and try again.",
-        "salesAssisted": "This plan is set up with our team, not instant checkout. Contact us to get started."
+        "salesAssisted": "This plan is set up with our team, not instant checkout. Contact us to get started.",
+        "alreadySubscribed": "You already have a membership. If a payment failed, update your payment method instead — starting a second subscription would charge you twice.",
+        "portalFailed": "Could not open the payment page. Please try again in a moment."
       }
     },
     "coachChat": {

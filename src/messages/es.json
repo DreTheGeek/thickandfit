@@ -2175,6 +2175,10 @@
       "checkoutSuccess": "Pago confirmado. Tu membresía está activa.",
       "preLaunchNote": "La facturación aún no ha comenzado. No se te cobrará nada hasta el lanzamiento, y tu plan se activará automáticamente cuando la facturación esté disponible.",
       "cardOnFile": "{brand} terminada en {last4}",
+      "updateCardCta": "Actualizar método de pago",
+      "pastDueTitle": "Tu último pago no se procesó",
+      "pastDueBody": "No has perdido nada: actualiza tu método de pago y todo vuelve enseguida.",
+      "pastDueBodyCard": "Tu {brand} terminada en {last4} fue rechazada. No has perdido nada: actualízala y todo vuelve enseguida.",
       "card": "Tarjeta",
       "history": "Historial de pagos",
       "reasonLabel": "¿Por qué te vas? (opcional)",
@@ -2218,7 +2222,9 @@
         "noCompany": "La cuenta no está lista.",
         "generic": "Algo salió mal. Inténtalo de nuevo.",
         "rateLimited": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
-        "salesAssisted": "Este plan se configura con nuestro equipo, no con pago instantáneo. Contáctanos para empezar."
+        "salesAssisted": "Este plan se configura con nuestro equipo, no con pago instantáneo. Contáctanos para empezar.",
+        "alreadySubscribed": "Ya tienes una membresía. Si un pago falló, actualiza tu método de pago: iniciar una segunda suscripción te cobraría dos veces.",
+        "portalFailed": "No pudimos abrir la página de pago. Inténtalo de nuevo en un momento."
       }
     },
     "coachChat": {

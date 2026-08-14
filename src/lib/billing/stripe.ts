@@ -161,6 +161,37 @@ export async function createCheckoutSession(args: {
   );
 }
 
+// --- Billing portal ----------------------------------------------------------
+export type StripePortalSession = { id: string; url: string | null };
+
+/**
+ * A hosted session where the member can replace the card on file.
+ *
+ * WHY THIS EXISTS. Until now there was no way, anywhere in this app, for a member to fix a declined
+ * card. The chain that produced was: Stripe marks her past_due, isEntitled stops granting (correctly
+ * — serving paid content through a failed payment is how involuntary churn becomes unpaid usage),
+ * requireEntitled ejects her to /checkout, and /checkout offers to sell her a SECOND subscription.
+ * The one thing she needed to do was the one thing the product could not do.
+ *
+ * The portal rather than a hand-rolled card form, deliberately: card data never touches this app,
+ * SCA and 3DS re-authentication are Stripe's problem, and the same session also covers the invoice
+ * history a member asks support for. What the portal is allowed to show is configured in the Stripe
+ * dashboard, not here — keep cancellation OFF there, because /account/billing owns cancellation and
+ * records a reason code that the portal cannot.
+ */
+export async function createBillingPortalSession(args: {
+  customerId: string;
+  returnUrl: string;
+}): Promise<StripeResult<StripePortalSession>> {
+  // No idempotency key. A portal session is a short-lived, single-use URL; reusing one across a
+  // retry would hand the member a link that has already been consumed, which reads as the fix
+  // being broken on exactly the screen where she is already frustrated.
+  return stripeRequest<StripePortalSession>('POST', '/billing_portal/sessions', {
+    customer: args.customerId,
+    return_url: args.returnUrl,
+  });
+}
+
 // --- Checkout/session reads (webhook-race reconciliation) --------------------
 export type StripeCheckoutSessionDetail = {
   id: string;

@@ -2,7 +2,7 @@
 import 'server-only';
 import { redirect } from 'next/navigation';
 import { resolveAuth, hasRole, COACH_ROLES, APPROVER_ROLES, type AuthContext } from '@/lib/auth/session';
-import { isEntitled, hasAckedHealth } from '@/lib/billing/entitlement';
+import { isEntitled, hasAckedHealth, pastDueOnly } from '@/lib/billing/entitlement';
 import { isStripeConfigured } from '@/lib/billing/stripe';
 
 export async function requireAuth(): Promise<AuthContext> {
@@ -47,7 +47,13 @@ export async function requireApprover(): Promise<AuthContext> {
 export async function requireEntitled(): Promise<AuthContext> {
   const ctx = await requireAuth();
   if (hasRole(ctx.role, COACH_ROLES)) return ctx;
-  if (isStripeConfigured() && !(await isEntitled(ctx.userId))) redirect('/checkout');
+  if (isStripeConfigured() && !(await isEntitled(ctx.userId))) {
+    // NOT everyone who fails the gate needs the same screen. A member whose card declined is being
+    // dunned on a subscription she still wants; sending her to checkout offers to sell her a second
+    // one, and startCheckoutAction would have created it. She needs the card-update flow, and the
+    // page needs to say why she is there rather than leaving her to guess.
+    redirect((await pastDueOnly(ctx.userId)) ? '/account/billing?fix=card' : '/checkout');
+  }
   // Health / assumption-of-risk disclaimer must be accepted before any training content.
   if (!(await hasAckedHealth(ctx.userId))) redirect('/disclaimer');
   return ctx;
