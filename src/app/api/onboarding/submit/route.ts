@@ -14,6 +14,7 @@ import { sendWelcomeEmail } from '@/lib/email/welcome';
 import { seedIntroMessage } from '@/lib/coach/intro-message';
 import { assignDefaultCheckin } from '@/lib/checkins/assign-default';
 import { autoAssignStarterProgram } from '@/lib/programs/auto-assign';
+import { autoAssignStarterMealPlan } from '@/lib/meal-plans/auto-assign';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
 import { extractIntakeNotes, mergeSlugs } from '@/lib/onboarding/intake-notes';
 import {
@@ -270,6 +271,11 @@ async function POST_h(req: Request) {
       // inert until someone decides to turn it on; see the module header for why that is a decision
       // rather than a default. Never overrides a coach's own assignment.
       await autoAssignStarterProgram(companyId, userId);
+
+      // And her meal plan, if her tier includes one. Everyone gets a program; a written meal plan is
+      // part of what the higher tiers are FOR, so this is gated on tier where the program is not.
+      // Same switch shape, same never-override-a-coach rule.
+      await autoAssignStarterMealPlan(companyId, userId, tier);
 
       // goal:* tags use the same vocabulary as the waitlist quiz, so a lead who said "lose_fat" at the
       // giveaway lands in the same GHL segment after they become a member.

@@ -518,6 +518,7 @@
       "library": "Library",
       "history": "History",
       "weekOf": "Week {week} of {total}",
+      "starterNote": "This is your starting week, so you have something to train today. Steph is reading your answers and writing your own plan — it will replace this one when it is ready.",
       "dayOf": "Day {day} of {total}",
       "todaysWorkout": "Today's Workout",
       "noProgram": "No program yet",

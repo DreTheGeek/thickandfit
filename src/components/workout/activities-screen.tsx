@@ -30,6 +30,8 @@ export type ActivitiesProgram = {
   days: { index: number; label: string }[];
   activeDay: number;
   exercises: { id: string; name: string; sub: string; hasDemo: boolean; done: boolean }[];
+  /** She is on the auto-assigned starting week, not a plan anybody wrote for her yet. */
+  isStarter?: boolean;
 };
 export type HistoryItem = {
   id: string;
@@ -99,6 +101,17 @@ export function ActivitiesScreen({
                 {t('dayOf', { day: program.day, total: program.totalDays })}
               </div>
             </HeroCard>
+
+            {/* The one line that keeps "Steph writes your plan by hand" honest once auto-assign is
+                on. She has a program on day one now, which is the improvement; being allowed to
+                believe a generic starting week is her personalised plan is not. Renders only while
+                she is actually on the starter, and disappears the moment a coach assigns her
+                something real. */}
+            {program.isStarter && (
+              <p className="mt-3 rounded-[12px] border border-line bg-surface px-4 py-3 text-[13px] leading-relaxed text-soft">
+                {t('starterNote')}
+              </p>
+            )}
 
             {/* Canonical stats band: sessions this week / total / lifted volume */}
             {stats && (

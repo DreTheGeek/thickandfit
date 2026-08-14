@@ -143,6 +143,16 @@ export default async function WorkoutsPage({
         })),
         activeDay: dayIndex,
         exercises,
+        // TRUE only while she is on the auto-assigned starter.
+        //
+        // Compared against the env var rather than a column on plan_assignments: the starter IS
+        // that plan id, so the comparison cannot drift, and a coach assigning her something real
+        // turns this off by doing so, with nothing to remember to clear.
+        //
+        // Without it, flipping STARTER_PROGRAM_ID on makes "Steph writes your plan by hand" a
+        // half-truth. She opens the app on day one, sees a program, and reasonably concludes that
+        // generic starting week is the plan a human wrote for her.
+        isStarter: plan.id === (process.env.STARTER_PROGRAM_ID ?? '').trim(),
       };
     }
 

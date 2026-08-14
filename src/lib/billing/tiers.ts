@@ -31,3 +31,23 @@ export function normalizeTier(raw: unknown): CheckoutTier {
 export function isSelfServe(tier: CheckoutTier): boolean {
   return SELF_SERVE_TIERS.includes(tier);
 }
+
+/**
+ * Tiers that include a written meal plan.
+ *
+ * Lives here, beside SELF_SERVE_TIERS, because it is the same kind of statement: what a tier IS,
+ * not what some module does about it. The auto-assign job reads it, and so should anything that
+ * later needs to answer "does she get nutrition" — a second copy of this list somewhere else is how
+ * a member ends up entitled to a plan on one screen and not on another.
+ *
+ * `self` is training-only by design (2026-08-13: "you pay the higher tier, here's your meal plan"),
+ * which is exactly the inverse of SELF_SERVE_TIERS and not a coincidence: the written plan is part
+ * of what the sales-assisted tiers are sold on.
+ */
+export const MEAL_PLAN_TIERS: readonly CheckoutTier[] = ['team', 'steph'];
+
+/** Accepts either vocabulary; anything unrecognised normalizes to `self` and gets no plan, which is
+ *  the safe direction — withholding falls back to today's behaviour of a coach doing it by hand. */
+export function tierGetsMealPlan(tier: unknown): boolean {
+  return MEAL_PLAN_TIERS.includes(normalizeTier(tier));
+}
