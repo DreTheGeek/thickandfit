@@ -46,6 +46,9 @@ async function GET_h(req: Request) {
     .from('plans')
     .select('id, name_en, weeks, is_template, updated_at')
     .eq('company_id', ctx.companyId)
+    // Same exclusion as the coach library page (0141): this endpoint feeds pickers, and an archived
+    // plan must not be offerable even though it still resolves by id for existing assignments.
+    .is('archived_at', null)
     .order('updated_at', { ascending: false });
   return apiSuccess({ plans: data ?? [] });
 }

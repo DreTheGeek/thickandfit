@@ -29,6 +29,10 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
         .from('plans')
         .select('id, name_en, weeks, is_template')
         .eq('company_id', ctx.companyId)
+        // Archived plans leave the library and stay readable wherever they are already assigned.
+        // Stephanie asked to delete 17 of her 40 on 2026-08-13; deleting would have cascaded away
+        // the assignments of clients who are mid-program on them (0141).
+        .is('archived_at', null)
         .order('name_en', { ascending: true }),
       supabase.from('sessions').select('plan_id').eq('company_id', ctx.companyId),
     ]);

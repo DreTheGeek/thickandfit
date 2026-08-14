@@ -371,6 +371,56 @@ the failure mode is someone "simplifying" them into one number that means neithe
 - Cost: `getAttention` now runs the sweep (~9 queries) on every coach home load. Fine at 270
   members. If the roster reaches thousands, materialize it nightly next to `user_state` instead.
 
+## The Aug 13 call: what shipped, and the four switches it left off
+
+The [2026-08-13 call](https://fathom.video/calls/784517045) named the Lenus failures she is leaving
+behind, and several were answered on the call as already built when they were not. Commits `b3b71c7`
+through `d80152a` close them. **Four things are built and inert until someone sets a value** — the
+same shape as `NEXT_PUBLIC_SCAN_AUTO_ACCEPT`, and each is a product decision, not a config chore:
+
+| var | effect when set | who decides |
+|---|---|---|
+| `STARTER_PROGRAM_ID` | every new member gets a program at onboarding | Dre picks a plan uuid |
+| `STARTER_MEAL_PLAN_ID` | team/steph tiers also get a meal plan | Dre picks a template uuid |
+| `COACH_AI_DAILY_LIMIT` | AI coach questions per day (default 20) | Stephanie — she said 3 |
+| `coach_settings.training_followup` | plan-expiry reminders fire | Stephanie, in the UI |
+
+`STRIPE_TRIAL_DAYS` is a fifth, documented above.
+
+- **The `past_due` chain was the P0.** A declined card had no fix anywhere: `requireEntitled` ejected
+  her to `/checkout`, and `startCheckoutAction` read her subscription only for the customer id, so it
+  would have sold her a SECOND subscription. Now `/api/billing/portal` + a `past_due` mode on
+  `/account/billing`, and checkout refuses when `LIVE_SUBSCRIPTION_STATUSES` matches.
+- **Three status lists live in `status-shared.ts`** with the reason they are not one list. Collapsing
+  any two is the failure that file is arranged to prevent: `isActiveStatus` includes `past_due`,
+  `isActiveEntitlementStatus` excludes it, `LIVE_SUBSCRIPTION_STATUSES` includes `unpaid`.
+- **`routeForEntitlements` is the whole access routing table**, four outcomes, and `paused` outranks
+  `past_due`. Both `pastDueOnly` and `isPaused` delegate to it so they cannot disagree.
+- **Check-in reminders moved to the hourly `notify-reminders` route** and now read the seven
+  `coach_settings` columns that had a UI and no reader. Her cadence is bi-weekly, not the hardcoded 7.
+  Both route names stay: renaming a target pg_cron points at is how a cron silently stops.
+- **Coach-addressed notifications now exist** (`plan_expiring`). `notifications` is profile-keyed and
+  coaches have profiles, so this needed no schema change.
+- **Pauses are migration 0140.** Read-only: her records stay, the paid surface closes, `/paused`
+  instead of a paywall. It deliberately does NOT touch Stripe — some of her pauses are unpaid breaks
+  and some are paid holds. Auto-resume runs first in the daily job and the engagement sweep excludes
+  paused members, or the app spends her break telling her she has gone quiet.
+- **`plans.archived_at` is migration 0141.** She said delete 17 of 40; `plan_assignments` references
+  them and clients are mid-program, so `scripts/archive-retired-programs.mjs` archives instead and
+  dry-runs by default, printing assigned-client counts for her to confirm.
+- **Still not verified in a browser by anyone.** Section 1 in particular cannot be: it needs a live
+  Stripe key and a test decline.
+
+**Two things only Stephanie can do**, and the second blocks the first: generate the Stripe secret key
+(every money figure in the admin portal is a Lenus-migration artifact until she does, which is why she
+flinched at $16k MRR on the call), and answer what the low tier's daily AI question count should be.
+
+**Deliberately NOT built: per-tier AI limits.** `contacts.product_type` carries two incompatible
+vocabularies at once — the Lenus migration wrote `bootcamp`/`personalCoaching`/`basic`/`solon`, new
+signups write `Self-Guided`/`Team Thick & Fit`/`1-on-1 with Steph` — and nothing in the repo says
+which Lenus value is which tier. Guessing would cap a woman paying for 1-on-1 coaching at the free
+number. Settle the mapping with her before wiring it.
+
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
 Gemini free-tier limits. Document limits and deferral decisions here as they approach.
