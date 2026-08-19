@@ -745,7 +745,9 @@
       "tryAgain": "Reintentar",
       "supersetOf": "Superserie {pos} de {total}",
       "thenStraightInto": "Y de una vez",
-      "amrap": "Máximo de reps"
+      "amrap": "Máximo de reps",
+      "restoredSets": "Retomamos donde te quedaste: {count, plural, one {# serie} other {# series}} ya registradas.",
+      "restoredStartOver": "Empezar de nuevo"
     },
     "coach": {
       "overview": "Resumen",

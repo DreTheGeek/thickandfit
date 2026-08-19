@@ -13,6 +13,14 @@ import { UnderlineTabs } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Confetti, useConfetti } from '@/components/ui/confetti';
 import { MuscleMap } from '@/components/workout/muscle-map';
+import {
+  readDraft,
+  writeDraft,
+  clearDraft,
+  DRAFT_VERSION,
+  type WorkoutDraft,
+  type DraftSet,
+} from '@/lib/workout/draft';
 
 export type OverloadHint = {
   action: 'increase_reps' | 'increase_weight' | 'hold' | 'deload';
@@ -132,6 +140,22 @@ function beep(): void {
   }
 }
 
+// A restored draft is JSON that was on disk for up to twelve hours; its `difficulty` is whatever
+// string was written, possibly by an older build. Validate rather than cast: an unrecognised RPE
+// would otherwise flow into the log and out to the coach's console as a value nothing can read.
+function toLoggedSets(sets: DraftSet[]): LoggedSet[] {
+  return sets.map((x) => ({
+    exercise_id: String(x.exercise_id),
+    set_number: Number(x.set_number),
+    reps: Number(x.reps),
+    weight: Number(x.weight),
+    completed: Boolean(x.completed),
+    difficulty: DIFFICULTIES.includes(x.difficulty as Difficulty)
+      ? (x.difficulty as Difficulty)
+      : 'moderate',
+  }));
+}
+
 export function WorkoutPlayer({
   sessionId,
   dayLabel,
@@ -149,9 +173,24 @@ export function WorkoutPlayer({
   const router = useRouter();
   const { pieces, fire } = useConfetti();
 
-  const [exercises, setExercises] = useState<PlayerExercise[]>(initialExercises);
-  const [idx, setIdx] = useState(0);
-  const [setNum, setSetNum] = useState(1);
+  // Read ONCE, during the first render, so the initial state below is already the restored state.
+  // Restoring in an effect would paint exercise 1 / set 1 first and jump, which in a gym reads as
+  // the app having lost the workout — the exact fear this feature exists to remove.
+  const [draft] = useState<WorkoutDraft | null>(() => readDraft(sessionId));
+  const [restored, setRestored] = useState<number>(draft?.sets.length ?? 0);
+  const restoredElapsed = draft?.elapsed ?? 0;
+
+  const [exercises, setExercises] = useState<PlayerExercise[]>(() => {
+    if (!draft?.swaps) return initialExercises;
+    // Re-apply her substitutions, including clearing the bests, exactly as chooseSub does: a
+    // substitute has no history here, and a restored session must not claim a false PR.
+    return initialExercises.map((item, i) => {
+      const sw = draft.swaps[i];
+      return sw ? { ...item, exercise_id: sw.exercise_id, name: sw.name, bestE1rm: null, bestReps: null } : item;
+    });
+  });
+  const [idx, setIdx] = useState(() => Math.min(draft?.idx ?? 0, Math.max(0, initialExercises.length - 1)));
+  const [setNum, setSetNum] = useState(draft?.setNum ?? 1);
   const [tab, setTab] = useState<'instructions' | 'muscles'>('instructions');
   const [rest, setRest] = useState<number | null>(null);
   const [subsOpen, setSubsOpen] = useState(false);
@@ -159,15 +198,60 @@ export function WorkoutPlayer({
   const [finished, setFinished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
-  const [elapsed, setElapsed] = useState(0); // total workout seconds, counts up from start
+  const [elapsed, setElapsed] = useState(draft?.elapsed ?? 0); // total workout seconds, counts up from start
   const [difficulty, setDifficulty] = useState<Difficulty>('moderate'); // this set's RPE, resets each set
   const [showComplete, setShowComplete] = useState(false); // post-workout rating sheet
   const [setsCount, setSetsCount] = useState(0); // sets logged, snapshotted when the sheet opens
   const [prs, setPrs] = useState<PR[]>([]);
   const [enjoyment, setEnjoyment] = useState<number | null>(null);
   const [effort, setEffort] = useState<number | null>(null);
-  const logged = useRef<LoggedSet[]>([]);
+  const logged = useRef<LoggedSet[]>(draft ? toLoggedSets(draft.sets) : []);
   const wakeRef = useRef<WakeLockSentinel | null>(null);
+  // Substitutions, by exercise index. A ref rather than state: nothing renders from it, and it has
+  // to be readable from saveDraft without adding a dependency that re-creates the callback.
+  const swapsRef = useRef<Record<number, { exercise_id: string; name: string }>>(draft?.swaps ?? {});
+
+  // When this session actually started, in wall-clock terms, so saveDraft can record a duration
+  // without an `elapsed` dependency that would rebuild the callback once a second for the length of
+  // the workout.
+  //
+  // Wall clock rather than the displayed counter on purpose: that counter is a setInterval, and an
+  // interval stops in a backgrounded tab. The visible number is an honest "time you have been
+  // looking at this"; this one is an honest "how long the workout has been going", which is what a
+  // recovered session should resume from.
+  //
+  // A lazy useState initializer, not useRef(Date.now()): a useRef argument is evaluated on every
+  // render, so the clock would be read dozens of times with only the first value kept. The lazy
+  // initializer runs exactly once, which is what "when did this session start" means.
+  const [startedAt] = useState<number>(() => Date.now() - restoredElapsed * 1000);
+
+  // Mirror the session to localStorage. Called after every logged set and every swap — the two
+  // moments the session actually changes — rather than on a timer, so a crash can lose at most the
+  // set she is mid-way through entering.
+  const saveDraft = useCallback(
+    (nextIdx: number, nextSetNum: number): void => {
+      if (logged.current.length === 0) return;
+      writeDraft(sessionId, {
+        v: DRAFT_VERSION,
+        savedAt: Date.now(),
+        sets: logged.current,
+        idx: nextIdx,
+        setNum: nextSetNum,
+        elapsed: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
+        swaps: swapsRef.current,
+      } satisfies WorkoutDraft);
+    },
+    [sessionId, startedAt],
+  );
+
+  // When this session actually started, in wall-clock terms. Set once and never reassigned, so
+  // saveDraft can read the duration without taking an `elapsed` dependency that would rebuild the
+  // callback once a second for the length of the workout.
+  //
+  // Wall clock rather than the displayed counter on purpose: that counter is a setInterval, and an
+  // interval stops in a backgrounded tab. The visible number is the honest "time you have been
+  // looking at this"; this one is the honest "how long the workout has been going", which is what a
+  // recovered session should resume from.
 
   // Elapsed workout clock: tick every second until the rating sheet opens or the session finishes.
   useEffect(() => {
@@ -181,6 +265,18 @@ export function WorkoutPlayer({
   // Prefill from the progressive-overload recommendation when we have one, else the plan target.
   const [reps, setReps] = useState(ex?.overload?.reps ?? ex?.reps ?? 10);
   const [weight, setWeight] = useState(ex?.overload?.weight ?? ex?.weight ?? 0);
+
+  // A closing tab with unsaved sets gets the browser's own confirm. The draft already means she
+  // would not LOSE them, but "are you sure" costs nothing and stops the reload before it happens,
+  // which is better than recovering from it. Deliberately not armed once the save has succeeded.
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent): void => {
+      if (finished || logged.current.length === 0) return;
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [finished]);
 
   // Wake Lock for the whole session.
   useEffect(() => {
@@ -242,11 +338,14 @@ export function WorkoutPlayer({
           i === idx ? { ...item, exercise_id: s.exercise!.id, name, bestE1rm: null, bestReps: null } : item,
         ),
       );
+      // Remember it, or a recovery would put her back on the machine that was broken or taken.
+      swapsRef.current = { ...swapsRef.current, [idx]: { exercise_id: s.exercise.id, name } };
+      saveDraft(idx, setNum);
       setSubsOpen(false);
     },
     // subName is recreated each render; locale/t drive its output.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [idx, locale],
+    [idx, locale, setNum, saveDraft],
   );
 
   // Persist the whole session (sets carry per-set difficulty; the sheet adds enjoyment/effort),
@@ -280,6 +379,9 @@ export function WorkoutPlayer({
         }),
       });
       if (!res.ok) throw new Error(`save failed: ${res.status}`);
+      // Safely on the server now. Leaving the draft behind would offer to restore a workout she has
+      // already logged, and accepting that offer would log it twice.
+      clearDraft(sessionId);
     } catch (e) {
       console.error('workout submitLog:', e instanceof Error ? e.message : e);
       setSaving(false);
@@ -294,6 +396,19 @@ export function WorkoutPlayer({
     setTimeout(() => router.push('/workouts'), 1300);
   }, [fire, router, sessionId, enjoyment, effort]);
 
+  // The escape hatch for a restore she did not want — a plan changed, or she is genuinely starting
+  // the day again. Everything else about recovery is automatic; this is the one tap that undoes it.
+  const startOver = useCallback((): void => {
+    logged.current = [];
+    swapsRef.current = {};
+    clearDraft(sessionId);
+    setRestored(0);
+    setExercises(initialExercises);
+    setIdx(0);
+    setSetNum(1);
+    setElapsed(0);
+  }, [sessionId, initialExercises]);
+
   const logSet = useCallback((): void => {
     logged.current.push({
       exercise_id: ex.exercise_id,
@@ -306,10 +421,14 @@ export function WorkoutPlayer({
     setDifficulty('moderate'); // reset the RPE tap for the next set
 
     if (setNum < totalSets) {
+      // Saved with the position she is moving TO, not the one she just left: a recovery should put
+      // her at the next set, not make her redo the one she already logged.
+      saveDraft(idx, setNum + 1);
       setSetNum((n) => n + 1);
       if (ex.rest_sec) setRest(ex.rest_sec);
     } else if (idx < exercises.length - 1) {
       const next = exercises[idx + 1];
+      saveDraft(idx + 1, 1);
       setIdx(idx + 1);
       setSetNum(1);
       setReps(next.overload?.reps ?? next.reps ?? 10);
@@ -318,13 +437,16 @@ export function WorkoutPlayer({
       if (ex.rest_sec) setRest(ex.rest_sec);
     } else {
       // Last set of the last exercise: open the rating sheet (PRs + enjoyment/effort). Don't finish yet.
+      // Still saved: the sheet is where enjoyment and effort get chosen, and a tab that dies on that
+      // screen would otherwise lose a COMPLETED workout, which is the worst moment to lose one.
+      saveDraft(idx, setNum);
       const found = detectPRs(exercises, logged.current);
       setPrs(found);
       setSetsCount(logged.current.length);
       setShowComplete(true);
       if (found.length) fire();
     }
-  }, [ex, setNum, totalSets, idx, exercises, reps, weight, difficulty, fire]);
+  }, [ex, setNum, totalSets, idx, exercises, reps, weight, difficulty, fire, saveDraft]);
 
   // SUPERSET CONTEXT. Everything sharing a group_key is performed back to back, so the member needs
   // to know before she starts the set, not after. Without this the app rendered her supersets as
@@ -415,6 +537,24 @@ export function WorkoutPlayer({
 
       {/* Body */}
       <div className="tf-scroll flex-1 px-[22px] pb-7 pt-5">
+        {/* RESTORED, SAID OUT LOUD. The recovery is automatic on purpose — a modal asking "resume?"
+            is friction at the exact moment her hands are chalky and she wants to lift — but silently
+            reviving sets she cannot see would be worse than losing them: she would trust a number
+            she never verified. So it restores, tells her what it restored, and puts starting over
+            one tap away. */}
+        {restored > 0 && (
+          <div className="mb-[18px] flex items-start justify-between gap-3 rounded-[14px] border border-line bg-warm/40 px-4 py-3">
+            <p className="text-[13px] leading-snug text-soft">{t('restoredSets', { count: restored })}</p>
+            <button
+              type="button"
+              onClick={startOver}
+              className="tf-press shrink-0 text-[12px] font-semibold text-ink underline"
+            >
+              {t('restoredStartOver')}
+            </button>
+          </div>
+        )}
+
         <UnderlineTabs
           className="mb-[18px]"
           value={tab}

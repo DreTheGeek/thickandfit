@@ -745,7 +745,9 @@
       "tryAgain": "Try again",
       "supersetOf": "Superset {pos} of {total}",
       "thenStraightInto": "Then straight into",
-      "amrap": "AMRAP"
+      "amrap": "AMRAP",
+      "restoredSets": "Picked up where you left off — {count, plural, one {# set} other {# sets}} already logged.",
+      "restoredStartOver": "Start over"
     },
     "coach": {
       "overview": "Overview",
