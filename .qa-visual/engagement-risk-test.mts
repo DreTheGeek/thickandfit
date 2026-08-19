@@ -15,6 +15,7 @@ import {
   daysSince,
   isEngagementRisk,
   reengageStage,
+  hasDepartedGrants,
   TIER_RANK,
   REENGAGE_TYPES,
   QUIET_SLIPPING_DAYS,
@@ -141,6 +142,41 @@ check('a timestamp is bucketed to its day', daysSince('2026-08-07T23:59:00Z', no
 // Clock skew or a future-dated row must not produce a negative age that reads as "very active".
 check('a future date clamps to 0', daysSince('2026-09-01', now), 0);
 check('garbage is 0, not NaN', daysSince('not-a-date', now), 0);
+
+// --- gone versus quiet -----------------------------------------------------------
+// Nothing in this app demotes profiles.role when a subscription ends, so a woman who cancelled last
+// month is still role 'subscriber', still has an onboarding row, and is extremely quiet. Shipped
+// without this check, she landed on the churn queue as someone to win back and, at day 28, was
+// told "your coach is going to reach out personally". Found by re-reading the sweep, not by a test.
+const ON = true;
+const OFF = false;
+
+check('an active grant is not a departure', hasDepartedGrants(['active'], ON), false);
+check('trialing is not a departure', hasDepartedGrants(['trialing'], ON), false);
+// The overlap this whole module exists for: a declined card is a churn RISK, not a churn.
+check('past_due is not a departure', hasDepartedGrants(['past_due'], ON), false);
+check('paused is not a departure', hasDepartedGrants(['paused'], ON), false);
+
+check('canceled IS a departure', hasDepartedGrants(['canceled'], ON), true);
+check('expired IS a departure', hasDepartedGrants(['expired'], ON), true);
+check('revoked IS a departure', hasDepartedGrants(['revoked'], ON), true);
+check('every grant dead is a departure', hasDepartedGrants(['canceled', 'expired'], ON), true);
+
+// One live grant beside dead ones means she resubscribed. Treating her as gone would drop a paying
+// member off the queue permanently.
+check('a resubscriber is not gone', hasDepartedGrants(['canceled', 'active'], ON), false);
+check('order does not matter', hasDepartedGrants(['active', 'canceled'], ON), false);
+check('a cancelled-then-past_due member is not gone', hasDepartedGrants(['canceled', 'past_due'], ON), false);
+
+// Conservative in both directions. No grant is not evidence: comped members and staff test accounts
+// have none, and dropping them would silently shrink the roster this sweep reports on.
+check('no grants is not a departure', hasDepartedGrants([], ON), false);
+check('undefined grants is not a departure', hasDepartedGrants(undefined, ON), false);
+
+// Pre-launch nobody CAN subscribe, so nobody can have cancelled. Applying the test then would empty
+// the queue and hide exactly the members it was built to surface. It arms itself with the live key.
+check('pre-Stripe, a cancelled grant is ignored', hasDepartedGrants(['canceled'], OFF), false);
+check('pre-Stripe, everything is ignored', hasDepartedGrants(['expired', 'revoked'], OFF), false);
 
 // --- report ------------------------------------------------------------------
 if (failures.length > 0) {

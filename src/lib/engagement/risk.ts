@@ -22,9 +22,11 @@ import 'server-only';
 // their queue is the invite/claim one (invite-legacy), not this. Reading contact-keyed history here
 // would put 250 people who have never seen the app at the top of a churn queue on day one.
 import { createServiceClient } from '@/lib/supabase/service';
+import { isStripeConfigured } from '@/lib/billing/stripe';
 import {
   classifyRisk,
   daysSince,
+  hasDepartedGrants,
   isEngagementRisk,
   TIER_RANK,
   type RiskTier,
@@ -127,7 +129,7 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
 
   const ids = profiles.map((p) => p.id);
 
-  const [onbRes, streakRes, workoutRes, foodRes, weightRes, habitRes, formRes, msgRes, contactRes, pausedRes] =
+  const [onbRes, streakRes, workoutRes, foodRes, weightRes, habitRes, formRes, msgRes, contactRes, entitlementRes] =
     await Promise.all([
       // The clock starts at onboarding, not signup: before she finishes it the app owes her nothing
       // and generateOnboardingNudges owns her. Members with no completed row are dropped entirely.
@@ -178,20 +180,36 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
         .gte('sent_at', sinceIso)
         .limit(ROW_CAP),
       svc.from('contacts').select('id, profile_id').eq('company_id', companyId).in('profile_id', ids),
-      // Members on a coach-agreed break. They are not quiet, they are away on purpose, and both the
-      // /coach/quiet queue and the re-engagement ladder read this sweep — so without this exclusion
-      // the app spends a pause telling her she has vanished and promising a coach will chase her.
+      // Every entitlement row for these members, so the sweep can tell a lapse from a departure.
+      // Two exclusions come out of this and they are different people; see below.
       svc
         .from('entitlements')
-        .select('profile_id')
+        .select('profile_id, status')
         .eq('company_id', companyId)
-        .eq('status', 'paused')
         .in('profile_id', ids),
     ]);
 
-  const paused = new Set(
-    ((pausedRes.data ?? []) as { profile_id: string }[]).map((r) => r.profile_id),
-  );
+  // ON A BREAK. Not quiet — away on purpose. Both /coach/quiet and the re-engagement ladder read
+  // this sweep, so without this the app spends her agreed pause telling her she has vanished and
+  // promising that a coach will chase her.
+  const paused = new Set<string>();
+  // ALREADY GONE. Nothing demotes profiles.role when a subscription ends — the only role writes in
+  // the app are manual admin actions — so a woman who cancelled last month is still role
+  // 'subscriber', still has an onboarding row, and is very quiet indeed. Without this she lands on
+  // the churn queue as someone to win back, and on day 28 receives "your coach is going to reach
+  // out personally". Messaging someone who cancelled as though she is still coached is worse than
+  // saying nothing: it reads as not having noticed she left.
+  const grantsByProfile = new Map<string, string[]>();
+  for (const r of (entitlementRes.data ?? []) as { profile_id: string; status: string }[]) {
+    if (r.status === 'paused') paused.add(r.profile_id);
+    grantsByProfile.set(r.profile_id, [...(grantsByProfile.get(r.profile_id) ?? []), r.status]);
+  }
+
+  // The rule, and every reason it is conservative in both directions, lives in risk-shared.ts so it
+  // can be asserted without a database.
+  const stripeOn = isStripeConfigured();
+  const hasLeft = (profileId: string): boolean =>
+    hasDepartedGrants(grantsByProfile.get(profileId), stripeOn);
 
   const onboarded = new Map(
     ((onbRes.data ?? []) as { profile_id: string; completed_at: string }[]).map((r) => [
@@ -246,6 +264,7 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
     const completedAt = onboarded.get(p.id);
     if (!completedAt) continue;
     if (paused.has(p.id)) continue;
+    if (hasLeft(p.id)) continue;
 
     // null means "nothing in the 30-day window and no streak row", which is UNKNOWN rather than
     // never: a member who logged 45 days ago and has never loaded the dashboard since the streak

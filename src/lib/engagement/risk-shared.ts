@@ -149,3 +149,39 @@ export function daysSince(iso: string, now: Date = new Date()): number {
   if (!Number.isFinite(then)) return 0;
   return Math.max(0, Math.floor((dayStart(now.toISOString()) - then) / 86_400_000));
 }
+
+/**
+ * Statuses that mean she is still a member of this coaching relationship.
+ *
+ * past_due is HERE on purpose. Her card failed; she has not left, and she is exactly the person the
+ * quiet queue exists to catch — the whole premise of this module is that engagement risk arrives
+ * weeks before billing risk, so treating a declined card as a departure would discard the overlap
+ * that matters most.
+ */
+const LIVE_ENOUGH_GRANTS = new Set(['active', 'trialing', 'past_due', 'paused']);
+
+/**
+ * Has she actually left, as opposed to gone quiet?
+ *
+ * Nothing in this app demotes profiles.role when a subscription ends — the only role writes are
+ * manual admin actions — so a woman who cancelled last month is still role 'subscriber', still has
+ * an onboarding row, and is very quiet indeed. Without this she lands on the churn queue as someone
+ * to win back and, on day 28, receives "your coach is going to reach out personally". Messaging
+ * someone who cancelled as though she is still coached is worse than saying nothing: it reads as
+ * not having noticed she left.
+ *
+ * Deliberately conservative in both directions:
+ *   - Before Stripe is configured, nobody can subscribe, so nobody can have cancelled. Applying the
+ *     test then would empty the queue and hide the members it exists to surface.
+ *   - No grant at all is not evidence of departure. Comped members and staff test accounts have
+ *     none, and dropping them would silently shrink the roster this sweep reports on.
+ * Only an explicit, complete set of dead grants counts as gone.
+ */
+export function hasDepartedGrants(
+  grants: readonly string[] | undefined,
+  stripeConfigured: boolean,
+): boolean {
+  if (!stripeConfigured) return false;
+  if (!grants || grants.length === 0) return false;
+  return !grants.some((g) => LIVE_ENOUGH_GRANTS.has(g));
+}
