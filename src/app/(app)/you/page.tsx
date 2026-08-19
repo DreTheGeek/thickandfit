@@ -1,7 +1,7 @@
 // Subscriber "You" profile hub. Profile + stats + goal (from onboarding) + menu.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { requireEntitled } from '@/lib/auth/guards';
+import { requireAuthOrPaused } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { getSupportEmail } from '@/lib/admin/settings';
 import { YouScreen, type GoalSummary } from '@/components/profile/you-screen';
@@ -15,8 +15,17 @@ export const dynamic = 'force-dynamic';
 
 const KG_TO_LB = 2.20462;
 
+// requireAuthOrPaused, not requireEntitled. Everything on this page is hers — her name, her goal
+// from onboarding, her workout count, her last weigh-in, her badges — and the 2026-08-14 pause
+// decision was that she keeps all of it. Its two sub-pages (/you/cycle, /you/health) already use
+// requireAuth, so before this the children were open while the hub that links to them bounced her
+// to /paused: the same shape as the /history link on the pause page.
+//
+// Nothing here is coaching or costs money to serve, and recomputeGamification derives lastActiveOn
+// from real activity days rather than from this page load, so reading it during a break cannot make
+// her look active afterwards and hide her from the quiet queue.
 export default async function YouPage(): Promise<ReactElement> {
-  const ctx = await requireEntitled();
+  const ctx = await requireAuthOrPaused();
   const locale = await getLocale();
   const t = await getTranslations('app.you');
   const supabase = await createClient();

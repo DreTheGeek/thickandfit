@@ -2138,15 +2138,16 @@
     },
     "paused": {
       "title": "Your coaching is paused",
-      "bodyWithDate": "You and Steph put your coaching on hold until {date}. Everything picks back up on its own that day — you don\u2019t have to do anything.",
-      "bodyOpenEnded": "You and Steph put your coaching on hold. It picks back up whenever you tell her you\u2019re ready.",
+      "bodyWithDate": "You and Steph put your coaching on hold until {date}. Everything picks back up on its own that day — you don’t have to do anything.",
+      "bodyOpenEnded": "You and Steph put your coaching on hold. It picks back up whenever you tell her you’re ready.",
       "reassurance": "Nothing has been deleted. Your progress, your photos, your measurements and every message are exactly where you left them.",
       "stillYours": "Still yours",
       "linkProgress": "Your progress and photos",
       "linkHistory": "Your workout history",
+      "linkYou": "Your profile and stats",
       "linkMessages": "Your messages",
       "linkAccount": "Account and billing",
-      "comeBackEarly": "Ready sooner? Message Steph and she\u2019ll switch you back on."
+      "comeBackEarly": "Ready sooner? Message Steph and she’ll switch you back on."
     },
     "checkout": {
       "title": "Unlock your plan",

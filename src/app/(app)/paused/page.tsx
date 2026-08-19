@@ -24,11 +24,13 @@ export const dynamic = 'force-dynamic';
 //   /progress  requireAuthOrPaused
 //   /history   redirects to /workouts, which is requireEntitledOrPaused: her logged history stays,
 //              the program half of that screen closes. Before that guard existed this link bounced.
+//   /you       requireAuthOrPaused; its sub-pages /you/cycle and /you/health are requireAuth
 //   /inbox     requireAuthOrPaused
 //   /account   requireAuth, which admits her for the same reason
-const OPEN: { href: string; icon: 'pulse' | 'clipboard' | 'community' | 'gear'; key: string }[] = [
+const OPEN: { href: string; icon: 'pulse' | 'clipboard' | 'community' | 'gear' | 'user'; key: string }[] = [
   { href: '/progress', icon: 'pulse', key: 'linkProgress' },
   { href: '/history', icon: 'clipboard', key: 'linkHistory' },
+  { href: '/you', icon: 'user', key: 'linkYou' },
   { href: '/inbox', icon: 'community', key: 'linkMessages' },
   { href: '/account', icon: 'gear', key: 'linkAccount' },
 ];
