@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "eval:scan": "node --env-file=.env.local scripts/eval/run-smart-scan-eval.mjs",
-    "eval:seed": "node --env-file=.env.local scripts/eval/seed-smart-scan-eval.mjs"
+    "eval:seed": "node --env-file=.env.local scripts/eval/seed-smart-scan-eval.mjs",
+    "food:embed": "node --env-file=.env.local scripts/backfill-food-embeddings.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",

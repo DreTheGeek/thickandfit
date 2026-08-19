@@ -1,28 +1,46 @@
-// Food-resolution layer: turn predicted items [{ name, grams, confidence }] into loggable, macro-scaled
-// food rows. Each predicted name is matched to the shared public.foods corpus via FTS (ilike on
-// search_text), then cooked_uncooked_ratios + per-100g scaling produce real macros for the predicted
-// grams. Shared by the text-to-macro pipeline; the photo path lives in smart-scan.ts. Never crashes.
+// Food-resolution layer: turn predicted food identities + portions into authoritative, macro-scaled
+// rows. Smart Scan never trusts the vision model for nutrition facts. It resolves each identity through
+// the local food corpus, then scales the corpus's per-100g nutrition by the estimated edible grams.
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite, type MacroTotals } from '@/lib/nutrition/macros';
 import { groundFoodByName } from '@/lib/nutrition/external-foods';
+import { matchFoodsHybrid, type FoodMatchMethod } from '@/lib/nutrition/food-retrieval';
 
-export type PredictedItem = { name: string; grams: number; confidence: number; basis?: string };
+export type PredictedItem = {
+  name: string;
+  grams: number;
+  // Backward-compatible aggregate confidence from smart-scan.v4 and text-to-macro.
+  confidence: number;
+  // Newer callers can separate "what is it?" from "how much is there?". They are deliberately
+  // optional so cached v4 inferences replay through the same deterministic resolver.
+  identityConfidence?: number;
+  portionConfidence?: number;
+  basis?: string;
+};
 
-// A predicted item resolved against the foods corpus, with macros scaled to the predicted grams.
 export type PhotoCandidate = {
   predictedName: string;
   grams: number;
+  // Public confidence drives the existing client trust gate. Keep it conservative when any critical
+  // dimension needs verification so older clients cannot accidentally auto-accept a weighted average.
   confidence: number;
+  identityConfidence: number;
+  portionConfidence: number;
+  dbMatchConfidence: number;
+  nutritionConfidence: number;
+  // Weighted score retained separately for telemetry and future UI. This may be higher than the public
+  // confidence when, for example, identity is strong but the photographed portion is uncertain.
+  overallConfidence: number;
+  needsVerification: boolean;
+  resolutionMethod: FoodMatchMethod;
   matched: boolean;
   food: FoodLite | null;
   macros: MacroTotals | null;
-  basis?: string; // the model's area/volume/density portion reasoning (structured-context step)
+  basis?: string;
 };
 
 export type PhotoResult =
-  // inferenceId/model are set by provenance-aware callers (text-to-macro) so a logged food can link
-  // back to the ai_inferences row that predicted it (correction capture + eval attribution).
   | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals; inferenceId?: string; model?: string }
   | { status: 'notConfigured' }
   | { status: 'noFood' }
@@ -42,6 +60,11 @@ type FoodRaw = {
 };
 
 const COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
+const CLIENT_REVIEW_CEILING = 0.69;
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+}
 
 function mapFood(r: FoodRaw, locale: string): FoodLite {
   const name = (locale === 'es' ? r.name_es || r.name_en : r.name_en || r.name_es) || r.name_en;
@@ -58,7 +81,9 @@ function mapFood(r: FoodRaw, locale: string): FoodLite {
   };
 }
 
-// Stopwords stripped so "cooked white rice" still matches a "rice" row when the exact phrase misses.
+// Legacy local matcher stays as a deployment-safe fallback. Once 0145 is live, hybrid retrieval is
+// always attempted first. If the RPC or embedding provider is unavailable, a scan still resolves via
+// this path and then USDA rather than becoming a hard outage.
 const STOP = new Set(['cooked', 'raw', 'dry', 'fresh', 'grilled', 'fried', 'roasted', 'baked', 'boiled', 'steamed', 'cocido', 'cocida', 'crudo', 'cruda', 'seco', 'seca', 'a', 'de', 'la', 'el', 'and', 'with', 'con', 'of']);
 
 function keywords(name: string): string[] {
@@ -69,16 +94,12 @@ function keywords(name: string): string[] {
     .filter((w) => w.length > 2 && !STOP.has(w));
 }
 
-// PostgREST .or() splits conditions on commas, so strip them (plus wildcards, quotes, and
-// backslashes - a predicted name like 6" sub would otherwise break the whole batched query,
-// failing EVERY item on the plate) from user-derived terms.
 function orSafe(term: string): string {
   return term.replace(/[,%*()"\\]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-// Rank candidate rows for a term instead of taking the first substring hit (arbitrary order made
-// "egg" able to land on "eggplant"): exact match, then whole-token match, then shortest (most
-// specific) search_text. Deterministic, zero extra round-trips.
+type FoodRowWithSearch = FoodRaw & { search_text: string | null };
+
 function bestRowForTerm(rows: FoodRowWithSearch[], term: string): FoodRowWithSearch | null {
   const hits = rows.filter((r) => (r.search_text ?? '').includes(term));
   if (!hits.length) return null;
@@ -91,14 +112,7 @@ function bestRowForTerm(rows: FoodRowWithSearch[], term: string): FoodRowWithSea
   return pool.reduce((a, b) => ((a.search_text ?? '').length <= (b.search_text ?? '').length ? a : b));
 }
 
-type FoodRowWithSearch = FoodRaw & { search_text: string | null };
-
-// BATCHED local matching for a whole plate: ONE query for every item's full phrase, then ONE query
-// for every unresolved item's keywords, then JS picks per item with the same preference order the old
-// per-item loop had (full phrase first, then longest keyword). The old path ran up to ~6 serial DB
-// round-trips PER item (phrase + each keyword + ratio), which was the dominant scan latency after the
-// vision call; this is 2 round-trips for the whole plate regardless of item count.
-async function matchFoodsBatch(
+async function matchFoodsLegacy(
   sb: Awaited<ReturnType<typeof createClient>>,
   names: string[],
   locale: string,
@@ -106,7 +120,6 @@ async function matchFoodsBatch(
   const phrases = names.map((n) => orSafe(n.trim().toLowerCase()));
   const results: (FoodLite | null)[] = names.map(() => null);
 
-  // Round 1: all full phrases in one .or(ilike) query; assign in JS by substring test.
   const phraseTerms = [...new Set(phrases.filter((p) => p.length > 2))];
   if (phraseTerms.length) {
     const { data } = await sb
@@ -123,8 +136,8 @@ async function matchFoodsBatch(
     }
   }
 
-  // Round 2: keywords for still-unresolved items, one query, longest-keyword-first per item.
-  const pending = names.map((n, i) => ({ i, words: keywords(n).map(orSafe).filter((w) => w.length > 2) }))
+  const pending = names
+    .map((n, i) => ({ i, words: keywords(n).map(orSafe).filter((w) => w.length > 2) }))
     .filter((x) => results[x.i] === null && x.words.length > 0);
   const kwTerms = [...new Set(pending.flatMap((x) => x.words))];
   if (kwTerms.length) {
@@ -148,9 +161,6 @@ async function matchFoodsBatch(
   return results;
 }
 
-// Apply the deterministic cooked/uncooked yield so per-100g macros (stated for one state) apply to
-// the grams the photo estimated (the visible, cooked form). Ratios come from ONE bulk fetch (the
-// table is tiny) instead of a query per item. cooked = raw * factor.
 async function loadRawToCookedFactors(
   sb: Awaited<ReturnType<typeof createClient>>,
 ): Promise<Map<string, number>> {
@@ -175,16 +185,43 @@ function effectiveGrams(
 ): number {
   if (!food.category) return grams;
   const listed = foodStateFromName(`${food.name} ${predictedName}`);
-  // The photo measures the visible (cooked) portion. If the food row is stated raw, convert down.
   if (listed !== 'raw') return grams;
   const factor = factors.get(food.category) ?? 0;
   if (factor <= 0) return grams;
-  // grams here are cooked (as seen); the row is per-100g raw, so convert cooked -> raw.
   return Math.round(grams / factor);
 }
 
-// Resolve predicted items (from a photo OR a text description) against the foods corpus and scale
-// macros with cooked/uncooked conversion. Shared by analyzeMealPhoto + the text-to-macro pipeline.
+function confidenceFor(
+  item: PredictedItem,
+  dbMatchConfidence: number,
+  nutritionConfidence: number,
+): {
+  identity: number;
+  portion: number;
+  overall: number;
+  publicConfidence: number;
+  needsVerification: boolean;
+} {
+  const identity = clamp01(item.identityConfidence ?? item.confidence);
+  const portion = clamp01(item.portionConfidence ?? item.confidence);
+  const db = clamp01(dbMatchConfidence);
+  const nutrition = clamp01(nutritionConfidence);
+
+  const overall = clamp01(identity * 0.38 + portion * 0.24 + db * 0.23 + nutrition * 0.15);
+  const needsVerification = identity < 0.7 || portion < 0.58 || db < 0.62 || overall < 0.7;
+
+  // The current client already enforces a two-tap review below 0.70 and its auto-accept path requires
+  // >=0.90. Until the client surfaces all confidence dimensions directly, public confidence must carry
+  // the verification decision. Otherwise a strong nutrition source can mathematically hide a weak
+  // portion estimate and let an uncertain number look safe.
+  const weakestCritical = Math.min(identity, portion, db || 1);
+  const publicConfidence = needsVerification
+    ? Math.min(CLIENT_REVIEW_CEILING, overall, weakestCritical)
+    : Math.min(overall, identity, Math.max(portion, 0.7), Math.max(db, 0.7));
+
+  return { identity, portion, overall, publicConfidence: clamp01(publicConfidence), needsVerification };
+}
+
 export async function resolvePredictedItems(
   items: PredictedItem[],
   locale: string,
@@ -192,33 +229,92 @@ export async function resolvePredictedItems(
   if (items.length === 0) return { status: 'noFood' };
 
   const sb = await createClient();
+  const names = items.map((i) => i.name);
   const t0 = Date.now();
-  // Whole-plate resolution in 3 bulk round-trips (phrase batch + keyword batch + ratio map), then
-  // per-item USDA grounding ONLY for local misses (parallel, each cached into foods for next time).
-  // The old shape (per-item serial phrase->keyword->ratio queries) dominated scan latency.
-  const [localMatches, factors] = await Promise.all([
-    matchFoodsBatch(sb, items.map((i) => i.name), locale),
+
+  const [hybridMatches, legacyMatches, factors] = await Promise.all([
+    matchFoodsHybrid(names, locale),
+    matchFoodsLegacy(sb, names, locale),
     loadRawToCookedFactors(sb),
   ]);
   const tLocal = Date.now();
 
   const candidates: PhotoCandidate[] = await Promise.all(
     items.map(async (item, idx): Promise<PhotoCandidate> => {
-      // 1) batched local corpus hit. 2) on miss, ground against USDA + cache so the next log is local.
-      // The model's grams still scale the DB's per-100g macros (golden rule).
-      const food = localMatches[idx] ?? (await groundFoodByName(item.name, locale));
+      const hybrid = hybridMatches[idx];
+      const legacy = legacyMatches[idx];
+
+      let food: FoodLite | null = hybrid?.food ?? legacy;
+      let method: FoodMatchMethod = hybrid?.method ?? (legacy ? 'legacy' : 'external');
+      let dbMatchConfidence = hybrid?.dbMatchConfidence ?? (legacy ? 0.7 : 0);
+      let nutritionConfidence = hybrid?.nutritionConfidence ?? (legacy ? 0.8 : 0);
+
       if (!food) {
-        return { predictedName: item.name, grams: item.grams, confidence: item.confidence, matched: false, food: null, macros: null, basis: item.basis };
+        food = await groundFoodByName(item.name, locale);
+        if (food) {
+          method = 'external';
+          dbMatchConfidence = 0.86;
+          nutritionConfidence = 0.99;
+        }
       }
+
+      if (!food) {
+        const c = confidenceFor(item, 0, 0);
+        return {
+          predictedName: item.name,
+          grams: item.grams,
+          confidence: c.publicConfidence,
+          identityConfidence: c.identity,
+          portionConfidence: c.portion,
+          dbMatchConfidence: 0,
+          nutritionConfidence: 0,
+          overallConfidence: c.overall,
+          needsVerification: true,
+          resolutionMethod: method,
+          matched: false,
+          food: null,
+          macros: null,
+          basis: item.basis,
+        };
+      }
+
+      const c = confidenceFor(item, dbMatchConfidence, nutritionConfidence);
       const effGrams = effectiveGrams(factors, food, item.name, item.grams);
-      // Report the grams the user weighs/sees (the estimate), not the raw-equivalent.
-      return { predictedName: item.name, grams: item.grams, confidence: item.confidence, matched: true, food, macros: macrosForGrams(food, effGrams), basis: item.basis };
+      return {
+        predictedName: item.name,
+        grams: item.grams,
+        confidence: c.publicConfidence,
+        identityConfidence: c.identity,
+        portionConfidence: c.portion,
+        dbMatchConfidence,
+        nutritionConfidence,
+        overallConfidence: c.overall,
+        needsVerification: c.needsVerification,
+        resolutionMethod: method,
+        matched: true,
+        food,
+        macros: macrosForGrams(food, effGrams),
+        basis: item.basis,
+      };
     }),
   );
-  console.log(`[resolve] local ${tLocal - t0}ms, ground ${Date.now() - tLocal}ms, items ${items.length}, misses ${localMatches.filter((m) => m === null).length}`);
+
+  console.log(
+    `[resolve] hybrid/local ${tLocal - t0}ms, ground ${Date.now() - tLocal}ms, items ${items.length}, ` +
+      `hybrid ${hybridMatches.filter(Boolean).length}, unresolved ${candidates.filter((c) => !c.matched).length}, ` +
+      `verify ${candidates.filter((c) => c.needsVerification).length}`,
+  );
 
   const totals = candidates.reduce<MacroTotals>(
-    (a, c) => (c.macros ? { kcal: a.kcal + c.macros.kcal, proteinG: a.proteinG + c.macros.proteinG, carbG: a.carbG + c.macros.carbG, fatG: a.fatG + c.macros.fatG } : a),
+    (a, c) =>
+      c.macros
+        ? {
+            kcal: a.kcal + c.macros.kcal,
+            proteinG: a.proteinG + c.macros.proteinG,
+            carbG: a.carbG + c.macros.carbG,
+            fatG: a.fatG + c.macros.fatG,
+          }
+        : a,
     { kcal: 0, proteinG: 0, carbG: 0, fatG: 0 },
   );
 
