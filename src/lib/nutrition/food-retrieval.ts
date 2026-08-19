@@ -41,6 +41,11 @@ type RpcFoodRow = {
   match_score: number;
 };
 
+const MIN_MATCH_SCORE = 0.64;
+const MIN_MARGIN = 0.06;
+const STRONG_VECTOR = 0.78;
+const STRONG_AUTHORITY = 0.78;
+
 function clamp01(v: number): number {
   return Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
 }
@@ -83,6 +88,55 @@ function nutritionConfidence(row: RpcFoodRow): number {
   return 0.7;
 }
 
+function isUnverifiedAi(row: RpcFoodRow): boolean {
+  return !row.is_verified && (row.source === 'ai' || row.source === 'ai_estimate');
+}
+
+/**
+ * Decide whether the top database row is strong enough to become nutrition truth.
+ *
+ * Absolute score alone is insufficient. "Chicken breast" with two nearly tied rows is materially
+ * different from a 0.72 winner whose runner-up is 0.41. We therefore require both evidence strength
+ * and separation from the runner-up, except for near-exact lexical identity.
+ */
+function acceptedMatch(rows: RpcFoodRow[]): { row: RpcFoodRow; confidence: number } | null {
+  const best = rows[0];
+  if (!best) return null;
+
+  const bestScore = clamp01(Number(best.match_score));
+  const lexical = clamp01(Number(best.lexical_score));
+  const trigram = clamp01(Number(best.trigram_score));
+  const vector = clamp01(Number(best.vector_score));
+  const authority = clamp01(Number(best.authority_score));
+  const secondScore = rows[1] ? clamp01(Number(rows[1].match_score)) : 0;
+  const margin = clamp01(bestScore - secondScore);
+  const exact = lexical >= 0.98;
+
+  // A model-transcribed/unverified AI row cannot win from semantic similarity alone. It is useful as
+  // a cache for a label the member just scanned, but not as a fuzzy source of truth for somebody else's
+  // visually similar food. Only near-exact lexical identity is allowed to select it.
+  if (isUnverifiedAi(best) && !exact) return null;
+
+  // Exact identity is allowed through even if duplicate rows make the top-two score margin tiny. The
+  // source-authority term still determines which duplicate wins.
+  if (exact) {
+    const confidence = clamp01(0.92 + authority * 0.08);
+    return { row: best, confidence };
+  }
+
+  if (bestScore < MIN_MATCH_SCORE) return null;
+  if (margin < MIN_MARGIN) return null;
+
+  const vectorLed = vector > lexical && vector > trigram;
+  if (vectorLed && (vector < STRONG_VECTOR || authority < STRONG_AUTHORITY)) return null;
+
+  // Confidence reflects both the winner's evidence and how decisively it beat the runner-up. This is
+  // what downstream verification gating needs, not a raw fused score with no ambiguity signal.
+  const marginQuality = clamp01(margin / 0.15);
+  const confidence = clamp01(bestScore * 0.82 + marginQuality * 0.13 + authority * 0.05);
+  return { row: best, confidence };
+}
+
 /**
  * Resolve each predicted food name through the database's hybrid matcher.
  *
@@ -104,7 +158,6 @@ export async function matchFoodsHybrid(names: string[], locale: string): Promise
         const candidate = await embed(EMBED.model, name, 'food-resolution');
         if (candidate?.length === EMBED.dims) vector = candidate;
       } catch {
-        // Embeddings are an additive retrieval signal. They must never make food logging unavailable.
         vector = null;
       }
 
@@ -120,13 +173,10 @@ export async function matchFoodsHybrid(names: string[], locale: string): Promise
         }
 
         const rows = (data ?? []) as unknown as RpcFoodRow[];
-        const best = rows[0];
-        if (!best) return null;
-
+        const accepted = acceptedMatch(rows);
+        if (!accepted) return null;
+        const best = accepted.row;
         const score = clamp01(Number(best.match_score));
-        // Do not silently convert a weak semantic neighbor into nutrition facts. Below this floor the
-        // caller grounds against USDA instead. Exact names and verified sources naturally clear it.
-        if (score < 0.58) return null;
 
         return {
           food: toFood(best, locale),
@@ -137,7 +187,7 @@ export async function matchFoodsHybrid(names: string[], locale: string): Promise
           vectorScore: clamp01(Number(best.vector_score)),
           authorityScore: clamp01(Number(best.authority_score)),
           matchScore: score,
-          dbMatchConfidence: score,
+          dbMatchConfidence: accepted.confidence,
           nutritionConfidence: nutritionConfidence(best),
           method: methodFor(best),
         };
