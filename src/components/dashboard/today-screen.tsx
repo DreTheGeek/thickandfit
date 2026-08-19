@@ -12,13 +12,10 @@ import { ErrorState } from '@/components/states/error-state';
 import { STEP_GOAL, SLEEP_GOAL_MIN, formatSleep } from '@/lib/dailymetrics/goals';
 import { FirstRunState } from '@/components/states/first-run-state';
 import { Card } from '@/components/ui/card';
-import { Mission, type MissionItem } from '@/components/dashboard/mission';
 import { TransformCard, PlanCard, SmallCard, type PlanRow } from '@/components/portal/today-cards';
 import { Avatar } from '@/components/ui/avatar';
 import { ButtonLink } from '@/components/ui/button';
-import { Wordmark } from '@/components/ui/wordmark';
 import { Icon } from '@/components/ui/icons';
-import { IconTile, ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
 import { SectionTitle } from '@/components/ui/section';
 import { ProgressRing, ProgressBar } from '@/components/ui/ring';
@@ -39,7 +36,6 @@ export type WeightGoal = { startLb: number; currentLb: number; goalLb: number; p
 export type TodayCoach = { name: string };
 
 export function TodayScreen({
-  name,
   dateLabel: dateLabelInit,
   weekDays: weekDaysInit,
   initial,
@@ -49,11 +45,9 @@ export function TodayScreen({
   weightGoal,
   coach,
   supportEmail,
-  weeksIn,
   daily,
   intelligence,
 }: {
-  name: string;
   dateLabel: string;
   weekDays: WeekDay[];
   initial: DashboardSummary | null;
@@ -63,7 +57,6 @@ export function TodayScreen({
   weightGoal: WeightGoal | null;
   coach: TodayCoach | null;
   supportEmail: string;
-  weeksIn: number | null;
   daily: { steps: number | null; sleepMinutes: number | null };
   /** K9: server-rendered intelligence strip, passed in as a slot. It is a SERVER component (all of
    *  its data is derived server-side and none of it is interactive), so it cannot be imported here
@@ -148,15 +141,9 @@ export function TodayScreen({
     }
   }
 
-  const greeting = name
-    ? t('today.greeting', { name })
-    : locale === 'es'
-      ? 'Hola'
-      : 'Hey there';
 
   // Header: wordmark only. The streak now lives in the dark hero (canonical), and the bell +
   // messages entry live in the app top bar / rail (rendered by the layout).
-  const streak = summary?.streak ?? 0;
   const header = (
     <div className="mb-[18px] flex items-center justify-between">
       <div>
@@ -237,96 +224,7 @@ export function TodayScreen({
   // and Fuel derive from the assigned workout and the food diary; Move and Recover are self-reported
   // via daily_metrics (tap the row to log steps / sleep). Habits still appears when the member has
   // habits set. Nothing invented: an unlogged Move/Recover row prompts to log, never shows a fake.
-  const habitsDone = habits.filter((h) => h.done).length;
-  const moveDone = daily.steps != null && daily.steps >= STEP_GOAL;
-  const recoverDone = daily.sleepMinutes != null && daily.sleepMinutes >= SLEEP_GOAL_MIN;
-  const missionItems: MissionItem[] = [
-    // TRAIN appears only once a program exists, and both halves of that matter.
-    //
-    // It used to render unconditionally, falling back to "Rest day" when todaysWorkout was null.
-    // That string was never right: todaysWorkout is derived from the ASSIGNED PROGRAM's name, so it
-    // is null only when nothing is assigned at all, never because a real programme scheduled a rest
-    // day. The one state the copy could reach was the one it described incorrectly, and it read as
-    // "Steph programmed rest for you" to a member who in fact had no program, three rows above a
-    // "No program yet" row saying the opposite.
-    //
-    // Omitted rather than reworded, because Mission is the list of things she can finish today and
-    // its percentage is done/length (mission.tsx). An impossible row is both a to-do she cannot do
-    // and a permanent cap at 75%, so a member doing everything available still reads as failing.
-    // "No program yet · Start here" already has a home in Things To Do; a second copy here would be
-    // redundant, and this way the denominator fixes itself.
-    //
-    // NOT FIXED HERE: once she HAS a program this row shows the program name every day, including
-    // genuine rest days, and can only be ticked by training. Distinguishing that needs today's
-    // session rather than the plan name, which summary.ts does not currently load.
-    ...(summary.hasProgram
-      ? [
-          {
-            key: 'train' as const,
-            label: t('today.missionTrain'),
-            detail: summary.todaysWorkout?.name ?? '',
-            href: '/workouts',
-            done: Boolean(summary.todaysWorkout?.done),
-          },
-        ]
-      : []),
-    {
-      key: 'fuel',
-      label: t('today.missionFuel'),
-      detail:
-        nutrition && nutrition.consumed.kcal > 0
-          ? t('today.missionMealsLogged')
-          : t('today.missionLogMeals'),
-      href: '/nutrition',
-      done: Boolean(nutrition && nutrition.consumed.kcal > 0),
-    },
-    {
-      key: 'move',
-      label: t('today.missionMove'),
-      detail:
-        daily.steps != null
-          ? t('today.missionSteps', { steps: daily.steps.toLocaleString(locale) })
-          : t('today.missionLogSteps'),
-      capture: 'steps',
-      done: moveDone,
-    },
-    {
-      key: 'recover',
-      label: t('today.missionRecover'),
-      detail:
-        daily.sleepMinutes != null ? formatSleep(daily.sleepMinutes) : t('today.missionLogSleep'),
-      capture: 'sleep',
-      done: recoverDone,
-    },
-  ];
-  if (habits.length > 0) {
-    missionItems.push({
-      key: 'habits',
-      label: t('today.missionHabits'),
-      detail: t('today.missionHabitsOf', { done: habitsDone, total: habits.length }),
-      href: '/you',
-      done: habitsDone === habits.length,
-    });
-  }
 
-  // The THIRD place that told her to wait. With no program assigned this row read "Morning Workout /
-  // Your program's on the way", which is a to-do item she cannot do, sitting in a list called Things
-  // To Do. Point her at the tab that now has three things she CAN do instead.
-  const workoutTitle = summary.todaysWorkout?.name ?? t('activities.noProgram');
-  const workoutSub = summary.todaysWorkout
-    ? t('activities.todaysWorkout')
-    : t('firstSteps.title');
-
-  // Personalized macro status for the hero: how far from "closing" today, then a coaching nudge.
-  let heroMessage: string = t('today.checkinBody');
-  if (nutrition) {
-    const calLeft = Math.round(nutrition.target.kcal - nutrition.consumed.kcal);
-    const proteinLeft = Math.max(0, Math.round(nutrition.target.proteinG - nutrition.consumed.proteinG));
-    heroMessage =
-      calLeft > 0
-        ? `${t('today.heroFromClosing', { cals: calLeft, protein: proteinLeft })} ${t('today.heroNudge')}`
-        : t('today.heroClosed');
-  }
 
   // The handoff's four rows, from data this screen already holds. Green only where a target is hit,
   // which is the functional-only rule the light system had and 8.0 keeps.
@@ -472,25 +370,8 @@ export function TodayScreen({
         ))}
       </div>
 
-      {/* Things to do */}
-      <SectionTitle
-        className="mb-2.5 mt-[26px]"
-        action={<Link href="/workouts">{t('common.viewAll')}</Link>}
-      >
-        {t('today.todo')}
-      </SectionTitle>
-
-      <ListRow
-        href="/workouts"
-        leading={
-          <IconTile>
-            <Icon name="dumbbell" size={18} />
-          </IconTile>
-        }
-        title={workoutTitle}
-        sub={workoutSub}
-        trailing={<CompletionCheck done={summary.todaysWorkout?.done ?? false} />}
-      />
+      {/* "Things to do" lived here: one row pointing at today's workout, which is exactly the
+          TRAIN row in the plan card above. */}
 
       {/* Your habits (canonical card with a done count) */}
       {habits.length > 0 && (

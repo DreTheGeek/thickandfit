@@ -186,12 +186,10 @@ export default async function DashboardPage(): Promise<ReactElement> {
   // Null when neither is known, so the line is hidden rather than showing a fabricated week 1.
   const startedAt =
     onbStartedAt ?? ((profile as { created_at?: string } | null)?.created_at ?? null);
-  const weeksIn = weeksSince(startedAt);
 
   return (
     <TodayScreen
       intelligence={<IntelligenceCard prediction={prediction} meals={meals} />}
-      name={firstName}
       dateLabel={dateLabel}
       weekDays={weekDays}
       initial={summary}
@@ -201,7 +199,6 @@ export default async function DashboardPage(): Promise<ReactElement> {
       weightGoal={weightGoal}
       coach={coach}
       supportEmail={supportEmail}
-      weeksIn={weeksIn}
       daily={daily}
     />
   );
