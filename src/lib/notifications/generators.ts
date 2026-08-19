@@ -13,6 +13,7 @@ import { localHour, localWeekday } from '@/lib/datetime/local-day';
 import { readCoachSettings } from '@/lib/coach/settings';
 import {
   checkinCadenceDays,
+  isCheckinDue,
   reminderHourOf,
   type CoachSettings,
 } from '@/lib/coach/settings-shared';
@@ -332,22 +333,42 @@ export async function generateCheckinReminders(at: Date = new Date()): Promise<G
     if (!prev || r.created_at > prev) lastSentAt.set(r.profile_id, r.created_at);
   }
 
-  const ms = (days: number): number => days * 86_400_000;
-  const due = dueNow.filter((r) => {
+  const eligible = dueNow.filter((r) => {
     const settings = settingsByCompany.get(r.company_id) as CoachSettings;
-
-    // Already reminded inside this cycle? Then this is the same cycle, not the next one.
     const sent = lastSentAt.get(r.profile_id);
-    const cadence = checkinCadenceDays(settings.reminderEvery, settings.reminderPeriod);
-    if (sent && at.getTime() - Date.parse(sent) < ms(cadence - 1)) return false;
-
-    // "Skip the reminder if she has already done it." Reminding someone to do a thing she just did
-    // is the fastest way to teach her the reminders are not worth reading.
     const answered = answeredAt.get(`${r.form_id}:${r.profile_id}`);
-    if (!answered) return true;
-    const window = settings.isReminderSkippedWhenDone ? settings.reminderSkipDays : cadence;
-    return at.getTime() - Date.parse(answered) >= ms(window);
+    return isCheckinDue({
+      lastSentAt: sent ? Date.parse(sent) : null,
+      answeredAt: answered ? Date.parse(answered) : null,
+      cadenceDays: checkinCadenceDays(settings.reminderEvery, settings.reminderPeriod),
+      skipWhenDone: settings.isReminderSkippedWhenDone,
+      skipDays: settings.reminderSkipDays,
+      now: at.getTime(),
+    });
   });
+
+  // AT MOST ONE PER MEMBER PER RUN.
+  //
+  // A member can hold more than one published check-in form — the backfill script has a branch for
+  // exactly that case — and the cadence dedupe reads notifications written BEFORE this run, so it
+  // cannot see the message about to be sent for her second form. Without this she gets two pushes
+  // in the same minute, every cycle, and each one suppresses the other next time.
+  //
+  // When there is a choice, remind her about the one she is furthest behind on: never answered
+  // beats answered a month ago beats answered yesterday.
+  const bestPerProfile = new Map<string, (typeof eligible)[number]>();
+  for (const r of eligible) {
+    const current = bestPerProfile.get(r.profile_id);
+    if (!current) {
+      bestPerProfile.set(r.profile_id, r);
+      continue;
+    }
+    const a = answeredAt.get(`${r.form_id}:${r.profile_id}`) ?? '';
+    const b = answeredAt.get(`${current.form_id}:${current.profile_id}`) ?? '';
+    // '' sorts before any ISO timestamp, so a never-answered form wins.
+    if (a < b) bestPerProfile.set(r.profile_id, r);
+  }
+  const due = [...bestPerProfile.values()];
   if (due.length === 0) return { ok: true, job, selected: dueNow.length, notified: 0 };
 
   const byCompany = new Map<string, Array<{ profileId: string; payload: NotificationPayload }>>();

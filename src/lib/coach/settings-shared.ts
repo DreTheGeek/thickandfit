@@ -84,6 +84,57 @@ export function followUpDays(option: FollowUpOption): number | null {
   }
 }
 
+/**
+ * The weekday gate quantizes sending to whole weeks, so the cadence dedupe has to round to the
+ * nearest week rather than demand the full interval.
+ *
+ * A coach who sets "every 1 month" fires on a weekday, so the reachable gaps are 28 or 35 days, not
+ * 30. Requiring a full 30 pushes every monthly reminder out to 35, which is a five-week month. Half
+ * a week of slack rounds to whichever is nearer: 28 for a 30-day cadence, 63 for a 60-day one.
+ */
+const GATE_SLACK_DAYS = 3.5;
+
+export type CheckinDueInput = {
+  /** When this member was last sent a check-in reminder, ms epoch, or null if never. */
+  lastSentAt: number | null;
+  /** When she last submitted THIS form, ms epoch, or null if never. */
+  answeredAt: number | null;
+  cadenceDays: number;
+  skipWhenDone: boolean;
+  skipDays: number;
+  now: number;
+};
+
+/**
+ * Should this member get a check-in reminder on this tick?
+ *
+ * Assumes the caller has already checked the on/off switch and the weekday + local-hour gate; this
+ * is only the "has enough time passed, and has she already done it" half. Split out because those
+ * two rules decide whether 256 women get a message they did not need, and neither is testable
+ * against a database from a build container.
+ */
+export function isCheckinDue(input: CheckinDueInput): boolean {
+  const { lastSentAt, answeredAt, cadenceDays, skipWhenDone, skipDays, now } = input;
+  const ms = (days: number): number => days * 86_400_000;
+
+  // Already reminded inside this cycle? Then this tick is the same cycle, not the next one.
+  //
+  // Enforced against what was SENT rather than a stored schedule, which is what makes the cadence
+  // survive a missed cron run: the next hour it fires, the gap is still open and she gets it an
+  // hour late instead of two weeks late.
+  if (lastSentAt !== null && now - lastSentAt < ms(Math.max(0, cadenceDays - GATE_SLACK_DAYS))) {
+    return false;
+  }
+
+  // "Skip the reminder if she has already completed it", the coach's own checkbox. OFF means she
+  // wants it sent regardless — the cadence gate above is what stops that from becoming spam, and
+  // reading OFF as "skip anyway, just on a different window" would make the switch do nothing.
+  if (!skipWhenDone) return true;
+
+  if (answeredAt === null) return true;
+  return now - answeredAt >= ms(skipDays);
+}
+
 /** 'HH:MM' -> hour 0..23. Anything unparseable falls back to 18:00, the column default. */
 export function reminderHourOf(timeLocal: string): number {
   const m = /^(\d{1,2}):(\d{2})$/.exec((timeLocal ?? '').trim());

@@ -13,6 +13,7 @@
 import {
   checkinCadenceDays,
   followUpDays,
+  isCheckinDue,
   reminderHourOf,
   DEFAULT_COACH_SETTINGS,
   FOLLOW_UP_OPTIONS,
@@ -141,6 +142,69 @@ check('default cadence is weekly', checkinCadenceDays(DEFAULT_COACH_SETTINGS.rem
 check('default send time is 18:00', reminderHourOf(DEFAULT_COACH_SETTINGS.reminderTimeLocal), 18);
 check('default weekday is Monday', DEFAULT_COACH_SETTINGS.reminderWeekday, 1);
 check('follow-ups ship off too', followUpDays(DEFAULT_COACH_SETTINGS.trainingFollowup), null);
+
+// --- the send decision -------------------------------------------------------------------
+// The half that decides whether 256 women get a message they did not need. Found three defects in
+// the first version of this by reading it back: a member holding two check-in forms was double
+// notified every cycle, "skip when done" did nothing when switched OFF, and a monthly cadence
+// silently became five-weekly because the weekday gate quantizes sending to whole weeks.
+const T0 = 1_786_000_000_000;
+const days = (n: number): number => n * 86_400_000;
+const due = (over: Partial<Parameters<typeof isCheckinDue>[0]> = {}): boolean =>
+  isCheckinDue({
+    lastSentAt: null,
+    answeredAt: null,
+    cadenceDays: 14,
+    skipWhenDone: true,
+    skipDays: 7,
+    now: T0,
+    ...over,
+  });
+
+check('never reminded, never answered: send', due(), true);
+
+// Cadence, at her bi-weekly setting.
+check('reminded yesterday: hold', due({ lastSentAt: T0 - days(1) }), false);
+check('reminded a week ago on a 2-week cadence: hold', due({ lastSentAt: T0 - days(7) }), false);
+check('reminded 14 days ago: send', due({ lastSentAt: T0 - days(14) }), true);
+check('reminded 21 days ago: send', due({ lastSentAt: T0 - days(21) }), true);
+
+// The weekday gate only fires on one weekday, so reachable gaps are multiples of 7. A monthly
+// cadence must land on 28, not be pushed out to 35 by demanding the full 30.
+check('monthly at 28 days sends, not 35', due({ cadenceDays: 30, lastSentAt: T0 - days(28) }), true);
+check('monthly at 21 days still holds', due({ cadenceDays: 30, lastSentAt: T0 - days(21) }), false);
+// 60 days rounds the other way: 63 is nearer than 56, so 56 must hold.
+check('two-monthly at 56 days holds', due({ cadenceDays: 60, lastSentAt: T0 - days(56) }), false);
+check('two-monthly at 63 days sends', due({ cadenceDays: 60, lastSentAt: T0 - days(63) }), true);
+// Weekly must not be loosened into "any time after 3.5 days".
+check('weekly at 3 days holds', due({ cadenceDays: 7, lastSentAt: T0 - days(3) }), false);
+check('weekly at 7 days sends', due({ cadenceDays: 7, lastSentAt: T0 - days(7) }), true);
+
+// Skip-when-done, ON: reminding her to do a thing she just did teaches her to ignore reminders.
+check('answered yesterday: hold', due({ answeredAt: T0 - days(1) }), false);
+check('answered 6 days ago, 7-day skip: hold', due({ answeredAt: T0 - days(6) }), false);
+check('answered exactly 7 days ago: send', due({ answeredAt: T0 - days(7) }), true);
+check('answered 30 days ago: send', due({ answeredAt: T0 - days(30) }), true);
+
+// Skip-when-done, OFF. The checkbox says "do not skip", so it must SEND regardless of her answer —
+// the cadence gate is what stops that from becoming spam. Reading OFF as "skip on a different
+// window" made the switch do nothing at all, which is what the first version did.
+check('skip OFF, answered yesterday: SEND anyway', due({ skipWhenDone: false, answeredAt: T0 - days(1) }), true);
+check('skip OFF, answered today: SEND anyway', due({ skipWhenDone: false, answeredAt: T0 }), true);
+// ...but the cadence still governs, or "do not skip" would mean "send every hour".
+check(
+  'skip OFF does not defeat the cadence',
+  due({ skipWhenDone: false, answeredAt: T0, lastSentAt: T0 - days(2) }),
+  false,
+);
+
+// Cadence outranks completion in the other direction too: recently reminded holds even if she has
+// never answered, or a missed cron catch-up would fire twice in a week.
+check('recently reminded and never answered: still holds', due({ lastSentAt: T0 - days(2) }), false);
+
+// A zero or negative cadence must not turn into "send on every tick".
+check('a zero cadence still respects skip-when-done', due({ cadenceDays: 0, answeredAt: T0 }), false);
+ok('a zero cadence with nothing answered sends', due({ cadenceDays: 0 }) === true);
 
 // --- report ----------------------------------------------------------------------------
 if (failures.length > 0) {
