@@ -24,7 +24,12 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { readCoachSettings } from '@/lib/coach/settings';
 import { followUpDays } from '@/lib/coach/settings-shared';
-import { planEndsOn, daysUntil, isInFollowUpWindow } from '@/lib/coach/plan-followups-shared';
+import {
+  planEndsOn,
+  daysUntil,
+  isInFollowUpWindow,
+  newestAssignmentPerMember,
+} from '@/lib/coach/plan-followups-shared';
 
 export type ExpiringPlanItem = {
   kind: 'training' | 'meal';
@@ -54,7 +59,7 @@ type AssignmentRow = {
   profile_id: string;
   assigned_at: string;
   plans: { name_en: string; weeks: number } | { name_en: string; weeks: number }[] | null;
-  profiles: { full_name: string | null } | { full_name: string | null }[] | null;
+  profiles: { full_name: string | null; role: string } | { full_name: string | null; role: string }[] | null;
 };
 
 function one<T>(v: T | T[] | null | undefined): T | null {
@@ -82,15 +87,30 @@ export async function listExpiringPlans(
   const items: ExpiringPlanItem[] = [];
 
   if (trainingWindowDays !== null) {
+    // Newest first, so the cap (if it is ever reached) drops the assignments that are already
+    // superseded rather than the ones that are current.
     const { data, error } = await svc
       .from('plan_assignments')
-      .select('id, profile_id, assigned_at, plans!inner ( name_en, weeks ), profiles ( full_name )')
+      .select('id, profile_id, assigned_at, plans!inner ( name_en, weeks ), profiles!inner ( full_name, role )')
       .eq('company_id', companyId)
+      // Coaches and operators hold plans too, for testing and for their own training. A queue that
+      // tells Stephanie to renew Stephanie's program is noise in the queue she is meant to trust.
+      .in('profiles.role', ['subscriber', 'free'])
+      .order('assigned_at', { ascending: false })
       .limit(5000);
     if (error) {
       console.error('listExpiringPlans training:', error.message);
     } else {
-      for (const raw of (data ?? []) as unknown as AssignmentRow[]) {
+      // Only her CURRENT plan can run out. See newestAssignmentPerMember: nothing deletes an
+      // assignment, so without this every plan every member ever finished sits here forever.
+      const current = newestAssignmentPerMember(
+        ((data ?? []) as unknown as AssignmentRow[]).map((raw) => ({
+          profileId: raw.profile_id,
+          assignedAt: raw.assigned_at,
+          raw,
+        })),
+      );
+      for (const { raw } of current) {
         const plan = one(raw.plans);
         if (!plan) continue;
         // Null when the duration is corrupt; planEndsOn refuses to guess a date rather than putting

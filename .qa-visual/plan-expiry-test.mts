@@ -11,7 +11,12 @@
 //
 // Run: npx tsx .qa-visual/plan-expiry-test.mts
 import { followUpDays } from '../src/lib/coach/settings-shared';
-import { planEndsOn, daysUntil, isInFollowUpWindow } from '../src/lib/coach/plan-followups-shared';
+import {
+  planEndsOn,
+  daysUntil,
+  isInFollowUpWindow,
+  newestAssignmentPerMember,
+} from '../src/lib/coach/plan-followups-shared';
 
 let pass = 0;
 const failures: string[] = [];
@@ -95,6 +100,92 @@ ok('weeks=1 is a real plan and gets a date', endsOn(assigned, 1) !== null);
 // daysUntil must never return NaN: a NaN comparison is always false, so the plan would silently
 // vanish from the queue rather than showing up wrong.
 check('garbage in daysUntil is 0, not NaN', dayDiff('not-a-date', now), 0);
+
+// --- one assignment per member, and it is the newest ---------------------------------
+// plan_assignments never loses a row: no status column, no unassign, no archive. The first version
+// of the queue walked every assignment in the company, and because the window is open-ended on the
+// past side (an expired plan is the case it exists for), every plan every member had ever finished
+// qualified — permanently, one coach notification each. With 256 migrating members that is an
+// archive of everything that ever ended, not a queue, and no action could empty it.
+
+type Asn = { profileId: string; assignedAt: string; tag: string };
+const asn = (profileId: string, assignedAt: string, tag: string): Asn => ({ profileId, assignedAt, tag });
+const tags = (rows: Asn[]): string[] => rows.map((r) => r.tag).sort();
+
+check('nothing in, nothing out', tags(newestAssignmentPerMember([])), []);
+check('one assignment survives', tags(newestAssignmentPerMember([asn('a', '2026-01-01', 'only')])), ['only']);
+
+// The regression: a member who finished a 6-week block in January and started a 12-week block in
+// June must be asked about June, and never again about January.
+check(
+  'a superseded plan is dropped',
+  tags(
+    newestAssignmentPerMember([
+      asn('a', '2026-06-01', 'june'),
+      asn('a', '2026-01-01', 'january'),
+    ]),
+  ),
+  ['june'],
+);
+check(
+  'input order does not decide it',
+  tags(
+    newestAssignmentPerMember([
+      asn('a', '2026-01-01', 'january'),
+      asn('a', '2026-06-01', 'june'),
+    ]),
+  ),
+  ['june'],
+);
+check(
+  'a long history collapses to one',
+  tags(
+    newestAssignmentPerMember([
+      asn('a', '2024-03-01', 'y1'),
+      asn('a', '2025-03-01', 'y2'),
+      asn('a', '2026-03-01', 'y3'),
+      asn('a', '2023-03-01', 'y0'),
+    ]),
+  ),
+  ['y3'],
+);
+// Members do not collapse into each other. Getting this wrong would drop every member but one from
+// the queue, which fails silently and in the direction nobody checks.
+check(
+  'each member keeps her own newest',
+  tags(
+    newestAssignmentPerMember([
+      asn('a', '2026-06-01', 'a-new'),
+      asn('a', '2026-01-01', 'a-old'),
+      asn('b', '2026-02-01', 'b-new'),
+      asn('b', '2025-02-01', 'b-old'),
+      asn('c', '2026-04-01', 'c-only'),
+    ]),
+  ),
+  ['a-new', 'b-new', 'c-only'],
+);
+// Timestamps, not just days: two assignments made the same afternoon must still order.
+check(
+  'same day, different time, later wins',
+  tags(
+    newestAssignmentPerMember([
+      asn('a', '2026-06-01T09:00:00Z', 'morning'),
+      asn('a', '2026-06-01T17:00:00Z', 'evening'),
+    ]),
+  ),
+  ['evening'],
+);
+// An exact tie keeps the first row seen, which is why the query orders newest-first.
+check(
+  'an exact tie keeps the first seen',
+  tags(
+    newestAssignmentPerMember([
+      asn('a', '2026-06-01T09:00:00Z', 'first'),
+      asn('a', '2026-06-01T09:00:00Z', 'second'),
+    ]),
+  ),
+  ['first'],
+);
 
 // --- report -----------------------------------------------------------------------
 if (failures.length > 0) {

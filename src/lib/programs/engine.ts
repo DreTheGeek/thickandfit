@@ -137,9 +137,25 @@ export async function assignProgram(companyId: string, planId: string, profileId
     .maybeSingle();
   if (!profile) throw new Error('Profile not found');
 
-  await supabase
-    .from('plan_assignments')
-    .upsert({ company_id: companyId, plan_id: planId, profile_id: profileId }, { onConflict: 'plan_id,profile_id' });
+  // assigned_at is written explicitly, and that is not tidiness. plan_assignments is
+  // UNIQUE(plan_id, profile_id), so putting a member back on a plan she has run before is an UPDATE,
+  // and an update that omits assigned_at leaves the original date in place. Stephanie has 40
+  // programs and reruns them; the second time a client goes through the same 12-week block, the old
+  // date meant /workouts computed her week from a start months ago and pinned her at "week 12 of 12"
+  // forever, and the renewal queue kept reporting the plan as expired with no action that could
+  // clear it. Re-assigning IS a new assignment, and the date has to say so.
+  //
+  // Safe to bump: the only caller is POST /api/programs/[id]/assign, a deliberate coach action.
+  // autoAssignStarterProgram writes with ignoreDuplicates and only when she holds nothing at all.
+  await supabase.from('plan_assignments').upsert(
+    {
+      company_id: companyId,
+      plan_id: planId,
+      profile_id: profileId,
+      assigned_at: new Date().toISOString(),
+    },
+    { onConflict: 'plan_id,profile_id' },
+  );
   return { assigned: true };
 }
 
