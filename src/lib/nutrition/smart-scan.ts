@@ -1,10 +1,9 @@
-// Unified "smart scan": ONE vision call decides whether the photo is a MEAL/plate or a single packaged
-// PRODUCT (incl. its Nutrition Facts label) and resolves each correctly. The golden rule holds:
-//   - MEAL: the model gives name + grams; the food DB supplies the macros (resolvePredictedItems).
-//   - PRODUCT by name: grounded against USDA + cached.
-//   - PRODUCT with a legible LABEL: the model TRANSCRIBES the printed per-serving numbers (reading, not
-//     inventing) and we convert to per-100g + cache it.
-// Ambiguity -> a `clarify` question the UI asks the user. No OPENROUTER_API_KEY -> clean notConfigured.
+// Unified Smart Scan: one vision call decides whether the photo is a meal or packaged product.
+// Nutrition truth stays deterministic:
+//   - meal: vision identifies food + edible grams, the food corpus supplies macros
+//   - product by name: USDA/OFF/local corpus supplies macros
+//   - product label: vision transcribes printed values, then the row is cached with low authority
+// Image quality and uncertainty are explicit so an unusable photo is rejected instead of guessed.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { resolvePredictedItems, type PhotoCandidate } from '@/lib/nutrition/photo';
@@ -17,38 +16,34 @@ import { buildScanContext, renderScanContextForPrompt } from '@/lib/nutrition/sc
 import { readPopulationBias } from '@/lib/nutrition/population-bias-store';
 import { renderPopulationBiasForPrompt } from '@/lib/nutrition/population-bias';
 
-// Model routing lives in the central router (AI_MODELS), NOT hardcoded here, so the eval harness can
-// A/B models and swap in one place. The scan tries the primary (smartScan = gpt-5, benchmarked faster +
-// more accurate), then a distinct fallback (gemini), so a provider outage or a model-specific rejection
-// degrades to a proven model instead of failing every meal log. The shared client dedupes the chain.
 const SCAN_CHAIN = [AI_MODELS.smartScan, AI_MODELS.smartScanFallback];
-// Bump when PROMPT changes so replay/eval can group inferences by prompt generation. Exported so the
-// eval harness records the version under test instead of duplicating the string.
-// v2 (2026-07-24): adds K1 member-context injection when ctx is provided. Base PROMPT unchanged,
-// so a ctx-less eval run (the golden-set harness) hits the exact same v1 behavior and its score
-// cannot regress from this wire. The v2 bump lets the trace show WHICH prompt generation ran.
-// v3 (2026-07-31): style rule for "clarify", the one field a member reads verbatim. Prod returned an
-// em dash in it, which nothing else in this product uses. Identification and portion rules are
-// untouched, so scores should not move; the bump keeps that claim checkable in the trace, and since
-// PROMPT_VERSION is part of the PRD-B cache key it also invalidates cached scans, which is correct
-// because a cached v2 clarify string would still carry the old style.
-// v4 (2026-07-31): K4 population-bias injection, added as its own system message BEFORE the member's
-// own context so the member's specific edits remain the last word. Like K1 it only fires when ctx is
-// present, so a ctx-less eval run still exercises the untouched base prompt and the golden-set score
-// cannot move because of this wire.
-export const PROMPT_VERSION = 'smart-scan.v4';
+
+// v5 (2026-08-19): image quality gate plus separate identity and portion confidence. The previous
+// single confidence number mixed two independent error sources. A model can know that an item is
+// chicken while having weak evidence for whether it is 90 g or 180 g. Keeping those separate lets
+// the deterministic resolver ask for verification only where the uncertainty actually lives.
+export const PROMPT_VERSION = 'smart-scan.v5';
 const FOOD_COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
 
+export type ScanClarifyReason = 'image_quality' | 'food_identity' | 'portion' | 'product_identity';
+
 export type SmartScanResult =
-  // `model` = which chain entry actually answered (a mid-run 429 fallback would otherwise silently
-  // contaminate eval attribution). Set on loggable outcomes even without ctx.
-  | { status: 'ok'; candidates: PhotoCandidate[]; totals: MacroTotals; inferenceId?: string; model?: string } // a MEAL
+  | {
+      status: 'ok';
+      candidates: PhotoCandidate[];
+      totals: MacroTotals;
+      verificationQuestions?: string[];
+      inferenceId?: string;
+      model?: string;
+    }
   | { status: 'product'; food: FoodLite; clarify: string | null; inferenceId?: string; model?: string }
-  // inferenceId on the FAILURE variants too (PRD-A). The route stores the scan image keyed by
-  // inference id, and it could only ever see an id on ok/product, so the photos that FAILED were
-  // discarded. Those are precisely the replay set worth keeping: when a better model ships, the
-  // interesting question is what the current one could not read, not what it already got right.
-  | { status: 'clarify'; clarify: string; inferenceId?: string; model?: string }
+  | {
+      status: 'clarify';
+      clarify: string;
+      reason?: ScanClarifyReason;
+      inferenceId?: string;
+      model?: string;
+    }
   | { status: 'notConfigured' }
   | { status: 'noFood'; inferenceId?: string; model?: string }
   | { status: 'error'; inferenceId?: string; model?: string };
@@ -82,21 +77,22 @@ function toFoodLite(r: FoodRow, locale: string): FoodLite {
 }
 
 const PROMPT = [
-  'You are a nutrition vision engine for a fitness app. Look at the photo and decide what it shows.',
-  'It is EITHER (A) a MEAL: a plate/bowl/spread of one or more prepared foods, OR (B) a single packaged PRODUCT or its Nutrition Facts label (a bottle, can, box, wrapper).',
+  'You are a nutrition vision engine for a fitness app. Inspect the photo conservatively. Never guess through bad image quality.',
+  'First judge whether the image is usable for food identification and portion estimation.',
   'Return ONLY minified JSON, no prose, no markdown:',
-  '{"kind":"meal"|"product",',
-  '"meal":{"reference":string,"items":[{"name":string,"grams":number,"confidence":number,"basis":string}]}|null,',
-  '"product":{"name":string,"brand":string|null,"label":{"kcal":number,"protein_g":number,"carb_g":number,"fat_g":number,"serving_grams":number|null,"serving_desc":string|null}|null,"clarify":string|null}|null}',
-  'MEAL rules: identify each distinct food; estimate edible weight in grams using a size reference (dinner plate ~26cm, fork ~19cm) via area x height x density; add a "cooking oil" item if it looks pan-fried/roasted; state cooked or raw in the name when it matters; use common searchable generic names. Do NOT output calories or macros for meal items - those are looked up.',
-  'PRODUCT rules: if a Nutrition Facts panel is legible, TRANSCRIBE the printed per-serving Calories + protein/carbohydrate/fat grams and the serving size into "label" (serving_grams = the gram weight shown in parentheses, e.g. "1 cup (240g)" -> 240; serving_desc = the household measure). Read the printed numbers EXACTLY; never estimate label numbers. If no label is legible, set label=null and give the product name + brand from the packaging. If you cannot tell which specific product it is, put a short question in "clarify" (e.g. "Is this the original or the light version?").',
-  // "clarify" is the ONLY field here shown to a member verbatim, so the house style rule has to reach
-  // the model. Observed on prod 2026-07-31: "The image is unclear-can you retake or specify the
-  // product?" came back with an em dash, which no other copy in this product uses.
-  'STYLE for "clarify" (the only text a person reads): write it in the app\'s voice, warm and direct. NEVER use an em dash or an en dash; use a period, comma, or colon instead. One short sentence.',
+  '{"image_quality":{"usable":boolean,"confidence":number,"issue":string|null},',
+  '"kind":"meal"|"product"|"unknown",',
+  '"meal":{"reference":string|null,"clarify":string|null,"items":[{"name":string,"grams":number,"identity_confidence":number,"portion_confidence":number,"confidence":number,"basis":string}]}|null,',
+  '"product":{"name":string,"brand":string|null,"identity_confidence":number,"label":{"kcal":number,"protein_g":number,"carb_g":number,"fat_g":number,"serving_grams":number|null,"serving_desc":string|null}|null,"clarify":string|null}|null}',
+  'IMAGE QUALITY rules: usable=false when blur, darkness, glare, severe crop, occlusion, distance, or a blocked view prevents dependable identification. A clear image can still have low portion confidence. Do not mark a clear image unusable only because portion size is difficult.',
+  'MEAL rules: identify each distinct visible food. Use common searchable generic names. State cooked or raw when it materially changes nutrition. Estimate edible grams from visible geometry and any reliable size reference. If there is no reliable reference, lower portion_confidence instead of pretending the grams are exact. Add cooking oil only when visual evidence supports it. Hidden sauces, oils, fillings, and ingredients must not be invented.',
+  'For each meal item, identity_confidence answers only: how sure are you what the food is? portion_confidence answers only: how sure are you about the edible grams? confidence is the conservative combined confidence and must not exceed the weaker dimension by more than 0.10. Values are 0 to 1.',
+  'If two materially different foods are visually plausible and the choice would change nutrition, keep the best generic identity, lower identity_confidence, and put one short targeted question in meal.clarify.',
+  'Do NOT output calories or macros for meal items. The database supplies nutrition facts after identity resolution.',
+  'PRODUCT rules: if a Nutrition Facts panel is legible, transcribe the printed per-serving Calories, protein, carbohydrate, fat, and serving size exactly. Never estimate missing label numbers. If the exact product or variant is uncertain, lower identity_confidence and ask one short targeted question in product.clarify.',
+  'STYLE for clarify text: warm, direct, one short sentence. Never use an em dash or en dash.',
 ].join('\n');
 
-// A transcribed Nutrition Facts label -> a per-100g food row, cached. Needs serving_grams to convert.
 type LabelData = {
   kcal: number;
   protein_g: number;
@@ -105,18 +101,17 @@ type LabelData = {
   serving_grams: number | null;
   serving_desc: string | null;
 };
+
 async function groundFoodFromLabel(
   p: { name: string; brand: string | null; label: LabelData },
   locale: string,
 ): Promise<FoodLite | null> {
   const g = p.label.serving_grams;
-  if (!g || g <= 0) return null; // can't convert per-serving -> per-100g without the gram weight
+  if (!g || g <= 0) return null;
   const scale = 100 / g;
   const name = `${p.brand ? `${p.brand} ` : ''}${p.name}`.trim().slice(0, 300);
   const svc = createServiceClient();
-  // Dedupe: scanning the same label twice previously inserted a NEW row every time, growing
-  // near-duplicate corpus rows that the ilike matcher then hit at random. Reuse the cached row;
-  // the uq_foods_ai_name partial unique index (0067) closes the concurrent-scan race.
+
   const { data: existing } = await svc
     .from('foods')
     .select(FOOD_COLS)
@@ -125,6 +120,7 @@ async function groundFoodFromLabel(
     .limit(1)
     .maybeSingle();
   if (existing) return toFoodLite(existing as FoodRow, locale);
+
   const { data: inserted } = await svc
     .from('foods')
     .insert({
@@ -135,13 +131,13 @@ async function groundFoodFromLabel(
       protein_g: Math.round(p.label.protein_g * scale * 10) / 10,
       carb_g: Math.round(p.label.carb_g * scale * 10) / 10,
       fat_g: Math.round(p.label.fat_g * scale * 10) / 10,
-      is_verified: false, // read by the model, not a validated DB
+      is_verified: false,
       search_text: name.toLowerCase(),
     })
     .select(FOOD_COLS)
     .maybeSingle();
   if (inserted) return toFoodLite(inserted as FoodRow, locale);
-  // Unique-index race: a concurrent scan inserted it first - reuse that row.
+
   const { data: winner } = await svc
     .from('foods')
     .select(FOOD_COLS)
@@ -155,6 +151,7 @@ async function groundFoodFromLabel(
 type Product = {
   name?: string;
   brand?: string | null;
+  identity_confidence?: number;
   label?: {
     kcal?: number;
     protein_g?: number;
@@ -165,25 +162,64 @@ type Product = {
   } | null;
   clarify?: string | null;
 };
-type MealItem = { name?: string; grams?: number; confidence?: number; basis?: string };
-type VisionOut = { kind?: string; meal?: { items?: MealItem[] } | null; product?: Product | null };
+
+type MealItem = {
+  name?: string;
+  grams?: number;
+  identity_confidence?: number;
+  portion_confidence?: number;
+  confidence?: number;
+  basis?: string;
+};
+
+type VisionOut = {
+  image_quality?: { usable?: boolean; confidence?: number; issue?: string | null } | null;
+  kind?: string;
+  meal?: { items?: MealItem[]; clarify?: string | null; reference?: string | null } | null;
+  product?: Product | null;
+};
 
 function num(v: unknown, d = 0): number {
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : d;
 }
 
-/**
- * Turn a parsed VisionOut into a result, via the DETERMINISTIC half of the pipeline.
- *
- * Extracted so the fresh path and the cache-replay path run the SAME code. Duplicating it would
- * mean a re-scan could diverge from the original scan the first time either copy was edited, which
- * is the exact failure the cache exists to prevent.
- *
- * Deterministic given DB state: the model supplies names + grams, the food tables supply the macros.
- * So replaying a cached VisionOut yields the same items with FRESH macros, which is what we want if
- * a food row was corrected between the two scans.
- */
+function clamp01(v: unknown, fallback: number): number {
+  return Math.min(1, Math.max(0, num(v, fallback)));
+}
+
+function imageQualityClarify(issue: string | null | undefined): string {
+  const value = (issue ?? '').toLowerCase();
+  if (value.includes('blur')) return 'That photo is too blurry to log accurately. Retake it with the food in focus.';
+  if (value.includes('dark') || value.includes('light')) return 'I need a brighter photo to read this accurately. Retake it in better light.';
+  if (value.includes('glare')) return 'Glare is blocking the food details. Retake it from a slightly different angle.';
+  if (value.includes('crop') || value.includes('cut off')) return 'Part of the meal is cut off. Retake it with the full plate in frame.';
+  if (value.includes('occlu') || value.includes('block')) return 'Part of the meal is blocked from view. Retake it so the whole plate is visible.';
+  if (value.includes('distance') || value.includes('far')) return 'The food is too far away to estimate reliably. Move closer and retake the photo.';
+  return 'I cannot read this meal accurately from that photo. Retake it with the full meal clear and in focus.';
+}
+
+function verificationQuestions(candidates: PhotoCandidate[], modelClarify: string | null): string[] {
+  const questions: string[] = [];
+  if (modelClarify) questions.push(modelClarify);
+
+  const weakestIdentity = [...candidates]
+    .filter((c) => c.identityConfidence < 0.68 || c.dbMatchConfidence < 0.62)
+    .sort((a, b) => Math.min(a.identityConfidence, a.dbMatchConfidence) - Math.min(b.identityConfidence, b.dbMatchConfidence))[0];
+  if (weakestIdentity && questions.length === 0) {
+    questions.push(`Can you confirm that the ${weakestIdentity.predictedName} is identified correctly?`);
+  }
+
+  const weakestPortion = [...candidates]
+    .filter((c) => c.portionConfidence < 0.58)
+    .sort((a, b) => a.portionConfidence - b.portionConfidence)[0];
+  if (weakestPortion && questions.length < 2) {
+    questions.push(`About how much ${weakestPortion.predictedName} did you have?`);
+  }
+
+  return [...new Set(questions)].slice(0, 2);
+}
+
 async function resolveVisionOut(
   out: VisionOut,
   locale: string,
@@ -193,11 +229,34 @@ async function resolveVisionOut(
   let itemCount = 0;
   let confidence: number | null = null;
 
+  const quality = out.image_quality;
+  if (quality?.usable === false) {
+    return {
+      result: {
+        status: 'clarify',
+        clarify: imageQualityClarify(quality.issue),
+        reason: 'image_quality',
+      },
+      itemCount: 0,
+      confidence: clamp01(quality.confidence, 0),
+    };
+  }
+
   if (out.kind === 'product' && out.product) {
-    // --- PRODUCT ---
     const p = out.product;
     const name = (p.name ?? '').trim();
     const clarify = p.clarify?.trim() || null;
+    const identityConfidence = clamp01(p.identity_confidence, name ? 0.65 : 0);
+    confidence = identityConfidence;
+
+    // If the model itself says it cannot identify the product variant, do not silently ground the
+    // wrong SKU from a fuzzy name. Ask first when confidence is materially low and it supplied a
+    // targeted clarification.
+    if (identityConfidence < 0.58 && clarify) {
+      result = { status: 'clarify', clarify, reason: 'product_identity' };
+      return { result, itemCount, confidence };
+    }
+
     let food: FoodLite | null = null;
     if (p.label && typeof p.label.kcal === 'number') {
       food = await groundFoodFromLabel(
@@ -218,57 +277,80 @@ async function resolveVisionOut(
     }
     if (!food && name) food = await groundFoodByName(name, locale);
     if (food) result = { status: 'product', food, clarify };
-    else if (clarify) result = { status: 'clarify', clarify };
+    else if (clarify) result = { status: 'clarify', clarify, reason: 'product_identity' };
     else result = { status: 'noFood' };
-  } else {
-    // --- MEAL --- (reuse the grounded resolve pipeline)
-    const items = (out.meal?.items ?? [])
-      .map((it) => {
-        const nm = (it.name ?? '').trim();
-        if (!nm) return null;
-        return {
-          name: nm,
-          grams: Math.min(5000, Math.max(1, Math.round(num(it.grams, 100)))),
-          confidence: Math.min(1, Math.max(0, num(it.confidence, 0.5))),
-          basis: typeof it.basis === 'string' && it.basis.trim() ? it.basis.trim() : undefined,
-        };
-      })
-      .filter((x): x is NonNullable<typeof x> => x !== null)
-      .slice(0, 12);
-    itemCount = items.length;
-    confidence = items.length ? items.reduce((s, it) => s + it.confidence, 0) / items.length : null;
-
-    const tResolve = Date.now();
-    const resolved = await resolvePredictedItems(items, locale);
-    // Timing split so prod latency is attributable (vision vs food resolution) from the logs.
-    // visionMs is null on a cache replay, where there was no vision call to attribute.
-    console.log(
-      `[smart-scan] vision ${visionMs === null ? 'cached' : `${visionMs}ms`}, resolve ${Date.now() - tResolve}ms, items ${items.length}`,
-    );
-    if (resolved.status === 'ok') result = { status: 'ok', candidates: resolved.candidates, totals: resolved.totals };
-    else {
-      if (resolved.status !== 'noFood') console.error('smart-scan resolve failed:', resolved.status);
-      result = { status: resolved.status === 'noFood' ? 'noFood' : 'error' };
-    }
+    return { result, itemCount, confidence };
   }
+
+  if (out.kind !== 'meal' || !out.meal) {
+    return {
+      result: {
+        status: 'clarify',
+        clarify: 'I cannot tell what food is in this photo. Retake it with the meal centered and clearly visible.',
+        reason: 'image_quality',
+      },
+      itemCount: 0,
+      confidence: 0,
+    };
+  }
+
+  const items = (out.meal.items ?? [])
+    .map((it) => {
+      const nm = (it.name ?? '').trim();
+      if (!nm) return null;
+      const legacy = clamp01(it.confidence, 0.5);
+      const identityConfidence = clamp01(it.identity_confidence, legacy);
+      const portionConfidence = clamp01(it.portion_confidence, legacy);
+      const conservative = Math.min(legacy, identityConfidence + 0.1, portionConfidence + 0.1);
+      return {
+        name: nm,
+        grams: Math.min(5000, Math.max(1, Math.round(num(it.grams, 100)))),
+        confidence: Math.max(0, conservative),
+        identityConfidence,
+        portionConfidence,
+        basis: typeof it.basis === 'string' && it.basis.trim() ? it.basis.trim() : undefined,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .slice(0, 12);
+
+  itemCount = items.length;
+  confidence = items.length
+    ? items.reduce((sum, item) => sum + Math.min(item.identityConfidence, item.portionConfidence), 0) / items.length
+    : null;
+
+  if (!items.length) {
+    const clarify = out.meal.clarify?.trim();
+    result = clarify
+      ? { status: 'clarify', clarify, reason: 'food_identity' }
+      : { status: 'noFood' };
+    return { result, itemCount, confidence };
+  }
+
+  const tResolve = Date.now();
+  const resolved = await resolvePredictedItems(items, locale);
+  console.log(
+    `[smart-scan] vision ${visionMs === null ? 'cached' : `${visionMs}ms`}, resolve ${Date.now() - tResolve}ms, items ${items.length}`,
+  );
+
+  if (resolved.status === 'ok') {
+    const questions = verificationQuestions(resolved.candidates, out.meal.clarify?.trim() || null);
+    result = {
+      status: 'ok',
+      candidates: resolved.candidates,
+      totals: resolved.totals,
+      ...(questions.length ? { verificationQuestions: questions } : {}),
+    };
+  } else {
+    if (resolved.status !== 'noFood') console.error('smart-scan resolve failed:', resolved.status);
+    result = { status: resolved.status === 'noFood' ? 'noFood' : 'error' };
+  }
+
   return { result, itemCount, confidence };
 }
 
-/** How long an identical photo replays without hitting the model. */
 const SCAN_CACHE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-/**
- * Most recent cache-eligible scan of this exact image, for this member, under this prompt version.
- *
- * MEMBER-SCOPED on purpose. K1 folds each member's own habits and corrections into the prompt, so
- * two members photographing the same plate can legitimately get different reads. Serving one
- * member a result shaped by another's history would be wrong even though it leaks nothing.
- *
- * PROMPT_VERSION is part of the key, so bumping it auto-invalidates every cached scan. Model-chain
- * changes deliberately do NOT invalidate: the cached VisionOut was already accepted output.
- *
- * Never throws. A DB blip must not block scanning (same contract as buildScanContext).
- */
 async function findCachedScan(
   profileId: string,
   inputHash: string,
@@ -283,8 +365,6 @@ async function findCachedScan(
       .eq('profile_id', profileId)
       .eq('input_hash', inputHash)
       .eq('prompt_version', PROMPT_VERSION)
-      // Only a successful read is worth replaying. A failure re-tries the model, which is the whole
-      // point of keeping the PRD-A failure corpus separate from this.
       .in('status', ['ok', 'product'])
       .gte('created_at', since)
       .order('created_at', { ascending: false })
@@ -292,7 +372,6 @@ async function findCachedScan(
       .maybeSingle();
     if (error || !data) return null;
     const row = data as { id: string; raw_output: unknown; model: string | null };
-    // raw_output is jsonb. A row written before this shape existed, or a string, is not replayable.
     if (!row.raw_output || typeof row.raw_output !== 'object') return null;
     return { id: row.id, rawOutput: row.raw_output as VisionOut, model: row.model ?? 'cached' };
   } catch (e) {
@@ -310,16 +389,6 @@ export async function analyzeSmartPhoto(
   const tVision = Date.now();
   const inputHash = hashInput(image);
 
-  // Determinism cache. Same plate scanned twice returned different numbers, and re-scan variance
-  // destroys trust faster than being wrong does: an answer that changes reads as guessing.
-  //
-  // ONLY with ctx. A ctx-less call is the eval harness, which must always hit the live model or a
-  // cached row would silently poison the run it is meant to measure.
-  //
-  // A hit writes NO new ai_inferences row: replaying a stored read is not a new inference, and
-  // logging one would double-count it in every accuracy number. It threads the ORIGINAL id back, so
-  // a correction made on the second scan attaches to the inference that actually produced the
-  // prediction.
   if (ctx) {
     const cached = await findCachedScan(ctx.profileId, inputHash);
     if (cached) {
@@ -332,15 +401,7 @@ export async function analyzeSmartPhoto(
   }
 
   try {
-    // K1 loop-close: retrieve this member's structured history (habits + past corrections) and
-    // fold it in as an ADDITIONAL system message. Base PROMPT stays untouched so eval attribution
-    // is clean and a member with no history gets the exact same v1 behavior. Fire-and-forget SQL:
-    // a failed context read logs and returns empty rather than blocking the scan.
     let memberContextText: string | null = null;
-    // K4: what EVERY member has taught this engine, not just this one. K1 above only helps someone
-    // who has already corrected scans, so it does nothing on day one and never notices that all
-    // members under-report the same food. Read in parallel with the member's own history; both are
-    // best-effort and a failure in either leaves the base prompt untouched.
     let populationBiasText: string | null = null;
     if (ctx) {
       const [ownRes, popRes] = await Promise.allSettled([
@@ -352,45 +413,29 @@ export async function analyzeSmartPhoto(
       if (popRes.status === 'fulfilled') populationBiasText = renderPopulationBiasForPrompt(popRes.value);
       else console.error('smart-scan readPopulationBias:', popRes.reason);
     }
-    const messages: { role: string; content: unknown }[] = [
-      { role: 'system', content: PROMPT },
-    ];
-    // Population first, member second: the member's own edits are the more specific evidence and
-    // should be the last word when the two disagree.
+
+    const messages: { role: string; content: unknown }[] = [{ role: 'system', content: PROMPT }];
     if (populationBiasText) messages.push({ role: 'system', content: populationBiasText });
     if (memberContextText) messages.push({ role: 'system', content: memberContextText });
     messages.push({
       role: 'user',
       content: [
-        { type: 'text', text: 'Classify and read this photo (a meal, or a single packaged product/label).' },
+        { type: 'text', text: 'Classify and read this photo. Reject it if image quality cannot support a dependable food read.' },
         { type: 'image_url', image_url: { url: image } },
       ],
     });
-    // The shared client runs the chain: primary then fallback, each attempt bounded to 75s so the
-    // fallback still fits the route's 300s ceiling; latency-sorted provider + low reasoning effort
-    // keep gpt-5 sub-second (its default heavy reasoning was the old ~40s cost). Provenance is
-    // DEFERRED: the ai_inferences row needs the final pipeline status + itemCount + confidence, so
-    // this module enriches and logs it after the resolve step (exactly the pre-client behavior).
+
     const call = await callJson({
       models: SCAN_CHAIN,
       timeoutMs: 75_000,
       providerSort: 'latency',
       reasoningEffort: 'low',
       messages,
-      // Provenance is deferred (enriched + logged after resolve), so label the trace explicitly here
-      // or the scan - the moat surface - aggregates under 'unknown' on /admin/traces.
       traceFeature: 'photo-scan',
-      // How many context blocks actually reached the model this call (population priors + this
-      // member's own history). Without it the injection is unobservable in prod: ai_trace stores no
-      // prompt input, so "the prior was applied" would be an assumption rather than a fact. This
-      // makes it a number anyone can query after the event.
       retrievalCount: (populationBiasText ? 1 : 0) + (memberContextText ? 1 : 0),
     });
     if (call.status === 'notConfigured') return { status: 'notConfigured' };
-    // PRD-A: a provider outage (every model in the chain failed) used to return here with no
-    // provenance row at all, so the scan left no trace anywhere. Log it, then return. `model: 'none'`
-    // because no chain entry answered; callJson does not surface which one was tried last on the
-    // error path, and inventing an attribution would be worse than recording that none succeeded.
+
     if (call.status !== 'ok') {
       const failed: SmartScanResult = { status: 'error' };
       if (!ctx) return failed;
@@ -414,25 +459,16 @@ export async function analyzeSmartPhoto(
         return failed;
       }
     }
+
     const usedModel = call.model;
     const out = JSON.parse(call.content) as VisionOut;
     const visionMs = call.latencyMs;
-
-    // Build the result first, then write ONE provenance row for the whole scan and thread its id back so
-    // a logged food links to the inference that produced it (enables correction capture + replay).
-    // `result` is reassigned below (model + inferenceId are threaded onto it); the other two are not.
     const resolvedOut = await resolveVisionOut(out, locale, visionMs);
     const { itemCount, confidence } = resolvedOut;
     let result = resolvedOut.result;
 
-    // Which model answered, on every outcome (with or without ctx): the eval harness runs ctx-less
-    // and must attribute a mid-run fallback (gpt-5 429 -> gemini) to the right model. Applied to
-    // failures too now, so "gemini could not read this photo" is answerable from the row alone.
     if (result.status !== 'notConfigured') result = { ...result, model: usedModel };
 
-    // Provenance: one row per scan (fire-after, needs the final status). Only when we know the
-    // tenant/member (ctx). Thread the id back onto EVERY outcome so a correction can attach to it
-    // and, more importantly, so the route can store the pixels for a failed scan.
     if (ctx) {
       const inferenceId = await logInference({
         companyId: ctx.companyId,
@@ -447,16 +483,10 @@ export async function analyzeSmartPhoto(
         status: result.status,
         itemCount,
       });
-      // notConfigured is the only variant with no id field: it returns before any model call, so
-      // there is nothing to attribute and no pixels worth keeping.
       if (inferenceId && result.status !== 'notConfigured') result = { ...result, inferenceId };
     }
     return result;
   } catch (e) {
-    // PRD-A: this catch used to return {status:'error'} with no provenance row, so a scan that threw
-    // (a JSON.parse of model garbage lands here) was invisible: no row, no image, nothing on
-    // /admin/traces. That is the fallback chain's "the model returned nonsense" signal and the eval
-    // wants it. Telemetry never throws, hence the nested try (house contract, see inferences.ts).
     console.error('smart-scan exception:', e instanceof Error ? e.message : String(e));
     const failed: SmartScanResult = { status: 'error' };
     if (!ctx) return failed;
