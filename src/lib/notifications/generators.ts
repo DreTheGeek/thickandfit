@@ -22,6 +22,17 @@ import { notifyNewChallenge } from '@/lib/notifications/triggers';
 import { getEngagementSweep } from '@/lib/engagement/risk';
 import { listExpiringPlans } from '@/lib/coach/plan-followups';
 import {
+  LIFECYCLE_COPY_KEY,
+  LIFECYCLE_LINK,
+  LIFECYCLE_TYPES,
+  LIFECYCLE_TYPE_LIST,
+  lifecycleHistoryKey,
+  lifecycleStage,
+  selectLifecycleSends,
+} from '@/lib/engagement/lifecycle-shared';
+import type { LifecycleCandidate } from '@/lib/engagement/lifecycle-shared';
+import {
+  isEngagementRisk,
   ladderHistoryKey,
   ladderLookbackDay,
   reengageStage,
@@ -714,6 +725,10 @@ export async function generateCycleReminders(at: Date = new Date()): Promise<Gen
 // truncated history reads as "nothing sent", which is exactly the resend bug the lookback fixes.
 const REENGAGE_HISTORY_CAP = 5000;
 
+// Same guard, same reason, for the lifecycle read. Five milestones per member means this roster
+// could not approach it; reaching it means something is duplicating sends.
+const LIFECYCLE_HISTORY_CAP = 5000;
+
 const REENGAGE_COPY: Record<7 | 14 | 28, { key: string; link: string }> = {
   7: { key: 'reengage7', link: '/dashboard' },
   // Sends her to the coach thread rather than the workout list on purpose. At two weeks the barrier
@@ -799,6 +814,97 @@ export async function generateReengagementNudges(): Promise<GeneratorResult> {
           title: notifText(locale, `${copy.key}Title`),
           body: notifText(locale, `${copy.key}Body`),
           link: copy.link,
+        },
+      });
+    }
+
+    if (recipients.length === 0) continue;
+    await createNotificationsBulk(companyId, recipients);
+    notified += recipients.length;
+  }
+
+  return { ok: true, job, selected, notified };
+}
+
+// ---------------------------------------------------------------------------
+// The tenure lifecycle: day 7, 14, 30, 45, 90.
+//
+// The counterpart to the re-engagement ladder, and deliberately its opposite. The ladder reaches a
+// woman who stopped; this reaches a woman who did not. Before it, the only tenure-driven message in
+// the whole app was generateOnboardingNudges, which fires once, inside the first 14 days, only to
+// members who never onboarded — so a member who DID onboard and kept training heard nothing about
+// her own progress, ever, from the system.
+//
+// THE SUPPRESSION IS THE FEATURE. Anyone the sweep classifies as at risk is skipped, because
+// "you've been at this a month, look what you built" landing on a woman who has not logged anything
+// in three weeks proves nobody is looking. She gets the ladder instead. Both read the same sweep in
+// the same run, so the two can never disagree about who she is.
+//
+// See lifecycle-shared.ts for the grace window, which is what makes this safe to switch on against
+// an existing roster rather than emptying five milestones into 256 migrating members at once.
+// ---------------------------------------------------------------------------
+export async function generateLifecycleNudges(): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+  const job = 'lifecycle';
+
+  const { data: companyData, error: companyErr } = await svc.from('companies').select('id');
+  if (companyErr) return { ok: false, job, selected: 0, notified: 0, error: companyErr.message };
+  const companyIds = ((companyData ?? []) as { id: string }[]).map((c) => c.id);
+
+  let selected = 0;
+  let notified = 0;
+
+  for (const companyId of companyIds) {
+    const { rows } = await getEngagementSweep(companyId);
+    const due: LifecycleCandidate[] = [];
+    const rowBy = new Map<string, (typeof rows)[number]>();
+    for (const r of rows) {
+      // She is being chased, not celebrated. The ladder owns her this run.
+      if (isEngagementRisk(r.tier)) continue;
+      const stage = lifecycleStage(r.memberAgeDays);
+      if (stage === null) continue;
+      due.push({ profileId: r.profileId, stage });
+      rowBy.set(r.profileId, r);
+    }
+    if (due.length === 0) continue;
+    selected += due.length;
+
+    // No time bound, because the guard is "ever" rather than "since an anchor" — tenure only moves
+    // forward. Bounded instead by the cohort (at most one row per member per milestone) and capped,
+    // for the same reason the ladder is: a truncated history reads as "nothing sent".
+    const { data: sentData, error: sentErr } = await svc
+      .from('notifications')
+      .select('profile_id, type')
+      .eq('company_id', companyId)
+      .in('profile_id', due.map((d) => d.profileId))
+      .in('type', LIFECYCLE_TYPE_LIST)
+      .limit(LIFECYCLE_HISTORY_CAP);
+    if (sentErr) return { ok: false, job, selected, notified, error: sentErr.message };
+    const history = (sentData ?? []) as { profile_id: string; type: string }[];
+    if (history.length >= LIFECYCLE_HISTORY_CAP) {
+      return {
+        ok: false,
+        job,
+        selected,
+        notified,
+        error: `lifecycle history hit the ${LIFECYCLE_HISTORY_CAP}-row cap; refusing to send on a partial read`,
+      };
+    }
+    const sent = new Set(history.map((r) => lifecycleHistoryKey(r.profile_id, r.type)));
+
+    const recipients: Array<{ profileId: string; payload: NotificationPayload }> = [];
+    for (const { profileId, stage } of selectLifecycleSends(due, sent)) {
+      const row = rowBy.get(profileId);
+      if (!row) continue;
+      const locale = asNotifLocale(row.locale);
+      const key = LIFECYCLE_COPY_KEY[stage];
+      recipients.push({
+        profileId,
+        payload: {
+          type: LIFECYCLE_TYPES[stage],
+          title: notifText(locale, `${key}Title`),
+          body: notifText(locale, `${key}Body`),
+          link: LIFECYCLE_LINK[stage],
         },
       });
     }

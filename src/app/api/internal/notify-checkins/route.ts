@@ -2,8 +2,8 @@
 // bearer; also callable as GET for manual verification. Secret-gated, service role.
 //
 // Runs the one-time "finish onboarding" nudge for abandoned signups, the re-engagement ladder for
-// members who have gone quiet, and the coach-facing plan-expiry reminder. Logs each run to
-// cron_job_log. Never requires CRON_SECRET at import time (build-safe).
+// members who have gone quiet, the tenure lifecycle for the members who have not, and the
+// coach-facing plan-expiry reminder. Logs each run to cron_job_log. Never requires CRON_SECRET at import time (build-safe).
 //
 // The name is now a misnomer and stays anyway: check-ins moved to the hourly notify-reminders job
 // on 2026-08-14, and renaming a route that pg_cron already points at is how a cron silently stops.
@@ -14,6 +14,7 @@ import { logCronRun } from '@/lib/monitoring/cron-log';
 import {
   generateOnboardingNudges,
   generateReengagementNudges,
+  generateLifecycleNudges,
   generatePlanFollowupReminders,
   resumeDuePauses,
 } from '@/lib/notifications/generators';
@@ -49,16 +50,22 @@ async function run(req: NextRequest): Promise<NextResponse> {
   const resumed = await resumeDuePauses();
   const result = await generateOnboardingNudges();
   const reengagement = await generateReengagementNudges();
+  // The ladder's counterpart: tenure milestones for the members who did NOT go quiet. It runs right
+  // after the ladder, and reads the same sweep, so the suppression inside it ("skip anyone at risk")
+  // is decided from the same view of the roster that just chased her. Running these two out of
+  // order, or against two different sweeps, is how one woman gets both a win-back and a
+  // congratulations in the same minute.
+  const lifecycle = await generateLifecycleNudges();
   // The only one addressed at the coach rather than a member. Daily is the right cadence: the
   // window she configures is measured in days, and an hourly nudge about a plan ending next week
   // would be noise.
   const planFollowups = await generatePlanFollowupReminders();
-  const combined = { ...result, reengagement, planFollowups, resumed };
-  const ok = result.ok && reengagement.ok && planFollowups.ok && resumed.ok;
+  const combined = { ...result, reengagement, lifecycle, planFollowups, resumed };
+  const ok = result.ok && reengagement.ok && lifecycle.ok && planFollowups.ok && resumed.ok;
 
   after(() => logCronRun('notify-checkins-cron', ok ? 'success' : 'error', combined)); // survives the frozen lambda; insert failures now hit the function logs
 
-  const failed = [result, reengagement, planFollowups, resumed].find((r) => !r.ok);
+  const failed = [result, reengagement, lifecycle, planFollowups, resumed].find((r) => !r.ok);
   const body = ok ? combined : { ok: false as const, job: failed?.job ?? result.job };
   return NextResponse.json(body, { status: ok ? 200 : 500 });
 }

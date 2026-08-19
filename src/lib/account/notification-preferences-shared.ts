@@ -44,6 +44,14 @@ export function categoryForNotificationType(type: string): NotificationCategory 
     case 'reengage_7':
     case 'reengage_14':
     case 'reengage_28':
+    // Tenure milestones sit beside the win-back messages for the same reason: warm, automated, and
+    // hers to switch off. A woman who has muted reminders has told us she does not want the app
+    // congratulating her, and that answer has to hold for the nice messages too or it means nothing.
+    case 'lifecycle_7':
+    case 'lifecycle_14':
+    case 'lifecycle_30':
+    case 'lifecycle_45':
+    case 'lifecycle_90':
       return 'reminders';
     case 'renewal':
     case 'comp_expiring':

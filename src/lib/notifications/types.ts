@@ -29,7 +29,14 @@ export type NotificationType =
   // Addressed at the COACH, not a member: a plan reaching the end of its weeks. The first
   // coach-facing notification in the app, and it needed no schema change because notifications are
   // profile-keyed and coaches have profiles.
-  | 'plan_expiring';
+  | 'plan_expiring'
+  // Tenure milestones: day 7, 14, 30, 45, 90. Distinct types for the same reason the ladder's are,
+  // and here the dedupe is "ever" rather than "since an anchor" — nobody reaches day 30 twice.
+  | 'lifecycle_7'
+  | 'lifecycle_14'
+  | 'lifecycle_30'
+  | 'lifecycle_45'
+  | 'lifecycle_90';
 
 export type AppNotification = {
   id: string;
