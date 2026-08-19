@@ -36,7 +36,10 @@ export type NotificationType =
   | 'lifecycle_14'
   | 'lifecycle_30'
   | 'lifecycle_45'
-  | 'lifecycle_90';
+  | 'lifecycle_90'
+  // A dated campaign written by the coach, not a message this codebase authors. One type for all of
+  // them: the campaign key and its run year ride the link, which is what the dedupe matches on.
+  | 'seasonal';
 
 export type AppNotification = {
   id: string;

@@ -15,6 +15,7 @@ import {
   generateOnboardingNudges,
   generateReengagementNudges,
   generateLifecycleNudges,
+  generateSeasonalCampaigns,
   generatePlanFollowupReminders,
   resumeDuePauses,
 } from '@/lib/notifications/generators';
@@ -56,16 +57,22 @@ async function run(req: NextRequest): Promise<NextResponse> {
   // order, or against two different sweeps, is how one woman gets both a win-back and a
   // congratulations in the same minute.
   const lifecycle = await generateLifecycleNudges();
+  // LAST of the three member-facing senders, and the only one that can address a whole cohort on one
+  // day. By the time it selects, the ladder and the lifecycle have already decided from the same
+  // sweep, so a woman cannot receive a win-back and a seasonal push in the same minute. It is inert
+  // until somebody writes a campaign and switches it on: the table ships empty.
+  const seasonal = await generateSeasonalCampaigns();
   // The only one addressed at the coach rather than a member. Daily is the right cadence: the
   // window she configures is measured in days, and an hourly nudge about a plan ending next week
   // would be noise.
   const planFollowups = await generatePlanFollowupReminders();
-  const combined = { ...result, reengagement, lifecycle, planFollowups, resumed };
-  const ok = result.ok && reengagement.ok && lifecycle.ok && planFollowups.ok && resumed.ok;
+  const combined = { ...result, reengagement, lifecycle, seasonal, planFollowups, resumed };
+  const ok =
+    result.ok && reengagement.ok && lifecycle.ok && seasonal.ok && planFollowups.ok && resumed.ok;
 
   after(() => logCronRun('notify-checkins-cron', ok ? 'success' : 'error', combined)); // survives the frozen lambda; insert failures now hit the function logs
 
-  const failed = [result, reengagement, lifecycle, planFollowups, resumed].find((r) => !r.ok);
+  const failed = [result, reengagement, lifecycle, seasonal, planFollowups, resumed].find((r) => !r.ok);
   const body = ok ? combined : { ok: false as const, job: failed?.job ?? result.job };
   return NextResponse.json(body, { status: ok ? 200 : 500 });
 }

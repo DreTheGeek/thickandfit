@@ -52,6 +52,10 @@ export function categoryForNotificationType(type: string): NotificationCategory 
     case 'lifecycle_30':
     case 'lifecycle_45':
     case 'lifecycle_90':
+    // A seasonal campaign is marketing in a coaching voice, and it is the one a member is most
+    // likely to want switched off. Filing it under 'reminders' — mutable, like the other two
+    // automated senders — rather than 'coach', which no preference can silence.
+    case 'seasonal':
       return 'reminders';
     case 'renewal':
     case 'comp_expiring':

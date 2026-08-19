@@ -22,6 +22,14 @@ import { notifyNewChallenge } from '@/lib/notifications/triggers';
 import { getEngagementSweep } from '@/lib/engagement/risk';
 import { listExpiringPlans } from '@/lib/coach/plan-followups';
 import {
+  activeCampaigns,
+  campaignHistoryKey,
+  isCampaignAudience,
+  seasonYear,
+  selectCampaignRecipients,
+} from '@/lib/campaigns/season-shared';
+import type { CampaignMember, CampaignRow } from '@/lib/campaigns/season-shared';
+import {
   LIFECYCLE_COPY_KEY,
   LIFECYCLE_LINK,
   LIFECYCLE_TYPES,
@@ -729,6 +737,22 @@ const REENGAGE_HISTORY_CAP = 5000;
 // could not approach it; reaching it means something is duplicating sends.
 const LIFECYCLE_HISTORY_CAP = 5000;
 
+// Same guard again. A campaign addresses a whole cohort, so this is the read most likely to grow —
+// one row per member per campaign per year — and a truncated history reads as "nothing sent", which
+// would re-broadcast to everyone who already received it.
+const SEASONAL_HISTORY_CAP = 20000;
+
+/**
+ * The dedupe tag a seasonal notification carries in `link`.
+ *
+ * notifications has no campaign column and needs none: the key plus the run year in the link makes
+ * "who already got the December 2026 one" a single equality match. The member sees a normal in-app
+ * link; the query string is inert to the router.
+ */
+function campaignLinkTag(key: string, year: number): string {
+  return `/dashboard?c=${encodeURIComponent(key)}-${year}`;
+}
+
 const REENGAGE_COPY: Record<7 | 14 | 28, { key: string; link: string }> = {
   7: { key: 'reengage7', link: '/dashboard' },
   // Sends her to the coach thread rather than the workout list on purpose. At two weeks the barrier
@@ -912,6 +936,137 @@ export async function generateLifecycleNudges(): Promise<GeneratorResult> {
     if (recipients.length === 0) continue;
     await createNotificationsBulk(companyId, recipients);
     notified += recipients.length;
+  }
+
+  return { ok: true, job, selected, notified };
+}
+
+// ---------------------------------------------------------------------------
+// Seasonal campaigns: the third and last automated sender, and the only one that can address a
+// whole cohort on a single day.
+//
+// The other two are per-member by construction — the ladder fires on HER quiet days, the lifecycle
+// on HER tenure — so the worst either can do on a bad day is reach one woman wrongly. This one
+// fires on the calendar, so a mistake reaches everybody at once. Everything about it is arranged
+// around that asymmetry:
+//
+//   * The table ships EMPTY and every row defaults to inactive. Nothing sends until somebody writes
+//     a campaign and switches it on.
+//   * A malformed window fails CLOSED (isSeasonActive returns false), so a typo sends to nobody
+//     rather than to the roster.
+//   * A tenure floor per campaign, defaulting to 14 days, so a woman who joined on 20 December is
+//     not told on the 26th not to give up on her goals.
+//   * The audience test reads `atRisk` off the SAME sweep the other two generators just used, so a
+//     woman cannot receive a win-back and a seasonal push in the same minute.
+//
+// Runs last in the daily job for that final reason: by the time it selects, the ladder and the
+// lifecycle have already made their decisions from the same view of the roster.
+// ---------------------------------------------------------------------------
+export async function generateSeasonalCampaigns(at: Date = new Date()): Promise<GeneratorResult> {
+  const svc = createServiceClient();
+  const job = 'seasonal';
+  const today = at.toISOString().slice(0, 10);
+
+  const { data: companyData, error: companyErr } = await svc.from('companies').select('id');
+  if (companyErr) return { ok: false, job, selected: 0, notified: 0, error: companyErr.message };
+  const companyIds = ((companyData ?? []) as { id: string }[]).map((c) => c.id);
+
+  let selected = 0;
+  let notified = 0;
+
+  for (const companyId of companyIds) {
+    const { data: campaignData, error: campaignErr } = await svc
+      .from('seasonal_campaigns')
+      .select('id, key, starts_md, ends_md, audience, min_tenure_days, title_en, body_en, title_es, body_es, link, is_active')
+      .eq('company_id', companyId)
+      .eq('is_active', true);
+    if (campaignErr) return { ok: false, job, selected, notified, error: campaignErr.message };
+
+    type Row = {
+      id: string;
+      key: string;
+      starts_md: string;
+      ends_md: string;
+      audience: string;
+      min_tenure_days: number;
+      title_en: string;
+      body_en: string;
+      title_es: string;
+      body_es: string;
+      link: string;
+    };
+    const all = (campaignData ?? []) as Row[];
+    const rows: CampaignRow[] = all.map((c) => ({
+      id: c.id,
+      key: c.key,
+      startsMd: c.starts_md,
+      endsMd: c.ends_md,
+      // A stored value outside the union means the row was written by something other than the UI.
+      // Falling back to the narrowest audience is the safe direction: 'all' would broadcast.
+      audience: isCampaignAudience(c.audience) ? c.audience : 'active',
+      minTenureDays: c.min_tenure_days,
+      isActive: true,
+    }));
+    const live = activeCampaigns(rows, today);
+    if (live.length === 0) continue;
+
+    // The same sweep the ladder and the lifecycle read, so "she has gone quiet" has one answer today.
+    const { rows: sweep } = await getEngagementSweep(companyId);
+    const members: CampaignMember[] = sweep.map((r) => ({
+      profileId: r.profileId,
+      memberAgeDays: r.memberAgeDays,
+      atRisk: isEngagementRisk(r.tier),
+    }));
+    if (members.length === 0) continue;
+    const localeBy = new Map(sweep.map((r) => [r.profileId, r.locale]));
+    const bodyBy = new Map(all.map((c) => [c.key, c]));
+
+    for (const campaign of live) {
+      const year = seasonYear(campaign.startsMd, campaign.endsMd, today);
+      const { data: sentData, error: sentErr } = await svc
+        .from('notifications')
+        .select('profile_id, link')
+        .eq('company_id', companyId)
+        .eq('type', 'seasonal')
+        // The campaign key and the run year ride the link, so one query answers "who already got
+        // THIS campaign THIS year" without a column on notifications. Matching on the exact string
+        // rather than a prefix keeps last year's send from suppressing this year's.
+        .eq('link', campaignLinkTag(campaign.key, year))
+        .limit(SEASONAL_HISTORY_CAP);
+      if (sentErr) return { ok: false, job, selected, notified, error: sentErr.message };
+      const history = (sentData ?? []) as { profile_id: string }[];
+      if (history.length >= SEASONAL_HISTORY_CAP) {
+        return {
+          ok: false,
+          job,
+          selected,
+          notified,
+          error: `seasonal history hit the ${SEASONAL_HISTORY_CAP}-row cap; refusing to send on a partial read`,
+        };
+      }
+      const sent = new Set(history.map((r) => campaignHistoryKey(r.profile_id, campaign.key, year)));
+
+      const due = selectCampaignRecipients(campaign, members, sent, year);
+      selected += due.length;
+      if (due.length === 0) continue;
+
+      const copy = bodyBy.get(campaign.key);
+      if (!copy) continue;
+      const recipients = due.map((m) => {
+        const es = asNotifLocale(localeBy.get(m.profileId)) === 'es';
+        return {
+          profileId: m.profileId,
+          payload: {
+            type: 'seasonal' as const,
+            title: es ? copy.title_es : copy.title_en,
+            body: es ? copy.body_es : copy.body_en,
+            link: campaignLinkTag(campaign.key, year),
+          },
+        };
+      });
+      await createNotificationsBulk(companyId, recipients);
+      notified += recipients.length;
+    }
   }
 
   return { ok: true, job, selected, notified };

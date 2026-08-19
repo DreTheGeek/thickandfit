@@ -62,6 +62,9 @@ const SECTIONS: NavSection[] = [
       // the thing you set BEFORE leaving, and a rota buried in a settings tree is a rota nobody
       // fills in — which is the whole failure this feature exists to prevent.
       { key: 'navCoverage', href: '/coach/coverage', icon: 'user' },
+      // Beside coverage rather than with the queues: both are things you set AHEAD of a date and
+      // then stop thinking about, which is the opposite of a queue you work down.
+      { key: 'navCampaigns', href: '/coach/campaigns', icon: 'funnel' },
       // Leads is a sibling of Clients on her old top-level nav, not a child. It stays in this
       // section rather than getting a header of its own, because a one-item section is a header
       // with nothing under it.

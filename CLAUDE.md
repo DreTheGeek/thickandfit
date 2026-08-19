@@ -472,7 +472,29 @@ number. Settle the mapping with her before wiring it.
   with the whole roster owned by the company, "mine" is an empty console. `coach_coverage.ends_on`
   is the LAST DAY AWAY, inclusive: "back on the 20th" is stored as the 19th.
 
-## Two automated ladders, and they must never reach the same woman
+## Three automated senders, and they must never reach the same woman
+
+- `generateReengagementNudges` fires on QUIET days (7/14/28) and reaches someone who stopped.
+- `generateLifecycleNudges` fires on TENURE (day 7/14/30/45/90) and reaches someone who did not.
+- `generateSeasonalCampaigns` fires on the CALENDAR and is the only one that can address a whole
+  cohort in a day. Migration 0144; the table ships EMPTY and every row defaults to inactive, so
+  nothing sends until somebody writes a campaign on `/coach/campaigns` and switches it on. A
+  malformed window fails CLOSED (sends to nobody), each campaign carries a tenure floor (default 14
+  days) so a woman who joined on 20 December is not told on the 26th not to give up, and the
+  audience choice (`all | active | at_risk`) reads `atRisk` off the same sweep the other two just
+  used. It runs LAST in the daily job for that reason.
+
+  **Windows are MM-DD and recur every year, and `ends_md < starts_md` means the window crosses New
+  Year.** That case is the whole reason `isSeasonActive` exists: for `12-26 → 01-05` the obvious
+  `start <= today && today <= end` is false on every single day it should be true. The dedupe year
+  for the January side is the year the season STARTED, or a member gets the same message on 30
+  December and again on 2 January. `npx tsx .qa-visual/season-test.mts`.
+
+  **No seed campaign ships, deliberately.** Pre-writing a "December save" row would mean guessing
+  Stephanie's offers, her voice and her numbers. The empty page names the two seasons worth writing
+  first and leaves the copy to her.
+
+## Two of those three overlap, and here is the rule
 
 - `generateReengagementNudges` fires on QUIET days (7/14/28) and reaches someone who stopped.
 - `generateLifecycleNudges` fires on TENURE (day 7/14/30/45/90) and reaches someone who did not.
