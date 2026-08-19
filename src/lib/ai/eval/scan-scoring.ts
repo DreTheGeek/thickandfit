@@ -54,10 +54,13 @@ export type CaseScore = {
   fatBiasG: number | null;
 };
 
-// Pass bars: kind right, most foods found (F1 >= 0.6), portions within 40% on average.
-export const PASS_F1 = 0.6;
-export const PASS_MAPE = 0.4;
-// Composite: food-ID is weighted over portion accuracy (a missed food is worse than a loose portion).
+// v5 trust bars. A production scan is not good enough merely because it found "most" foods.
+// Extra invented foods now count as false positives, including cooking oil when it is not in the
+// human label. Identity must be high precision/recall and matched portions must average within 30%.
+export const PASS_F1 = 0.8;
+export const PASS_MAPE = 0.3;
+// Composite: food-ID is weighted over portion accuracy (a missed or invented food is worse than a
+// loose portion estimate).
 export const WEIGHT_F1 = 0.6;
 export const WEIGHT_PORTION = 0.4;
 // Minimum token overlap (Jaccard) for two names to count as the same food.
@@ -137,14 +140,11 @@ export function scoreCase(
 ): CaseScore {
   const kindMatch = expected.kind === actualKind;
   const pairs = kindMatch ? matchItems(expected.items, predicted) : [];
-  // The scan prompt REQUIRES a hidden "cooking oil" item on pan-fried/roasted plates. Labels rarely
-  // include it, so an unmatched predicted cooking-oil must not count as a false positive (that would
-  // double-punish mandated behavior). It still matches normally when the label DOES include oil.
-  const matchedPredicted = new Set(pairs.map((p) => p.predicted));
-  const effectivePredicted = predicted.filter(
-    (p) => matchedPredicted.has(p.name) || !/\b(cooking |)oil\b/i.test(p.name),
-  );
-  const precision = effectivePredicted.length ? pairs.length / effectivePredicted.length : 0;
+
+  // v5 policy: every unmatched prediction is a false positive. The evaluator must not forgive
+  // "cooking oil" or any other invisible ingredient that the scan invented. If oil is visibly
+  // present and belongs in the meal, the human label must contain it and it will match normally.
+  const precision = predicted.length ? pairs.length / predicted.length : 0;
   const recall = expected.items.length ? pairs.length / expected.items.length : 0;
   const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
   const mape = pairs.length
@@ -169,14 +169,14 @@ export function scoreCase(
 }
 
 /**
- * Signed fat error for a case, or null when it carries no fat label.
+ * Signed fat error for a case, or null when the case carries no fat label.
  *
  * Deliberately NOT part of `passed` or `score`. A baseline has to exist before a bar can be set,
  * and tuning a threshold in the same change that introduces the metric means neither number can be
  * trusted afterwards. This reports; a later PRD decides what is acceptable.
  *
- * Uses ALL predicted items, not just matched pairs: predicted cooking oil usually has no label to
- * match against, and excluding it would erase exactly the correction the prompt was written to make.
+ * Uses ALL predicted items, not just matched pairs. If a scan invents oil, the excess resolved fat
+ * remains visible in this metric instead of being hidden by the identity matcher.
  */
 export function fatBias(expected: ExpectedCase, predicted: PredictedEvalItem[]): number | null {
   const expectedFat =
