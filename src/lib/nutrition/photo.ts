@@ -22,11 +22,15 @@ export type PredictedItem = {
 export type PhotoCandidate = {
   predictedName: string;
   grams: number;
+  // Public confidence drives the existing client trust gate. Keep it conservative when any critical
+  // dimension needs verification so older clients cannot accidentally auto-accept a weighted average.
   confidence: number;
   identityConfidence: number;
   portionConfidence: number;
   dbMatchConfidence: number;
   nutritionConfidence: number;
+  // Weighted score retained separately for telemetry and future UI. This may be higher than the public
+  // confidence when, for example, identity is strong but the photographed portion is uncertain.
   overallConfidence: number;
   needsVerification: boolean;
   resolutionMethod: FoodMatchMethod;
@@ -56,6 +60,7 @@ type FoodRaw = {
 };
 
 const COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
+const CLIENT_REVIEW_CEILING = 0.69;
 
 function clamp01(v: number): number {
   return Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
@@ -194,6 +199,7 @@ function confidenceFor(
   identity: number;
   portion: number;
   overall: number;
+  publicConfidence: number;
   needsVerification: boolean;
 } {
   const identity = clamp01(item.identityConfidence ?? item.confidence);
@@ -201,10 +207,19 @@ function confidenceFor(
   const db = clamp01(dbMatchConfidence);
   const nutrition = clamp01(nutritionConfidence);
 
-  // Identity is the strongest factor for "what is this?". Portion is deliberately separate because a
-  // model can be certain it sees rice while being uncertain whether that mound is 120g or 190g.
   const overall = clamp01(identity * 0.38 + portion * 0.24 + db * 0.23 + nutrition * 0.15);
-  return { identity, portion, overall, needsVerification: identity < 0.7 || portion < 0.58 || db < 0.62 || overall < 0.7 };
+  const needsVerification = identity < 0.7 || portion < 0.58 || db < 0.62 || overall < 0.7;
+
+  // The current client already enforces a two-tap review below 0.70 and its auto-accept path requires
+  // >=0.90. Until the client surfaces all confidence dimensions directly, public confidence must carry
+  // the verification decision. Otherwise a strong nutrition source can mathematically hide a weak
+  // portion estimate and let an uncertain number look safe.
+  const weakestCritical = Math.min(identity, portion, db || 1);
+  const publicConfidence = needsVerification
+    ? Math.min(CLIENT_REVIEW_CEILING, overall, weakestCritical)
+    : Math.min(overall, identity, Math.max(portion, 0.7), Math.max(db, 0.7));
+
+  return { identity, portion, overall, publicConfidence: clamp01(publicConfidence), needsVerification };
 }
 
 export async function resolvePredictedItems(
@@ -217,8 +232,6 @@ export async function resolvePredictedItems(
   const names = items.map((i) => i.name);
   const t0 = Date.now();
 
-  // Hybrid lookup and deployment-safe legacy fallback run concurrently with the tiny yield table.
-  // USDA is only called after both local paths miss.
   const [hybridMatches, legacyMatches, factors] = await Promise.all([
     matchFoodsHybrid(names, locale),
     matchFoodsLegacy(sb, names, locale),
@@ -240,7 +253,6 @@ export async function resolvePredictedItems(
         food = await groundFoodByName(item.name, locale);
         if (food) {
           method = 'external';
-          // USDA grounding performs its own relevance, brand-conflict and plausible-macro guards.
           dbMatchConfidence = 0.86;
           nutritionConfidence = 0.99;
         }
@@ -251,7 +263,7 @@ export async function resolvePredictedItems(
         return {
           predictedName: item.name,
           grams: item.grams,
-          confidence: c.overall,
+          confidence: c.publicConfidence,
           identityConfidence: c.identity,
           portionConfidence: c.portion,
           dbMatchConfidence: 0,
@@ -271,7 +283,7 @@ export async function resolvePredictedItems(
       return {
         predictedName: item.name,
         grams: item.grams,
-        confidence: c.overall,
+        confidence: c.publicConfidence,
         identityConfidence: c.identity,
         portionConfidence: c.portion,
         dbMatchConfidence,
