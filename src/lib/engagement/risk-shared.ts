@@ -1,5 +1,6 @@
-// Engagement risk: the pure part. No imports, no `server-only`, no database — so the thresholds,
-// which ARE the feature, can be tested without one (npx tsx .qa-visual/engagement-risk-test.mts).
+// Engagement risk: the pure part. No `server-only`, no database, and the only import is another
+// pure -shared module — so the thresholds, which ARE the feature, can be tested without one
+// (npx tsx .qa-visual/engagement-risk-test.mts).
 //
 // WHAT THIS IS FOR. Everything this app currently calls "at risk" is billing: `isAtRisk` in
 // coach/overview.ts reads subscription status and billing_health, and the coach home tile, the
@@ -23,6 +24,8 @@
 // They are round numbers rather than tuned ones, and nothing here pretends otherwise. Tuning them
 // needs churn outcomes this app has not collected yet: revisit once there are cancellations to
 // score against, not before.
+
+import { isPauseGrant } from '@/lib/billing/status-shared';
 
 /** Quiet-day bands. A member's band is the largest one she has passed. */
 export const QUIET_SLIPPING_DAYS = 7;
@@ -251,4 +254,27 @@ export function selectLadderSends(
     out.push(c);
   }
   return out;
+}
+
+/** One entitlement row, as far as the departure test is concerned. */
+export type GrantRow = { status: string; externalTxnId: string | null };
+
+/**
+ * The statuses that describe what she actually HOLDS, with the pause bookkeeping stripped out.
+ *
+ * A pause is its own `manual` entitlement row (see pauseGrantId), and resuming sets that row to
+ * 'revoked' rather than deleting it, so the history of who was paused when survives. That is right
+ * for the audit trail and wrong for this test: 'revoked' is one of the statuses hasDepartedGrants
+ * reads as "she left".
+ *
+ * For a member with a Stripe grant the live one outvotes it and nothing goes wrong. For a member
+ * whose access never came through entitlements at all — a migrated Lenus client, a staff account —
+ * the revoked pause becomes her ONLY grant. Taking a break and coming back would then delete her
+ * from the churn queue permanently, and from the one list that would have noticed her going quiet
+ * afterwards. Silently, and in the direction nobody checks.
+ *
+ * Her break is not a purchase and ending it is not a cancellation. It does not get a vote here.
+ */
+export function purchaseGrantStatuses(rows: readonly GrantRow[]): string[] {
+  return rows.filter((r) => !isPauseGrant(r.externalTxnId)).map((r) => r.status);
 }

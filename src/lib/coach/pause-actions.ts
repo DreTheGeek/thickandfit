@@ -21,6 +21,7 @@ import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { logCoachAction } from '@/lib/coach/audit';
 import { upsertEntitlement } from '@/lib/billing/entitlement';
+import { pauseGrantId } from '@/lib/billing/status-shared';
 
 export type PauseResult = { ok: true } | { ok: false; error: string };
 
@@ -54,7 +55,7 @@ export async function pauseMemberAction(input: unknown): Promise<PauseResult> {
     status: 'paused',
     // Stable and distinct from the comp grant's `comp:${profileId}`, so a pause never overwrites a
     // comp and re-pausing the same member updates one row instead of minting a second.
-    externalTxnId: `pause:${profileId}`,
+    externalTxnId: pauseGrantId(profileId),
     // The resume date rides expires_at, matching how manual comps already use the column. Midday UTC
     // rather than midnight so a timezone shift cannot land it on the day before.
     expiresAt: resumesOn ? `${resumesOn}T12:00:00Z` : null,
@@ -98,7 +99,7 @@ export async function resumeMemberAction(input: unknown): Promise<PauseResult> {
     .update({ status: 'revoked', updated_at: new Date().toISOString() })
     .eq('company_id', ctx.companyId)
     .eq('profile_id', profileId)
-    .eq('external_txn_id', `pause:${profileId}`)
+    .eq('external_txn_id', pauseGrantId(profileId))
     .eq('status', 'paused');
   if (error) {
     console.error('resumeMemberAction:', error.message);

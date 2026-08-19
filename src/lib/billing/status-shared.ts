@@ -63,3 +63,26 @@ export function routeForEntitlements(statuses: string[]): 'app' | 'paused' | 'fi
   if (statuses.includes('paused')) return 'paused';
   return statuses.includes('past_due') ? 'fixCard' : 'checkout';
 }
+
+/**
+ * The `external_txn_id` of a member's pause grant.
+ *
+ * A pause is a `manual` entitlement row, deliberately separate from her Stripe grant: pausing must
+ * not overwrite what she bought, and resuming must not invent access she no longer has. The id is
+ * stable per member so re-pausing updates one row rather than stacking them, and it is distinct
+ * from the comp grant's `comp:${profileId}` so a pause can never clobber a comp.
+ *
+ * Defined here rather than written inline at each call site because three places now depend on the
+ * exact string — pauseMemberAction writes it, resumeMemberAction matches on it, and the engagement
+ * sweep has to recognise and IGNORE it — and a drift between any two of them fails silently.
+ */
+export const PAUSE_GRANT_PREFIX = 'pause:';
+
+export function pauseGrantId(profileId: string): string {
+  return `${PAUSE_GRANT_PREFIX}${profileId}`;
+}
+
+/** Is this entitlement row the pause bookkeeping rather than something she actually holds? */
+export function isPauseGrant(externalTxnId: string | null | undefined): boolean {
+  return typeof externalTxnId === 'string' && externalTxnId.startsWith(PAUSE_GRANT_PREFIX);
+}

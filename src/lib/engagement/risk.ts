@@ -28,7 +28,9 @@ import {
   daysSince,
   hasDepartedGrants,
   isEngagementRisk,
+  purchaseGrantStatuses,
   TIER_RANK,
+  type GrantRow,
   type RiskTier,
 } from '@/lib/engagement/risk-shared';
 
@@ -184,7 +186,7 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
       // Two exclusions come out of this and they are different people; see below.
       svc
         .from('entitlements')
-        .select('profile_id, status')
+        .select('profile_id, status, external_txn_id')
         .eq('company_id', companyId)
         .in('profile_id', ids),
     ]);
@@ -199,17 +201,28 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
   // the churn queue as someone to win back, and on day 28 receives "your coach is going to reach
   // out personally". Messaging someone who cancelled as though she is still coached is worse than
   // saying nothing: it reads as not having noticed she left.
-  const grantsByProfile = new Map<string, string[]>();
-  for (const r of (entitlementRes.data ?? []) as { profile_id: string; status: string }[]) {
+  const grantsByProfile = new Map<string, GrantRow[]>();
+  for (const r of (entitlementRes.data ?? []) as {
+    profile_id: string;
+    status: string;
+    external_txn_id: string | null;
+  }[]) {
     if (r.status === 'paused') paused.add(r.profile_id);
-    grantsByProfile.set(r.profile_id, [...(grantsByProfile.get(r.profile_id) ?? []), r.status]);
+    grantsByProfile.set(r.profile_id, [
+      ...(grantsByProfile.get(r.profile_id) ?? []),
+      { status: r.status, externalTxnId: r.external_txn_id },
+    ]);
   }
 
   // The rule, and every reason it is conservative in both directions, lives in risk-shared.ts so it
-  // can be asserted without a database.
+  // can be asserted without a database. purchaseGrantStatuses first, because resuming a pause leaves
+  // a 'revoked' row behind and for a member who never had a Stripe grant that row would otherwise be
+  // her whole record — a break she came back from, read as a departure.
   const stripeOn = isStripeConfigured();
-  const hasLeft = (profileId: string): boolean =>
-    hasDepartedGrants(grantsByProfile.get(profileId), stripeOn);
+  const hasLeft = (profileId: string): boolean => {
+    const rows = grantsByProfile.get(profileId);
+    return hasDepartedGrants(rows ? purchaseGrantStatuses(rows) : undefined, stripeOn);
+  };
 
   const onboarded = new Map(
     ((onbRes.data ?? []) as { profile_id: string; completed_at: string }[]).map((r) => [

@@ -18,6 +18,7 @@ import {
   hasDepartedGrants,
   ladderHistoryKey,
   ladderLookbackDay,
+  purchaseGrantStatuses,
   selectLadderSends,
   type LadderCandidate,
   TIER_RANK,
@@ -181,6 +182,57 @@ check('undefined grants is not a departure', hasDepartedGrants(undefined, ON), f
 // the queue and hide exactly the members it was built to surface. It arms itself with the live key.
 check('pre-Stripe, a cancelled grant is ignored', hasDepartedGrants(['canceled'], OFF), false);
 check('pre-Stripe, everything is ignored', hasDepartedGrants(['expired', 'revoked'], OFF), false);
+
+// --- a break is not a departure ------------------------------------------------
+// A pause is its own manual entitlement row, and resuming sets it to 'revoked' rather than deleting
+// it so the audit trail survives. 'revoked' is one of the statuses hasDepartedGrants reads as gone.
+// For a member with a Stripe grant the live one outvotes it; for a migrated Lenus client whose
+// access never came through entitlements at all, that revoked pause is her ONLY grant — so taking a
+// break and coming back would have deleted her from the churn queue permanently.
+const PAUSE = (profileId: string) => ({ status: 'revoked', externalTxnId: `pause:${profileId}` });
+
+check('nothing in, nothing out', purchaseGrantStatuses([]), []);
+check(
+  'a real grant survives',
+  purchaseGrantStatuses([{ status: 'active', externalTxnId: 'sub_123' }]),
+  ['active'],
+);
+check('a revoked pause is not a grant she holds', purchaseGrantStatuses([PAUSE('a')]), []);
+check(
+  'a live pause is not one either — the paused set is built separately',
+  purchaseGrantStatuses([{ status: 'paused', externalTxnId: 'pause:a' }]),
+  [],
+);
+check(
+  'the Stripe grant is kept and the pause is dropped',
+  purchaseGrantStatuses([{ status: 'active', externalTxnId: 'sub_123' }, PAUSE('a')]),
+  ['active'],
+);
+// A comp is a manual grant too, and it IS something she holds. Only the pause is bookkeeping.
+check(
+  'a comp is not swept up with the pause',
+  purchaseGrantStatuses([{ status: 'active', externalTxnId: 'comp:a' }, PAUSE('a')]),
+  ['active'],
+);
+// A null external_txn_id must not be mistaken for a pause; that would hide a real cancellation.
+check(
+  'a null txn id is a real grant',
+  purchaseGrantStatuses([{ status: 'canceled', externalTxnId: null }]),
+  ['canceled'],
+);
+
+// The composition, which is the thing that actually broke. Both directions.
+ok(
+  'a member back from a break, with no other grant, is NOT gone',
+  hasDepartedGrants(purchaseGrantStatuses([PAUSE('a')]), ON) === false,
+);
+ok(
+  'a member who genuinely cancelled is still gone',
+  hasDepartedGrants(
+    purchaseGrantStatuses([{ status: 'canceled', externalTxnId: 'sub_123' }, PAUSE('a')]),
+    ON,
+  ) === true,
+);
 
 // --- the ladder's dedupe, and the window it reads history through ---------------
 // The first version read a flat 90 days of send history, on the reasoning that a rung older than
