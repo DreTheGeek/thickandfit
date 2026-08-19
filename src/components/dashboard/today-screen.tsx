@@ -13,6 +13,7 @@ import { STEP_GOAL, SLEEP_GOAL_MIN, formatSleep } from '@/lib/dailymetrics/goals
 import { FirstRunState } from '@/components/states/first-run-state';
 import { Card } from '@/components/ui/card';
 import { Mission, type MissionItem } from '@/components/dashboard/mission';
+import { TransformCard, PlanCard, SmallCard, type PlanRow } from '@/components/portal/today-cards';
 import { Avatar } from '@/components/ui/avatar';
 import { ButtonLink } from '@/components/ui/button';
 import { Wordmark } from '@/components/ui/wordmark';
@@ -158,10 +159,21 @@ export function TodayScreen({
   const streak = summary?.streak ?? 0;
   const header = (
     <div className="mb-[18px] flex items-center justify-between">
-      <Wordmark height={20} />
+      <div>
+        <h1 className="tf-display text-[25px] font-black leading-none tracking-[-1px]">
+          {t('nav.today')}
+        </h1>
+        <small className="mt-0.5 block text-muted">{dateLabel}</small>
+      </div>
+      <Link
+        href="/you"
+        aria-label={t('nav.you')}
+        className="tf-press grid h-9 w-9 place-items-center rounded-full bg-warm text-ink"
+      >
+        <Icon name="user" size={16} />
+      </Link>
     </div>
   );
-
   if (state === 'loading') {
     return (
       <div className="px-[22px] pb-7 pt-3">
@@ -316,57 +328,90 @@ export function TodayScreen({
         : t('today.heroClosed');
   }
 
+  // The handoff's four rows, from data this screen already holds. Green only where a target is hit,
+  // which is the functional-only rule the light system had and 8.0 keeps.
+  const proteinLeft = nutrition
+    ? Math.max(0, Math.round(nutrition.target.proteinG - nutrition.consumed.proteinG))
+    : 0;
+  const steps = daily.steps;
+  const sleepMin = daily.sleepMinutes;
+  const planRows: PlanRow[] = [
+    {
+      key: 'train',
+      title: t('today.missionTrain'),
+      sub: summary.todaysWorkout?.name ?? t('activities.noProgram'),
+      href: '/workouts',
+      action: t('activities.startWorkout'),
+    },
+    {
+      key: 'fuel',
+      title: t('today.missionFuel'),
+      sub: nutrition
+        ? `${Math.round(nutrition.consumed.proteinG)} / ${Math.round(nutrition.target.proteinG)}g`
+        : t('today.logMeal'),
+      href: '/nutrition',
+      action: t('today.actionLog'),
+    },
+    {
+      key: 'move',
+      title: t('today.missionMove'),
+      sub: `${(steps ?? 0).toLocaleString(locale)} / ${STEP_GOAL.toLocaleString(locale)}`,
+      value: steps == null ? undefined : steps.toLocaleString(locale),
+      hit: (steps ?? 0) >= STEP_GOAL,
+    },
+    {
+      key: 'recover',
+      title: t('today.missionRecover'),
+      sub: sleepMin == null ? t('today.missionLogSleep') : formatSleep(sleepMin),
+      value: sleepMin == null ? undefined : formatSleep(sleepMin),
+      hit: (sleepMin ?? 0) >= SLEEP_GOAL_MIN,
+    },
+  ];
+
   return (
     <div className="px-[22px] pb-7 pt-3">
       {header}
 
-      {/* Canonical dark hero: week/program eyebrow + greeting + personalized macro status + the two
-          CTAs (check-in, book a call) + streak. Leads the screen, per the 7.1 Portal. */}
-      <Card dark className="p-[22px]">
-        {summary.todaysWorkout?.name ? (
-          <div className="text-[11px] font-semibold uppercase tracking-[2px] text-white/55">
-            {summary.todaysWorkout.name}
-          </div>
-        ) : null}
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="tf-display mt-1 text-[32px] leading-none text-white">{greeting}</h1>
-            <p className="mt-1 text-[12px] text-white/45">{dateLabel}</p>
-            <p className="mt-2.5 text-[13px] leading-[1.5] text-white/65">{heroMessage}</p>
-            <div className="mt-4 flex flex-wrap items-center gap-2.5">
-              <ButtonLink href="/checkin" variant="light" size="sm">
-                {t('today.checkinCta')}
-              </ButtonLink>
-              <Link
-                href="/inbox"
-                className="tf-press rounded-full border border-white/35 px-4 py-2 text-[12px] font-semibold uppercase tracking-[1px] text-white"
-              >
-                {t('today.bookCall')}
-              </Link>
-            </div>
-          </div>
-          {streak > 0 ? (
-            <div className="flex flex-none flex-col items-center">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-accent">
-                <Icon name="flame" size={20} />
-              </span>
-              <span className="tf-display mt-1.5 text-[26px] leading-none text-white">{streak}</span>
-              <span className="text-[9px] uppercase tracking-[1.5px] text-white/55">
-                {t('today.streakUnit')}
-              </span>
-            </div>
-          ) : null}
-        </div>
-      </Card>
+      {/* 8.0 Today: transformation status, the day's four asks, then the two-up. This is the whole
+          screen the handoff draws. The modules below it (habits, nutrition detail, catch-up) are
+          features the handoff simply does not depict; they are kept, restyled, rather than deleted. */}
+      {weightGoal ? (
+        <TransformCard
+          labelStatus={t('today.transformStatus')}
+          labelToGoal={t('today.toGoal')}
+          labelStart={t('today.goalStart')}
+          labelCurrent={t('today.goalCurrent')}
+          labelGoal={t('today.goalGoal')}
+          pct={weightGoal.pct}
+          startLb={weightGoal.startLb}
+          currentLb={weightGoal.currentLb}
+          goalLb={weightGoal.goalLb}
+        />
+      ) : null}
 
-      {/* Today's mission: what the day asks of her and how much of it she already owns. */}
-      <Mission
-        items={missionItems}
-        title={t('today.missionTitle')}
-        weekLine={weeksIn && weeksIn > 0 ? t('today.missionWeek', { n: weeksIn }) : null}
-        evolutionHref="/evolution"
-        evolutionLabel={t('evolution.eyebrow')}
-      />
+      <PlanCard title={t('today.planTitle')} rows={planRows} />
+
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+        {proteinLeft > 0 ? (
+          <SmallCard
+            label={t('today.nextBest')}
+            heading={t('today.proteinLeft', { n: proteinLeft })}
+          >
+            <Link href="/nutrition" className="tf-press text-[10px] font-semibold text-accent">
+              {t('today.logMeal')}
+            </Link>
+          </SmallCard>
+        ) : null}
+
+        {catchUp?.challenge ? (
+          <SmallCard label={t('today.challenge')} heading={catchUp.challenge.title}>
+            <div className="text-[10px] text-soft">
+              {t('today.daysLeft', { n: catchUp.challenge.daysLeft })}
+            </div>
+          </SmallCard>
+        ) : null}
+      </div>
+
 
       {/* Nutrition first: the moat lives on the home screen. Cal-AI-style calories-left hero. */}
       {nutrition ? <NutritionCard n={nutrition} t={t} /> : null}
@@ -478,38 +523,8 @@ export function TodayScreen({
         </div>
       )}
 
-      {/* Weight / goal progress -> taps into the Progress Body tab */}
-      {weightGoal && (
-        <Link href="/progress?tab=body" className="tf-press mt-6 block">
-          <Card className="p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
-                {t('today.goalTitle')}
-              </span>
-              <span className="text-[11px] font-semibold text-accent">
-                {t('today.goalPct', { pct: weightGoal.pct })}
-              </span>
-            </div>
-            <div className="mb-3 flex items-end justify-between">
-              <div>
-                <div className="text-[11px] text-faint">{t('today.goalStart')}</div>
-                <div className="font-display text-[22px] leading-none">{weightGoal.startLb}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-[11px] text-accent">{t('today.goalCurrent')}</div>
-                <div className="font-display text-[28px] leading-none text-accent">
-                  {weightGoal.currentLb}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-[11px] text-faint">{t('today.goalGoal')}</div>
-                <div className="font-display text-[22px] leading-none">{weightGoal.goalLb}</div>
-              </div>
-            </div>
-            <ProgressBar pct={weightGoal.pct} color="var(--color-accent)" height={4} />
-          </Card>
-        </Link>
-      )}
+      {/* The old goal card lived here. TransformCard above is the same three numbers in the
+          8.0 treatment, so keeping both showed her weight twice on one screen. */}
 
       {/* Coach card -> messages */}
       {coach && (
