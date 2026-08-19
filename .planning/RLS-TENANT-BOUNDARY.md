@@ -103,3 +103,53 @@ is the available route).
 **Verify by observation, not by the policy reading correctly.** CLAUDE.md notes RLS has leaked three
 times historically and that `.qa-visual/rls-isolation-test.cjs` exists for exactly this: prove a
 company-B JWT sees zero company-A rows, per table, before calling it fixed.
+
+---
+
+## Written 2026-08-19: `0142_tenant_boundary.sql`
+
+**Not applied yet.** The migration exists; it has to be run and then verified in a browser, exactly
+like 0140 and 0141. Applying it is step 1 of `.planning/RUNBOOK-2026-08-14.md`.
+
+**It took option 2, with a correction.** The plan above suggested a helper carrying the tenant. The
+migration keeps `is_coach()` as-is and adds `public.auth_company_id()`, then writes
+`public.is_coach() and company_id = public.auth_company_id()` at each of the 20 tables that carry
+the column. Same number of edit sites as option 1, which is a real cost — but the alternative, a
+combined `is_coach_here()` with no argument, cannot see the row's `company_id` and so would have had
+to read the caller's company and compare against nothing. The predicate needs the row.
+
+**The trap that would have taken the console down.** `current_company_id()` (0001) reads
+`auth.jwt() ->> 'company_id'` — a CUSTOM CLAIM, injected by an auth hook that CLAUDE.md lists under
+"Manual / Post-Deploy Steps", i.e. something a human has to have done. If that hook was never set,
+the claim is absent, the function returns null, `company_id = null` evaluates to NULL rather than
+true, and this migration denies every coach read in the product. Locking Stephanie out of her own
+console to close a hole that requires a second tenant to exist is not a trade worth making.
+
+`auth_company_id()` prefers the claim and falls back to the caller's own `profiles` row, so it is
+right either way. It is `SECURITY DEFINER` because `profiles_select` is a policy ON profiles calling
+a function that READS profiles; running as the owner is what stops that recursing, and no table here
+sets `FORCE ROW LEVEL SECURITY`, so the owner does bypass RLS.
+
+**Blast radius is small and was measured, not assumed.** Only 3 files under `src/app/(app)/coach`
+and `src/lib/coach` use the RLS-bound client; 49 use the BYPASSRLS service client. And only the
+`is_coach()` branch is narrowed — every `= auth.uid()` branch is copied through untouched, so no
+member's access to her own data is affected. With one company, `company_id = auth_company_id()` is
+true for every row a coach can already see, so this should change nothing today.
+
+**`webhook_events` is the 21st and could not be scoped.** It is the Stripe idempotency ledger (0025)
+keyed on `stripe_event_id`, with no company column. Rather than invent a tenant column on an ops
+ledger, the policy was narrowed from `is_coach()` to a new `is_operator()`. That is the one thing in
+the migration that changes who can see something today: a coach or assistant coach loses read access
+to raw Stripe event payloads, which they had no reason to have.
+
+**The audit is now a test.** `node .qa-visual/tenant-boundary-test.mjs` parses every migration in
+order, resolves each policy to its final definition, and fails if any grants on `is_coach()` without
+constraining the company. Run against the pre-0142 schema it reports exactly the 21 above. It also
+catches the NEXT one: a new table shipping a copy-pasted
+`using (public.is_coach() or profile_id = auth.uid())` fails in the diff rather than a year later.
+`webhook_events` is exempted by name, with its reason in the file, so the gap is a decision on the
+record rather than a silent omission.
+
+**Still true: this is static analysis, not observation.** The migration has not run, and a passing
+parser is not a company-B JWT seeing zero company-A rows. `storage.objects` is also still untouched
+— there is no company column there and the tenant has to come from the object path.
