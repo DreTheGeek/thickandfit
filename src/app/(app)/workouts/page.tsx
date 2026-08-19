@@ -2,7 +2,7 @@
 // + logged history, then the client screen switches Program / Library / History.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { requireEntitled } from '@/lib/auth/guards';
+import { requireEntitledOrPaused } from '@/lib/auth/guards';
 import { getAssignedPlans, getProgram } from '@/lib/programs/engine';
 import { fetchHistory } from '@/lib/workout/logging';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -37,7 +37,7 @@ export default async function WorkoutsPage({
 }: {
   searchParams: Promise<{ day?: string }>;
 }): Promise<ReactElement> {
-  const ctx = await requireEntitled();
+  const ctx = await requireEntitledOrPaused();
   const { day: dayParam } = await searchParams;
   const locale = await getLocale();
   const tEx = await getTranslations('app.exercise');
@@ -47,10 +47,16 @@ export default async function WorkoutsPage({
   let stats: WorkoutStats | null = null;
 
   if (ctx.companyId) {
-    const plans = (await getAssignedPlans(
-      ctx.companyId,
-      ctx.userId,
-    )) as unknown as AssignedPlan[];
+    // On a break, the program half of this screen is closed and the history half is not. Skipping
+    // the lookup rather than hiding the result: a paused member should not be told which plan she
+    // is not allowed to open. ActivitiesScreen already renders a null program (it has to — a member
+    // waiting on her first plan sees the same thing).
+    const plans = ctx.onBreak
+      ? []
+      : ((await getAssignedPlans(
+          ctx.companyId,
+          ctx.userId,
+        )) as unknown as AssignedPlan[]);
     const plan = plans[0];
 
     if (plan) {

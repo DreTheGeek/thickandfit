@@ -19,7 +19,13 @@ import { Icon } from '@/components/ui/icons';
 
 export const dynamic = 'force-dynamic';
 
-// What she keeps. Every one of these is guarded with requireAuthOrPaused, so the links work.
+// What she keeps, and every one of these links has to actually open for a paused member — a page
+// listing what she still has that bounces her back here is worse than not listing it.
+//   /progress  requireAuthOrPaused
+//   /history   redirects to /workouts, which is requireEntitledOrPaused: her logged history stays,
+//              the program half of that screen closes. Before that guard existed this link bounced.
+//   /inbox     requireAuthOrPaused
+//   /account   requireAuth, which admits her for the same reason
 const OPEN: { href: string; icon: 'pulse' | 'clipboard' | 'community' | 'gear'; key: string }[] = [
   { href: '/progress', icon: 'pulse', key: 'linkProgress' },
   { href: '/history', icon: 'clipboard', key: 'linkHistory' },

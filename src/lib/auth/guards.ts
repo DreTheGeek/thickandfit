@@ -66,6 +66,32 @@ export async function requireEntitled(): Promise<AuthContext> {
 }
 
 /**
+ * Training surfaces that keep their READ half during a pause.
+ *
+ * requireEntitled bounces a paused member to /paused, which is right for a page that is only the
+ * program and wrong for /workouts, where the program shares a screen with her logged history. That
+ * history is the most concrete "her stuff" this app holds, and the pause decision (2026-08-14) was
+ * that she keeps all of it. /paused links to it; before this the link bounced her straight back to
+ * /paused, which is the one thing a page listing what she keeps must not do.
+ *
+ * `onBreak` is returned rather than left for the caller to look up, so the page cannot forget to
+ * ask and quietly serve a paused member the program half.
+ *
+ * Identical to requireEntitled except for that one branch — including the health-disclaimer gate,
+ * which a paused member skips because nothing is prescribing her anything.
+ */
+export async function requireEntitledOrPaused(): Promise<AuthContext & { onBreak: boolean }> {
+  const ctx = await requireAuth();
+  if (hasRole(ctx.role, COACH_ROLES)) return { ...ctx, onBreak: false };
+  if (isStripeConfigured() && !(await isEntitled(ctx.userId))) {
+    if ((await isPaused(ctx.userId)).paused) return { ...ctx, onBreak: true };
+    redirect((await pastDueOnly(ctx.userId)) ? '/account/billing?fix=card' : '/checkout');
+  }
+  if (!(await hasAckedHealth(ctx.userId))) redirect('/disclaimer');
+  return { ...ctx, onBreak: false };
+}
+
+/**
  * Her own records, reachable during a pause.
  *
  * The decision (2026-08-14): a paused member keeps everything of her own and can reach nothing else.
