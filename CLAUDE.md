@@ -450,6 +450,48 @@ signups write `Self-Guided`/`Team Thick & Fit`/`1-on-1 with Steph` — and nothi
 which Lenus value is which tier. Guessing would cap a woman paying for 1-on-1 coaching at the free
 number. Settle the mapping with her before wiring it.
 
+## Three migrations are written and NOT applied (0142, 0143, plus 0140/0141)
+
+`.planning/RUNBOOK-2026-08-14.md` steps 1, 1b, 1c. Apply in number order — 0143's RLS policy calls
+`auth_company_id()`, which 0142 creates.
+
+- **0140 / 0141** — the `paused` entitlement status and `plans.archived_at`. Until 0140 lands,
+  `pauseMemberAction` fails at the CHECK constraint and the whole pause feature is dead code.
+- **0142 tenant boundary** — 21 policies granted on `is_coach()` with no company predicate. The
+  trap: the obvious fix (`current_company_id()`) reads a JWT CUSTOM CLAIM injected by an auth hook
+  that is a manual post-deploy step, so if it was never set the migration denies every coach read in
+  the product. `auth_company_id()` prefers the claim and falls back to the caller's `profiles` row.
+  **Verification is a browser step, not a SQL one**: a coach console that loads EMPTY means the
+  helper returned null. `node .qa-visual/tenant-boundary-test.mjs` audits the SQL statically and
+  fails on the next unscoped policy, in the diff.
+- **0143 coach assignment + coverage** — additive. `profiles.assigned_coach_id` and `coach_coverage`.
+  Resolver, reader and server actions are built and tested; **no UI**, because with one coach a
+  "mine" filter shows an empty console. Build the screens the week an assistant is hired.
+
+## Two automated ladders, and they must never reach the same woman
+
+- `generateReengagementNudges` fires on QUIET days (7/14/28) and reaches someone who stopped.
+- `generateLifecycleNudges` fires on TENURE (day 7/14/30/45/90) and reaches someone who did not.
+
+The lifecycle skips anyone `isEngagementRisk`, and both run in the same daily job off the same
+sweep so they cannot disagree about who she is. "You've been at this a month, look what you built"
+landing on a woman who has not logged anything in three weeks proves nobody is looking.
+
+The lifecycle's **grace window** (`[day, day + 7)`) is what makes it safe against an existing
+roster: a member already 200 days in matches nothing. Without it, first run would have congratulated
+256 migrating members on anniversaries that passed months ago — the same shape as the renewal-queue
+archive. Dedupe is once EVER, not once per spell: nobody reaches day 30 twice.
+
+## The advertised trial now reads the switch
+
+The `/vs/*` pages used to say "Start 3 days free. No card to start." while `/faq` said "No free
+trial" — the site contradicted itself, and both halves of the /vs claim were false. `STRIPE_TRIAL_DAYS`
+is now read by `configuredTrialDays()` in `src/lib/billing/trial-shared.ts`, which BOTH the checkout
+call and the marketing page use, so setting the var turns the offer and the sentence on together and
+the page cannot drift from the product. "No card to start" was removed outright: Checkout collects a
+card regardless of `trial_period_days` unless `payment_method_collection: 'if_required'` is set, and
+setting that means a trial can end with no card on file — a product decision, not a copy fix.
+
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
 Gemini free-tier limits. Document limits and deferral decisions here as they approach.
