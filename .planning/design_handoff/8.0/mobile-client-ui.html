@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thick & Fit Mobile Client UI</title>
+
+  <style>
+    :root {
+      --black: #000000;
+      --black-2: #080808;
+      --black-3: #101010;
+      --black-4: #171717;
+      --panel: #1c1c1e;
+
+      --white: #ffffff;
+      --white-80: rgba(255,255,255,.80);
+      --white-60: rgba(255,255,255,.60);
+      --white-40: rgba(255,255,255,.40);
+      --white-16: rgba(255,255,255,.16);
+      --white-10: rgba(255,255,255,.10);
+
+      --yellow: #eaff00;
+      --green: #58ef68;
+      --red: #ff5b5b;
+      --orange: #ffa52f;
+      --blue: #5ba8ff;
+      --pink: #f0609b;
+
+      --light-bg: #f7f7f7;
+      --light-card: #ffffff;
+      --light-line: #e9e9e9;
+      --light-muted: #777777;
+
+      --phone-radius: 48px;
+      --card-radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: #000;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% 0%, #191919 0, #050505 34%, #000 70%);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+    }
+
+    .page {
+      width: min(100%, 1800px);
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-areas:
+        "work work preview preview track track"
+        "scan scan scan result result result";
+      gap: 14px;
+      align-items: start;
+    }
+
+    .slot-work {
+      grid-area: work;
+    }
+
+    .slot-preview {
+      grid-area: preview;
+    }
+
+    .slot-track {
+      grid-area: track;
+    }
+
+    .slot-scan {
+      grid-area: scan;
+    }
+
+    .slot-result {
+      grid-area: result;
+    }
+
+    .phone {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: var(--phone-radius);
+      border: 3px solid #292929;
+      background: #000;
+      box-shadow:
+        0 0 0 2px #080808 inset,
+        0 22px 55px rgba(0,0,0,.55);
+    }
+
+    .phone.tall {
+      aspect-ratio: 0.485 / 1;
+    }
+
+    .phone.light {
+      background: var(--light-bg);
+      color: #111;
+    }
+
+    .dynamic-island {
+      position: absolute;
+      z-index: 50;
+      top: 12px;
+      left: 50%;
+      width: 31%;
+      height: 26px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: #000;
+    }
+
+    .status-bar {
+      height: 52px;
+      padding: 15px 22px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+      z-index: 20;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .status-right {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .signal {
+      display: inline-flex;
+      gap: 2px;
+      align-items: flex-end;
+      height: 13px;
+    }
+
+    .signal i {
+      display: block;
+      width: 3px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+
+    .signal i:nth-child(1) {
+      height: 5px;
+    }
+
+    .signal i:nth-child(2) {
+      height: 7px;
+    }
+
+    .signal i:nth-child(3) {
+      height: 10px;
+    }
+
+    .signal i:nth-child(4) {
+      height: 13px;
+    }
+
+    .battery {
+      width: 22px;
+      height: 11px;
+      border: 1.5px solid currentColor;
+      border-radius: 3px;
+      position: relative;
+    }
+
+    .battery:before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      right: 4px;
+      bottom: 2px;
+      border-radius: 1px;
+      background: currentColor;
+    }
+
+    .battery:after {
+      content: "";
+      position: absolute;
+      width: 2px;
+      height: 5px;
+      top: 2px;
+      right: -4px;
+      border-radius: 0 2px 2px 0;
+      background: currentColor;
+    }
+
+    .home-indicator {
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      z-index: 30;
+      width: 37%;
+      height: 5px;
+      border-radius: 999px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,.9);
+    }
+
+    .light .home-indicator {
+      background: #111;
+    }
+
+    .round-button {
+      border: 0;
+      background: rgba(255,255,255,.12);
+      color: #fff;
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      font-size: 24px;
+    }
+
+    /* ACTIVE WORKOUT */
+
+    .workout-live {
+      position: relative;
+      height: calc(100% - 52px);
+      min-height: 840px;
+      background: #090909;
+      overflow: hidden;
+    }
+
+    .live-photo {
+      position: absolute;
+      inset: 0;
+    }
+
+    .live-photo img {
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .live-photo:after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          to bottom,
+          rgba(0,0,0,.15) 0,
+          rgba(0,0,0,.05) 48%,
+          rgba(0,0,0,.25) 64%,
+          rgba(0,0,0,.90) 85%,
+          #000 100%
+        );
+    }
+
+    .live-ui {
+      position: relative;
+      z-index: 5;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0 22px 54px;
+    }
+
+    .work-progress {
+      padding-top: 4px;
+    }
+
+    .work-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .segmented span {
+      height: 4px;
+      border-radius: 99px;
+      background: rgba(255,255,255,.26);
+    }
+
+    .segmented span.active {
+      background: #fff;
+    }
+
+    .cheer {
+      margin-top: 22px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .cheer-avatar,
+    .coach-dot {
+      width: 44px;
+      height: 44px;
+      overflow: hidden;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.6);
+    }
+
+    .cheer-avatar img,
+    .coach-dot img {
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cheer-text {
+      font-size: 15px;
+      line-height: 1.15;
+    }
+
+    .cheer-text strong {
+      color: var(--yellow);
+      font-size: 16px;
+    }
+
+    .fire {
+      font-size: 31px;
+    }
+
+    .coach-dot {
+      margin-left: auto;
+      border: 3px solid rgba(234,255,0,.6);
+      box-shadow: 0 0 0 7px rgba(234,255,0,.12);
+    }
+
+    .fire-row {
+      position: absolute;
+      inset: 120px 8px auto;
+      height: 380px;
+      pointer-events: none;
+      font-size: 40px;
+    }
+
+    .fire-row span {
+      position: absolute;
+    }
+
+    .fire-row span:nth-child(1) {
+      left: 8%;
+      top: 34%;
+    }
+
+    .fire-row span:nth-child(2) {
+      left: 25%;
+      top: 3%;
+    }
+
+    .fire-row span:nth-child(3) {
+      right: 25%;
+      top: 4%;
+    }
+
+    .fire-row span:nth-child(4) {
+      right: 7%;
+      top: 37%;
+    }
+
+    .fire-row span:nth-child(5) {
+      left: 13%;
+      top: 57%;
+    }
+
+    .fire-row span:nth-child(6) {
+      right: 15%;
+      top: 56%;
+    }
+
+    .live-spacer {
+      flex: 1;
+    }
+
+    .timer-block {
+      margin-top: auto;
+      display: grid;
+      grid-template-columns: 72px 1fr 78px;
+      align-items: end;
+      text-align: center;
+      padding-bottom: 18px;
+    }
+
+    .timer-side strong {
+      font-size: 29px;
+      display: block;
+    }
+
+    .timer-side small {
+      font-size: 16px;
+      color: rgba(255,255,255,.65);
+    }
+
+    .arc {
+      position: relative;
+      height: 118px;
+    }
+
+    .arc:before {
+      content: "";
+      position: absolute;
+      width: 165px;
+      height: 82px;
+      left: 50%;
+      bottom: 4px;
+      transform: translateX(-50%);
+      border-radius: 165px 165px 0 0;
+      border: 12px dashed rgba(255,255,255,.25);
+      border-bottom: 0;
+    }
+
+    .arc:after {
+      content: "";
+      position: absolute;
+      width: 165px;
+      height: 82px;
+      left: 50%;
+      bottom: 4px;
+      transform: translateX(-50%);
+      border-radius: 165px 165px 0 0;
+      border: 12px dashed var(--yellow);
+      border-right-color: transparent;
+      border-bottom: 0;
+      clip-path: inset(0 43% 0 0);
+    }
+
+    .arc-time {
+      position: absolute;
+      inset: 38px 0 auto;
+      text-align: center;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -2px;
+    }
+
+    .exercise-footer {
+      margin: 0 -4px;
+      background: rgba(44,45,50,.96);
+      border-radius: 18px 18px 0 0;
+      padding: 19px 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 17px;
+    }
+
+    .exercise-footer b {
+      font-weight: 800;
+    }
+
+    .exercise-footer strong {
+      color: var(--yellow);
+    }
+
+    /* WORKOUT PREVIEW */
+
+    .preview-header {
+      position: relative;
+      height: 310px;
+      overflow: hidden;
+    }
+
+    .preview-header img {
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .preview-header:after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,.10), rgba(0,0,0,.96));
+    }
+
+    .preview-controls {
+      position: absolute;
+      inset: 14px 16px auto;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-title {
+      position: absolute;
+      z-index: 5;
+      left: 20px;
+      right: 20px;
+      bottom: 30px;
+      text-align: center;
+    }
+
+    .preview-title .date {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .preview-title h1 {
+      margin: 13px 0 14px;
+      font-size: 42px;
+      line-height: .95;
+      letter-spacing: -2px;
+      font-weight: 950;
+    }
+
+    .equipment-chip {
+      display: inline-flex;
+      padding: 7px 16px;
+      border-radius: 10px;
+      background: rgba(70,70,70,.85);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .preview-body {
+      padding: 0 22px 84px;
+    }
+
+    .action-icons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 18px 0 25px;
+      border-bottom: 1px solid rgba(255,255,255,.18);
+    }
+
+    .action {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,.75);
+    }
+
+    .action .icon {
+      display: block;
+      font-size: 30px;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .time-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      margin: 23px 0 28px;
+      text-align: center;
+    }
+
+    .time-stats div:first-child {
+      border-right: 1px solid rgba(255,255,255,.22);
+    }
+
+    .time-stats strong {
+      display: block;
+      color: var(--yellow);
+      font-size: 23px;
+      margin-bottom: 7px;
+    }
+
+    .time-stats span {
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .section-heading {
+      font-size: 26px;
+      font-weight: 950;
+      letter-spacing: -1px;
+      margin-bottom: 18px;
+    }
+
+    .exercise-row {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .exercise-row img {
+      width: 72px;
+      height: 72px;
+      border-radius: 13px;
+      object-fit: cover;
+    }
+
+    .exercise-row strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .exercise-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,.7);
+      font-size: 14px;
+    }
+
+    .exercise-info .select {
+      background: rgba(255,255,255,.14);
+      padding: 6px 10px;
+      border-radius: 7px;
+    }
+
+    .sticky-start {
+      position: absolute;
+      z-index: 20;
+      left: 18px;
+      right: 18px;
+      bottom: 28px;
+      background: var(--yellow);
+      color: #000;
+      border: 0;
+      padding: 18px 20px;
+      border-radius: 999px;
+      font-size: 17px;
+      font-weight: 950;
+      letter-spacing: .2px;
+    }
+
+    /* TRACKER */
+
+    .tracker-content {
+      padding: 8px 20px 86px;
+    }
+
+    .tracker-logo {
+      font-size: 24px;
+      font-weight: 900;
+      margin: 12px 0 23px;
+    }
+
+    .tracker-tabs {
+      display: flex;
+      gap: 20px;
+      color: rgba(255,255,255,.45);
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .tracker-tabs .active {
+      color: #fff;
+      border-bottom: 2px solid #fff;
+      padding-bottom: 8px;
+    }
+
+    .big-cal-card {
+      background: #1b1b1d;
+      border-radius: 17px;
+      padding: 23px 18px;
+      display: grid;
+      grid-template-columns: 1fr 90px;
+      align-items: center;
+    }
+
+    .big-cal-card strong {
+      display: block;
+      font-size: 35px;
+    }
+
+    .big-cal-card small {
+      color: rgba(255,255,255,.62);
+    }
+
+    .mini-ring {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 8px solid rgba(255,255,255,.2);
+      border-top-color: #fff;
+      border-right-color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .macro-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .macro-card {
+      background: #1b1b1d;
+      border-radius: 14px;
+      padding: 15px 10px;
+      min-height: 127px;
+    }
+
+    .macro-card strong {
+      display: block;
+      font-size: 19px;
+    }
+
+    .macro-card small {
+      color: rgba(255,255,255,.55);
+      font-size: 11px;
+    }
+
+    .macro-circle {
+      width: 52px;
+      height: 52px;
+      margin: 14px auto 0;
+      border-radius: 50%;
+      border: 5px solid #333;
+    }
+
+    .macro-circle.red {
+      border-top-color: var(--red);
+      border-left-color: var(--red);
+    }
+
+    .macro-circle.orange {
+      border-top-color: var(--orange);
+      border-right-color: var(--orange);
+    }
+
+    .macro-circle.blue {
+      border-bottom-color: var(--blue);
+      border-right-color: var(--blue);
+    }
+
+    .recent-title {
+      font-size: 19px;
+      margin: 28px 0 15px;
+    }
+
+    .food-log {
+      display: grid;
+      gap: 11px;
+    }
+
+    .food-item {
+      display: grid;
+      grid-template-columns: 68px 1fr;
+      gap: 13px;
+      padding: 7px 0;
+    }
+
+    .food-item img {
+      width: 68px;
+      height: 68px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    .food-item strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .food-item small {
+      color: rgba(255,255,255,.55);
+    }
+
+    .food-macros {
+      display: flex;
+      gap: 10px;
+      margin-top: 7px;
+      font-size: 11px;
+    }
+
+    .tracker-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 73px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: center;
+      background: rgba(5,5,5,.96);
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .tracker-nav button {
+      background: transparent;
+      border: 0;
+      color: rgba(255,255,255,.55);
+      font-size: 10px;
+    }
+
+    .tracker-nav button.active {
+      color: #fff;
+    }
+
+    .tracker-plus {
+      position: absolute;
+      right: 10px;
+      bottom: 53px;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.25);
+      background: #29292b;
+      color: #fff;
+      font-size: 33px;
+      z-index: 7;
+    }
+
+    /* SCANNER */
+
+    .scanner {
+      position: relative;
+      height: calc(100% - 52px);
+      min-height: 840px;
+      overflow: hidden;
+    }
+
+    .scanner > img {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .scanner:after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,.20), transparent 18%, transparent 72%, rgba(0,0,0,.55));
+    }
+
+    .scanner-ui {
+      position: relative;
+      z-index: 5;
+      height: 100%;
+      padding: 20px 22px 42px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .scanner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .scanner-header h2 {
+      font-size: 19px;
+      margin: 0;
+    }
+
+    .scan-box {
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      top: 28%;
+      height: 42%;
+      border: 3px solid rgba(255,255,255,.82);
+      border-radius: 24px;
+    }
+
+    .scanner-bottom {
+      margin-top: auto;
+    }
+
+    .scanner-modes {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border-radius: 999px;
+      background: rgba(238,238,238,.92);
+      padding: 6px;
+      color: #111;
+      font-size: 11px;
+      align-items: center;
+      text-align: center;
+    }
+
+    .scanner-modes span:first-child {
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 5px;
+      font-weight: 700;
+    }
+
+    .camera-controls {
+      display: grid;
+      grid-template-columns: 1fr 100px 1fr;
+      align-items: center;
+      margin-top: 22px;
+    }
+
+    .flash {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(255,255,255,.9);
+      justify-self: start;
+      font-size: 18px;
+    }
+
+    .shutter {
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      border: 5px solid #fff;
+      box-shadow: 0 0 0 3px rgba(0,0,0,.55) inset;
+      background: #f8f8f8;
+      justify-self: center;
+    }
+
+    /* RESULT */
+
+    .result-hero {
+      height: 310px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-hero img {
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .result-top-controls {
+      position: absolute;
+      z-index: 5;
+      top: 18px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .detected-label {
+      position: absolute;
+      z-index: 5;
+      background: #fff;
+      color: #111;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: 800;
+      box-shadow: 0 5px 18px rgba(0,0,0,.18);
+    }
+
+    .blueberry {
+      top: 42px;
+      left: 22px;
+    }
+
+    .pancake-label {
+      top: 101px;
+      right: 14px;
+    }
+
+    .syrup-label {
+      bottom: 10px;
+      left: 8px;
+    }
+
+    .result-sheet {
+      position: relative;
+      z-index: 4;
+      margin-top: -18px;
+      padding: 22px 18px 32px;
+      background: #fff;
+      color: #111;
+      border-radius: 28px 28px 0 0;
+      min-height: 550px;
+    }
+
+    .meal-type {
+      display: inline-flex;
+      border-radius: 999px;
+      background: #f4f4f4;
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+
+    .meal-title-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin: 11px 0 20px;
+    }
+
+    .meal-title-row h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.05;
+    }
+
+    .quantity {
+      display: inline-grid;
+      grid-template-columns: 32px 32px 32px;
+      align-items: center;
+      text-align: center;
+      border: 1px solid #bbb;
+      border-radius: 999px;
+      height: 42px;
+    }
+
+    .nutrient-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .nutrient {
+      min-height: 78px;
+      border-radius: 16px;
+      border: 1px solid #ececec;
+      padding: 13px;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nutrient-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f8f8f8;
+      display: grid;
+      place-items: center;
+    }
+
+    .nutrient strong {
+      display: block;
+    }
+
+    .health {
+      margin-top: 10px;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .health-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .health-bar {
+      margin-top: 13px;
+      height: 5px;
+      border-radius: 10px;
+      background: #e9e9e9;
+      overflow: hidden;
+    }
+
+    .health-bar i {
+      display: block;
+      width: 72%;
+      height: 100%;
+      background: var(--green);
+    }
+
+    .result-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .result-actions button {
+      height: 54px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .fix {
+      border: 1px solid #999;
+      background: #fff;
+    }
+
+    .done {
+      border: 0;
+      color: #fff;
+      background: #17171b;
+    }
+
+    @media (max-width: 1180px) {
+      .mockup-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+          "work preview"
+          "track track"
+          "scan result";
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 8px;
+      }
+
+      .mockup-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "work"
+          "preview"
+          "track"
+          "scan"
+          "result";
+      }
+
+      .phone {
+        width: min(100%, 430px);
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <div class="mockup-grid">
+
+      <!-- 1. LIVE WORKOUT -->
+      <section class="slot-work">
+        <div class="phone tall">
+          <div class="dynamic-island"></div>
+
+          <div class="status-bar">
+            <span>8:20</span>
+            <span class="status-right">
+              <span class="signal">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <span>⌁</span>
+              <span class="battery"></span>
+            </span>
+          </div>
+
+          <div class="workout-live">
+            <div class="live-photo">
+              <img
+                src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1100&q=95"
+                alt=""
+              />
+            </div>
+
+            <div class="fire-row">
+              <span>🔥</span>
+              <span>🔥</span>
+              <span>🔥</span>
+              <span>🔥</span>
+              <span>🔥</span>
+              <span>🔥</span>
+            </div>
+
+            <div class="live-ui">
+              <div class="work-progress">
+                <div class="work-progress-meta">
+                  <strong>20:34 · 23%</strong>
+                  <span>▣</span>
+                </div>
+
+                <div class="segmented">
+                  <span class="active"></span>
+                  <span class="active"></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+
+              <div class="cheer">
+                <div class="cheer-avatar">
+                  <img
+                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=85"
+                    alt=""
+                  />
+                </div>
+
+                <div class="cheer-text">
+                  <strong>Jessica B</strong><br />
+                  cheered you on!
+                </div>
+
+                <div class="fire">🔥</div>
+
+                <div class="coach-dot">
+                  <img
+                    src="https://images.unsplash.com/photo-1594737625785-c6683fc0dbb8?auto=format&fit=crop&w=180&q=85"
+                    alt=""
+                  />
+                </div>
+              </div>
+
+              <div class="live-spacer"></div>
+
+              <div class="timer-block">
+                <div class="timer-side">
+                  <strong>10</strong>
+                  <small>reps</small>
+                </div>
+
+                <div class="arc">
+                  <div class="arc-time">00:28</div>
+                </div>
+
+                <div class="timer-side">
+                  <strong>95 <small style="font-size:14px">lbs</small></strong>
+                  <small>weight</small>
+                </div>
+              </div>
+
+              <div class="exercise-footer">
+                <b>Deficit Reverse Lunge · Left</b>
+                <span>Set <strong>1</strong> of 3</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-indicator"></div>
+        </div>
+      </section>
+
+      <!-- 2. WORKOUT PREVIEW -->
+      <section class="slot-preview">
+        <div class="phone tall">
+          <div class="dynamic-island"></div>
+
+          <div class="status-bar">
+            <span>15:32</span>
+            <span class="status-right">
+              <span class="signal">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <span>⌁</span>
+              <span>76</span>
+            </span>
+          </div>
+
+          <div style="position:relative;height:calc(100% - 52px);min-height:840px">
+            <div class="preview-header">
+              <img
+                src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=95"
+                alt=""
+              />
+
+              <div class="preview-controls">
+                <button class="round-button">×</button>
+                <button class="round-button">⚙</button>
+              </div>
+
+              <div class="preview-title">
+                <div class="date">Friday, October 3</div>
+                <h1>TONE &amp; TIGHTEN</h1>
+                <span class="equipment-chip">Dumbbells</span>
+              </div>
+            </div>
+
+            <div class="preview-body">
+              <div class="action-icons">
+                <div class="action">
+                  <span class="icon">♡</span>
+                  Save
+                </div>
+
+                <div class="action">
+                  <span class="icon">▦</span>
+                  Schedule
+                </div>
+
+                <div class="action">
+                  <span class="icon">⇧</span>
+                  Share
+                </div>
+
+                <div class="action">
+                  <span class="icon">⇩</span>
+                  Download
+                </div>
+              </div>
+
+              <div class="time-stats">
+                <div>
+                  <strong>37 min</strong>
+                  <span>Total Workout Time</span>
+                </div>
+
+                <div>
+                  <strong>27 min</strong>
+                  <span>Active Workout Time</span>
+                </div>
+              </div>
+
+              <h2 class="section-heading">WARMUP</h2>
+
+              <div class="exercise-row">
+                <img
+                  src="https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=240&q=85"
+                  alt=""
+                />
+                <div>
+                  <strong>Knee Hug</strong>
+                  <div class="exercise-info">
+                    <span class="select">Bodyweight⌄</span>
+                    <span>30 sec</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="exercise-row">
+                <img
+                  src="https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&w=240&q=85"
+                  alt=""
+                />
+                <div>
+                  <strong>Deltoid Stretch · Left</strong>
+                  <div class="exercise-info">
+                    <span class="select">Bodyweight⌄</span>
+                    <span>30 sec</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="exercise-row">
+                <img
+                  src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=240&q=85"
+                  alt=""
+                />
+                <div>
+                  <strong>Deltoid Stretch · Right</strong>
+                  <div class="exercise-info">
+                    <span class="select">Bodyweight⌄</span>
+                    <span>30 sec</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="exercise-row">
+                <img
+                  src="https://images.unsplash.com/photo-1590487988256-9ed24133863e?auto=format&fit=crop&w=240&q=85"
+                  alt=""
+                />
+                <div>
+                  <strong>Palms Behind Shoulders Stretch</strong>
+                  <div class="exercise-info">
+                    <span class="select">Bodyweight⌄</span>
+                    <span>30 sec</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="sticky-start">START WORKOUT</button>
+          </div>
+
+          <div class="home-indicator"></div>
+        </div>
+      </section>
+
+      <!-- 3. TRACKER -->
+      <section class="slot-track">
+        <div class="phone tall">
+          <div class="dynamic-island"></div>
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="status-right">
+              <span class="signal">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <span>⌁</span>
+              <span class="battery"></span>
+            </span>
+          </div>
+
+          <div class="tracker-content">
+            <div class="tracker-logo">● Cal AI</div>
+
+            <div class="tracker-tabs">
+              <span class="active">Today</span>
+              <span>Yesterday</span>
+            </div>
+
+            <div class="big-cal-card">
+              <div>
+                <strong>1250</strong>
+                <small>Calories left</small>
+              </div>
+
+              <div class="mini-ring">◉</div>
+            </div>
+
+            <div class="macro-cards">
+              <div class="macro-card">
+                <strong>45g</strong>
+                <small>Protein over</small>
+                <div class="macro-circle red"></div>
+              </div>
+
+              <div class="macro-card">
+                <strong>89g</strong>
+                <small>Carbs left</small>
+                <div class="macro-circle orange"></div>
+              </div>
+
+              <div class="macro-card">
+                <strong>48g</strong>
+                <small>Fats left</small>
+                <div class="macro-circle blue"></div>
+              </div>
+            </div>
+
+            <h2 class="recent-title">Recently uploaded</h2>
+
+            <div class="food-log">
+              <div class="food-item">
+                <img
+                  src="https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=300&q=90"
+                  alt=""
+                />
+
+                <div>
+                  <strong>Fattoush Salad</strong>
+                  <small>563 calories</small>
+
+                  <div class="food-macros">
+                    <span style="color:#ff5b5b">● 12g</span>
+                    <span style="color:#ffa52f">● 80g</span>
+                    <span style="color:#5ba8ff">● 8g</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="food-item">
+                <img
+                  src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=300&q=90"
+                  alt=""
+                />
+
+                <div>
+                  <strong>Sweet Corn Pancake Bowl</strong>
+                  <small>485 kcal</small>
+
+                  <div class="food-macros">
+                    <span style="color:#ff5b5b">● 26g</span>
+                    <span style="color:#ffa52f">● 55g</span>
+                    <span style="color:#5ba8ff">● 15g</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="tracker-plus">+</button>
+
+          <nav class="tracker-nav">
+            <button class="active">⌂<br />Home</button>
+            <button>▥<br />Analytics</button>
+            <button>⚙<br />Settings</button>
+          </nav>
+
+          <div class="home-indicator"></div>
+        </div>
+      </section>
+
+      <!-- 4. CAMERA SCANNER -->
+      <section class="slot-scan">
+        <div class="phone tall">
+          <div class="dynamic-island"></div>
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="status-right">
+              <span class="signal">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <span>⌁</span>
+              <span class="battery"></span>
+            </span>
+          </div>
+
+          <div class="scanner">
+            <img
+              src="https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=1200&q=95"
+              alt=""
+            />
+
+            <div class="scan-box"></div>
+
+            <div class="scanner-ui">
+              <div class="scanner-header">
+                <button class="round-button">←</button>
+                <h2>Scanner</h2>
+                <button class="round-button">•••</button>
+              </div>
+
+              <div class="scanner-bottom">
+                <div class="scanner-modes">
+                  <span>◉ Scan food</span>
+                  <span>▥</span>
+                  <span>▧</span>
+                  <span>★</span>
+                  <span>✎</span>
+                </div>
+
+                <div class="camera-controls">
+                  <button class="flash">ϟ</button>
+                  <button class="shutter"></button>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-indicator"></div>
+        </div>
+      </section>
+
+      <!-- 5. SCAN RESULT -->
+      <section class="slot-result">
+        <div class="phone tall light">
+          <div class="dynamic-island"></div>
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="status-right">
+              <span class="signal">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <span>⌁</span>
+              <span class="battery"></span>
+            </span>
+          </div>
+
+          <div class="result-hero">
+            <img
+              src="https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=1200&q=95"
+              alt=""
+            />
+
+            <div class="result-top-controls">
+              <button class="round-button">←</button>
+              <strong style="color:white;font-size:18px;padding-top:11px">Nutrition</strong>
+              <button class="round-button">•••</button>
+            </div>
+
+            <div class="detected-label blueberry">
+              Blueberries<br />8
+            </div>
+
+            <div class="detected-label pancake-label">
+              Pancakes<br />595
+            </div>
+
+            <div class="detected-label syrup-label">
+              Syrup<br />12
+            </div>
+          </div>
+
+          <div class="result-sheet">
+            <span class="meal-type">Breakfast</span>
+
+            <div class="meal-title-row">
+              <h2>Pancakes with blueberries &amp; syrup</h2>
+
+              <div class="quantity">
+                <span>−</span>
+                <strong>1</strong>
+                <span>+</span>
+              </div>
+            </div>
+
+            <div class="nutrient-grid">
+              <div class="nutrient">
+                <div class="nutrient-icon">🔥</div>
+                <div>
+                  Calories
+                  <strong>615</strong>
+                </div>
+              </div>
+
+              <div class="nutrient">
+                <div class="nutrient-icon" style="color:#e6a028">🌾</div>
+                <div>
+                  Carbs
+                  <strong>93g</strong>
+                </div>
+              </div>
+
+              <div class="nutrient">
+                <div class="nutrient-icon" style="color:#ee5d69">●</div>
+                <div>
+                  Protein
+                  <strong>11g</strong>
+                </div>
+              </div>
+
+              <div class="nutrient">
+                <div class="nutrient-icon" style="color:#568ee4">◉</div>
+                <div>
+                  Fats
+                  <strong>21g</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="health">
+              <div class="health-head">
+                <span>💔 Health score</span>
+                <strong>7/10</strong>
+              </div>
+
+              <div class="health-bar">
+                <i></i>
+              </div>
+            </div>
+
+            <div class="result-actions">
+              <button class="fix">✦ Fix Results</button>
+              <button class="done">Done</button>
+            </div>
+          </div>
+
+          <div class="home-indicator"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</body>
+</html>

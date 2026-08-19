@@ -319,6 +319,8 @@
       "activities": "Train",
       "nutrition": "Fuel",
       "you": "You",
+      "progress": "Progress",
+      "coach": "Coach",
       "chat": "Chat",
       "messages": "Messages",
       "logFood": "Log food",

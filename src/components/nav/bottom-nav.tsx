@@ -7,16 +7,23 @@ import type { ReactElement } from 'react';
 import { Icon, type IconName } from '@/components/ui/icons';
 
 type Tab = {
-  key: 'today' | 'community' | 'activities' | 'nutrition' | 'you';
+  key: 'today' | 'activities' | 'nutrition' | 'progress' | 'community' | 'coach';
   href: string;
   icon: IconName;
   match: (path: string) => boolean;
-  soon?: boolean;
 };
 
+/**
+ * Six tabs, per the 8.0 handoff (.planning/design_handoff/8.0/client-portal.html).
+ *
+ * The old nav had five and buried Progress and the coach thread inside the You hub. Five of the
+ * six screens in the handoff draw the same bar: Today, Train, Fuel, Progress, Community, Coach.
+ * The Profile screen draws a seventh tab in Coach's place, which is the one internal contradiction
+ * in the handoff; Coach wins because it is what the other five agree on, and because a coaching
+ * product should not put its coach two taps deep. Profile is reached from the header instead.
+ */
 const TABS: Tab[] = [
   { key: 'today', href: '/dashboard', icon: 'calendar', match: (p) => p === '/dashboard' },
-  { key: 'community', href: '/community', icon: 'community', match: (p) => p.startsWith('/community') },
   {
     key: 'activities',
     href: '/workouts',
@@ -29,28 +36,24 @@ const TABS: Tab[] = [
   },
   { key: 'nutrition', href: '/nutrition', icon: 'nutrition', match: (p) => p.startsWith('/nutrition') },
   {
-    key: 'you',
-    href: '/you',
-    icon: 'user',
-    // Every child of the You hub, so the tab stays lit wherever she landed from it. /inbox and
-    // /coach-chat were missing, which meant the two screens where she talks to her coach, human and
-    // AI, were the only ones in the app with no tab highlighted and no way back down the nav. In a
-    // coaching product that is the wrong screen to make her feel lost on. Both are rows in the You
-    // menu (see you-screen.tsx), so this is the tab that already owns them.
-    //
-    // /messages only ever redirects to /coach-chat, so it is never a resting path; matched anyway
-    // because the redirect is cheap to outlive and a stale entry here is invisible.
-    //
-    // NOT /notifications: the bell lives in the top bar and the desktop rail, not in the You menu,
-    // so it belongs to no tab. Picking one for it would be a guess.
-    match: (p) =>
-      p.startsWith('/you') ||
-      p.startsWith('/progress') ||
-      p.startsWith('/account') ||
-      p.startsWith('/evolution') ||
-      p.startsWith('/inbox') ||
-      p.startsWith('/coach-chat') ||
-      p.startsWith('/messages'),
+    key: 'progress',
+    href: '/progress',
+    icon: 'pulse',
+    // Progress owns the body-and-photos story, which the handoff splits across a Progress screen
+    // and a Photos screen reached from its own tab row. /evolution is the same story over a longer
+    // window, so it lights this tab rather than none.
+    match: (p) => p.startsWith('/progress') || p.startsWith('/evolution'),
+  },
+  { key: 'community', href: '/community', icon: 'community', match: (p) => p.startsWith('/community') },
+  {
+    key: 'coach',
+    href: '/inbox',
+    icon: 'chat',
+    // /inbox is the human thread with Stephanie, which is the conversation the handoff's Coach
+    // screen draws. /coach-chat is the assistant and lives behind the same tab: from a member's
+    // side both are "talking to my coach", and giving them separate tabs would ask her to know
+    // which one she wants before she has typed anything.
+    match: (p) => p.startsWith('/inbox') || p.startsWith('/coach-chat') || p.startsWith('/messages'),
   },
 ];
 
@@ -66,7 +69,10 @@ export function BottomNav(): ReactElement | null {
   if (isHidden(pathname)) return null;
 
   return (
-    <nav className="flex flex-none border-t border-divider bg-surface px-3.5 pb-3.5 pt-2.5 lg:hidden">
+    <nav
+      className="flex flex-none border-t border-line bg-[rgba(5,5,6,0.96)] px-2.5 pb-4 pt-2 backdrop-blur-lg lg:hidden"
+      aria-label={t('today')}
+    >
       {TABS.map((tab) => {
         const active = tab.match(pathname);
         return (
@@ -75,20 +81,14 @@ export function BottomNav(): ReactElement | null {
             href={tab.href}
             aria-current={active ? 'page' : undefined}
             className={[
-              'tf-press flex flex-1 flex-col items-center gap-[3px]',
-              active ? 'text-ink' : 'text-faint/90',
+              'tf-press flex flex-1 flex-col items-center gap-[3px] py-0.5',
+              active ? 'text-ink' : 'text-faint',
             ].join(' ')}
           >
-            <span className="relative">
-              <Icon name={tab.icon} size={18} />
-              {tab.soon && (
-                <span
-                  aria-hidden
-                  className="absolute -right-1.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-accent"
-                />
-              )}
-            </span>
-            <span className="text-[10px]">{t(tab.key)}</span>
+            <Icon name={tab.icon} size={18} />
+            {/* 9px in the handoff. Six labels have to survive Spanish too, where "Comunidad" is
+                the longest, so the label wraps at the tab edge rather than pushing its neighbours. */}
+            <span className="text-center text-[9px] font-semibold leading-tight">{t(tab.key)}</span>
           </Link>
         );
       })}

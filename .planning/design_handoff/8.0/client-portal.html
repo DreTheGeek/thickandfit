@@ -1,0 +1,3074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Thick & Fit Client Portal</title>
+
+<style>
+/* =========================================================
+   THICK & FIT CLIENT PORTAL
+   Real editable reconstruction of approved visual direction
+   ========================================================= */
+
+:root {
+  --bg: #000;
+  --surface: #0b0b0c;
+  --surface-2: #121214;
+  --surface-3: #19191c;
+
+  --text: #fff;
+  --muted: #909096;
+  --dim: #5f5f65;
+
+  --line: rgba(255,255,255,.10);
+  --line-strong: rgba(255,255,255,.18);
+
+  --white: #fff;
+  --black: #000;
+
+  /* semantic only */
+  --success: #4ff068;
+  --warning: #edff00;
+  --danger: #ff5e62;
+
+  --phone-width: 390px;
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 15px;
+
+  --shadow:
+    0 40px 100px rgba(0,0,0,.6),
+    0 0 0 1px rgba(255,255,255,.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #050505;
+  color: var(--text);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  width: 100%;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* =========================================================
+   PRESENTATION SHELL
+   ========================================================= */
+
+.demo-shell {
+  min-height: 100vh;
+  padding: 28px;
+}
+
+.demo-top {
+  width: min(1600px, 100%);
+  margin: 0 auto 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.demo-brand {
+  font-size: 23px;
+  font-weight: 950;
+  letter-spacing: -.9px;
+}
+
+.demo-brand span {
+  display: block;
+  margin-top: 4px;
+  font-size: 9px;
+  letter-spacing: 4px;
+  font-weight: 700;
+  color: #aaa;
+}
+
+.screen-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.screen-picker button {
+  border: 1px solid #222;
+  color: #aaa;
+  background: #0d0d0e;
+  border-radius: 999px;
+  padding: 9px 13px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.screen-picker button.active {
+  color: #000;
+  background: #fff;
+  border-color: #fff;
+}
+
+.phone-wrap {
+  width: var(--phone-width);
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.phone {
+  width: 100%;
+  height: 844px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  border-radius: 50px;
+  border: 4px solid #29292b;
+  box-shadow: var(--shadow);
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.screen-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 90px;
+  scrollbar-width: none;
+}
+
+.screen-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================================================
+   IOS CHROME
+   ========================================================= */
+
+.dynamic-island {
+  position: absolute;
+  z-index: 100;
+  top: 11px;
+  left: 50%;
+  width: 120px;
+  height: 31px;
+  transform: translateX(-50%);
+  background: #000;
+  border-radius: 999px;
+}
+
+.statusbar {
+  height: 52px;
+  flex: 0 0 52px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 15px 22px 0;
+  position: relative;
+  z-index: 10;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.status-icons {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.signal {
+  display: flex;
+  gap: 2px;
+  align-items: end;
+}
+
+.signal i {
+  width: 3px;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.signal i:nth-child(1) { height: 5px; }
+.signal i:nth-child(2) { height: 8px; }
+.signal i:nth-child(3) { height: 11px; }
+.signal i:nth-child(4) { height: 14px; }
+
+.battery {
+  width: 23px;
+  height: 12px;
+  border: 1.5px solid #fff;
+  border-radius: 3px;
+  position: relative;
+}
+
+.battery::before {
+  content: "";
+  position: absolute;
+  inset: 2px 5px 2px 2px;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.battery::after {
+  content: "";
+  position: absolute;
+  right: -4px;
+  top: 3px;
+  width: 2px;
+  height: 5px;
+  background: #fff;
+  border-radius: 0 2px 2px 0;
+}
+
+.home-indicator {
+  position: absolute;
+  z-index: 100;
+  left: 50%;
+  bottom: 7px;
+  transform: translateX(-50%);
+  width: 135px;
+  height: 5px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+/* =========================================================
+   GLOBAL MOBILE ELEMENTS
+   ========================================================= */
+
+.mobile-header {
+  padding: 5px 18px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobile-header h1 {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 950;
+  letter-spacing: -1px;
+}
+
+.mobile-header small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #171719;
+}
+
+.section {
+  padding: 0 16px 18px;
+}
+
+.card {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 18px;
+  font-weight: 900;
+}
+
+.btn-white {
+  background: #fff;
+  color: #000;
+}
+
+.btn-outline {
+  color: #fff;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+}
+
+.btn-action {
+  background: var(--warning);
+  color: #000;
+}
+
+.bottom-nav {
+  position: absolute;
+  z-index: 80;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 82px;
+  padding: 9px 10px 18px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  background: rgba(5,5,6,.96);
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+}
+
+.bottom-nav button {
+  border: 0;
+  background: transparent;
+  color: #777;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.bottom-nav button strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.bottom-nav button.active {
+  color: #fff;
+}
+
+/* =========================================================
+   TODAY
+   ========================================================= */
+
+.transform-card {
+  position: relative;
+  min-height: 180px;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.transform-image {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 47%;
+  height: 100%;
+}
+
+.transform-image img {
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.transform-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, var(--surface-2), transparent 45%);
+  z-index: 2;
+}
+
+.transform-copy {
+  position: relative;
+  z-index: 3;
+  width: 60%;
+}
+
+.big-progress {
+  margin-top: 8px;
+  font-size: 57px;
+  line-height: .95;
+  font-weight: 950;
+  letter-spacing: -3px;
+}
+
+.weight-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.weight-grid strong {
+  display: block;
+  font-size: 13px;
+}
+
+.weight-grid span {
+  color: #888;
+  font-size: 8px;
+  letter-spacing: .6px;
+}
+
+.progress-line {
+  height: 5px;
+  margin-top: 13px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: #29292c;
+}
+
+.progress-line i {
+  display: block;
+  height: 100%;
+  width: 64%;
+  background: #fff;
+}
+
+.plan-card {
+  padding: 14px;
+  margin-top: 10px;
+}
+
+.plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.plan-row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.plan-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #000;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.plan-row strong {
+  display: block;
+  font-size: 12px;
+}
+
+.plan-row small {
+  color: #777;
+}
+
+.plan-action {
+  border: 1px solid #333;
+  background: #fff;
+  color: #000;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.today-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.small-card {
+  padding: 13px;
+  min-height: 110px;
+}
+
+.small-card h3 {
+  margin: 4px 0 8px;
+  font-size: 12px;
+}
+
+.food-mini {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+
+.food-mini img {
+  width: 47px;
+  height: 47px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+/* =========================================================
+   TRAIN
+   ========================================================= */
+
+.train-tabs {
+  display: flex;
+  gap: 18px;
+  padding: 0 18px 12px;
+  color: #777;
+  font-size: 12px;
+}
+
+.train-tabs span.active {
+  color: #fff;
+  border-bottom: 2px solid #fff;
+  padding-bottom: 8px;
+}
+
+.train-feature {
+  margin-top: 7px;
+  padding: 12px;
+}
+
+.workout-banner {
+  position: relative;
+  overflow: hidden;
+  height: 150px;
+  border-radius: 15px;
+}
+
+.workout-banner img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.workout-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right,rgba(0,0,0,.78),rgba(0,0,0,.12));
+}
+
+.workout-copy {
+  position: absolute;
+  z-index: 3;
+  left: 14px;
+  bottom: 14px;
+}
+
+.workout-copy strong {
+  display: block;
+  font-size: 16px;
+}
+
+.workout-copy small {
+  color: #bbb;
+}
+
+.up-next {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.next-row {
+  display: grid;
+  grid-template-columns: 53px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.next-row img {
+  width: 53px;
+  height: 53px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+
+.next-row strong {
+  display: block;
+  font-size: 12px;
+}
+
+.next-row small {
+  color: #777;
+}
+
+.week-plan {
+  margin-top: 12px;
+  padding: 14px;
+}
+
+.week-row {
+  display: grid;
+  grid-template-columns: 37px 1fr auto;
+  padding: 7px 0;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.week-row.active {
+  color: #fff;
+}
+
+/* =========================================================
+   LIVE WORKOUT
+   ========================================================= */
+
+.live-screen {
+  background: #000;
+}
+
+.live-title {
+  text-align: center;
+  padding: 2px 18px 12px;
+}
+
+.live-title strong {
+  display: block;
+  font-size: 18px;
+}
+
+.live-title small {
+  color: #aaa;
+}
+
+.video-frame {
+  position: relative;
+  height: 255px;
+  overflow: hidden;
+}
+
+.video-frame img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54px;
+  height: 54px;
+  transform: translate(-50%,-50%);
+  border-radius: 50%;
+  border: 0;
+  font-size: 20px;
+}
+
+.main-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  text-align: center;
+  padding: 20px 28px;
+}
+
+.main-stats > div:first-child {
+  border-right: 1px solid #333;
+}
+
+.main-stats strong {
+  display: block;
+  font-size: 31px;
+}
+
+.main-stats span {
+  color: #777;
+  font-size: 10px;
+}
+
+.set-progress {
+  padding: 4px 18px 0;
+}
+
+.set-head {
+  display: flex;
+  justify-content: space-between;
+  color: #888;
+  font-size: 9px;
+}
+
+.set-line {
+  margin-top: 10px;
+  height: 5px;
+  background: #222;
+  border-radius: 99px;
+}
+
+.set-line i {
+  display: block;
+  width: 59%;
+  height: 100%;
+  border-radius: inherit;
+  background: #fff;
+}
+
+.rest-circle {
+  width: 116px;
+  height: 116px;
+  margin: 18px auto;
+  border-radius: 50%;
+  border: 6px solid #333;
+  border-top-color: #fff;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.rest-circle strong {
+  font-size: 30px;
+}
+
+.rest-circle small {
+  display: block;
+  color: #888;
+}
+
+.next-exercise {
+  margin: 0 18px;
+  padding: 11px;
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.next-exercise img {
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* =========================================================
+   EXERCISE DETAIL
+   ========================================================= */
+
+.exercise-photo {
+  height: 390px;
+  position: relative;
+}
+
+.exercise-photo img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.exercise-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,transparent 60%,#000 100%);
+}
+
+.exercise-name {
+  position: absolute;
+  z-index: 3;
+  bottom: 15px;
+  left: 16px;
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.exercise-tools {
+  padding: 8px 16px 14px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.tool-chip {
+  flex: none;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #242426;
+  color: #bbb;
+  font-size: 11px;
+}
+
+.set-table {
+  margin: 0 16px;
+}
+
+.set-table-head,
+.set-table-row {
+  display: grid;
+  grid-template-columns: 34px 55px 1fr 52px 60px;
+  gap: 4px;
+  align-items: center;
+  font-size: 11px;
+}
+
+.set-table-head {
+  color: #777;
+  padding: 10px 0;
+  border-bottom: 1px solid #222;
+}
+
+.set-table-row {
+  min-height: 46px;
+  border-bottom: 1px solid #151515;
+}
+
+.set-table-row .amrap {
+  color: var(--success);
+  font-weight: 900;
+}
+
+/* =========================================================
+   FUEL
+   ========================================================= */
+
+.fuel-tabs {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  padding: 0 18px 10px;
+  text-align: center;
+  font-size: 11px;
+  color: #777;
+}
+
+.fuel-tabs .active {
+  color: #fff;
+}
+
+.calorie-line {
+  padding: 14px 18px;
+  border-top: 1px solid #151515;
+  border-bottom: 1px solid #151515;
+}
+
+.cal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+}
+
+.cal-top strong {
+  font-size: 26px;
+}
+
+.cal-top span {
+  color: #bbb;
+  font-size: 12px;
+}
+
+.macro-row {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  margin-top: 17px;
+}
+
+.macro-row > div {
+  padding-right: 10px;
+}
+
+.macro-row > div + div {
+  border-left: 1px solid #222;
+  padding-left: 10px;
+}
+
+.macro-row strong {
+  display: block;
+  font-size: 12px;
+}
+
+.macro-row small {
+  color: #777;
+}
+
+.meals {
+  padding: 0 16px;
+}
+
+.meal {
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  gap: 10px;
+  padding: 10px 0;
+  align-items: center;
+  border-bottom: 1px solid #151515;
+}
+
+.meal img {
+  width: 54px;
+  height: 54px;
+  border-radius: 11px;
+  object-fit: cover;
+}
+
+.meal strong {
+  display: block;
+  font-size: 12px;
+}
+
+.meal small {
+  color: #777;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   SMART SCAN
+   ========================================================= */
+
+.scan-screen {
+  background: #000;
+}
+
+.scan-camera {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-camera > img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,rgba(0,0,0,.18),transparent 20%,transparent 72%,rgba(0,0,0,.62));
+}
+
+.scan-frame {
+  position: absolute;
+  left: 35px;
+  right: 35px;
+  top: 145px;
+  height: 365px;
+  border: 2px solid #fff;
+  border-radius: 25px;
+}
+
+.scan-message {
+  position: absolute;
+  bottom: 150px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+}
+
+.scan-controls {
+  position: absolute;
+  bottom: 32px;
+  left: 18px;
+  right: 18px;
+  display: grid;
+  grid-template-columns: 1fr 80px 1fr;
+  align-items: center;
+}
+
+.scan-small {
+  color: #bbb;
+  font-size: 10px;
+  text-align: center;
+}
+
+.shutter {
+  width: 72px;
+  height: 72px;
+  border: 5px solid #fff;
+  border-radius: 50%;
+  background: #f8f8f8;
+}
+
+/* =========================================================
+   SCAN RESULT
+   ========================================================= */
+
+.scan-result-image {
+  height: 185px;
+  overflow: hidden;
+}
+
+.scan-result-image img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.result-main {
+  padding: 14px 16px;
+}
+
+.result-main h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.result-cal {
+  margin-top: 4px;
+  font-size: 15px;
+  color: #aaa;
+}
+
+.result-macros {
+  margin-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  text-align: center;
+}
+
+.result-macros strong {
+  display: block;
+  font-size: 20px;
+}
+
+.result-macros span {
+  color: #777;
+  font-size: 8px;
+}
+
+.ingredients {
+  margin-top: 20px;
+}
+
+.ingredient {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 0;
+  font-size: 10px;
+}
+
+.ingredient img {
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.ingredient span:nth-child(3),
+.ingredient span:nth-child(4) {
+  color: #999;
+}
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+.progress-tabs {
+  display: flex;
+  gap: 16px;
+  padding: 0 18px 10px;
+  font-size: 10px;
+  color: #777;
+}
+
+.progress-tabs .active {
+  color: #fff;
+}
+
+.chart-card {
+  margin: 0 16px;
+  padding: 14px;
+}
+
+.chart-meta {
+  display: flex;
+  justify-content: space-between;
+}
+
+.chart-meta strong {
+  font-size: 14px;
+}
+
+.chart-box {
+  height: 210px;
+  margin-top: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom,transparent 24%,#181818 25%,transparent 26%),
+    linear-gradient(to bottom,transparent 49%,#181818 50%,transparent 51%),
+    linear-gradient(to bottom,transparent 74%,#181818 75%,transparent 76%);
+}
+
+.chart-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.progress-summary {
+  padding: 16px;
+  margin: 10px 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  font-size: 11px;
+}
+
+.summary-row span {
+  color: #777;
+}
+
+/* =========================================================
+   PHOTOS
+   ========================================================= */
+
+.compare-card {
+  margin: 0 16px;
+  overflow: hidden;
+}
+
+.compare-images {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 315px;
+}
+
+.compare-images img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.compare-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.photo-strip {
+  margin: 14px 16px 0;
+}
+
+.photo-strip h3 {
+  font-size: 11px;
+}
+
+.photo-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.photo-row img {
+  flex: 0 0 55px;
+  width: 55px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* =========================================================
+   COMMUNITY
+   ========================================================= */
+
+.challenge-card {
+  margin: 0 16px 10px;
+  padding: 13px;
+  background: linear-gradient(135deg,#131313,#080808);
+}
+
+.challenge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.challenge-header strong {
+  display: block;
+  font-size: 14px;
+}
+
+.trophy {
+  font-size: 38px;
+}
+
+.post {
+  padding: 13px 16px 16px;
+  border-bottom: 1px solid #181818;
+}
+
+.post-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.post-user img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-user strong {
+  display: block;
+  font-size: 11px;
+}
+
+.post-user small {
+  color: #777;
+}
+
+.post-copy {
+  margin: 11px 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.post-img {
+  height: 210px;
+  border-radius: 13px;
+  object-fit: cover;
+}
+
+.post-stats {
+  display: flex;
+  gap: 20px;
+  padding-top: 10px;
+  color: #aaa;
+  font-size: 11px;
+}
+
+/* =========================================================
+   COACH
+   ========================================================= */
+
+.coach-head {
+  padding: 3px 16px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.coach-head img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.coach-head strong {
+  display: block;
+  font-size: 13px;
+}
+
+.coach-head small {
+  color: #aaa;
+}
+
+.chat {
+  padding: 12px 16px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.msg {
+  max-width: 76%;
+  border-radius: 17px;
+  padding: 11px 13px;
+  font-size: 11px;
+  line-height: 1.45;
+  background: #161618;
+}
+
+.msg.me {
+  align-self: flex-end;
+  background: #fff;
+  color: #000;
+}
+
+.workout-context {
+  max-width: 78%;
+  border: 1px solid #2a2a2a;
+  border-radius: 13px;
+  overflow: hidden;
+}
+
+.context-main {
+  display: grid;
+  grid-template-columns: 50px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 9px;
+}
+
+.context-main img {
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.context-main strong {
+  display: block;
+  font-size: 11px;
+}
+
+.context-main small {
+  color: #777;
+}
+
+.pr {
+  background: #fff;
+  color: #000;
+  border-radius: 7px;
+  padding: 5px 6px;
+  font-weight: 900;
+  font-size: 9px;
+}
+
+.coach-actions {
+  display: flex;
+  gap: 7px;
+  padding: 0 16px 10px;
+}
+
+.coach-actions button {
+  border: 1px solid #2a2a2a;
+  background: transparent;
+  color: #fff;
+  padding: 8px 11px;
+  border-radius: 999px;
+  font-size: 9px;
+}
+
+.chat-input {
+  position: absolute;
+  z-index: 70;
+  left: 16px;
+  right: 16px;
+  bottom: 88px;
+  display: grid;
+  grid-template-columns: 1fr 38px;
+  gap: 8px;
+}
+
+.chat-input input {
+  width: 100%;
+  border: 1px solid #2b2b2b;
+  background: #0c0c0d;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 999px;
+  outline: none;
+}
+
+.chat-input button {
+  border: 0;
+  border-radius: 50%;
+  color: #000;
+  background: #fff;
+}
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+.profile-main {
+  padding: 4px 16px 100px;
+}
+
+.profile-person {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.profile-person img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-person h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.profile-person p {
+  margin: 0;
+  color: #777;
+  font-size: 11px;
+}
+
+.profile-stats {
+  margin-top: 17px;
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  text-align: center;
+}
+
+.profile-stats > div + div {
+  border-left: 1px solid #242424;
+}
+
+.profile-stats strong {
+  display: block;
+  font-size: 16px;
+}
+
+.profile-stats span {
+  color: #777;
+  font-size: 9px;
+}
+
+.achievements {
+  margin-top: 17px;
+  padding: 13px;
+}
+
+.badge-row {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 9px;
+  margin-top: 11px;
+}
+
+.badge {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle,#4b4b4b 0 30%,#191919 31% 55%,#6d6d6d 56% 61%,#111 62%);
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+}
+
+.profile-menu {
+  margin-top: 15px;
+  overflow: hidden;
+}
+
+.menu-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px;
+  border-bottom: 1px solid #1d1d1d;
+  font-size: 11px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .demo-shell {
+    padding: 10px;
+  }
+
+  .demo-top {
+    display: block;
+  }
+
+  .screen-picker {
+    margin-top: 14px;
+  }
+
+  .phone-wrap {
+    margin-top: 18px;
+  }
+
+  .phone {
+    height: min(844px, calc(100vh - 40px));
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="demo-shell">
+
+  <header class="demo-top">
+    <div class="demo-brand">
+      THICK & FIT
+      <span>BY STEPH</span>
+    </div>
+
+    <div class="screen-picker" id="screenPicker">
+      <button class="active" data-go="today">Today</button>
+      <button data-go="train">Train</button>
+      <button data-go="live">Live Workout</button>
+      <button data-go="exercise">Exercise</button>
+      <button data-go="fuel">Fuel</button>
+      <button data-go="scan">Scan</button>
+      <button data-go="result">Result</button>
+      <button data-go="progress">Progress</button>
+      <button data-go="photos">Photos</button>
+      <button data-go="community">Community</button>
+      <button data-go="coach">Coach</button>
+      <button data-go="profile">Profile</button>
+    </div>
+  </header>
+
+  <div class="phone-wrap">
+    <div class="phone">
+
+      <div class="dynamic-island"></div>
+
+      <!-- ===================================================
+           TODAY
+           =================================================== -->
+
+      <section class="screen" data-screen="today">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll">
+
+          <header class="mobile-header">
+            <div>
+              <h1>TODAY</h1>
+              <small>Friday, Oct 3</small>
+            </div>
+
+            <button class="icon-btn">♧</button>
+          </header>
+
+          <div class="section">
+
+            <article class="card transform-card">
+
+              <div class="transform-image">
+                <img
+                  src="https://images.unsplash.com/photo-1594737625785-c6683fc0dbb8?auto=format&fit=crop&w=700&q=90"
+                  alt=""
+                />
+              </div>
+
+              <div class="transform-copy">
+
+                <div class="label">Transformation status</div>
+
+                <div class="big-progress">64%</div>
+
+                <div class="label">to your goal</div>
+
+                <div class="weight-grid">
+                  <div>
+                    <strong>217.4</strong>
+                    <span>START</span>
+                  </div>
+
+                  <div>
+                    <strong>201.6</strong>
+                    <span>CURRENT</span>
+                  </div>
+
+                  <div>
+                    <strong>192</strong>
+                    <span>GOAL</span>
+                  </div>
+                </div>
+
+                <div class="progress-line">
+                  <i></i>
+                </div>
+
+              </div>
+            </article>
+
+            <article class="card plan-card">
+
+              <div class="plan-top">
+                <span class="label">Today's plan</span>
+                <span class="muted" style="font-size:10px">Edit</span>
+              </div>
+
+              <div class="plan-list">
+
+                <div class="plan-row">
+                  <div class="plan-icon">T</div>
+
+                  <div>
+                    <strong>TRAIN</strong>
+                    <small>Glutes + Hamstrings</small>
+                  </div>
+
+                  <button class="plan-action" data-jump="train">
+                    START
+                  </button>
+                </div>
+
+                <div class="plan-row">
+                  <div class="plan-icon">F</div>
+
+                  <div>
+                    <strong>FUEL</strong>
+                    <small>147 / 150g protein</small>
+                  </div>
+
+                  <button class="plan-action" data-jump="fuel">
+                    LOG
+                  </button>
+                </div>
+
+                <div class="plan-row">
+                  <div class="plan-icon">M</div>
+
+                  <div>
+                    <strong>MOVE</strong>
+                    <small>8,742 / 10,000 steps</small>
+                  </div>
+
+                  <strong style="color:var(--success);font-size:11px">
+                    8,742
+                  </strong>
+                </div>
+
+                <div class="plan-row">
+                  <div class="plan-icon">R</div>
+
+                  <div>
+                    <strong>RECOVER</strong>
+                    <small>7h 26m sleep</small>
+                  </div>
+
+                  <strong style="color:var(--success);font-size:11px">
+                    7:26
+                  </strong>
+                </div>
+
+              </div>
+            </article>
+
+            <div class="today-grid">
+
+              <article class="card small-card">
+
+                <div class="label">Next best action</div>
+
+                <h3>You have 22g of protein left.</h3>
+
+                <div class="food-mini">
+                  <img
+                    src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=250&q=90"
+                    alt=""
+                  />
+
+                  <div>
+                    <strong style="font-size:10px">
+                      Chicken Burrito Bowl
+                    </strong>
+                    <div class="muted" style="font-size:8px;margin-top:3px">
+                      42g protein
+                    </div>
+                  </div>
+                </div>
+
+              </article>
+
+              <article class="card small-card">
+
+                <div class="label">Challenge</div>
+
+                <h3>Glute Growth Challenge</h3>
+
+                <div style="font-size:10px;color:#aaa">
+                  Week 3 of 4
+                </div>
+
+                <div style="margin-top:14px;font-size:11px">
+                  🏆 You're ranked
+                  <strong>#14</strong>
+                </div>
+
+              </article>
+
+            </div>
+
+          </div>
+        </div>
+
+        <nav class="bottom-nav">
+          <button class="active" data-nav="today"><strong>⌂</strong>Today</button>
+          <button data-nav="train"><strong>✦</strong>Train</button>
+          <button data-nav="fuel"><strong>◉</strong>Fuel</button>
+          <button data-nav="progress"><strong>▥</strong>Progress</button>
+          <button data-nav="community"><strong>♧</strong>Community</button>
+          <button data-nav="coach"><strong>◌</strong>Coach</button>
+        </nav>
+
+      </section>
+
+      <!-- ===================================================
+           TRAIN
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="train">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll">
+
+          <header class="mobile-header">
+            <h1>TRAIN</h1>
+          </header>
+
+          <div class="train-tabs">
+            <span class="active">My Plan</span>
+            <span>Programs</span>
+            <span>Favorites</span>
+          </div>
+
+          <div class="section">
+
+            <div class="label">Today's workout</div>
+
+            <article class="card train-feature">
+
+              <div class="workout-banner">
+
+                <img
+                  src="https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=900&q=90"
+                  alt=""
+                />
+
+                <div class="workout-copy">
+                  <strong>Glutes + Hamstrings</strong>
+                  <small>5 exercises · 45 min</small>
+                </div>
+
+              </div>
+
+              <button
+                class="btn btn-white"
+                data-jump="live"
+                style="width:100%;margin-top:11px"
+              >
+                START WORKOUT
+              </button>
+
+            </article>
+
+            <article class="card" style="padding:13px;margin-top:10px">
+
+              <div class="label">Up next</div>
+
+              <div class="up-next">
+
+                <div class="next-row">
+                  <img
+                    src="https://images.unsplash.com/photo-1598266663439-2056e6900339?auto=format&fit=crop&w=300&q=85"
+                    alt=""
+                  />
+
+                  <div>
+                    <strong>Upper Body Push</strong>
+                    <small>Tomorrow</small>
+                  </div>
+                </div>
+
+                <div class="next-row">
+                  <img
+                    src="https://images.unsplash.com/photo-1581009137042-c552e485697a?auto=format&fit=crop&w=300&q=85"
+                    alt=""
+                  />
+
+                  <div>
+                    <strong>Lower Body Strength</strong>
+                    <small>Sunday</small>
+                  </div>
+                </div>
+
+              </div>
+
+            </article>
+
+            <article class="card week-plan">
+
+              <div class="label">Split overview</div>
+
+              <div style="margin-top:8px">
+
+                <div class="week-row">
+                  <span>Mon</span>
+                  <span>Upper Body Push</span>
+                  <span></span>
+                </div>
+
+                <div class="week-row">
+                  <span>Tue</span>
+                  <span>Lower Body Pull</span>
+                  <span></span>
+                </div>
+
+                <div class="week-row">
+                  <span>Wed</span>
+                  <span>Glutes + Hamstrings</span>
+                  <span></span>
+                </div>
+
+                <div class="week-row">
+                  <span>Thu</span>
+                  <span>Upper Body Pull</span>
+                  <span></span>
+                </div>
+
+                <div class="week-row active">
+                  <span>Fri</span>
+                  <span>Glutes + Hamstrings</span>
+                  <span>●</span>
+                </div>
+
+                <div class="week-row">
+                  <span>Sat</span>
+                  <span>Full Body</span>
+                  <span></span>
+                </div>
+
+                <div class="week-row">
+                  <span>Sun</span>
+                  <span>Rest</span>
+                  <span></span>
+                </div>
+
+              </div>
+
+            </article>
+
+          </div>
+
+        </div>
+
+        <nav class="bottom-nav">
+          <button data-nav="today"><strong>⌂</strong>Today</button>
+          <button class="active" data-nav="train"><strong>✦</strong>Train</button>
+          <button data-nav="fuel"><strong>◉</strong>Fuel</button>
+          <button data-nav="progress"><strong>▥</strong>Progress</button>
+          <button data-nav="community"><strong>♧</strong>Community</button>
+          <button data-nav="coach"><strong>◌</strong>Coach</button>
+        </nav>
+
+      </section>
+
+      <!-- ===================================================
+           LIVE WORKOUT
+           =================================================== -->
+
+      <section class="screen live-screen hidden" data-screen="live">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll" style="padding-bottom:20px">
+
+          <div class="live-title">
+            <small>LIVE WORKOUT</small>
+            <strong>Hip Thrust</strong>
+            <small>4 OF 5</small>
+          </div>
+
+          <div class="video-frame">
+            <img
+              src="https://images.unsplash.com/photo-1598266663439-2056e6900339?auto=format&fit=crop&w=1000&q=90"
+              alt=""
+            />
+            <button class="play">▶</button>
+          </div>
+
+          <div class="main-stats">
+            <div>
+              <strong>185</strong>
+              <span>LBS</span>
+            </div>
+
+            <div>
+              <strong>8</strong>
+              <span>REPS</span>
+            </div>
+          </div>
+
+          <div class="set-progress">
+
+            <div class="set-head">
+              <span>SET 3 OF 4</span>
+              <span>TARGET REPS 8 - 10</span>
+            </div>
+
+            <div class="set-line">
+              <i></i>
+            </div>
+
+          </div>
+
+          <div class="rest-circle">
+            <div>
+              <strong>0:28</strong>
+              <small>REST</small>
+            </div>
+          </div>
+
+          <article class="card next-exercise">
+
+            <img
+              src="https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=300&q=90"
+              alt=""
+            />
+
+            <div>
+              <div class="label">Up next</div>
+              <strong>Romanian Deadlift</strong>
+              <small class="muted">3 sets · 8-10 reps</small>
+            </div>
+
+          </article>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:13px 18px 0">
+
+            <button class="btn btn-outline">
+              END SET
+            </button>
+
+            <button class="btn btn-outline">
+              SKIP REST
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           EXERCISE DETAIL
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="exercise">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll" style="padding-bottom:30px">
+
+          <div class="exercise-photo">
+
+            <img
+              src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=90"
+              alt=""
+            />
+
+            <div class="exercise-name">
+              Kneeling Raises · Right
+            </div>
+
+          </div>
+
+          <div class="exercise-tools">
+            <span class="tool-chip">Dumbbells⌄</span>
+            <span class="tool-chip">▧ History</span>
+            <span class="tool-chip">✎ Notes</span>
+            <span class="tool-chip">▶ Start</span>
+          </div>
+
+          <div class="set-table">
+
+            <div class="set-table-head">
+              <span>Set</span>
+              <span>Time</span>
+              <span>Effort</span>
+              <span>Reps</span>
+              <span>Previous</span>
+            </div>
+
+            <div class="set-table-row">
+              <strong>1</strong>
+              <span>30s</span>
+              <span class="amrap">AMRAP</span>
+              <span>--</span>
+              <span>--</span>
+            </div>
+
+            <div class="set-table-row">
+              <strong>2</strong>
+              <span>30s</span>
+              <span class="amrap">AMRAP</span>
+              <span>--</span>
+              <span>--</span>
+            </div>
+
+            <div class="set-table-row">
+              <strong>3</strong>
+              <span>30s</span>
+              <span class="amrap">AMRAP</span>
+              <span>--</span>
+              <span>--</span>
+            </div>
+
+            <div class="set-table-row">
+              <strong>4</strong>
+              <span>30s</span>
+              <span class="amrap">AMRAP</span>
+              <span>--</span>
+              <span>--</span>
+            </div>
+
+          </div>
+
+          <div style="padding:18px 16px 0">
+
+            <button class="btn btn-action" style="width:100%">
+              ⇄ SWAP EXERCISE
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           FUEL
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="fuel">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll">
+
+          <header class="mobile-header">
+            <h1>FUEL</h1>
+            <button class="icon-btn">•••</button>
+          </header>
+
+          <div class="fuel-tabs">
+            <span class="active">Today</span>
+            <span>Meals</span>
+            <span>Nutrition</span>
+          </div>
+
+          <div class="calorie-line">
+
+            <div class="cal-top">
+              <div>
+                <span class="label">Calories</span>
+                <strong>1,420</strong>
+                <span>/ 1,780</span>
+              </div>
+
+              <span>
+                360 left
+              </span>
+            </div>
+
+            <div class="progress-line">
+              <i style="width:80%"></i>
+            </div>
+
+            <div class="macro-row">
+
+              <div>
+                <small>PROTEIN</small>
+                <strong>128 / 150g</strong>
+              </div>
+
+              <div>
+                <small>CARBS</small>
+                <strong>142 / 175g</strong>
+              </div>
+
+              <div>
+                <small>FATS</small>
+                <strong>48 / 60g</strong>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="meals">
+
+            <div class="label" style="margin-top:15px">
+              Meals
+            </div>
+
+            <div class="meal">
+
+              <img
+                src="https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=300&q=90"
+                alt=""
+              />
+
+              <div>
+                <strong>Breakfast</strong>
+                <small>
+                  Greek Yogurt Bowl<br />
+                  420 cal · 34P
+                </small>
+              </div>
+
+              <span>›</span>
+
+            </div>
+
+            <div class="meal">
+
+              <img
+                src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=300&q=90"
+                alt=""
+              />
+
+              <div>
+                <strong>Lunch</strong>
+                <small>
+                  Chicken Burrito Bowl<br />
+                  560 cal · 42P
+                </small>
+              </div>
+
+              <span>›</span>
+
+            </div>
+
+            <div class="meal">
+
+              <img
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=90"
+                alt=""
+              />
+
+              <div>
+                <strong>Dinner</strong>
+                <small>
+                  Salmon, Rice &amp; Veggies<br />
+                  440 cal · 40P
+                </small>
+              </div>
+
+              <span>›</span>
+
+            </div>
+
+            <div class="meal">
+
+              <img
+                src="https://images.unsplash.com/photo-1577805947697-89e18249d767?auto=format&fit=crop&w=300&q=90"
+                alt=""
+              />
+
+              <div>
+                <strong>Snack</strong>
+                <small>
+                  Protein Shake<br />
+                  220 cal · 30P
+                </small>
+              </div>
+
+              <span>›</span>
+
+            </div>
+
+            <button
+              class="btn btn-outline"
+              data-jump="scan"
+              style="width:100%;margin-top:15px"
+            >
+              ＋ ADD MEAL
+            </button>
+
+          </div>
+
+        </div>
+
+        <nav class="bottom-nav">
+          <button data-nav="today"><strong>⌂</strong>Today</button>
+          <button data-nav="train"><strong>✦</strong>Train</button>
+          <button class="active" data-nav="fuel"><strong>◉</strong>Fuel</button>
+          <button data-nav="progress"><strong>▥</strong>Progress</button>
+          <button data-nav="community"><strong>♧</strong>Community</button>
+          <button data-nav="coach"><strong>◌</strong>Coach</button>
+        </nav>
+
+      </section>
+
+      <!-- ===================================================
+           SMART SCAN
+           =================================================== -->
+
+      <section class="screen scan-screen hidden" data-screen="scan">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="scan-camera">
+
+          <img
+            src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1100&q=95"
+            alt=""
+          />
+
+          <div class="scan-overlay"></div>
+
+          <div class="mobile-header" style="position:absolute;z-index:5;left:0;right:0">
+
+            <button class="icon-btn" data-jump="fuel">
+              ×
+            </button>
+
+            <h1 style="font-size:14px">
+              SMART SCAN
+            </h1>
+
+            <button class="icon-btn">
+              ϟ
+            </button>
+
+          </div>
+
+          <div class="scan-frame"></div>
+
+          <div class="scan-message">
+            Center food in frame
+          </div>
+
+          <div class="scan-controls">
+
+            <div class="scan-small">
+              ▧<br />
+              GALLERY
+            </div>
+
+            <button class="shutter" data-jump="result"></button>
+
+            <div class="scan-small">
+              ↻<br />
+              HISTORY
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           SCAN RESULT
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="result">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll" style="padding-bottom:30px">
+
+          <header class="mobile-header">
+            <h1 style="font-size:17px">
+              SCAN RESULT
+            </h1>
+          </header>
+
+          <div class="scan-result-image">
+            <img
+              src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=95"
+              alt=""
+            />
+          </div>
+
+          <div class="result-main">
+
+            <h2>Chicken Burrito Bowl</h2>
+
+            <div class="result-cal">
+              560 calories
+            </div>
+
+            <div class="result-macros">
+
+              <div>
+                <strong>42g</strong>
+                <span>PROTEIN</span>
+              </div>
+
+              <div>
+                <strong>64g</strong>
+                <span>CARBS</span>
+              </div>
+
+              <div>
+                <strong>19g</strong>
+                <span>FATS</span>
+              </div>
+
+            </div>
+
+            <div class="ingredients">
+
+              <div class="label">
+                Ingredients
+              </div>
+
+              <div class="ingredient">
+                <img src="https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=100&q=80" />
+                <span>Chicken Breast</span>
+                <span>5 oz</span>
+                <span>250 cal</span>
+              </div>
+
+              <div class="ingredient">
+                <img src="https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=100&q=80" />
+                <span>White Rice</span>
+                <span>1 cup</span>
+                <span>205 cal</span>
+              </div>
+
+              <div class="ingredient">
+                <img src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=100&q=80" />
+                <span>Black Beans</span>
+                <span>½ cup</span>
+                <span>120 cal</span>
+              </div>
+
+              <div class="ingredient">
+                <img src="https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=100&q=80" />
+                <span>Corn</span>
+                <span>½ cup</span>
+                <span>67 cal</span>
+              </div>
+
+              <div class="ingredient">
+                <img src="https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?auto=format&fit=crop&w=100&q=80" />
+                <span>Salsa</span>
+                <span>¼ cup</span>
+                <span>15 cal</span>
+              </div>
+
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
+
+              <button class="btn btn-white">
+                Edit
+              </button>
+
+              <button class="btn btn-outline">
+                Add to Log
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           PROGRESS
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="progress">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll">
+
+          <header class="mobile-header">
+            <h1>PROGRESS</h1>
+          </header>
+
+          <div class="progress-tabs">
+            <span class="active">Overview</span>
+            <span>Body</span>
+            <span>Strength</span>
+            <span data-jump="photos">Photos</span>
+            <span>Consistency</span>
+          </div>
+
+          <article class="card chart-card">
+
+            <div class="chart-meta">
+
+              <div>
+                <div class="label">
+                  Weight trend
+                </div>
+
+                <small class="muted">
+                  Last 90 days
+                </small>
+              </div>
+
+              <div style="text-align:right">
+                <strong>-15.8 lbs</strong>
+                <small class="muted" style="display:block">
+                  Total Loss
+                </small>
+              </div>
+
+            </div>
+
+            <div class="chart-box">
+
+              <div class="chart-grid"></div>
+
+              <svg
+                class="chart-svg"
+                viewBox="0 0 300 210"
+                preserveAspectRatio="none"
+              >
+                <polyline
+                  fill="none"
+                  stroke="#ffffff"
+                  stroke-width="2"
+                  points="
+                  0,25
+                  18,42
+                  35,48
+                  52,62
+                  73,66
+                  92,78
+                  111,75
+                  128,90
+                  148,102
+                  165,106
+                  186,125
+                  204,132
+                  225,150
+                  244,160
+                  265,180
+                  282,185
+                  300,198"
+                />
+
+                <g fill="#fff">
+                  <circle cx="0" cy="25" r="3"/>
+                  <circle cx="52" cy="62" r="3"/>
+                  <circle cx="111" cy="75" r="3"/>
+                  <circle cx="165" cy="106" r="3"/>
+                  <circle cx="225" cy="150" r="3"/>
+                  <circle cx="282" cy="185" r="3"/>
+                </g>
+              </svg>
+
+            </div>
+
+          </article>
+
+          <article class="card progress-summary">
+
+            <div class="label">
+              Progress summary
+            </div>
+
+            <div class="summary-row">
+              <span>Start Weight</span>
+              <strong>217.4 lbs</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Current Weight</span>
+              <strong>201.6 lbs</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Goal Weight</span>
+              <strong>192 lbs</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Time to Goal</span>
+              <strong>4-5 weeks</strong>
+            </div>
+
+          </article>
+
+          <div style="text-align:center;padding:8px 0 20px">
+            You're <strong>64%</strong> to your goal.
+          </div>
+
+        </div>
+
+        <nav class="bottom-nav">
+          <button data-nav="today"><strong>⌂</strong>Today</button>
+          <button data-nav="train"><strong>✦</strong>Train</button>
+          <button data-nav="fuel"><strong>◉</strong>Fuel</button>
+          <button class="active" data-nav="progress"><strong>▥</strong>Progress</button>
+          <button data-nav="community"><strong>♧</strong>Community</button>
+          <button data-nav="coach"><strong>◌</strong>Coach</button>
+        </nav>
+
+      </section>
+
+      <!-- ===================================================
+           PHOTOS
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="photos">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll" style="padding-bottom:30px">
+
+          <header class="mobile-header">
+            <h1>PHOTOS</h1>
+          </header>
+
+          <div class="progress-tabs">
+            <span class="active">Progress</span>
+            <span>Compare</span>
+            <span>All</span>
+          </div>
+
+          <article class="card compare-card">
+
+            <div class="compare-images">
+
+              <img
+                src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=500&q=90"
+                alt=""
+              />
+
+              <img
+                src="https://images.unsplash.com/photo-1594737625785-c6683fc0dbb8?auto=format&fit=crop&w=500&q=90"
+                alt=""
+              />
+
+            </div>
+
+            <div class="compare-labels">
+
+              <div>
+                <strong>WEEK 1</strong><br />
+                <span class="muted">Jul 12</span>
+              </div>
+
+              <div>
+                <strong>WEEK 12</strong><br />
+                <span class="muted">Oct 3</span>
+              </div>
+
+            </div>
+
+          </article>
+
+          <div class="photo-strip">
+
+            <h3>• FRONT</h3>
+
+            <div class="photo-row">
+              <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=200&q=80" />
+              <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=200&q=80" />
+              <img src="https://images.unsplash.com/photo-1594737625785-c6683fc0dbb8?auto=format&fit=crop&w=200&q=80" />
+              <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=200&q=80" />
+              <img src="https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=200&q=80" />
+            </div>
+
+          </div>
+
+          <div class="photo-strip">
+
+            <h3>• SIDE</h3>
+
+            <div class="photo-row">
+              <img src="https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=200&q=80" />
+              <img src="https://images.unsplash.com/photo-1581009137042-c552e485697a?auto=format&fit=crop&w=200&q=80" />
+              <img src="https://images.unsplash.com/photo-1598266663439-2056e6900339?auto=format&fit=crop&w=200&q=80" />
+              <img src="https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&w=200&q=80" />
+            </div>
+
+          </div>
+
+          <div style="padding:18px 16px">
+
+            <button class="btn btn-outline" style="width:100%">
+              ＋ ADD PHOTOS
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================
+           COMMUNITY
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="community">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="screen-scroll">
+
+          <header class="mobile-header">
+            <h1>COMMUNITY</h1>
+          </header>
+
+          <div class="train-tabs">
+            <span class="active">For You</span>
+            <span>Following</span>
+            <span>Challenges</span>
+          </div>
+
+          <article class="card challenge-card">
+
+            <div class="challenge-header">
+
+              <div>
+                <strong>GLUTE GROWTH CHALLENGE</strong>
+                <small class="muted">
+                  Week 3 of 4
+                </small>
+
+                <p style="font-size:11px;margin:12px 0 0">
+                  You're ranked <strong>#14</strong><br />
+                  <span class="muted">Top 20 advance</span>
+                </p>
+              </div>
+
+              <div class="trophy">
+                🏆
+              </div>
+
+            </div>
+
+          </article>
+
+          <article class="post">
+
+            <div class="post-user">
+
+              <img
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=85"
+                alt=""
+              />
+
+              <div>
+                <strong>Ashley R.</strong>
+                <small>2h</small>
+              </div>
+
+            </div>
+
+            <p class="post-copy">
+              Hit a new hip thrust PR today!<br />
+              205 lbs for 10 reps 💪
+            </p>
+
+            <img
+              class="post-img"
+              src="https://images.unsplash.com/photo-1598266663439-2056e6900339?auto=format&fit=crop&w=800&q=90"
+              alt=""
+            />
+
+            <div class="post-stats">
+              <span>♡ 128</span>
+              <span>◌ 42</span>
+            </div>
+
+          </article>
+
+          <article class="post">
+
+            <div class="post-user">
+
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=85"
+                alt=""
+              />
+
+              <div>
+                <strong>Jasmine T.</strong>
+                <small>5h</small>
+              </div>
+
+            </div>
+
+            <p class="post-copy">
+              Week 3 progress
+            </p>
+
+            <img
+              class="post-img"
+              src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=90"
+              alt=""
+            />
+
+          </article>
+
+        </div>
+
+        <nav class="bottom-nav">
+          <button data-nav="today"><strong>⌂</strong>Today</button>
+          <button data-nav="train"><strong>✦</strong>Train</button>
+          <button data-nav="fuel"><strong>◉</strong>Fuel</button>
+          <button data-nav="progress"><strong>▥</strong>Progress</button>
+          <button class="active" data-nav="community"><strong>♧</strong>Community</button>
+          <button data-nav="coach"><strong>◌</strong>Coach</button>
+        </nav>
+
+      </section>
+
+      <!-- ===================================================
+           COACH
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="coach">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <div class="coach-head">
+
+          <img
+            src="https://images.unsplash.com/photo-1594737625785-c6683fc0dbb8?auto=format&fit=crop&w=200&q=90"
+            alt=""
+          />
+
+          <div>
+            <strong>Coach Steph</strong>
+            <small>Online</small>
+          </div>
+
+        </div>
+
+        <div class="screen-scroll">
+
+          <div class="chat">
+
+            <div class="msg">
+              Great job on the workout today!
+              That last set was 🔥
+            </div>
+
+            <article class="workout-context">
+
+              <div class="context-main">
+
+                <img
+                  src="https://images.unsplash.com/photo-1598266663439-2056e6900339?auto=format&fit=crop&w=200&q=85"
+                  alt=""
+                />
+
+                <div>
+                  <strong>Hip Thrust</strong>
+                  <small>
+                    185 lbs × 8<br />
+                    +10 lbs from last week
+                  </small>
+                </div>
+
+                <span class="pr">
+                  PR
+                </span>
+
+              </div>
+
+            </article>
+
+            <div class="msg me">
+              Legs are fried but feeling strong!
+            </div>
+
+            <div class="msg">
+              Love that. Recovery is where the gains happen.
+              Make sure you hit your protein and get some rest tonight. 💪
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="coach-actions">
+          <button>Log Food</button>
+          <button>Submit Check-in</button>
+          <button>View Plan</button>
+        </div>
+
+        <div class="chat-input">
+          <input
+            type="text"
+            placeholder="Type a message..."
+          />
+          <button>➜</button>
+        </div>
+
+        <nav class="bottom-nav">
+          <button data-nav="today"><strong>⌂</strong>Today</button>
+          <button data-nav="train"><strong>✦</strong>Train</button>
+          <button data-nav="fuel"><strong>◉</strong>Fuel</button>
+          <button data-nav="progress"><strong>▥</strong>Progress</button>
+          <button data-nav="community"><strong>♧</strong>Community</button>
+          <button class="active" data-nav="coach"><strong>◌</strong>Coach</button>
+        </nav>
+
+      </section>
+
+      <!-- ===================================================
+           PROFILE
+           =================================================== -->
+
+      <section class="screen hidden" data-screen="profile">
+
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="status-icons">
+            <span class="signal"><i></i><i></i><i></i><i></i></span>
+            <span>⌁</span>
+            <span class="battery"></span>
+          </span>
+        </div>
+
+        <header class="mobile-header">
+          <h1>PROFILE</h1>
+          <button class="icon-btn">⚙</button>
+        </header>
+
+        <div class="screen-scroll">
+
+          <div class="profile-main">
+
+            <div class="profile-person">
+
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=90"
+                alt=""
+              />
+
+              <div>
+                <h2>Maria S.</h2>
+                <p>Pro Member</p>
+              </div>
+
+            </div>
+
+            <div class="profile-stats">
+
+              <div>
+                <strong>128</strong>
+                <span>Workouts</span>
+              </div>
+
+              <div>
+                <strong>23</strong>
+                <span>Streak weeks</span>
+              </div>
+
+              <div>
+                <strong>18</strong>
+                <span>Check-ins</span>
+              </div>
+
+            </div>
+
+            <article class="card achievements">
+
+              <div class="label">
+                Achievements
+              </div>
+
+              <div class="badge-row">
+                <div class="badge">🔥</div>
+                <div class="badge">★</div>
+                <div class="badge">◆</div>
+                <div class="badge">🏆</div>
+              </div>
+
+            </article>
+
+            <article class="card profile-menu">
+
+              <div class="menu-row">
+                <span>▧ My Plans</span>
+                <span>›</span>
+              </div>
+
+              <div class="menu-row">
+                <span>▥ Measurements</span>
+                <span>›</span>
+              </div>
+
+              <div class="menu-row">
+                <span>◷ Check-in History</span>
+                <span>›</span>
+              </div>
+
+              <div class="menu-row">
+                <span>🏆 PR History</span>
+                <span>›</span>
+              </div>
+
+              <div class="menu-row">
+                <span>⚙ Settings</span>
+                <span>›</span>
+              </div>
+
+            </article>
+
+          </div>
+
+        </div>
+
+        <nav class="bottom-nav">
+          <button data-nav="today"><strong>⌂</strong>Today</button>
+          <button data-nav="train"><strong>✦</strong>Train</button>
+          <button data-nav="fuel"><strong>◉</strong>Fuel</button>
+          <button data-nav="progress"><strong>▥</strong>Progress</button>
+          <button data-nav="community"><strong>♧</strong>Community</button>
+          <button class="active" data-nav="profile"><strong>●</strong>Profile</button>
+        </nav>
+
+      </section>
+
+      <div class="home-indicator"></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const screens = [...document.querySelectorAll("[data-screen]")];
+const pickerButtons = [...document.querySelectorAll("[data-go]")];
+
+function openScreen(name) {
+  screens.forEach(screen => {
+    screen.classList.toggle(
+      "hidden",
+      screen.dataset.screen !== name
+    );
+  });
+
+  pickerButtons.forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.go === name
+    );
+  });
+}
+
+pickerButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    openScreen(button.dataset.go);
+  });
+});
+
+document.querySelectorAll("[data-nav]").forEach(button => {
+  button.addEventListener("click", () => {
+    openScreen(button.dataset.nav);
+  });
+});
+
+document.querySelectorAll("[data-jump]").forEach(element => {
+  element.addEventListener("click", () => {
+    openScreen(element.dataset.jump);
+  });
+});
+</script>
+
+</body>
+</html>

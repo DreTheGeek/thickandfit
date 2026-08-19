@@ -22,9 +22,12 @@ export async function SubscriberShell({
   const unread = profileId ? await getUnreadCount(profileId) : 0;
 
   return (
-    <div className="flex min-h-screen justify-center bg-bg">
+    // tf-portal is the 8.0 subscriber theme scope. It re-points the --c-* tokens the whole app
+    // already reads, so every screen below re-themes with no component edits, and nothing outside
+    // this subtree (coach console, admin portal) can be reached by it. See globals.css.
+    <div className="tf-portal flex min-h-screen justify-center bg-bg">
       <SubscriberRail initialUnread={unread} profileId={profileId} />
-      <div className="flex min-h-screen w-full max-w-[520px] flex-col bg-surface shadow-[0_0_50px_rgba(0,0,0,0.04)] lg:max-w-[760px] lg:border-x lg:border-line lg:shadow-none">
+      <div className="flex min-h-screen w-full max-w-[520px] flex-col bg-bg lg:max-w-[760px] lg:border-x lg:border-line">
         <SubscriberTopBar initialUnread={unread} profileId={profileId} />
         <main className="tf-scroll flex-1">{children}</main>
         <BottomNav />

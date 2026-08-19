@@ -37,6 +37,11 @@
      conversation. It is not a general brand colour and must not spread to buttons, links or cards. */
   --c-bubble: #d6e6f7;
   --c-bubble-ink: #10263c;
+
+  /* Primary action. The subscriber portal re-points this to yellow (see .tf-portal);
+     outside it, the action colour is what coach/admin primary buttons already are. */
+  --c-action: #0f0f0f;
+  --c-action-ink: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -60,6 +65,8 @@
   --c-alert: #3a1d1d;
   --c-alert-ink: #f3c0c0;
   --c-warning: #d8ad3f;
+  --c-action: #f4f4f5;
+  --c-action-ink: #0c0c0e;
 }
 
 @theme inline {
@@ -78,6 +85,8 @@
   --color-muted: var(--c-muted);
   --color-soft: var(--c-soft);
   --color-faint: var(--c-faint);
+  --color-action: var(--c-action);
+  --color-action-ink: var(--c-action-ink);
 
   /* coach message bubble: blue in light, green in dark */
   --color-bubble: var(--c-bubble);
@@ -640,4 +649,70 @@ html {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ==========================================================================
+   SUBSCRIBER PORTAL (8.0 handoff): scoped dark system
+
+   The member app moves to the pure-black system in
+   .planning/design_handoff/8.0/client-portal.html. The coach console and admin
+   portal DO NOT move, and Stephanie uses the coach console every day, so this
+   must not leak.
+
+   It is scoped rather than global on purpose. Every token below is one of the
+   --c-* raw values that @theme inline already maps to a Tailwind utility, so
+   re-pointing them inside .tf-portal re-themes the whole subscriber tree with
+   no component edits and no possibility of reaching /coach or /admin.
+
+   Custom properties inherit from the closest ancestor that sets them, and
+   .tf-portal sits below <html data-theme>, so it wins over both the light
+   :root palette and the dark override without needing !important.
+   ========================================================================== */
+.tf-portal {
+  --c-ink: #ffffff;
+  --c-bg: #000000;
+  /* The design's --surface-2. Its --surface (#0b0b0c) is a page-level wash that
+     never carries a card, so the card colour is the one worth owning here. */
+  --c-surface: #121214;
+  --c-warm: #19191c;
+  --c-line: rgba(255, 255, 255, 0.10);
+  --c-divider: rgba(255, 255, 255, 0.06);
+  --c-muted: #909096;
+  --c-soft: #b4b4ba;
+  --c-faint: #5f5f65;
+
+  /* Green survives the rebrand unchanged in MEANING. In the 8.0 handoff it
+     appears only on hit targets (steps, sleep) and AMRAP, never on a button or
+     a card, which is the same functional-only rule the light system had. */
+  --c-accent: #4ff068;
+  --c-accent-ink: #04240a;
+
+  /* New in 8.0: the action colour. Yellow carries the primary CTA
+     (START WORKOUT, SWAP EXERCISE) that white pills do not. It is the one
+     genuinely new role in the system, so it gets its own token rather than
+     overloading accent, which would break the green rule above. */
+  --c-action: #edff00;
+  --c-action-ink: #000000;
+
+  --c-pending: #3a3214;
+  --c-pending-ink: #fbe6a2;
+  --c-alert: #3a1d1d;
+  --c-alert-ink: #ff5e62;
+  --c-warning: #ffa52f;
+
+  /* Her voice bubble. The light system used Lenus blue and the dark one used
+     green; on pure black both go muddy, so the coach bubble is a raised
+     neutral and the MEMBER bubble is the white one, per the handoff's chat. */
+  --c-bubble: #161618;
+  --c-bubble-ink: #ffffff;
+
+  background: var(--c-bg);
+  color: var(--c-ink);
+}
+
+/* Radii from the handoff. Cards are 20px, the phone-level containers 28px. */
+.tf-portal {
+  --tf-radius-md: 15px;
+  --tf-radius-lg: 20px;
+  --tf-radius-xl: 28px;
 }
