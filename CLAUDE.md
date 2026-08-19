@@ -361,6 +361,22 @@ the failure mode is someone "simplifying" them into one number that means neithe
   whose purpose is to work while nobody is watching must not depend on someone remembering to
   register a schedule. There is no kill switch beyond reverting; if one is wanted, gate
   `generateReengagementNudges` on an env var the same way `STARTER_PROGRAM_ID` gates auto-assign.
+- **Three ways to fall off this queue silently, all now closed, all found by re-reading rather
+  than by a test.** Each removed a real member from the only list that would have reached her, and
+  a member vanishing off a churn queue looks exactly like a member who is fine.
+  1. *Cancelled members were on it.* Nothing demotes `profiles.role` when a subscription ends, so
+     she is still `subscriber`, still onboarded, and extremely quiet. `hasDepartedGrants` drops her.
+     It is inert until Stripe is configured, deliberately: pre-Stripe nobody can have cancelled.
+  2. *A resumed pause read as a departure.* Resuming revokes the pause grant rather than deleting
+     it. For a member with a Stripe grant the live one outvotes it; for a migrated Lenus client with
+     no entitlement row at all, that `revoked` row is her ONLY grant. `purchaseGrantStatuses` strips
+     the pause bookkeeping (`pause:<profileId>`, defined once in `status-shared.ts`) before the test.
+  3. *The ladder re-sent rung 28 every 90 days.* The send history was read through a fixed 90-day
+     window; the ladder has no upper bound (rung 28 is `>= 28`), so a ghost's day-28 message aged out
+     and she was told again that a coach would reach out personally. The lookback is now the oldest
+     `quietSince` in the cohort — exactly the anchor the dedupe compares against. Because that is
+     unbounded in time it carries a 5,000-row cap that FAILS rather than sends: a truncated history
+     reads as "nothing sent", which is the same bug wearing a success code.
 - **The day-28 message promises a human.** "Your coach is going to reach out personally." What makes
   that true is `/coach/quiet` being read, exactly as `/coach/awaiting` is what keeps "Steph writes
   your plan by hand" honest. If that page stops being read, the message becomes a lie.
@@ -401,6 +417,19 @@ same shape as `NEXT_PUBLIC_SCAN_AUTO_ACCEPT`, and each is a product decision, no
   Both route names stay: renaming a target pg_cron points at is how a cron silently stops.
 - **Coach-addressed notifications now exist** (`plan_expiring`). `notifications` is profile-keyed and
   coaches have profiles, so this needed no schema change.
+- **The plan-renewal queue reads only a member's NEWEST assignment.** `plan_assignments` has no
+  status column, no unassign and no archive — the table only grows, and the app already treats the
+  newest row as "your program" (`getAssignedPlans` orders newest-first, `/workouts` renders
+  `plans[0]`). The queue's window is open-ended on the past side on purpose (an expired plan is the
+  case it exists for), so walking every assignment turned it into an archive of everything that had
+  ever ended, one coach notification each, with no action that could clear a row. Relatedly,
+  `assignProgram` now writes `assigned_at` explicitly: the table is `UNIQUE(plan_id, profile_id)`, so
+  re-running a client through a block she has done before is an UPDATE, and omitting the column left
+  the old date — pinning her at "week 12 of 12" on `/workouts` and stranding the plan on the queue.
+- **A paused member keeps `/workouts` (history), not `/workout/[planId]` (the session).**
+  `requireEntitledOrPaused` returns `onBreak` so the page cannot forget to close the program half.
+  `/paused` lists what she keeps; every link on it must actually open, and the first version linked
+  `/history`, which redirects to `/workouts`, which bounced her back to `/paused`.
 - **Pauses are migration 0140.** Read-only: her records stay, the paid surface closes, `/paused`
   instead of a paywall. It deliberately does NOT touch Stripe — some of her pauses are unpaid breaks
   and some are paid holds. Auto-resume runs first in the daily job and the engagement sweep excludes
