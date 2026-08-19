@@ -7,6 +7,8 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { WorkoutPlayer, type PlayerExercise } from '@/components/workout/workout-player';
 import { recommendForSession } from '@/lib/workout/logging';
 import { readCoachSettings } from '@/lib/coach/settings';
+import { loadCycleLogs } from '@/lib/cycle/data';
+import { currentPhase } from '@/lib/cycle/phase';
 
 export const dynamic = 'force-dynamic';
 
@@ -140,6 +142,32 @@ export default async function WorkoutPage({
   const programName =
     (locale === 'es' && program.plan.name_es) || program.plan.name_en;
 
+  // HER CYCLE, WHERE IT IS ACTIONABLE.
+  //
+  // The phase guidance already existed and was already bilingual — it just never reached the one
+  // screen where it changes a decision. She saw it on /you/cycle, and the AI coach knew it if she
+  // thought to ask; standing at a machine choosing a weight, the app said nothing. "Go lighter if
+  // you need to" read three days ago on a different tab is not the same sentence as read now.
+  //
+  // Opt-in by behaviour, exactly as the coach context is: no logged period means no phase, which
+  // means no line. Nobody is asked to declare anything to use the workout player.
+  //
+  // Wrapped and best-effort. A tracker failure must never stop her training.
+  let cyclePhase: string | null = null;
+  try {
+    const cycleLogs = await loadCycleLogs(ctx.userId, 12);
+    if (cycleLogs.length) {
+      const { phase } = currentPhase(cycleLogs, new Date().toISOString().slice(0, 10));
+      if (phase !== 'unknown') cyclePhase = phase;
+    }
+  } catch (e) {
+    console.warn('workout cycle phase (non-fatal):', e instanceof Error ? e.message : String(e));
+  }
+  // Reuses app.cycle.phaseBody, the member-voiced copy her cycle page already shows. A second
+  // wording of the same advice is how two screens start disagreeing about what a phase means.
+  const tCycle = await getTranslations('app.cycle');
+  const cycleNote = cyclePhase ? tCycle(`phaseBody.${cyclePhase}` as never) : null;
+
   return (
     <div className="h-full">
       <WorkoutPlayer
@@ -147,6 +175,7 @@ export default async function WorkoutPage({
         programName={programName}
         dayLabel={session.day_label}
         exercises={playerExercises}
+        cycleNote={cycleNote}
       />
     </div>
   );

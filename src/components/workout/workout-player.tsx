@@ -160,11 +160,14 @@ export function WorkoutPlayer({
   sessionId,
   dayLabel,
   exercises: initialExercises,
+  cycleNote,
 }: {
   sessionId: string | null;
   programName: string;
   dayLabel: string;
   exercises: PlayerExercise[];
+  /** One line of phase guidance, already localized, or null when she does not track her cycle. */
+  cycleNote?: string | null;
 }): ReactElement {
   const t = useTranslations('app.exercise');
   const locale = useLocale();
@@ -553,6 +556,14 @@ export function WorkoutPlayer({
               {t('restoredStartOver')}
             </button>
           </div>
+        )}
+
+        {/* Only on the first exercise. This is context for the session, not for every set, and a
+            note that repeats on every screen stops being read by the third one. */}
+        {cycleNote && idx === 0 && (
+          <p className="mb-[18px] rounded-[14px] border border-line bg-surface px-4 py-3 text-[13px] leading-relaxed text-soft">
+            {cycleNote}
+          </p>
         )}
 
         <UnderlineTabs
