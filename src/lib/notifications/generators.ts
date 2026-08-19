@@ -21,7 +21,15 @@ import { recomputeChallengeBoard } from '@/lib/community/challenge-progress';
 import { notifyNewChallenge } from '@/lib/notifications/triggers';
 import { getEngagementSweep } from '@/lib/engagement/risk';
 import { listExpiringPlans } from '@/lib/coach/plan-followups';
-import { reengageStage, REENGAGE_TYPES, REENGAGE_TYPE_LIST } from '@/lib/engagement/risk-shared';
+import {
+  ladderHistoryKey,
+  ladderLookbackDay,
+  reengageStage,
+  selectLadderSends,
+  REENGAGE_TYPES,
+  REENGAGE_TYPE_LIST,
+} from '@/lib/engagement/risk-shared';
+import type { LadderCandidate } from '@/lib/engagement/risk-shared';
 import type { NotificationPayload } from '@/lib/notifications/types';
 
 export type GeneratorResult = {
@@ -699,6 +707,13 @@ export async function generateCycleReminders(at: Date = new Date()): Promise<Gen
 // the whole ladder again, which is correct: it is a new lapse, and the old messages are why the
 // naive version would have let her leave in silence the second time.
 // ---------------------------------------------------------------------------
+// Ceiling on the ladder's send-history read. The lookback is now bounded by the oldest quiet spell
+// rather than by a calendar window, so it can in principle reach back years. Three rungs per member
+// per spell means 5,000 rows covers this roster many times over; hitting it means something is wrong
+// (a duplicate-send loop, or a roster an order of magnitude larger than this design assumed), and a
+// truncated history reads as "nothing sent", which is exactly the resend bug the lookback fixes.
+const REENGAGE_HISTORY_CAP = 5000;
+
 const REENGAGE_COPY: Record<7 | 14 | 28, { key: string; link: string }> = {
   7: { key: 'reengage7', link: '/dashboard' },
   // Sends her to the coach thread rather than the workout list on purpose. At two weeks the barrier
@@ -708,7 +723,10 @@ const REENGAGE_COPY: Record<7 | 14 | 28, { key: string; link: string }> = {
   28: { key: 'reengage28', link: '/dashboard' },
 };
 
-export async function generateReengagementNudges(at: Date = new Date()): Promise<GeneratorResult> {
+// No injected clock, unlike its neighbours. getEngagementSweep reads `new Date()` internally, so an
+// `at` parameter here only ever advertised a testability this function does not have — and the one
+// place it was used (a fixed lookback window) is exactly what the resend bug came from.
+export async function generateReengagementNudges(): Promise<GeneratorResult> {
   const svc = createServiceClient();
   const job = 'reengagement';
 
@@ -721,46 +739,63 @@ export async function generateReengagementNudges(at: Date = new Date()): Promise
 
   for (const companyId of companyIds) {
     const { rows } = await getEngagementSweep(companyId);
-    const due = rows
-      .map((r) => ({ row: r, stage: reengageStage(r.daysQuiet) }))
-      .filter((d): d is { row: (typeof rows)[number]; stage: 7 | 14 | 28 } => d.stage !== null);
+    const due: LadderCandidate[] = [];
+    const rowBy = new Map<string, (typeof rows)[number]>();
+    for (const r of rows) {
+      const stage = reengageStage(r.daysQuiet);
+      if (stage === null) continue;
+      due.push({ profileId: r.profileId, quietSince: r.quietSince, stage });
+      rowBy.set(r.profileId, r);
+    }
     if (due.length === 0) continue;
     selected += due.length;
 
-    // One query for the whole cohort's ladder history. Bounded to 90 days: a rung older than the
-    // longest quiet spell this ladder can describe cannot suppress anything.
-    const since = new Date(at.getTime() - 90 * 86_400_000).toISOString();
+    // One query for the whole cohort's ladder history, reaching back to the oldest quiet spell in
+    // it. NOT a fixed window: see ladderLookbackDay for the resend loop a flat 90 days caused.
+    const lookback = ladderLookbackDay(due);
+    if (lookback === null) continue;
     const { data: sentData, error: sentErr } = await svc
       .from('notifications')
       .select('profile_id, type, created_at')
       .eq('company_id', companyId)
-      .in('profile_id', due.map((d) => d.row.profileId))
+      .in('profile_id', due.map((d) => d.profileId))
       .in('type', [...REENGAGE_TYPE_LIST])
-      .gte('created_at', since);
-    // Fail loud. An errored history read that fell through as "nothing sent" would re-send every
-    // rung to every quiet member on every run, which is the single worst thing this file could do.
+      .gte('created_at', `${lookback}T00:00:00Z`)
+      .limit(REENGAGE_HISTORY_CAP);
+    // Fail loud, twice over. An errored history read that fell through as "nothing sent" would
+    // re-send every rung to every quiet member on every run, which is the single worst thing this
+    // file could do — and a SATURATED read is the same bug wearing a success code, now that the
+    // lookback is unbounded in time. Sending nothing and logging it beats sending all of it.
     if (sentErr) return { ok: false, job, selected, notified, error: sentErr.message };
+    const history = (sentData ?? []) as { profile_id: string; type: string; created_at: string }[];
+    if (history.length >= REENGAGE_HISTORY_CAP) {
+      return {
+        ok: false,
+        job,
+        selected,
+        notified,
+        error: `ladder history hit the ${REENGAGE_HISTORY_CAP}-row cap; refusing to send on a partial read`,
+      };
+    }
     // profile+rung -> the most recent day that rung was delivered.
     const lastSent = new Map<string, string>();
-    for (const r of (sentData ?? []) as { profile_id: string; type: string; created_at: string }[]) {
-      const key = `${r.profile_id}|${r.type}`;
+    for (const r of history) {
+      const key = ladderHistoryKey(r.profile_id, r.type);
       const day = r.created_at.slice(0, 10);
       const prev = lastSent.get(key);
       if (!prev || day > prev) lastSent.set(key, day);
     }
 
     const recipients: Array<{ profileId: string; payload: NotificationPayload }> = [];
-    for (const { row, stage } of due) {
-      const type = REENGAGE_TYPES[stage];
-      // Sent since she was last active? Then this rung is spent for this quiet spell.
-      const already = lastSent.get(`${row.profileId}|${type}`);
-      if (already && already >= row.quietSince) continue;
+    for (const { profileId, stage } of selectLadderSends(due, lastSent)) {
+      const row = rowBy.get(profileId);
+      if (!row) continue;
       const locale = asNotifLocale(row.locale);
       const copy = REENGAGE_COPY[stage];
       recipients.push({
-        profileId: row.profileId,
+        profileId,
         payload: {
-          type,
+          type: REENGAGE_TYPES[stage],
           title: notifText(locale, `${copy.key}Title`),
           body: notifText(locale, `${copy.key}Body`),
           link: copy.link,

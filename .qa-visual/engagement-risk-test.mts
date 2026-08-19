@@ -16,6 +16,10 @@ import {
   isEngagementRisk,
   reengageStage,
   hasDepartedGrants,
+  ladderHistoryKey,
+  ladderLookbackDay,
+  selectLadderSends,
+  type LadderCandidate,
   TIER_RANK,
   REENGAGE_TYPES,
   QUIET_SLIPPING_DAYS,
@@ -177,6 +181,97 @@ check('undefined grants is not a departure', hasDepartedGrants(undefined, ON), f
 // the queue and hide exactly the members it was built to surface. It arms itself with the live key.
 check('pre-Stripe, a cancelled grant is ignored', hasDepartedGrants(['canceled'], OFF), false);
 check('pre-Stripe, everything is ignored', hasDepartedGrants(['expired', 'revoked'], OFF), false);
+
+// --- the ladder's dedupe, and the window it reads history through ---------------
+// The first version read a flat 90 days of send history, on the reasoning that a rung older than
+// the longest quiet spell the ladder describes could not suppress anything. The ladder has no
+// longest spell: rung 28 is `daysQuiet >= 28`, and the assertion 20 lines up says day 365 is still
+// rung 28. So a ghost's day-28 send aged out of the window, the history came back empty, and she
+// was told "your coach is going to reach out personally" again — every 90 days, forever.
+
+const cand = (profileId: string, quietSince: string, stage: 7 | 14 | 28): LadderCandidate => ({
+  profileId,
+  quietSince,
+  stage,
+});
+
+// --- lookback ----------------------------------------------------------------
+check('no candidates, no lookback', ladderLookbackDay([]), null);
+check('one candidate reaches back to her spell', ladderLookbackDay([cand('a', '2026-05-01', 7)]), '2026-05-01');
+check(
+  'the cohort reaches back to its OLDEST spell, not its newest',
+  ladderLookbackDay([cand('a', '2026-08-01', 7), cand('b', '2025-02-14', 28), cand('c', '2026-07-01', 14)]),
+  '2025-02-14',
+);
+check(
+  'order does not matter',
+  ladderLookbackDay([cand('b', '2025-02-14', 28), cand('a', '2026-08-01', 7)]),
+  '2025-02-14',
+);
+// The regression itself: a member quiet since early 2025 must be looked up against 2025, not
+// against a 90-day window that starts long after her rung was delivered.
+ok(
+  'a year-long ghost is not read through a 90-day window',
+  ladderLookbackDay([cand('ghost', '2025-06-01', 28)])! < '2026-05-21',
+);
+
+// --- selection ---------------------------------------------------------------
+const hist = (entries: Array<[string, string]>): Map<string, string> => new Map(entries);
+const ids = (out: LadderCandidate[]): string[] => out.map((c) => c.profileId);
+
+check('empty history sends everything', ids(selectLadderSends([cand('a', '2026-08-01', 7)], hist([]))), ['a']);
+check(
+  'a rung sent after the spell began is spent',
+  ids(selectLadderSends([cand('a', '2026-08-01', 7)], hist([[ladderHistoryKey('a', 'reengage_7'), '2026-08-05']]))),
+  [],
+);
+// The regression, stated as an assertion: the day-28 send is ANCIENT relative to any fixed window,
+// and still has to suppress. This only holds because the lookback reaches her spell.
+check(
+  'a two-year-old rung still suppresses when the spell is older than it',
+  ids(selectLadderSends([cand('g', '2024-01-01', 28)], hist([[ladderHistoryKey('g', 'reengage_28'), '2024-01-29']]))),
+  [],
+);
+// Same day counts as spent. A send that landed the morning she last logged something belongs to the
+// spell that ended; re-sending it because the clock passed midnight is the loop this guard prevents.
+check(
+  'sent on the day the spell began is spent',
+  ids(selectLadderSends([cand('a', '2026-08-01', 7)], hist([[ladderHistoryKey('a', 'reengage_7'), '2026-08-01']]))),
+  [],
+);
+// The other direction, which is the whole reason the anchor is quietSince and not "ever": she came
+// back, she lapsed again, the old message belongs to the old spell.
+check(
+  'a rung sent before this spell began is owed again',
+  ids(selectLadderSends([cand('a', '2026-08-01', 7)], hist([[ladderHistoryKey('a', 'reengage_7'), '2026-07-31']]))),
+  ['a'],
+);
+// Rungs do not suppress each other. If they did, rung 14 would swallow rung 28 and she would never
+// get the message that promises a human.
+check(
+  'rung 7 in the history does not spend rung 28',
+  ids(selectLadderSends([cand('a', '2026-08-01', 28)], hist([[ladderHistoryKey('a', 'reengage_7'), '2026-08-09']]))),
+  ['a'],
+);
+// Nor do members suppress each other.
+check(
+  "another member's send does not spend hers",
+  ids(selectLadderSends([cand('a', '2026-08-01', 7)], hist([[ladderHistoryKey('b', 'reengage_7'), '2026-08-09']]))),
+  ['a'],
+);
+check(
+  'the cohort is filtered per member, not all-or-nothing',
+  ids(
+    selectLadderSends(
+      [cand('a', '2026-08-01', 7), cand('b', '2026-08-01', 14), cand('c', '2026-08-01', 28)],
+      hist([
+        [ladderHistoryKey('a', 'reengage_7'), '2026-08-09'],
+        [ladderHistoryKey('c', 'reengage_28'), '2026-07-01'],
+      ]),
+    ),
+  ),
+  ['b', 'c'],
+);
 
 // --- report ------------------------------------------------------------------
 if (failures.length > 0) {

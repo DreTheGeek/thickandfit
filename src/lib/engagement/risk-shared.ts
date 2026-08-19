@@ -185,3 +185,70 @@ export function hasDepartedGrants(
   if (!grants || grants.length === 0) return false;
   return !grants.some((g) => LIVE_ENOUGH_GRANTS.has(g));
 }
+
+// ---------------------------------------------------------------------------
+// The ladder's dedupe, as pure functions.
+//
+// The guard is "has this rung been sent SINCE she was last active", not "has it ever been sent",
+// so that a member who returns and lapses again gets the ladder again. `quietSince` is that anchor,
+// and the two functions below are the whole of the logic that reads it. They live here rather than
+// inline in the generator so the boundary cases can be tested without a database — the failure they
+// prevent is silent and slow, and would only ever be discovered from a member.
+// ---------------------------------------------------------------------------
+
+/** One quiet member the ladder has something to say to, and the rung it is on. */
+export type LadderCandidate = {
+  profileId: string;
+  /** ISO day the current quiet spell began. See EngagementRow.quietSince. */
+  quietSince: string;
+  stage: 7 | 14 | 28;
+};
+
+/**
+ * How far back the ladder's send history has to be read.
+ *
+ * THIS IS NOT A FIXED WINDOW, AND THAT IS THE POINT. The first version of this read looked back a
+ * flat 90 days, reasoning that a rung older than the longest quiet spell the ladder describes could
+ * not suppress anything. But the ladder has no upper bound: rung 28 is `daysQuiet >= 28`, so a
+ * member quiet for a year is still standing on it. Her day-28 send aged out of the window, the
+ * history came back empty, and she received "your coach is going to reach out personally" again —
+ * and again every 90 days after that, for as long as she stayed gone. A message whose entire
+ * purpose is to sound like somebody noticed is the worst one to send on a loop.
+ *
+ * The comparison downstream is against `quietSince`, so `quietSince` is exactly how far back the
+ * read must reach: never less (that resends), and never more (that reads history that cannot
+ * suppress anything).
+ */
+export function ladderLookbackDay(candidates: readonly LadderCandidate[]): string | null {
+  let earliest: string | null = null;
+  for (const c of candidates) {
+    if (earliest === null || c.quietSince < earliest) earliest = c.quietSince;
+  }
+  return earliest;
+}
+
+/** Key into the send history: one entry per member per rung. */
+export function ladderHistoryKey(profileId: string, type: string): string {
+  return `${profileId}|${type}`;
+}
+
+/**
+ * Which candidates still have their rung owing.
+ *
+ * `lastSentDay` maps `profileId|type` to the most recent ISO day that rung was delivered. A rung is
+ * spent when it was delivered on or after the day the quiet spell began. Same-day counts as spent:
+ * a send that landed the morning she last logged something belongs to the spell that ended, and
+ * re-sending it because the clock ticked past midnight is the loop this guard exists to prevent.
+ */
+export function selectLadderSends(
+  candidates: readonly LadderCandidate[],
+  lastSentDay: ReadonlyMap<string, string>,
+): LadderCandidate[] {
+  const out: LadderCandidate[] = [];
+  for (const c of candidates) {
+    const already = lastSentDay.get(ladderHistoryKey(c.profileId, REENGAGE_TYPES[c.stage]));
+    if (already !== undefined && already >= c.quietSince) continue;
+    out.push(c);
+  }
+  return out;
+}
