@@ -32,6 +32,7 @@ import { LSection, LH2, LBody, LEyebrow } from '@/components/marketing/v2/ui';
 import { Icon } from '@/components/ui/icons';
 import { JsonLd } from '@/components/seo/json-ld';
 import { graph, faqPageNode, breadcrumbNode, type JsonLdNode } from '@/lib/seo/schema';
+import { configuredTrialDays } from '@/lib/billing/trial-shared';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,7 +67,7 @@ const ROWS: readonly Row[] = [
   { label: 'The community', them: 'Teams, challenges and chat', us: 'These women, with Stephanie in it' },
   { label: 'The method', them: 'A plan the app generates', us: "Stephanie's own, in her voice" },
   { label: 'Nutrition', them: 'A strong food database', us: 'Grounded data, plus cooked back to raw on meats, rice and beans' },
-  { label: 'The trial', them: '3 days, annual plan only, then the year starts', us: '3 days, cancel in one tap, price shown first' },
+  { label: 'Signing up', them: '3 days, annual plan only, then the year starts', us: 'Monthly, price shown first, cancel in one tap' },
 ];
 
 const FAQ: readonly { question: string; answer: string }[] = [
@@ -103,8 +104,9 @@ const FAQ: readonly { question: string; answer: string }[] = [
   {
     question: 'Can I cancel easily?',
     answer:
-      'Yes. You start with a free trial, the price is shown before you pay, and you can cancel in one ' +
-      'tap from inside the app, with no hidden steps.',
+      'Yes. The price is shown before you pay, there is no contract, and you can cancel in one tap ' +
+      'from inside the app, with no hidden steps. You keep access through the end of the period you ' +
+      'already paid for.',
   },
 ];
 
@@ -152,6 +154,11 @@ function MoreComparisons(): ReactElement {
 }
 
 export default function VsFitiaPage(): ReactElement {
+  // The CTA goes to /join, the waitlist, and there is no trial configured unless STRIPE_TRIAL_DAYS
+  // is set — so "Start 3 days free" was advertising an offer the product would not have honoured.
+  // Reads the same value the checkout call sends, so the sentence and the offer turn on together.
+  const trial = configuredTrialDays();
+  const ctaLabel = trial > 0 ? `Start ${trial} days free` : 'Join the waitlist';
   const nodes = [
     faqPageNode([...FAQ]),
     breadcrumbNode([
@@ -182,9 +189,9 @@ export default function VsFitiaPage(): ReactElement {
               href="/join"
               className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Start 3 days free
+              {ctaLabel}
             </Link>
-            <p className="mt-3 text-[13px] text-white/50">No card to start. Cancel any time, one tap.</p>
+            <p className="mt-3 text-[13px] text-white/50">Cancel any time, one tap.</p>
           </div>
         </div>
       </section>
@@ -262,7 +269,7 @@ export default function VsFitiaPage(): ReactElement {
               href="/join"
               className="mt-8 inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Start 3 days free
+              {ctaLabel}
             </Link>
           </div>
         </div>
@@ -301,10 +308,10 @@ export default function VsFitiaPage(): ReactElement {
               href="/join"
               className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Start 3 days free
+              {ctaLabel}
             </Link>
             <p className="mt-3 text-[13px] text-white/50">
-              No card to start. $19.97 a month founding price, $24.97 after the founding window.
+              $19.97 a month founding price, $24.97 after the founding window.
               Cancel any time, one tap.
             </p>
           </div>

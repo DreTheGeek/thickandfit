@@ -34,6 +34,7 @@ import { LSection, LH2, LBody, LEyebrow } from '@/components/marketing/v2/ui';
 import { Icon } from '@/components/ui/icons';
 import { JsonLd } from '@/components/seo/json-ld';
 import { graph, faqPageNode, breadcrumbNode, type JsonLdNode } from '@/lib/seo/schema';
+import { configuredTrialDays } from '@/lib/billing/trial-shared';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +69,7 @@ const ROWS: readonly Row[] = [
   { label: 'Latin home cooking', them: 'Not what it was built for', us: 'Built for your food, in Spanish' },
   { label: 'More than a number', them: 'Just a counter', us: 'Workouts, a coach, and a community' },
   { label: 'Accuracy', them: 'About 80%, by their own published number', us: 'Verified data behind the grams, not a guess' },
-  { label: 'The trial', them: '3 days free, then it renews on its own', us: '3 days, cancel in one tap, price shown first' },
+  { label: 'Signing up', them: '3 days free, then it renews on its own', us: 'Price shown first, cancel in one tap, no auto-renew surprise' },
 ];
 
 const FAQ: readonly { question: string; answer: string }[] = [
@@ -105,8 +106,9 @@ const FAQ: readonly { question: string; answer: string }[] = [
   {
     question: 'Can I cancel easily?',
     answer:
-      'Yes. You start with a free trial, the price is shown before you ever pay, and you can cancel ' +
-      'in one tap from inside the app, with no hidden steps and no phone call.',
+      'Yes. The price is shown before you ever pay, there is no contract, and you can cancel in one ' +
+      'tap from inside the app, with no hidden steps and no phone call. You keep access through the ' +
+      'end of the period you already paid for.',
   },
 ];
 
@@ -154,6 +156,11 @@ function MoreComparisons(): ReactElement {
 }
 
 export default function VsCalAiPage(): ReactElement {
+  // The CTA goes to /join, the waitlist, and there is no trial configured unless STRIPE_TRIAL_DAYS
+  // is set — so "Start 3 days free" was advertising an offer the product would not have honoured.
+  // Reads the same value the checkout call sends, so the sentence and the offer turn on together.
+  const trial = configuredTrialDays();
+  const ctaLabel = trial > 0 ? `Start ${trial} days free` : 'Join the waitlist';
   const nodes = [
     faqPageNode([...FAQ]),
     breadcrumbNode([
@@ -185,9 +192,9 @@ export default function VsCalAiPage(): ReactElement {
               href="/join"
               className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Start 3 days free
+              {ctaLabel}
             </Link>
-            <p className="mt-3 text-[13px] text-white/50">No card to start. Cancel any time, one tap.</p>
+            <p className="mt-3 text-[13px] text-white/50">Cancel any time, one tap.</p>
           </div>
         </div>
       </section>
@@ -268,7 +275,7 @@ export default function VsCalAiPage(): ReactElement {
               href="/join"
               className="mt-8 inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Start 3 days free
+              {ctaLabel}
             </Link>
           </div>
         </div>
@@ -307,10 +314,10 @@ export default function VsCalAiPage(): ReactElement {
               href="/join"
               className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Start 3 days free
+              {ctaLabel}
             </Link>
             <p className="mt-3 text-[13px] text-white/50">
-              No card to start. $19.97 a month founding price, $24.97 after the founding window.
+              $19.97 a month founding price, $24.97 after the founding window.
               Cancel any time, one tap.
             </p>
           </div>

@@ -6,6 +6,9 @@ import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/guards';
+// Optional free trial, configured per offer. 0/unset = charge immediately. Shared with the /vs
+// pages so the advertised trial and the sent trial cannot disagree; see trial-shared.ts.
+import { configuredTrialDays as trialDays } from '@/lib/billing/trial-shared';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { checkRateLimit } from '@/lib/security/rate-limit';
@@ -50,12 +53,6 @@ function priceForTier(tier: CheckoutTier, offer: Offer): string | undefined {
   }
   if (tier === 'team') return e.STRIPE_PRICE_TEAM ?? e.STRIPE_PRICE_MID ?? undefined;
   return e.STRIPE_PRICE_STEPH ?? e.STRIPE_PRICE_HIGH ?? undefined;
-}
-
-// Optional free trial, configured per offer. 0/unset = charge immediately.
-function trialDays(): number {
-  const n = Number(process.env.STRIPE_TRIAL_DAYS ?? '');
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 }
 
 async function origin(): Promise<string> {

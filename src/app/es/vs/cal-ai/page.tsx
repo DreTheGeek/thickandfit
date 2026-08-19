@@ -18,6 +18,7 @@ import { LSection, LH2, LBody, LEyebrow } from '@/components/marketing/v2/ui';
 import { Icon } from '@/components/ui/icons';
 import { JsonLd } from '@/components/seo/json-ld';
 import { graph, faqPageNode, breadcrumbNode, type JsonLdNode } from '@/lib/seo/schema';
+import { configuredTrialDays } from '@/lib/billing/trial-shared';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,7 @@ const ROWS: readonly Row[] = [
   { label: 'Comida de casa', them: 'No es para lo que se hizo', us: 'Hecha para tu comida, en español' },
   { label: 'Más que un número', them: 'Solo un contador', us: 'Entrenamientos, una coach y una comunidad' },
   { label: 'Precisión', them: 'Cerca del 80%, según su propia cifra', us: 'Datos validados detrás de cada gramo' },
-  { label: 'La prueba', them: '3 días gratis y después se renueva sola', us: '3 días, cancelas con un toque, el precio se ve antes' },
+  { label: 'Al registrarte', them: '3 días gratis y después se renueva sola', us: 'El precio se ve antes, cancelas con un toque, sin renovación sorpresa' },
 ];
 
 const FAQ: readonly { question: string; answer: string }[] = [
@@ -92,8 +93,9 @@ const FAQ: readonly { question: string; answer: string }[] = [
   {
     question: '¿Puedo cancelar fácil?',
     answer:
-      'Sí. Empiezas con una prueba gratis, el precio se ve antes de que pagues, y cancelas con un ' +
-      'toque desde la app, sin pasos escondidos y sin llamadas.',
+      'Sí. El precio se ve antes de que pagues, no hay contrato, y cancelas con un toque desde la ' +
+      'app, sin pasos escondidos y sin llamadas. Conservas el acceso hasta que termine el periodo ' +
+      'que ya pagaste.',
   },
 ];
 
@@ -138,6 +140,11 @@ function MasComparaciones(): ReactElement {
 }
 
 export default function EsVsCalAiPage(): ReactElement {
+  // El CTA lleva a /join, la lista de espera, y no hay prueba configurada salvo que STRIPE_TRIAL_DAYS
+  // esté puesta: "Empieza 3 días gratis" prometía una oferta que el producto no iba a cumplir. Lee el
+  // mismo valor que manda el checkout, así la frase y la oferta se encienden juntas.
+  const trial = configuredTrialDays();
+  const ctaLabel = trial > 0 ? `Empieza ${trial} días gratis` : 'Unirme a la lista';
   const nodes = [
     faqPageNode([...FAQ]),
     breadcrumbNode([
@@ -169,10 +176,10 @@ export default function EsVsCalAiPage(): ReactElement {
               href="/es/join"
               className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Empieza 3 días gratis
+              {ctaLabel}
             </Link>
             <p className="mt-3 text-[13px] text-white/50">
-              Sin tarjeta para empezar. Cancela cuando quieras, con un toque.
+              Cancela cuando quieras, con un toque.
             </p>
           </div>
         </div>
@@ -254,7 +261,7 @@ export default function EsVsCalAiPage(): ReactElement {
               href="/es/join"
               className="mt-8 inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Empieza 3 días gratis
+              {ctaLabel}
             </Link>
           </div>
         </div>
@@ -293,10 +300,10 @@ export default function EsVsCalAiPage(): ReactElement {
               href="/es/join"
               className="inline-block rounded-full bg-[#ff2d55] px-9 py-4 text-[15px] font-bold uppercase tracking-[0.02em] text-white transition-opacity hover:opacity-90"
             >
-              Empieza 3 días gratis
+              {ctaLabel}
             </Link>
             <p className="mt-3 text-[13px] text-white/50">
-              Sin tarjeta para empezar. $19.97 al mes de precio fundador, $24.97 después de la ventana
+              $19.97 al mes de precio fundador, $24.97 después de la ventana
               fundadora. Cancela cuando quieras, con un toque.
             </p>
           </div>
