@@ -49,6 +49,8 @@ export type EngagementRow = {
   name: string;
   email: string | null;
   locale: string;
+  /** Her coach, or null when the company owns her (the default for the whole roster today). */
+  assignedCoachId: string | null;
   tier: RiskTier;
   /** Days since she last did anything. Counts from onboarding when she has never done anything. */
   daysQuiet: number;
@@ -79,6 +81,7 @@ type ProfileRow = {
   ui_locale: string | null;
   role: string;
   comp_access_until: string | null;
+  assigned_coach_id: string | null;
 };
 
 /** Fold `rows` into a map of profile_id -> latest ISO day seen. */
@@ -113,7 +116,7 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
 
   const { data: profileData, error: profileErr } = await svc
     .from('profiles')
-    .select('id, company_id, full_name, email, ui_locale, role, comp_access_until')
+    .select('id, company_id, full_name, email, ui_locale, role, comp_access_until, assigned_coach_id')
     .eq('company_id', companyId)
     .in('role', ['subscriber', 'free']);
   if (profileErr) {
@@ -298,6 +301,7 @@ export async function getEngagementSweep(companyId: string): Promise<EngagementS
       name: (p.full_name ?? '').trim() || 'Member',
       email: p.email,
       locale: p.ui_locale ?? 'en',
+      assignedCoachId: p.assigned_coach_id ?? null,
       tier: classifyRisk({ daysQuiet, memberAgeDays, workoutsSinceJoining: workouts30d }),
       daysQuiet,
       memberAgeDays,

@@ -58,6 +58,10 @@ const SECTIONS: NavSection[] = [
       // the end of its weeks. Awaiting is "she never got one", quiet is "she stopped showing up",
       // this is "hers is finishing".
       { key: 'navPlanRenewals', href: '/coach/plan-renewals', icon: 'clipboard' },
+      // Not a queue like the four above: nothing accumulates here. It sits with them because it is
+      // the thing you set BEFORE leaving, and a rota buried in a settings tree is a rota nobody
+      // fills in — which is the whole failure this feature exists to prevent.
+      { key: 'navCoverage', href: '/coach/coverage', icon: 'user' },
       // Leads is a sibling of Clients on her old top-level nav, not a child. It stays in this
       // section rather than getting a header of its own, because a one-item section is a header
       // with nothing under it.

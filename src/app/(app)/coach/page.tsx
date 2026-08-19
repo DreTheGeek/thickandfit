@@ -7,6 +7,7 @@ import { requireCoach } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { getBusinessOverview, type Bucket, type TagStat } from '@/lib/coach/overview';
 import { getAttention } from '@/lib/coach/attention';
+import { getCoverageContext } from '@/lib/coach/coverage';
 import { RevenueChart } from '@/components/coach/revenue-chart';
 import { formatCents } from '@/components/coach/money';
 import { Eyebrow } from '@/components/ui/section';
@@ -96,7 +97,11 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
     return <div className="p-8 text-sm text-muted">{t('emptyOverview')}</div>;
   }
   const money = (cents: number): string => formatCents(cents, 'USD', locale, 0);
-  const [o, attention] = await Promise.all([getBusinessOverview(ctx.companyId), getAttention(ctx.companyId)]);
+  const [o, attention, coverage] = await Promise.all([
+    getBusinessOverview(ctx.companyId),
+    getAttention(ctx.companyId),
+    getCoverageContext(ctx.companyId, ctx.userId),
+  ]);
   const revenuePoints = o.revenueByMonth.map((m) => ({
     label: m.label,
     gross: Math.round(m.grossCents / 100),
@@ -174,6 +179,23 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
       <Eyebrow>{t('overviewTitle')}</Eyebrow>
       <h1 className="tf-display mt-1 text-[34px]">{t('welcomeBack', { name: firstName })}</h1>
       <p className="mb-7 mt-1 text-sm text-faint">{dateLabel}</p>
+
+      {/* Above the queues, because it changes what they MEAN. Someone covering for another coach is
+          looking at a console that quietly grew overnight, and a queue that got bigger for a reason
+          nobody told you about reads as a queue you have been neglecting. Rendered only when it is
+          true, so its presence is always information. */}
+      {coverage.covering.length > 0 && (
+        <div className="mb-4 rounded-xl bg-raise px-4 py-3 text-[13px]">
+          {t('coverageCoveringBanner', {
+            names: coverage.covering.map((c) => c.name).join(', '),
+            date: coverage.coverages
+              .filter((c) => coverage.covering.some((x) => x.id === c.coachId))
+              .map((c) => c.endsOn)
+              .sort()
+              .at(-1) ?? '',
+          })}
+        </div>
+      )}
 
       {/* What is waiting on her, above the numbers. A dashboard that opens on revenue tells her how
           last month went; this tells her what to do in the next hour. Absent entirely when nothing

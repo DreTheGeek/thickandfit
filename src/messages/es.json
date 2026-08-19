@@ -374,7 +374,8 @@
         "coachClientApp": "App de clientas",
         "coachCoachingPrefs": "Preferencias de coaching",
         "coachKnowledge": "Base de conocimiento",
-        "coachMethod": "Tu método"
+        "coachMethod": "Tu método",
+        "coachCoverage": "Cobertura"
       }
     },
     "community": {
@@ -1742,7 +1743,41 @@
       "goalFreq": {
         "daily": "diario",
         "weekly": "semanal"
-      }
+      },
+      "assignedCoach": "Entrenadora asignada",
+      "assignedCoachNobody": "Nadie: la empresa",
+      "assignedCoachHint": "Quién es responsable de ella. Déjalo en nadie mientras seas la única entrenadora.",
+      "assignedCoachCoveredBy": "Ahora la cubre {name}",
+      "pauseResumesOn": "Regresa el",
+      "pauseCta": "Pausar coaching",
+      "pauseHint": "Conserva su progreso, sus fotos, su historial y sus mensajes. Se cierran los entrenamientos y la entrenadora IA. Esto no toca su tarjeta: si el acuerdo es no cobrarle, detén el cobro en Stripe aparte.",
+      "pausedUntil": "En pausa hasta el {date}",
+      "pausedOpenEnded": "En pausa, sin fecha de regreso",
+      "resumeCta": "Reactivar ya",
+      "resumeConfirm": "¿Reactivar su coaching ahora?",
+      "coverageError": "No se guardó. Inténtalo de nuevo.",
+      "memberCoachTitle": "Entrenadora y acceso",
+      "coverageTitle": "Cobertura",
+      "coverageLead": "Quién cubre mientras una entrenadora no está. Sus clientas pasan a quien la cubre, mientras dure.",
+      "coverageWhoAway": "Quién no está",
+      "coverageWhoCovers": "Quién cubre",
+      "coverageFrom": "Primer día fuera",
+      "coverageTo": "Último día fuera",
+      "coverageNote": "Nota (opcional)",
+      "coverageAdd": "Agregar cobertura",
+      "coverageActive": "Vigente ahora",
+      "coverageUpcoming": "Próximamente",
+      "coverageNone": "Nadie está fuera. Agrega una ausencia y sus clientas pasan sola a quien la cubra, en las fechas que pongas.",
+      "coverageRow": "{away} → {covering}",
+      "coverageDates": "Del {from} al {to}",
+      "coverageEnd": "Cancelar",
+      "coverageEndConfirm": "¿Cancelar esta cobertura?",
+      "coverageNeedsTwo": "La cobertura necesita una segunda entrenadora. Primero agrega una asistente.",
+      "coverageCoveringBanner": "Estás cubriendo a {names} hasta el {date}.",
+      "coverageAwayBanner": "{name} te está cubriendo hasta el {date}.",
+      "filterMine": "Mías",
+      "filterEveryone": "Todas",
+      "navCoverage": "Cobertura"
     },
     "you": {
       "title": "Tú",

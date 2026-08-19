@@ -13,6 +13,7 @@ import { CoachNotesPanel } from '@/components/coach/coach-notes-panel';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { GeneratePlanButton } from '@/components/coach/generate-plan-button';
 import { CompAccessCard } from '@/components/coach/comp-access-card';
+import { MemberCoachCard, type CoachOption } from '@/components/coach/member-coach-card';
 import { AssignHabitForm } from '@/components/coach/assign-habit-form';
 import { CoachBodyProgress } from '@/components/coach/coach-body-progress';
 import { CoachFoodDiary } from '@/components/coach/coach-food-diary';
@@ -59,6 +60,11 @@ export type ProfileData = {
   habits: ClientHabits | null;
   compUntil: string | null;
   compActive: boolean;
+  coaches: CoachOption[];
+  assignedCoachId: string | null;
+  coveringCoachName: string | null;
+  paused: boolean;
+  resumesOn: string | null;
   checkin: ClientCheckin | null;
 };
 
@@ -193,6 +199,19 @@ export function SubscriberProfile({ data }: { data: ProfileData }): ReactElement
               ) : null}
             </Card>
           )}
+          <Card className="p-5 md:col-span-2">
+            <Eyebrow>{t('memberCoachTitle')}</Eyebrow>
+            <div className="mt-3">
+              <MemberCoachCard
+                profileId={data.id}
+                coaches={data.coaches}
+                assignedCoachId={data.assignedCoachId}
+                coveringCoachName={data.coveringCoachName}
+                paused={data.paused}
+                resumesOn={data.resumesOn}
+              />
+            </div>
+          </Card>
           <Card className="p-5 md:col-span-2">
             <Eyebrow>{t('compTitle')}</Eyebrow>
             <div className="mt-3">

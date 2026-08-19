@@ -7,6 +7,8 @@ import type { ReactElement } from 'react';
 import Link from 'next/link';
 import { requireCoach } from '@/lib/auth/guards';
 import { listAwaitingProgram, OVERDUE_DAYS } from '@/lib/coach/awaiting-program';
+import { getCoverageContext, filterToMine } from '@/lib/coach/coverage';
+import { QueueScope } from '@/components/coach/queue-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,9 +18,21 @@ function waited(days: number): string {
   return `${days} days`;
 }
 
-export default async function CoachAwaitingPage(): Promise<ReactElement> {
+export default async function CoachAwaitingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mine?: string }>;
+}): Promise<ReactElement> {
   const ctx = await requireCoach();
-  const items = ctx.companyId ? await listAwaitingProgram(ctx.companyId) : [];
+  const [allItems, coverage, sp] = await Promise.all([
+    ctx.companyId ? listAwaitingProgram(ctx.companyId) : Promise.resolve([]),
+    ctx.companyId ? getCoverageContext(ctx.companyId, ctx.userId) : Promise.resolve(null),
+    searchParams,
+  ]);
+  const mine = sp.mine === '1' && coverage !== null;
+  const items = mine
+    ? filterToMine(allItems, (i) => i.assignedCoachId, ctx.userId, coverage)
+    : allItems;
   const overdue = items.filter((i) => i.waitingDays >= OVERDUE_DAYS).length;
 
   // Renders its own heading rather than borrowing AdminPage from the admin portal: that component
@@ -30,6 +44,7 @@ export default async function CoachAwaitingPage(): Promise<ReactElement> {
         Finished onboarding, no training plan assigned yet. Oldest first, because a queue sorted
         newest-first starves its own bottom.
       </p>
+      <QueueScope basePath="/coach/awaiting" mine={mine} visible={coverage?.anyAssigned ?? false} />
       <div className="mt-6 flex flex-col gap-5">
       {items.length === 0 ? (
         <div className="rounded-[14px] border border-line px-5 py-8 text-center">

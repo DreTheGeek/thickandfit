@@ -465,8 +465,12 @@ number. Settle the mapping with her before wiring it.
   helper returned null. `node .qa-visual/tenant-boundary-test.mjs` audits the SQL statically and
   fails on the next unscoped policy, in the diff.
 - **0143 coach assignment + coverage** — additive. `profiles.assigned_coach_id` and `coach_coverage`.
-  Resolver, reader and server actions are built and tested; **no UI**, because with one coach a
-  "mine" filter shows an empty console. Build the screens the week an assistant is hired.
+  Resolver, reader, server actions AND the screens: the "Coach and access" card on the client record
+  (also the first UI for pauses, which had a backend and no screen), `/coach/coverage`, the
+  covering-for banner on `/coach`, and Mine/Everyone on `/coach/quiet` and `/coach/awaiting`. The
+  filter is a URL parameter read on the server, and it stays HIDDEN until something is assigned —
+  with the whole roster owned by the company, "mine" is an empty console. `coach_coverage.ends_on`
+  is the LAST DAY AWAY, inclusive: "back on the 20th" is stored as the 19th.
 
 ## Two automated ladders, and they must never reach the same woman
 

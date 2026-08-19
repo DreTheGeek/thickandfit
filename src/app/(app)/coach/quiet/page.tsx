@@ -13,6 +13,8 @@ import Link from 'next/link';
 import { requireCoach } from '@/lib/auth/guards';
 import { listEngagementRisk } from '@/lib/engagement/risk';
 import { TIER_LABEL, type RiskTier } from '@/lib/engagement/risk-shared';
+import { getCoverageContext, filterToMine } from '@/lib/coach/coverage';
+import { QueueScope } from '@/components/coach/queue-scope';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,11 +31,29 @@ function quietFor(days: number): string {
   return `${days} days`;
 }
 
-export default async function CoachQuietPage(): Promise<ReactElement> {
+export default async function CoachQuietPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mine?: string }>;
+}): Promise<ReactElement> {
   const ctx = await requireCoach();
-  const { rows, truncated } = ctx.companyId
-    ? await listEngagementRisk(ctx.companyId)
-    : { rows: [], truncated: [] as string[] };
+  const [{ rows: allRows, truncated }, coverage, sp] = await Promise.all([
+    ctx.companyId
+      ? listEngagementRisk(ctx.companyId)
+      : Promise.resolve({ rows: [], truncated: [] as string[] }),
+    ctx.companyId
+      ? getCoverageContext(ctx.companyId, ctx.userId)
+      : Promise.resolve(null),
+    searchParams,
+  ]);
+
+  // Narrowing happens through the one resolver, so "mine" here means exactly what it means to the
+  // notification that will eventually be addressed at whoever holds her — including when coverage
+  // has moved her to someone else this week.
+  const mine = sp.mine === '1' && coverage !== null;
+  const rows = mine
+    ? filterToMine(allRows, (r) => r.assignedCoachId, ctx.userId, coverage)
+    : allRows;
 
   const urgent = rows.filter((r) => r.tier === 'ghost' || r.tier === 'at_risk').length;
 
@@ -44,6 +64,7 @@ export default async function CoachQuietPage(): Promise<ReactElement> {
         Members who have stopped logging, training and checking in. This is not the billing list:
         nobody here has missed a payment yet, which is the entire point of looking at it.
       </p>
+      <QueueScope basePath="/coach/quiet" mine={mine} visible={coverage?.anyAssigned ?? false} />
 
       {/* A capped sweep reporting a partial roster as "everyone" would be the worst kind of quiet
           failure on a page about quiet failures. */}

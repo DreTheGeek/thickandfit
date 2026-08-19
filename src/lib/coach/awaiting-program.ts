@@ -20,6 +20,8 @@ export type AwaitingProgramItem = {
   waitingDays: number;
   /** Her stated goal, so the coach can start writing without opening the record. */
   goalSummary: string | null;
+  /** Her coach, or null when the company owns her. Drives the mine/everyone filter on the queue. */
+  assignedCoachId: string | null;
   /** Health flags from intake. A program cannot responsibly be written without seeing these. */
   injuries: string[];
   conditions: string[];
@@ -49,7 +51,7 @@ export async function listAwaitingProgram(companyId: string): Promise<AwaitingPr
 
   const { data, error } = await svc
     .from('onboarding_responses')
-    .select('profile_id, answers, completed_at, profiles(full_name, email, role)')
+    .select('profile_id, answers, completed_at, profiles(full_name, email, role, assigned_coach_id)')
     .eq('company_id', companyId)
     .not('completed_at', 'is', null)
     .order('completed_at', { ascending: true })
@@ -113,6 +115,7 @@ export async function listAwaitingProgram(companyId: string): Promise<AwaitingPr
         contactId: contact?.id ?? null,
         name: (p?.full_name ?? '').trim() || 'Member',
         email: p?.email ?? null,
+        assignedCoachId: (p as { assigned_coach_id?: string | null } | null)?.assigned_coach_id ?? null,
         waitingSince: when,
         waitingDays: Math.max(0, Math.floor((now - Date.parse(when)) / 86_400_000)),
         goalSummary,

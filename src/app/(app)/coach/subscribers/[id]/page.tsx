@@ -12,6 +12,9 @@ import { getClientCheckin } from '@/lib/coach/client-checkin';
 import { SubscriberProfile, type ProfileData } from '@/components/coach/subscriber-profile';
 import { getCoachNotes } from '@/lib/coach/notes-actions';
 import { getClientFoodPhotos } from '@/lib/food-photos/coach';
+import { listAssignableCoaches, listCoverage } from '@/lib/coach/coverage';
+import { effectiveCoach } from '@/lib/coach/coverage-shared';
+import { isPaused } from '@/lib/billing/entitlement';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,11 +38,21 @@ export default async function CoachSubscriberPage({
   const supabase = createServiceClient();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('company_id, full_name, email, role, ui_locale, is_legacy_client, created_at, timezone, comp_access_until')
+    .select('company_id, full_name, email, role, ui_locale, is_legacy_client, created_at, timezone, comp_access_until, assigned_coach_id')
     .eq('id', id)
     .maybeSingle();
 
   if (!profile || profile.company_id !== ctx.companyId) notFound();
+
+  const assignedCoachId = (profile.assigned_coach_id as string | null) ?? null;
+  const [coaches, coverages, pause] = await Promise.all([
+    listAssignableCoaches(ctx.companyId),
+    listCoverage(ctx.companyId),
+    isPaused(id),
+  ]);
+  // Resolved server-side: the card is a client component and must render the same answer the
+  // guards do, from the one resolver, rather than re-deriving coverage in the browser.
+  const holder = effectiveCoach(assignedCoachId, coverages, new Date().toISOString().slice(0, 10));
 
   const tz = (profile.timezone as string | null) || 'America/Chicago';
   const [{ data: onb }, { data: assignment }, history, { count: workoutCount }, notes, { data: me }, { data: physique }, foodPhotos, bodyStats, foodDiary] =
@@ -193,6 +206,17 @@ export default async function CoachSubscriberPage({
       profile.comp_access_until &&
         new Date(profile.comp_access_until as string).getTime() > new Date().getTime(),
     ),
+    coaches,
+    assignedCoachId,
+    // Only set when coverage actually MOVES her. The card renders the dropdown plus this line, so
+    // "assigned to Steph, covered by Steph" would be noise; a coach reading it needs to know when
+    // the real answer is not the one the dropdown shows.
+    coveringCoachName:
+      holder !== null && holder !== assignedCoachId
+        ? (coaches.find((c) => c.id === holder)?.name ?? null)
+        : null,
+    paused: pause.paused,
+    resumesOn: pause.resumesOn,
   };
 
   return <SubscriberProfile data={data} />;

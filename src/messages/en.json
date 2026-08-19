@@ -374,7 +374,8 @@
         "coachClientApp": "Client app",
         "coachCoachingPrefs": "Coaching preferences",
         "coachKnowledge": "Knowledge base",
-        "coachMethod": "Your method"
+        "coachMethod": "Your method",
+        "coachCoverage": "Coverage"
       }
     },
     "community": {
@@ -1742,7 +1743,41 @@
       "goalFreq": {
         "daily": "daily",
         "weekly": "weekly"
-      }
+      },
+      "assignedCoach": "Assigned coach",
+      "assignedCoachNobody": "Nobody — the company",
+      "assignedCoachHint": "Who is responsible for her. Leave as nobody while you are the only coach.",
+      "assignedCoachCoveredBy": "Covered by {name} right now",
+      "pauseResumesOn": "Resumes on",
+      "pauseCta": "Pause coaching",
+      "pauseHint": "She keeps her progress, photos, history and messages. Training and the AI coach close. This does not touch her card — stop the billing in Stripe separately if that is the arrangement.",
+      "pausedUntil": "Paused until {date}",
+      "pausedOpenEnded": "Paused, no end date",
+      "resumeCta": "Resume now",
+      "resumeConfirm": "Switch her coaching back on now?",
+      "coverageError": "That did not save. Try again.",
+      "memberCoachTitle": "Coach and access",
+      "coverageTitle": "Coverage",
+      "coverageLead": "Who is standing in while a coach is away. Members assigned to the away coach move to whoever is covering, for as long as it lasts.",
+      "coverageWhoAway": "Who is away",
+      "coverageWhoCovers": "Who covers",
+      "coverageFrom": "First day away",
+      "coverageTo": "Last day away",
+      "coverageNote": "Note (optional)",
+      "coverageAdd": "Add coverage",
+      "coverageActive": "In force now",
+      "coverageUpcoming": "Coming up",
+      "coverageNone": "Nobody is away. Add an absence and her members route to whoever is covering, automatically, on the dates you set.",
+      "coverageRow": "{away} → {covering}",
+      "coverageDates": "{from} to {to}",
+      "coverageEnd": "Cancel",
+      "coverageEndConfirm": "Cancel this coverage?",
+      "coverageNeedsTwo": "Coverage needs a second coach. Add an assistant coach first.",
+      "coverageCoveringBanner": "You are covering for {names} until {date}.",
+      "coverageAwayBanner": "{name} is covering for you until {date}.",
+      "filterMine": "Mine",
+      "filterEveryone": "Everyone",
+      "navCoverage": "Coverage"
     },
     "you": {
       "title": "You",
