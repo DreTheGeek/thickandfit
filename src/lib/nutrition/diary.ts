@@ -3,6 +3,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { getMealThumbs } from '@/lib/nutrition/meal-thumbs';
 import { localDay } from '@/lib/datetime/local-day';
 import { type DiaryDay, type DiaryEntry, type MacroTotals, type MealSlot, sumMacros } from '@/lib/nutrition/macros';
 
@@ -32,11 +33,18 @@ export async function getDiary(userId: string, companyId: string | null, date: s
   const sb = await createClient();
   const { data, error } = await sb
     .from('food_log')
-    .select('id, name, meal_slot, grams, kcal, protein_g, carb_g, fat_g, source')
+    .select('id, name, meal_slot, grams, kcal, protein_g, carb_g, fat_g, source, ai_inference_id')
     .eq('profile_id', userId)
     .eq('log_date', date)
     .order('logged_at', { ascending: true });
   if (error) throw new Error(`getDiary: ${error.message}`);
+
+  // One signing call for the whole day. The pixels already existed (scan-store writes every scanned
+  // image so corrected scans become gold eval cases); nothing had ever read them for display.
+  const thumbs = await getMealThumbs(
+    ((data ?? []) as LogRaw[]).map((r) => (r as { ai_inference_id?: string | null }).ai_inference_id),
+  );
+
   const entries: DiaryEntry[] = ((data ?? []) as LogRaw[]).map((r) => ({
     id: r.id,
     name: r.name ?? 'Food',
@@ -47,6 +55,8 @@ export async function getDiary(userId: string, companyId: string | null, date: s
     carbG: Number(r.carb_g),
     fatG: Number(r.fat_g),
     source: r.source,
+    thumbUrl:
+      thumbs.get((r as { ai_inference_id?: string | null }).ai_inference_id ?? '') ?? null,
   }));
   const totals = sumMacros(entries);
 

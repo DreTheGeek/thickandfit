@@ -574,7 +574,24 @@ export function DiaryScreen({
               </div>
               {rows.map((e) => (
                 <div key={e.id} className="flex items-center justify-between gap-3 border-b border-divider py-2.5 last:border-0">
-                  <div className="min-w-0">
+                  {/* Her own photo where the row came from a scan, a neutral tile otherwise. Most
+                      rows have no image and always will: search, barcode and text logs never had
+                      one, and neither did the 8,419 Lenus rows. A broken-image icon on the majority
+                      of a diary would be worse than the spreadsheet this replaces. */}
+                  {e.thumbUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- signed URL, expires hourly
+                    <img
+                      src={e.thumbUrl}
+                      alt=""
+                      loading="lazy"
+                      className="h-10 w-10 flex-none rounded-[10px] object-cover"
+                    />
+                  ) : (
+                    <span className="grid h-10 w-10 flex-none place-items-center rounded-[10px] bg-warm text-faint">
+                      <Icon name="nutrition" size={15} />
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
                     <div className="truncate text-[14px] font-medium">{e.name}</div>
                     <div className="text-[12px] text-faint">
                       {e.grams != null ? `${Math.round(e.grams)}g · ` : ''}

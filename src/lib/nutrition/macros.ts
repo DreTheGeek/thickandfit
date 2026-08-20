@@ -28,6 +28,14 @@ export type DiaryEntry = {
   carbG: number;
   fatG: number;
   source: string;
+  /**
+   * Signed URL for the photo she took, when this row came from a scan.
+   *
+   * Absent for search, barcode and text-to-macro logs, and for the 8,419 Lenus rows, and that is
+   * permanent rather than a gap waiting to fill: those meals never had an image. The screen shows a
+   * neutral tile instead of a broken one.
+   */
+  thumbUrl?: string | null;
 };
 
 export type MacroTotals = { kcal: number; proteinG: number; carbG: number; fatG: number };
