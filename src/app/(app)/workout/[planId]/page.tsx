@@ -9,6 +9,7 @@ import { recommendForSession } from '@/lib/workout/logging';
 import { readCoachSettings } from '@/lib/coach/settings';
 import { demoUrls } from '@/lib/exercises/demo-url';
 import { normalizeRestSeconds } from '@/lib/workout/rest';
+import { getPreviousSets } from '@/lib/workout/previous-sets';
 import { SessionPreview, type PreviewExercise } from '@/components/workout/session-preview';
 import { loadCycleLogs } from '@/lib/cycle/data';
 import { currentPhase } from '@/lib/cycle/phase';
@@ -115,6 +116,12 @@ export default async function WorkoutPage({
         recLocale,
       )
     : new Map();
+  // One batched read for the whole session's "Previous" column. Per-movement would be fourteen
+  // queries on a leg day.
+  const previousByExercise = ctx.companyId
+    ? await getPreviousSets(ctx.companyId, ctx.userId, ids)
+    : new Map();
+
   const playerExercises: PlayerExercise[] = exList.map((e) => {
     const meta = byId.get(e.exercise_id);
     const hint = overloadByExercise.get(e.exercise_id) ?? null;
@@ -141,6 +148,7 @@ export default async function WorkoutPage({
       demoUrl:
         demoSigned.get((meta as { demo_storage_path?: string | null } | undefined)?.demo_storage_path ?? '') ??
         null,
+      previousSets: previousByExercise.get(e.exercise_id) ?? [],
       overload: hint
         ? {
             action: hint.action,

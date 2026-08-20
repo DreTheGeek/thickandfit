@@ -22,6 +22,7 @@ import {
   type DraftSet,
 } from '@/lib/workout/draft';
 import { normalizeRestSeconds } from '@/lib/workout/rest';
+import { PortalButton } from '@/components/portal/portal-chrome';
 
 export type OverloadHint = {
   action: 'increase_reps' | 'increase_weight' | 'hold' | 'deload';
@@ -79,6 +80,11 @@ export type PlayerExercise = {
   isAmrap: boolean;
   groupKey: string | null;
   groupKind: string | null;
+  /**
+   * What she did on each set of this movement last time, for the table's Previous column.
+   * Empty when this is the first time she has trained it.
+   */
+  previousSets: { setNumber: number; reps: number; weight: number }[];
   overload: OverloadHint | null;
   // All-time bests for PR detection (Epley e1RM for weighted, max reps for bodyweight).
   bestE1rm: number | null;
@@ -746,21 +752,54 @@ export function WorkoutPlayer({
           />
         </div>
 
-        {/* Set dots */}
-        <div className="mt-5 flex justify-center gap-1.5">
+        {/* The handoff's `.set-table`, replacing five dots that said only "you are on set 3".
+            Columns are what THIS app records: reps, weight, and what she managed last time. The
+            mock's Time and Effort columns are not dropped out of laziness, they are not recorded
+            per set here; effort is the RPE row below, which is a tap rather than a column.
+
+            `logged.current` is a ref, and reading a ref during render is normally wrong. It is
+            correct here because logSet pushes to it and then immediately advances setNum or idx,
+            so the render that follows always sees the push. Nothing else writes it. */}
+        <div className="mt-5 overflow-hidden rounded-[14px] border border-line">
+          <div className="grid grid-cols-[44px_1fr_1fr_1.2fr] border-b border-line bg-warm/40 px-3 py-2 text-[9px] font-extrabold uppercase tracking-[0.6px] text-faint">
+            <span>{t('setCol')}</span>
+            <span className="text-right">{t('reps')}</span>
+            <span className="text-right">{t('weight')}</span>
+            <span className="text-right">{t('previousCol')}</span>
+          </div>
           {Array.from({ length: totalSets }, (_, i) => {
             const n = i + 1;
-            const color =
-              n < setNum
-                ? 'bg-accent'
-                : n === setNum
-                  ? 'bg-ink'
-                  : 'bg-line';
-            return <span key={i} className={`h-1.5 w-[30px] rounded-full ${color}`} />;
+            const done = logged.current.find(
+              (l) => l.exercise_id === ex.exercise_id && l.set_number === n,
+            );
+            const prev = ex.previousSets.find((p) => p.setNumber === n);
+            const current = n === setNum;
+            return (
+              <div
+                key={n}
+                className={[
+                  'grid grid-cols-[44px_1fr_1fr_1.2fr] px-3 py-2.5 text-[13px] tabular-nums',
+                  i > 0 ? 'border-t border-divider' : '',
+                  current ? 'bg-warm/40' : '',
+                ].join(' ')}
+              >
+                <span className={current ? 'font-bold text-ink' : 'text-muted'}>{n}</span>
+                {/* A logged row shows what she DID. The current row shows what the steppers are set
+                    to, so the table and the control above it never disagree. A future row shows a
+                    dash rather than the target: printing the plan as though it were a result is how
+                    a table starts lying about work nobody has done. */}
+                <span className={`text-right ${done ? 'text-accent' : current ? 'text-ink' : 'text-faint'}`}>
+                  {done ? done.reps : current ? reps : '--'}
+                </span>
+                <span className={`text-right ${done ? 'text-accent' : current ? 'text-ink' : 'text-faint'}`}>
+                  {done ? done.weight : current ? weight : '--'}
+                </span>
+                <span className="text-right text-faint">
+                  {prev ? `${prev.weight} x ${prev.reps}` : '--'}
+                </span>
+              </div>
+            );
           })}
-        </div>
-        <div className="mt-2 text-center text-[12px] text-faint">
-          {t('set', { current: setNum, total: totalSets })}
         </div>
 
         {/* Rest banner */}
@@ -860,11 +899,11 @@ export function WorkoutPlayer({
           </div>
         </div>
 
-        <Button size="block" className="mt-[18px]" onClick={logSet}>
-          {idx === exercises.length - 1 && setNum === totalSets
-            ? t('finish')
-            : t('logSet')}
-        </Button>
+        {/* The handoff spends its one action colour on this button, and it is the right place for
+            it: everything else on the screen is a reading, this is the thing she came to do. */}
+        <PortalButton variant="action" className="mt-[18px]" onClick={logSet}>
+          {idx === exercises.length - 1 && setNum === totalSets ? t('finish') : t('logSet')}
+        </PortalButton>
       </div>
 
       {/* Post-workout rating sheet: PRs + enjoyment/effort before we persist and celebrate */}

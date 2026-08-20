@@ -760,7 +760,9 @@
       "amrap": "Máximo de reps",
       "restoredSets": "Retomamos donde te quedaste: {count, plural, one {# serie} other {# series}} ya registradas.",
       "restoredStartOver": "Empezar de nuevo",
-      "day": "Día"
+      "day": "Día",
+      "setCol": "Serie",
+      "previousCol": "Anterior"
     },
     "coach": {
       "overview": "Resumen",
