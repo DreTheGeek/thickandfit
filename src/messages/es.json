@@ -1836,7 +1836,33 @@
       "campaignError": "No se guardó. Revisa las fechas e inténtalo de nuevo.",
       "campaignKeyTaken": "Ya hay una campaña con esa clave.",
       "campaignWindowLabel": "Del {from} al {to}",
-      "navCampaigns": "Campañas"
+      "navCampaigns": "Campañas",
+      "orientation": {
+        "title": "Empieza aquí",
+        "titleNamed": "Empieza aquí, {name}",
+        "subtitle": "Cuatro lugares que conviene conocer antes que nada. Cada uno desaparece cuando lo usas, y esta tarjeta se va con el último.",
+        "progress": "{done} de {total} listo",
+        "clients": {
+          "title": "Tus clientas",
+          "body": "{n} personas en tu lista.",
+          "empty": "Todavía no hay nadie en la lista."
+        },
+        "awaiting": {
+          "title": "Quién espera un plan",
+          "body": "{n} han terminado el onboarding.",
+          "empty": "Nadie está esperando ahora."
+        },
+        "programs": {
+          "title": "Su biblioteca de programas",
+          "body": "{n} programas que puedes asignar.",
+          "empty": "Todavía no hay programas."
+        },
+        "knowledge": {
+          "title": "Enseña al asistente",
+          "body": "{n} cosas que sabe con su voz.",
+          "empty": "Todavía no sabe nada. Agrega lo que le dirías dos veces a una clienta."
+        }
+      }
     },
     "you": {
       "title": "Tú",

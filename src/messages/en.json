@@ -1836,7 +1836,33 @@
       "campaignError": "That did not save. Check the dates and try again.",
       "campaignKeyTaken": "A campaign already uses that key.",
       "campaignWindowLabel": "{from} to {to}",
-      "navCampaigns": "Campaigns"
+      "navCampaigns": "Campaigns",
+      "orientation": {
+        "title": "Start here",
+        "titleNamed": "Start here, {name}",
+        "subtitle": "Four places worth knowing before anything else. Each one disappears once you have used it, and this card goes with the last of them.",
+        "progress": "{done} of {total} done",
+        "clients": {
+          "title": "Your clients",
+          "body": "{n} people are on your roster.",
+          "empty": "Nobody on the roster yet."
+        },
+        "awaiting": {
+          "title": "Who is waiting on a plan",
+          "body": "{n} have finished onboarding.",
+          "empty": "Nobody is waiting right now."
+        },
+        "programs": {
+          "title": "Her program library",
+          "body": "{n} programs you can assign.",
+          "empty": "No programs in the library yet."
+        },
+        "knowledge": {
+          "title": "Teach the assistant",
+          "body": "{n} things it knows in her voice.",
+          "empty": "It knows nothing yet. Add what you would tell a client twice."
+        }
+      }
     },
     "you": {
       "title": "You",
