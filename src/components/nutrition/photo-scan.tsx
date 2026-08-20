@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
+import { PortalStatRow } from '@/components/portal/portal-chrome';
 import { CoachMomentCard } from '@/components/nutrition/coach-moment-card';
 import type { CoachMoment } from '@/lib/nutrition/coach-moment';
 import {
@@ -731,6 +732,47 @@ export function PhotoScan({
                     ))}
                   </select>
                 </div>
+
+                {/* The plate's total, which the handoff's result screen leads with and this screen
+                    had nowhere at all: it went straight from the photo to a list of items, so the
+                    one number she opened the scanner to find had to be added up in her head.
+                    Computed LIVE from the edited grams rather than from the model's original totals,
+                    because she can change a portion on any row and a total that did not move with
+                    her would be worse than none. Matched rows only: an unmatched item has no macros
+                    to contribute and must not silently read as zero. */}
+                {(() => {
+                  const sum = candidates.reduce(
+                    (acc, c, i) => {
+                      if (!c.matched || !c.macros) return acc;
+                      const base = predictedGrams[i] ?? c.grams;
+                      const sm = scaleMacros(c.macros, base > 0 ? c.grams / base : 1);
+                      return {
+                        kcal: acc.kcal + sm.kcal,
+                        proteinG: acc.proteinG + sm.proteinG,
+                        carbG: acc.carbG + sm.carbG,
+                        fatG: acc.fatG + sm.fatG,
+                      };
+                    },
+                    { kcal: 0, proteinG: 0, carbG: 0, fatG: 0 },
+                  );
+                  if (sum.kcal <= 0) return null;
+                  return (
+                    <div className="mb-3 border-y border-line py-3">
+                      <div className="tf-display text-[26px] leading-none tabular-nums">
+                        {t('photoTotalKcal', { n: sum.kcal })}
+                      </div>
+                      <PortalStatRow
+                        className="mt-2.5"
+                        divider
+                        stats={[
+                          { key: 'p', label: t('protein'), value: `${sum.proteinG}g` },
+                          { key: 'c', label: t('carbs'), value: `${sum.carbG}g` },
+                          { key: 'f', label: t('fat'), value: `${sum.fatG}g` },
+                        ]}
+                      />
+                    </div>
+                  );
+                })()}
 
                 <p className="mb-2 text-[12px] text-faint">{t('photoConfirmHint')}</p>
 

@@ -2120,7 +2120,8 @@
       "modeDescribe": "Describir",
       "modeSearch": "Buscar",
       "modeBarcode": "Código",
-      "modeFavorites": "Favoritos"
+      "modeFavorites": "Favoritos",
+      "photoTotalKcal": "{n} calorías"
     },
     "disclaimer": {
       "title": "Antes de empezar",
