@@ -24,6 +24,7 @@ const ex = (o: Partial<PreviewExercise>): PreviewExercise => ({
   repsMin: null,
   repsMax: null,
   restSec: null,
+  timeSec: null,
   equipment: null,
   hasDemo: false,
   groupKey: null,

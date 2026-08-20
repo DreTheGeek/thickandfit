@@ -23,6 +23,7 @@ type SessionExercise = {
   reps_max: number | null;
   weight: number | null;
   rest_sec: number | null;
+  time_sec: number | null;
   notes: string | null;
   group_key: string | null;
   group_kind: string | null;
@@ -181,6 +182,7 @@ export default async function WorkoutPage({
         repsMin: e.reps_min,
         repsMax: e.reps_max,
         restSec: normalizeRestSeconds(e.rest_sec),
+        timeSec: e.time_sec,
         equipment: (meta as { equipment?: string | null } | undefined)?.equipment ?? null,
         // The same three-source test the player applies, so the play badge here and the video there
         // can never disagree about whether a movement has footage.

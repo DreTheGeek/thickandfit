@@ -43,6 +43,8 @@ export type PreviewExercise = {
   repsMin: number | null;
   repsMax: number | null;
   restSec: number | null;
+  /** A prescribed duration, where the movement is timed rather than counted. */
+  timeSec: number | null;
   equipment: string | null;
   hasDemo: boolean;
   /** Superset / circuit grouping, used for the handoff's section headings. */
@@ -62,7 +64,17 @@ export type PreviewExercise = {
  * this does not have. Active excludes rest; total includes it, which is the difference between
  * "how long am I working" and "when am I leaving".
  */
+/**
+ * Per-rep tempo. Two of them, because a rep is not one thing.
+ *
+ * 4s is a controlled lift: down, pause, up. Applying it to everything is what made a jump-rope row
+ * of 500 skips estimate at 33 minutes. Above CYCLIC_THRESHOLD reps the movement is not a lift at
+ * all, it is conditioning (skips, marches, steps), where a rep is under a second. Her library has
+ * eight such rows and every one is jump rope at 300 to 500.
+ */
 const SECONDS_PER_REP = 4;
+const CYCLIC_SECONDS_PER_REP = 0.5;
+const CYCLIC_THRESHOLD = 50;
 const DEFAULT_REST_SEC = 60;
 
 export function estimateSession(exercises: PreviewExercise[]): { activeMin: number; totalMin: number } {
@@ -70,9 +82,16 @@ export function estimateSession(exercises: PreviewExercise[]): { activeMin: numb
   let restSec = 0;
   for (const e of exercises) {
     const sets = e.sets ?? 1;
-    // A rep range estimates at its top: the plan asks for "8-10" and finishing the set is 10.
-    const reps = e.repsMax ?? e.reps ?? e.repsMin ?? 10;
-    activeSec += sets * reps * SECONDS_PER_REP;
+    if (e.timeSec != null && e.timeSec > 0) {
+      // A prescribed duration beats any tempo guess, and 271 rows in her library carry one: the
+      // cardio machines, where reps are meaningless and the plan says "20 minutes".
+      activeSec += sets * e.timeSec;
+    } else {
+      // A rep range estimates at its top: the plan asks for "8-10" and finishing the set is 10.
+      const reps = e.repsMax ?? e.reps ?? e.repsMin ?? 10;
+      const tempo = reps > CYCLIC_THRESHOLD ? CYCLIC_SECONDS_PER_REP : SECONDS_PER_REP;
+      activeSec += sets * reps * tempo;
+    }
     // Rest happens BETWEEN sets, so a single set rests zero times. Getting this wrong is how an
     // estimate quietly inflates by one rest period per movement.
     restSec += Math.max(0, sets - 1) * (e.restSec ?? DEFAULT_REST_SEC);

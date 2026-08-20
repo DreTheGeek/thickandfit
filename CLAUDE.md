@@ -617,6 +617,36 @@ It is deliberately free of `'use client'` so `you-screen.tsx`, an async server c
 it. Nav lives once in `src/components/nav/tabs.ts`, consumed by both the phone bar and the desktop
 rail, which had drifted to different tab sets.
 
+## `rest_sec` held milliseconds, and the player counted them as seconds
+
+Fixed 2026-08-20 (migration 0145), and worth keeping because the shape recurs: a UNIT bug in an
+importer is invisible to every check this repo runs, and only becomes visible when some screen puts
+the number in front of a person.
+
+Her Lenus export carries `restTime` in milliseconds. `scripts/import-lenus-programs.mjs` wrote it
+straight into `session_exercises.rest_sec`, so 1,454 of 1,458 prescribed rests were 1000x too large.
+The player does `setRest(ex.rest_sec)` and ticks once a second: finishing a set of banded squats
+(20000) opened a **five and a half hour** countdown with the audible timer never firing. Live since
+the programs import, through a green typecheck, lint, build and the whole QA board.
+
+It surfaced only because the new workout-preview screen estimated a session at "3,380 min" and the
+number was absurd enough to chase.
+
+**Fixed in three places on purpose**, because any one alone gets undone:
+- **data**: 0145 divides and clamps to 600s. It REFUSES to run if any row sits between 601 and 999,
+  where seconds and milliseconds cannot be told apart. That band is empty on the real data.
+- **producer**: the importer divides now. STATE.md schedules it to re-run before her Lenus account
+  closes, and it would have rewritten every row back.
+- **consumer**: `src/lib/workout/rest.ts` normalises on READ, so a third mistake here cannot reach a
+  member. `npx tsx .qa-visual/rest-normalize-test.mts` pins both sides of the threshold, the ceiling
+  and idempotency (0145 already converted the table, so normalising a correct 90 must not halve it).
+
+**The other imported units were checked and are FINE**, so nobody needs to redo it. `time_sec` looks
+like the same bug (73 rows >= 1000, max 3000) and is not: 3000s is a 50 minute incline walk, 300s a
+five minute one, and the values track the movement. `reps > 200` is eight rows of jump rope at 300 to
+500 skips, which is a real prescription. `weight` tops out at 158.76, which is lb. `rest_sec` was the
+only one.
+
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
 Gemini free-tier limits. Document limits and deferral decisions here as they approach.
