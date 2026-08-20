@@ -1869,7 +1869,10 @@
       "strengthSub": "Cada sesión se apoya en la anterior. Sigue apareciendo.",
       "feelBetterTitle": "Sigues apareciendo",
       "feelBetterSub": "La constancia es todo. Un día a la vez.",
-      "cycle": "Tu ciclo"
+      "cycle": "Tu ciclo",
+      "coachTabSteph": "Steph",
+      "coachTabAssistant": "Tu coach",
+      "coachHumanNote": "Steph lee estos mensajes ella misma. Responde cuando puede."
     },
     "gamification": {
       "dayStreak": "días seguidos",

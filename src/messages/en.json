@@ -1869,7 +1869,10 @@
       "strengthSub": "Every session builds on the last. Keep showing up.",
       "feelBetterTitle": "You keep showing up",
       "feelBetterSub": "Consistency is the whole game. One day at a time.",
-      "cycle": "Your cycle"
+      "cycle": "Your cycle",
+      "coachTabSteph": "Steph",
+      "coachTabAssistant": "Your coach",
+      "coachHumanNote": "Steph reads these herself. She replies when she can."
     },
     "gamification": {
       "dayStreak": "day streak",
