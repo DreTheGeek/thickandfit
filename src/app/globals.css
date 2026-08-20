@@ -668,7 +668,23 @@ html {
    .tf-portal sits below <html data-theme>, so it wins over both the light
    :root palette and the dark override without needing !important.
    ========================================================================== */
+/* LIGHT IS THE DEFAULT. The portal inherits the :root palette and only states its ground, so every
+   screen renders on warm paper unless a member asks for dark.
+
+   The 8.0 handoff is a dark design and this was a dark-only scope: `.tf-portal` hardcoded the night
+   palette, so there was no light portal to fall back to and no way to offer the choice. Owner call
+   2026-08-20: light by default, dark available.
+
+   Everything below in the dark block is a RE-POINT of the same --c-* tokens the whole app already
+   reads, which is why one attribute flips the entire member tree with no component edits. That only
+   holds because components name ROLES (bg-surface, text-ink) rather than literals; the literal ones
+   were the bugs found and fixed across this week. */
 .tf-portal {
+  background: var(--c-bg);
+  color: var(--c-ink);
+}
+
+.tf-portal[data-portal-theme='dark'] {
   --c-ink: #ffffff;
   --c-bg: #000000;
   /* The design's --surface-2. Its --surface (#0b0b0c) is a page-level wash that

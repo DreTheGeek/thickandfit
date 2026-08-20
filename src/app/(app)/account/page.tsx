@@ -6,6 +6,8 @@ import { getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { LanguageToggle } from '@/components/i18n/language-toggle';
+import { PortalThemeToggle } from '@/components/app/portal-theme-toggle';
+import { readPortalTheme } from '@/lib/portal-theme';
 import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { Icon } from '@/components/ui/icons';
 import { signOutAction } from '@/lib/auth/actions';
@@ -41,6 +43,7 @@ export default async function AccountPage(): Promise<ReactElement> {
     readMyNotificationPrefs(),
   ]);
   const currentEmail = userData.user?.email ?? '';
+  const theme = await readPortalTheme();
 
   // Membership card from the chosen coaching tier (self / team / steph). Reuses the onboarding tier
   // copy; reflects the selection until live billing supplies the real subscription.
@@ -87,6 +90,14 @@ export default async function AccountPage(): Promise<ReactElement> {
           </div>
         </div>
       ) : null}
+
+      {/* Appearance sits above language because it is the change a member is most likely to be
+          looking for after installing the app, and it is the one she can see the result of
+          instantly. */}
+      <div className="mb-8">
+        <SectionLabel>{t('account.appearance')}</SectionLabel>
+        <PortalThemeToggle current={theme} />
+      </div>
 
       <LanguageToggle
         uiLocale={profile?.ui_locale ?? 'en'}

@@ -176,6 +176,15 @@ const PATHS = {
   play: <path d="M7 5.5v13l11-6.5z" />,
   // Outline by default; pass fill="currentColor" for the starred state.
   star: <path d="M12 3.4l2.65 5.37 5.93.86-4.29 4.18 1.01 5.9L12 16.92l-5.3 2.79 1.01-5.9L3.42 9.63l5.93-.86z" />,
+  // Theme toggle. Drawn on the same 24 grid and stroke weight as the rest of the set, so they sit
+  // with it rather than looking imported from somewhere else.
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </>
+  ),
+  moon: <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" />,
 } as const;
 
 export type IconName = keyof typeof PATHS;

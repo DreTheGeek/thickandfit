@@ -2301,7 +2301,8 @@
         "generic": "Algo salió mal. Inténtalo de nuevo."
       },
       "reminderHourLabel": "Hora del recordatorio diario",
-      "reminderHourHint": "Cuándo llega tu recordatorio diario, en tu hora local."
+      "reminderHourHint": "Cuándo llega tu recordatorio diario, en tu hora local.",
+      "appearance": "Apariencia"
     },
     "paused": {
       "title": "Tu coaching está en pausa",

@@ -2301,7 +2301,8 @@
         "generic": "Something went wrong. Please try again."
       },
       "reminderHourLabel": "Daily reminder time",
-      "reminderHourHint": "When your daily nudge arrives, in your local time."
+      "reminderHourHint": "When your daily nudge arrives, in your local time.",
+      "appearance": "Appearance"
     },
     "paused": {
       "title": "Your coaching is paused",
