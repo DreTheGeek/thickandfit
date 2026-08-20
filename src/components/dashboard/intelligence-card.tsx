@@ -39,8 +39,11 @@ export async function IntelligenceCard({
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2">
+        {/* bolt, not sparkles. This strip is a reading of HER logged numbers against her own
+            targets, and the sparkle is the universal "a machine did this" marker, which both
+            misdescribes it and breaks the brand rule that the method is hers, in her voice. */}
         <span className="text-ink">
-          <Icon name="sparkles" size={16} strokeWidth={2.2} />
+          <Icon name="bolt" size={16} strokeWidth={2.2} />
         </span>
         <h2 className="text-[11px] font-semibold uppercase tracking-[1.5px] text-faint">
           {t('title')}

@@ -75,7 +75,9 @@ export async function YouScreen({
     sub?: string;
     soon?: boolean;
   }[] = [
-    { key: 'aiCoach', icon: 'sparkles', label: t('aiCoach'), href: '/coach-chat' },
+    // icon 'chat', not 'sparkles': the row opens a conversation with her coach. The key name is
+    // internal; the label already reads "Coach chat".
+    { key: 'aiCoach', icon: 'chat', label: t('aiCoach'), href: '/coach-chat' },
     { key: 'evolution', icon: 'pulse', label: t('evolution'), href: '/evolution' },
     { key: 'health', icon: 'heart', label: t('healthProfile'), href: '/you/health' },
     ...(showCycle ? [{ key: 'cycle', icon: 'heart' as const, label: t('cycle'), href: '/you/cycle' }] : []),

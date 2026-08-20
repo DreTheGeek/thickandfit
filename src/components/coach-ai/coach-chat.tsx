@@ -189,7 +189,9 @@ export function CoachChat({
 
         {showEmpty && !notConfigured && !quotaReached && (
           <div className="flex flex-col items-center gap-2 px-6 pt-10 text-center">
-            <Icon name="sparkles" size={28} className="text-accent" />
+            {/* chat, not sparkles. The standing line on this screen is "Your coach, in
+                Stephanie's voice", and a sparkle above it says the opposite. */}
+            <Icon name="chat" size={28} className="text-accent" />
             <p className="text-[15px] font-semibold text-ink">{t('emptyTitle')}</p>
             <p className="max-w-[260px] text-[13px] text-faint">{t('emptyBody')}</p>
           </div>

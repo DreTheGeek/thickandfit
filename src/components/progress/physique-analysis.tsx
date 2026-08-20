@@ -50,7 +50,10 @@ export function PhysiqueAnalysisButton({
         disabled={!imageUrl}
         className="tf-press mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-full border border-line py-1.5 text-[11px] font-semibold uppercase tracking-[1px] text-muted disabled:opacity-40"
       >
-        <Icon name="sparkles" size={13} />
+        {/* ruler, not sparkles: this is a measurement read off her photo, presented as a range
+            with a disclaimer. Dressing it as magic oversells exactly the number that needs the
+            most hedging. */}
+        <Icon name="ruler" size={13} />
         {t('analyzePhoto')}
       </button>
 
