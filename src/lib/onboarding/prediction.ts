@@ -91,12 +91,33 @@ const MIN_FAT_G_PER_KG = 0.6;
  */
 const MAX_PROTEIN_SHARE = 0.35;
 
-export function computePlan(input: OnboardingInput): Plan {
+export function computePlan(
+  input: OnboardingInput,
+  /**
+   * A weekly rate she has effectively asked for by choosing a target date, in kg per week and
+   * signed the way the change runs (negative to lose).
+   *
+   * WHY THIS EXISTS. The date input used to change nothing. computePlan derives its rate from a flat
+   * 500 kcal deficit, so a member who picked a date was told "that works, about 1.3 lb a week" while
+   * the chart beside it, the per-week tile, the on-track date and the daily calories all still
+   * described 1 lb a week. One screen, two paces, and the one she typed was the one being ignored.
+   *
+   * The caller only passes this when the pace assessor says the date is safe, so an unrealistic
+   * date still leaves the sustainable plan alone and gets told the truth instead. The calorie floor
+   * below (bmr * 1.1) is unchanged and still binds, so no date can drive an unsafe intake.
+   */
+  weeklyKgTarget?: number | null,
+): Plan {
   const bmr = bmrMifflinStJeor(input.sex, input.weightKg, input.heightCm, input.age);
   const tdee = bmr * ACTIVITY_FACTOR[input.activity];
 
   let calories: number;
-  if (input.goal === 'lose') calories = Math.max(Math.round(tdee - 500), Math.round(bmr * 1.1));
+  if (weeklyKgTarget != null && Number.isFinite(weeklyKgTarget) && Math.abs(weeklyKgTarget) > 0.01) {
+    // Invert the energy balance she has asked for: kg/week -> kcal/day, applied to TDEE. Clamped by
+    // the same floor as the default path, which is what stops a date request becoming a crash diet.
+    const dailyDelta = (weeklyKgTarget * KCAL_PER_KG) / 7;
+    calories = Math.max(Math.round(tdee + dailyDelta), Math.round(bmr * 1.1));
+  } else if (input.goal === 'lose') calories = Math.max(Math.round(tdee - 500), Math.round(bmr * 1.1));
   else if (input.goal === 'gain') calories = Math.round(tdee + 300);
   else calories = Math.round(tdee);
 

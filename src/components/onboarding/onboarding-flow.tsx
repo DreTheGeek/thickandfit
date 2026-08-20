@@ -46,6 +46,14 @@ const S_PLAN = 5;
 type Activity = OnboardingInput['activity'];
 // Coaching tier chosen at onboarding (call 2026-07-01). Captured as intent; checkout maps it to a
 // Stripe price once billing is live. 'team' = coached by Steph's team (Dani), not Steph one-on-one.
+/**
+ * 'steph' is no longer OFFERED at onboarding and is deliberately still in the type.
+ *
+ * The 1-on-1 tier was never advertised anywhere a member could see it, so presenting it at signup
+ * sold something the marketing does not carry. Removing the card stops new members choosing it;
+ * removing the VALUE would orphan anybody already recorded on it and break the account and coach
+ * screens that render its name.
+ */
 type Tier = 'self' | 'team' | 'steph';
 /**
  * Parse a numeric text field. An empty or half-typed box ("", "-", ".") reads as 0 here, which the
@@ -292,13 +300,24 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
     }),
     [sex, ageNum, heightCmCanonical, weightKg, goalKg, activity, goal, bodyFatNum, bodyFatValid],
   );
-  const plan = useMemo(() => computePlan(input), [input]);
+  // plan is computed AFTER pace below, because a safe target date changes the rate it runs at.
   // Assessed against the CHOSEN date, not the plan's own projection: the point is to compare what she
   // wants with what is sustainable, and tell her honestly when those differ.
   const pace = useMemo(
     () => assessGoalPace({ currentKg: weightKg, goalKg: goalKg, targetDateIso: targetDate || null, now: new Date() }),
     [weightKg, goalKg, targetDate],
   );
+  /**
+   * The rate her chosen date implies, but ONLY when that date is actually safe.
+   *
+   * 'comfortable' and 'aggressive' are both deliverable, so the plan moves to meet them and every
+   * number on the screen agrees with the sentence under the date field. 'unrealistic' does not: the
+   * plan stays sustainable and the copy tells her why, which is the whole reason the assessor
+   * returns a verdict rather than a boolean.
+   */
+  const paceOverrideKg =
+    pace.verdict === 'comfortable' || pace.verdict === 'aggressive' ? pace.weeklyKg : null;
+  const plan = useMemo(() => computePlan(input, paceOverrideKg), [input, paceOverrideKg]);
   // Chart points in the user's display unit.
   const unitLabel = units === 'metric' ? 'kg' : 'lb';
   const chart = useMemo<CurvePoint[]>(
@@ -760,13 +779,6 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
               blurb={t('tierTeamBlurb')}
               active={tier === 'team'}
               onClick={() => setTier('team')}
-            />
-            <TierCard
-              name={t('tierStephName')}
-              price={t('tierStephPrice')}
-              blurb={t('tierStephBlurb')}
-              active={tier === 'steph'}
-              onClick={() => setTier('steph')}
             />
           </div>
           <p className="mt-4 text-[12px] leading-[1.5] text-faint">{t('tierTrialNote')}</p>
