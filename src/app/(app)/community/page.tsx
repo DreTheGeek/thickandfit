@@ -6,7 +6,7 @@ import { getTranslations } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { COACH_ROLES } from '@/lib/auth/session';
 import { getCommunity } from '@/lib/community/feed';
-import { PageHeader } from '@/components/ui/page-header';
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { CommunityFeed } from '@/components/community/community-feed';
 
 export const dynamic = 'force-dynamic';
@@ -18,9 +18,12 @@ export default async function CommunityPage(): Promise<ReactElement> {
   const canBroadcast = COACH_ROLES.includes(ctx.role);
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:py-8">
-      <PageHeader title={t('title')} subtitle={t('subtitle')} />
+    // PortalHeader, not PageHeader. PageHeader is a 44-56px title over an ink keyline, which is
+    // marketing scale: on a 390px phone it spent a fifth of the viewport before the first post.
+    // It stays where it belongs, on the public site and the coach console.
+    <PortalScreen>
+      <PortalHeader title={t('title')} sub={t('subtitle')} />
       <CommunityFeed data={data} canBroadcast={canBroadcast} viewerId={ctx.userId} />
-    </div>
+    </PortalScreen>
   );
 }

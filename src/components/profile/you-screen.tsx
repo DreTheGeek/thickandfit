@@ -1,11 +1,10 @@
 import type { ReactElement, ReactNode } from 'react';
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { Avatar } from '@/components/ui/avatar';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { Tag } from '@/components/ui/badge';
 import { ListRow } from '@/components/ui/list-row';
-import { PageTitle } from '@/components/ui/section';
+import { PortalScreen, PortalHeader, PortalIconButton } from '@/components/portal/portal-chrome';
 import { signOutAction } from '@/lib/auth/actions';
 import { WeightLogCard } from '@/components/profile/weight-log-card';
 import { GoalCard } from '@/components/profile/goal-card';
@@ -92,17 +91,11 @@ export async function YouScreen({
   ];
 
   return (
-    <div className="px-[22px] pb-7 pt-3">
-      <div className="mb-[18px] flex items-center justify-between">
-        <PageTitle>{t('title')}</PageTitle>
-        <Link
-          href="/account"
-          aria-label={t('settings')}
-          className="tf-press text-faint"
-        >
-          <Icon name="gear" size={22} />
-        </Link>
-      </div>
+    <PortalScreen>
+      <PortalHeader
+        title={t('title')}
+        right={<PortalIconButton icon="gear" href="/account" label={t('settings')} />}
+      />
 
       {/* Identity */}
       <div className="mb-5 flex items-center gap-3.5">
@@ -177,7 +170,7 @@ export async function YouScreen({
           {c('signOut')}
         </button>
       </form>
-    </div>
+    </PortalScreen>
   );
 }
 

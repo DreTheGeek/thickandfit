@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { getNotifications } from '@/lib/notifications/queries';
 import { isPushConfigured } from '@/lib/notifications/push';
-import { PageHeader } from '@/components/ui/page-header';
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { NotificationList } from '@/components/notifications/notification-list';
 
 export const dynamic = 'force-dynamic';
@@ -21,13 +21,13 @@ export default async function NotificationsPage(): Promise<ReactElement> {
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '';
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:py-8">
-      <PageHeader title={t('title')} subtitle={t('subtitle')} />
+    <PortalScreen>
+      <PortalHeader title={t('title')} sub={t('subtitle')} />
       <NotificationList
         initial={items}
         pushConfigured={pushConfigured}
         vapidPublicKey={vapidPublicKey}
       />
-    </div>
+    </PortalScreen>
   );
 }

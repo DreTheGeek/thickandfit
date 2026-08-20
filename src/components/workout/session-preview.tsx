@@ -1,3 +1,11 @@
+'use client';
+// 'use client' is REQUIRED, and its absence is the bug the first version of this screen shipped
+// with: useTranslations is the client hook, this is rendered from an async server page, and the
+// result was a 500 behind "Something went wrong" on every visit. tsc, eslint and `next build` were
+// all green, because nothing about the call is statically wrong; only opening the page shows it.
+// The alternative was getTranslations from next-intl/server, but the component holds Links and no
+// data access, so the client boundary is the cheaper of the two and matches train-cards.tsx.
+//
 // The screen between "today's workout" and being mid-set.
 //
 // It closes the biggest real gap in the 8.0 handoff's main file. Until now every route into a

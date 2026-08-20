@@ -23,13 +23,25 @@ const OUT = path.join(process.cwd(), '.qa-visual', 'portal');
 const PHONE = { width: 390, height: 844 };
 
 const SHOTS = [
-  { name: '01-today', route: '/dashboard' },
-  { name: '02-train', route: '/workouts' },
-  { name: '03-fuel', route: '/nutrition' },
-  { name: '04-fuel-add', route: '/nutrition', click: 'text=/add meal/i' },
+  { name: '01-today', route: '/dashboard', expect: /transformation status/i },
+  { name: '02-train', route: '/workouts', expect: /today's workout|entreno de hoy/i },
+  { name: '03-fuel', route: '/nutrition', expect: /calories|calor/i },
+  { name: '04-fuel-add', route: '/nutrition', click: 'text=/add meal/i', expect: /scan|escanear/i },
   { name: '05-community', route: '/community' },
   { name: '06-you', route: '/you' },
+  // Resolved at runtime from the Train screen, because the plan id is per-member.
+  { name: '07-preview', route: null, from: 'a[href*="preview=1"]', expect: /start workout|empezar/i },
 ];
+
+/**
+ * The error boundary's own copy. A route that throws renders THIS instead of the screen, with a
+ * 200 and no console error, so a screenshot run that only checks for crashes reports it as clean.
+ *
+ * The workout preview shipped exactly this way: it called useTranslations, the client hook, from a
+ * component rendered by an async server page. tsc, eslint and `next build` were all green and the
+ * page was a 500 behind "Something went wrong" on every visit.
+ */
+const ERROR_MARKER = /something went wrong/i;
 
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -62,9 +74,26 @@ if (page.url().includes('/auth/')) {
 }
 console.log(`signed in, landed on ${new URL(page.url()).pathname}`);
 
+// Train first: the preview shot resolves its URL from a link on this screen.
+await page.goto(`${BASE}/workouts`, { waitUntil: 'networkidle' }).catch(() => {});
+await page.waitForTimeout(1200);
+
+let failures = 0;
+
 for (const s of SHOTS) {
   const before = problems.length;
-  await page.goto(`${BASE}${s.route}`, { waitUntil: 'networkidle', timeout: 60_000 }).catch(() => {});
+
+  let route = s.route;
+  if (!route && s.from) {
+    // A route whose URL depends on this member's own data.
+    route = await page.getAttribute(s.from, 'href').catch(() => null);
+    if (!route) {
+      console.log(`  ${s.name.padEnd(14)} SKIPPED (no element matching ${s.from})`);
+      continue;
+    }
+  }
+
+  await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle', timeout: 60_000 }).catch(() => {});
   await page.waitForTimeout(1800);
 
   if (s.click) {
@@ -76,13 +105,33 @@ for (const s of SHOTS) {
   const file = path.join(OUT, `${s.name}.png`);
   // fullPage so the whole screen is visible rather than the first 844px of it.
   await page.screenshot({ path: file, fullPage: true });
+
+  // The assertions, in the order they catch things.
+  const body = (await page.textContent('body').catch(() => '')) ?? '';
+  const notes = [];
+  if (ERROR_MARKER.test(body)) {
+    notes.push('RENDERED THE ERROR BOUNDARY');
+    failures += 1;
+  } else if (s.expect && !s.expect.test(body)) {
+    // Not fatal on its own: an empty state is legitimate for a member with no data. It is still
+    // worth saying out loud, because this app fails open and an empty screen is what a broken read
+    // looks like.
+    notes.push(`did not contain ${s.expect} (empty state, or a broken read)`);
+  }
   const newProblems = problems.slice(before);
-  console.log(
-    `  ${s.name.padEnd(14)} ${s.route.padEnd(12)} ${newProblems.length ? `${newProblems.length} console error(s)` : 'clean'}`,
-  );
+  if (newProblems.length) {
+    notes.push(`${newProblems.length} console error(s)`);
+    failures += 1;
+  }
+
+  console.log(`  ${s.name.padEnd(14)} ${String(route).slice(0, 34).padEnd(36)} ${notes.length ? notes.join(' | ') : 'ok'}`);
   newProblems.forEach((p) => console.log(`      ${p}`));
+
+  // Land back on Train so the next data-derived link can be resolved from it.
+  if (s.from) await page.goto(`${BASE}/workouts`, { waitUntil: 'networkidle' }).catch(() => {});
 }
 
 await browser.close();
-console.log(`\n${SHOTS.length} shots -> ${OUT}`);
-if (problems.length) console.log(`${problems.length} console problem(s) total, listed above.`);
+console.log(`\nshots -> ${OUT}`);
+console.log(failures ? `FAILED: ${failures} screen(s) broken` : 'OK: every screen rendered its own content');
+process.exit(failures ? 1 : 0);
