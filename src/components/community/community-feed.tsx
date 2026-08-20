@@ -176,7 +176,10 @@ function Composer({ canBroadcast, viewerId }: { canBroadcast: boolean; viewerId:
           type="button"
           onClick={submit}
           disabled={pending || (body.trim().length === 0 && !file)}
-          className="tf-press rounded-full bg-accent px-5 py-2 text-[13px] font-semibold text-accent-ink disabled:opacity-40"
+          // bg-ink, not bg-accent. globals.css line 9: green is FUNCTIONAL ONLY, "completion,
+          // streaks, live/active indicators, positive deltas. Never decorative." A primary button
+          // is an action, not a status, and the handoff's primary is .btn-white.
+          className="tf-press rounded-full bg-ink px-5 py-2 text-[13px] font-semibold text-bg disabled:opacity-40"
         >
           {pending ? t('posting') : t('post')}
         </button>

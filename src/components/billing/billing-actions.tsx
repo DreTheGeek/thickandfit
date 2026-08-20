@@ -107,7 +107,7 @@ function UpdateCardButton({
         disabled={pending}
         className={
           primary
-            ? 'tf-press w-full bg-accent py-3.5 text-[12px] font-semibold uppercase tracking-[2px] text-accent-ink disabled:opacity-60'
+            ? 'tf-press w-full bg-ink py-3.5 text-[12px] font-semibold uppercase tracking-[2px] text-bg disabled:opacity-60'
             : 'tf-press w-full border border-line py-3.5 text-[12px] font-semibold uppercase tracking-[2px] text-muted disabled:opacity-60'
         }
       >
@@ -133,7 +133,7 @@ function SubscribeButton({ t, tier }: { t: ReturnType<typeof useTranslations>; t
       <button
         type="submit"
         disabled={pending}
-        className="tf-press w-full bg-accent py-3.5 text-[12px] font-semibold uppercase tracking-[2px] text-accent-ink disabled:opacity-60"
+        className="tf-press w-full bg-ink py-3.5 text-[12px] font-semibold uppercase tracking-[2px] text-bg disabled:opacity-60"
       >
         {pending ? '…' : t('subscribeCta')}
       </button>
@@ -169,7 +169,7 @@ function ReactivateButton({ t }: { t: ReturnType<typeof useTranslations> }): Rea
       <button
         type="submit"
         disabled={pending}
-        className="tf-press w-full bg-accent py-3.5 text-[12px] font-semibold uppercase tracking-[2px] text-accent-ink disabled:opacity-60"
+        className="tf-press w-full bg-ink py-3.5 text-[12px] font-semibold uppercase tracking-[2px] text-bg disabled:opacity-60"
       >
         {pending ? '…' : t('reactivateCta')}
       </button>

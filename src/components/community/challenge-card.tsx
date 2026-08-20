@@ -108,7 +108,7 @@ export function ChallengeCard({
           type="button"
           onClick={onJoin}
           disabled={joining}
-          className="tf-press mt-4 w-full rounded-full bg-accent py-2.5 text-[13px] font-semibold text-accent-ink disabled:opacity-50"
+          className="tf-press mt-4 w-full rounded-full bg-ink py-2.5 text-[13px] font-semibold text-bg disabled:opacity-50"
         >
           {joining ? t('joining') : t('joinChallenge')}
         </button>
