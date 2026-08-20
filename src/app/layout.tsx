@@ -7,6 +7,7 @@ import { IOSInstallBanner } from "@/components/pwa/ios-install-banner";
 import { AndroidInstallButton } from "@/components/pwa/android-install-button";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { readPortalTheme } from "@/lib/portal-theme";
 import { headers } from "next/headers";
 import { Providers } from "@/components/providers";
 import { Suspense } from "react";
@@ -144,6 +145,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  // Light unless she has asked for dark. Read at the root so <html> can carry it.
+  const portalTheme = await readPortalTheme();
   const allMessages = await getMessages();
   // Per-request script nonce from the proxy CSP. Reading headers() also opts the tree into dynamic
   // rendering, which is required for the nonce to be stamped at SSR time.
@@ -163,6 +166,10 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
+      // On <html>, not on the app shell, so the strip BELOW the shell can be painted too:
+      // viewport-fit=cover opens a band for the home indicator that the 100dvh frame does not cover,
+      // and with no background there it rendered as a pale default under the bottom nav.
+      data-portal-theme={portalTheme}
       className={`w-mod-js ${gulamsCondensed.variable} ${inter.variable}`}
     >
       <head>

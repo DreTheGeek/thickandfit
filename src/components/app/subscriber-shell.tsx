@@ -5,7 +5,6 @@ import { SubscriberTopBar } from '@/components/notifications/subscriber-topbar';
 import { ScrollReset } from '@/components/app/scroll-reset';
 import { CaptureFab } from '@/components/app/capture-fab';
 import { SupportWidget } from '@/components/support/support-widget';
-import { readPortalTheme } from '@/lib/portal-theme';
 import { resolveAuth } from '@/lib/auth/session';
 import { getUnreadCount } from '@/lib/notifications/queries';
 
@@ -22,9 +21,6 @@ export async function SubscriberShell({
   const auth = await resolveAuth();
   const profileId = auth?.userId ?? '';
   const unread = profileId ? await getUnreadCount(profileId) : 0;
-  // Light unless she has asked for dark. Read here, on the shell, so one attribute re-points the
-  // whole member tree and nothing below has to know a theme exists.
-  const theme = await readPortalTheme();
 
   return (
     // tf-portal is the 8.0 subscriber theme scope. It re-points the --c-* tokens the whole app
@@ -44,7 +40,7 @@ export async function SubscriberShell({
     // 100dvh, not 100vh: on iOS Safari 100vh is the height WITHOUT the address bar, so a fixed
     // frame is ~60px taller than the visible area and the nav sits just below the fold until the
     // bar retracts. dvh tracks the bar. That matters most in exactly the mode this is for.
-    <div className="tf-portal flex h-[100dvh] justify-center overflow-hidden bg-bg" data-portal-theme={theme}>
+    <div className="tf-portal flex h-[100dvh] justify-center overflow-hidden bg-bg">
       <SubscriberRail initialUnread={unread} profileId={profileId} />
       {/* pt clears the notch. `viewport-fit=cover` made the page run edge to edge, which is what
           lets the bottom bar sit against the home indicator, and the same change put the TOP of the

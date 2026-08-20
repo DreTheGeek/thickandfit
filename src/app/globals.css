@@ -598,6 +598,19 @@ html {
   overflow-x: clip;
 }
 
+/* The ground BEHIND the app shell.
+   The shell is exactly 100dvh, and viewport-fit=cover opens a strip below it for the home
+   indicator. With no background on body that strip rendered as the browser default: a pale band
+   under the bottom nav on every phone with an indicator. It follows the portal theme, which is why
+   data-portal-theme sits on <html> rather than on the shell div. */
+body {
+  background: var(--c-bg);
+}
+
+[data-portal-theme='dark'] body {
+  background: #000000;
+}
+
 /* Marketing ticker strip. The track holds two identical runs, so translating it exactly -50% lands
    the second run where the first started and the loop is seamless. Paused for reduced motion:
    the phrases stay readable, they just stop moving. */
@@ -684,7 +697,7 @@ html {
   color: var(--c-ink);
 }
 
-.tf-portal[data-portal-theme='dark'] {
+[data-portal-theme='dark'] .tf-portal {
   --c-ink: #ffffff;
   --c-bg: #000000;
   /* The design's --surface-2. Its --surface (#0b0b0c) is a page-level wash that
