@@ -9,6 +9,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { firstVisitLocale } from '@/lib/i18n/geo';
+
+/**
+ * Marks a browser whose ui_locale has been evaluated under the CURRENT precedence
+ * (Accept-Language, then IP). Its absence means the cookie may have been written by the pre
+ * 2026-07-31 rule, which used the IP country alone and persisted for a year.
+ */
+const LOCALE_VERSION_COOKIE = 'ui_locale_v';
 import { urlLocaleFor, esPathFor } from '@/lib/seo/locale-alternates';
 import {
   PREVIEW_COOKIE,
@@ -179,6 +186,33 @@ export async function proxy(req: NextRequest): Promise<NextResponse> {
     // profile (lib/i18n/actions.ts, api/onboarding/submit, lib/auth/actions.ts).
     res.cookies.set('ui_locale', urlLocale, {
       path: '/',
+      sameSite: 'lax',
+    });
+  } else if (!req.cookies.get(LOCALE_VERSION_COOKIE) && !sessionUser) {
+    // ONE-TIME RE-EVALUATION OF COOKIES SET BY THE OLD RULE.
+    //
+    // Before a8b106b (2026-07-31) this cookie was written for a YEAR from the IP country alone, with
+    // nothing reading Accept-Language. That commit fixed the logic for new visitors and could not
+    // fix the cookies already in the wild: every one of them survives until 2027-07-31. An English
+    // speaker who visited once during that window is still being served Spanish today, on every
+    // screen, including the auth screens where there is no way to change it.
+    //
+    // So: any browser without the version marker gets its locale recomputed ONCE under the current
+    // precedence, and the marker stops it happening again. Signed-in users are excluded because
+    // sign-in writes the locale from their PROFILE, which is a real stated preference and must not
+    // be overwritten by an inference about their browser.
+    const corrected = firstVisitLocale(
+      req.headers.get('accept-language'),
+      req.headers.get('x-vercel-ip-country'),
+    );
+    res.cookies.set('ui_locale', corrected, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+    res.cookies.set(LOCALE_VERSION_COOKIE, '2', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
     });
   } else if (!req.cookies.get('ui_locale')) {

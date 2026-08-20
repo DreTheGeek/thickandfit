@@ -20,7 +20,12 @@ async function persistToProfile(column: 'ui_locale' | 'content_locale', locale: 
 
 export async function setUiLocaleAction(locale: string): Promise<void> {
   if (!isLocale(locale)) return;
-  (await cookies()).set('ui_locale', locale, { path: '/', maxAge: ONE_YEAR, sameSite: 'lax' });
+  const jar = await cookies();
+  jar.set('ui_locale', locale, { path: '/', maxAge: ONE_YEAR, sameSite: 'lax' });
+  // Stamp the version marker too, or the middleware's one-time correction sweep would see an
+  // unmarked browser on the very next request and recompute over the choice she just made. An
+  // explicit pick is the strongest signal there is and must outrank any inference.
+  jar.set('ui_locale_v', '2', { path: '/', maxAge: ONE_YEAR, sameSite: 'lax' });
   await persistToProfile('ui_locale', locale);
 }
 
