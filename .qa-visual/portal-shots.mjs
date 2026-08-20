@@ -23,19 +23,28 @@ const BASE = args.find((a) => a.startsWith('http')) ?? 'https://www.teamthickand
  * overwrite them.
  */
 const DESKTOP = args.includes('--desktop');
+/**
+ * Spanish. The authed app has no /es URL: locale comes from the `ui_locale` COOKIE, set by the
+ * language toggle. So this sets the cookie rather than mutating a test account's profile, which
+ * means a Spanish run leaves no trace in the database.
+ *
+ * Worth running because Spanish is 15-25% longer against fixed-height rows and 10-12px labels, and
+ * every screen in this re-skin was laid out against English copy.
+ */
+const ES = args.includes('--es');
 const EMAIL = process.env.E2E_MEMBER_EMAIL ?? 'sample.sam@thickandfit.test';
 const PASSWORD = process.env.E2E_MEMBER_PASSWORD ?? 'TFSample2026!';
-const OUT = path.join(process.cwd(), '.qa-visual', 'portal', DESKTOP ? 'desktop' : 'phone');
+const OUT = path.join(process.cwd(), '.qa-visual', 'portal', `${DESKTOP ? 'desktop' : 'phone'}${ES ? '-es' : ''}`);
 
 // 390x844 is the handoff's own phone frame, so a shot here is directly comparable to the mock.
 // 1280x900 is past the lg breakpoint, where SubscriberRail replaces the bottom nav.
 const VIEWPORT = DESKTOP ? { width: 1280, height: 900 } : { width: 390, height: 844 };
 
 const SHOTS = [
-  { name: '01-today', route: '/dashboard', expect: /transformation status/i },
+  { name: '01-today', route: '/dashboard', expect: /transformation status|estado de/i },
   { name: '02-train', route: '/workouts', expect: /today's workout|entreno de hoy/i },
   { name: '03-fuel', route: '/nutrition', expect: /calories|calor/i },
-  { name: '04-fuel-add', route: '/nutrition', click: 'text=/add meal/i', expect: /scan|escanear/i },
+  { name: '04-fuel-add', route: '/nutrition', click: ES ? 'text=/agregar comida/i' : 'text=/add meal/i', expect: /scan|escanear/i },
   { name: '05-community', route: '/community' },
   { name: '06-you', route: '/you' },
   { name: '08-progress', route: '/progress', expect: /weight trend|tendencia/i },
@@ -43,7 +52,7 @@ const SHOTS = [
   { name: '11-coach-chat', route: '/coach-chat', expect: /steph/i },
   { name: '09-progress-body', route: '/progress?tab=body', expect: /./ },
   // Resolved at runtime from the Train screen, because the plan id is per-member.
-  { name: '07-preview', route: null, fromRoute: '/workouts', from: 'a[href*="preview=1"]', expect: /start workout|empezar/i },
+  { name: '07-preview', route: null, fromRoute: '/workouts', from: 'a[href*="preview=1"]', expect: /start workout|empezar|entrenamiento/i },
 ];
 
 /**
@@ -70,7 +79,7 @@ page.on('console', (m) => {
 });
 page.on('pageerror', (e) => problems.push(`pageerror: ${String(e).slice(0, 160)}`));
 
-console.log(`base: ${BASE}  viewport: ${VIEWPORT.width}x${VIEWPORT.height}`);
+console.log(`base: ${BASE}  viewport: ${VIEWPORT.width}x${VIEWPORT.height}  locale: ${ES ? 'es' : 'en'}`);
 await page.goto(`${BASE}/auth/sign-in`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 await page.fill('input[name=email]', EMAIL);
 await page.fill('input[name=password]', PASSWORD);
@@ -86,6 +95,15 @@ if (page.url().includes('/auth/')) {
   process.exit(1);
 }
 console.log(`signed in, landed on ${new URL(page.url()).pathname}`);
+
+if (ES) {
+  // AFTER sign-in, not before. The middleware only defaults ui_locale when it is absent, so a
+  // pre-set cookie survives that, but the sign-in action then writes the locale from the member's
+  // PROFILE (lib/auth/actions.ts), and sample.sam's profile says en. Setting it first looked like
+  // it worked and produced an entirely English run.
+  await ctx.addCookies([{ name: 'ui_locale', value: 'es', url: BASE }]);
+  console.log('ui_locale cookie set to es (post-login)');
+}
 
 let failures = 0;
 
