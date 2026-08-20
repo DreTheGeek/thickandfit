@@ -13,6 +13,7 @@ import { STEP_GOAL, SLEEP_GOAL_MIN, formatSleep } from '@/lib/dailymetrics/goals
 import { FirstRunState } from '@/components/states/first-run-state';
 import { Card } from '@/components/ui/card';
 import { TransformCard, PlanCard, SmallCard, type PlanRow } from '@/components/portal/today-cards';
+import { CaptureSheet, type CaptureKind } from '@/components/portal/capture-sheet';
 import { Avatar } from '@/components/ui/avatar';
 import { ButtonLink } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
@@ -77,6 +78,9 @@ export function TodayScreen({
   // A null summary is a companyless / not-yet-provisioned session, not a fetch error.
   // Start idle and surface a dedicated "account setup pending" state below.
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
+  // Which capture sheet is open, if any. Steps and sleep have no sync source, so the plan card's
+  // MOVE and RECOVER rows open this rather than navigating.
+  const [capture, setCapture] = useState<CaptureKind | null>(null);
 
   // The server computes the date strip in UTC, which mislabels "today" for the LATAM evening audience
   // (UTC-5/-6). SSR uses the server props as a stable placeholder (no hydration drift); after mount we
@@ -253,16 +257,25 @@ export function TodayScreen({
     {
       key: 'move',
       title: t('today.missionMove'),
-      sub: `${(steps ?? 0).toLocaleString(locale)} / ${STEP_GOAL.toLocaleString(locale)}`,
+      // NOT `(steps ?? 0)`. That rendered "0 / 10,000" to a member who had simply not told us yet,
+      // which is a measurement she never gave presented as one she did: a woman who walked 12,000
+      // steps was shown a zero. Nothing syncs steps, so absent means unknown, and the honest row
+      // asks instead of asserting.
+      sub:
+        steps == null
+          ? t('today.missionLogSteps')
+          : `${steps.toLocaleString(locale)} / ${STEP_GOAL.toLocaleString(locale)}`,
       value: steps == null ? undefined : steps.toLocaleString(locale),
-      hit: (steps ?? 0) >= STEP_GOAL,
+      hit: steps != null && steps >= STEP_GOAL,
+      onCapture: () => setCapture('steps'),
     },
     {
       key: 'recover',
       title: t('today.missionRecover'),
       sub: sleepMin == null ? t('today.missionLogSleep') : formatSleep(sleepMin),
       value: sleepMin == null ? undefined : formatSleep(sleepMin),
-      hit: (sleepMin ?? 0) >= SLEEP_GOAL_MIN,
+      hit: sleepMin != null && sleepMin >= SLEEP_GOAL_MIN,
+      onCapture: () => setCapture('sleep'),
     },
   ];
 
@@ -425,6 +438,8 @@ export function TodayScreen({
           </Card>
         </Link>
       )}
+
+      {capture && <CaptureSheet kind={capture} onClose={() => setCapture(null)} />}
     </div>
   );
 }

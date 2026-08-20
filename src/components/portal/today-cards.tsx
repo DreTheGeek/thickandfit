@@ -4,6 +4,7 @@
 // state, the summary refetch and the habit toggles. Nothing here reads the database.
 import Link from 'next/link';
 import type { ReactElement, ReactNode } from 'react';
+import { Icon } from '@/components/ui/icons';
 
 /** The handoff's .card: --surface-2 ground, hairline white border, 20px radius. */
 export function PortalCard({
@@ -116,6 +117,15 @@ export type PlanRow = {
   value?: string;
   /** True when the value is a target she has hit. Green is functional only, so this gates it. */
   hit?: boolean;
+  /**
+   * Makes the whole row a button that opens a capture sheet.
+   *
+   * MOVE and RECOVER have no href and no server-side source: nothing syncs steps or sleep yet, so
+   * the member is the source. Without this the two rows rendered a figure she had no way to enter,
+   * which is how the 8.0 Today re-skin silently dropped the capability that dashboard/mission.tsx
+   * used to carry. A row that shows a target must offer a way to meet it.
+   */
+  onCapture?: () => void;
 };
 
 /**
@@ -135,31 +145,52 @@ export function PlanCard({ title, edit, rows }: { title: string; edit?: ReactNod
       </div>
 
       <div className="mt-3 grid gap-2.5">
-        {rows.map((r) => (
-          <div key={r.key} className="grid grid-cols-[34px_1fr_auto] items-center gap-2.5">
-            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-ink text-[13px] font-black text-bg">
-              {r.title.charAt(0).toUpperCase()}
-            </span>
+        {rows.map((r) => {
+          const inner = (
+            <>
+              <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-ink text-[13px] font-black text-bg">
+                {r.title.charAt(0).toUpperCase()}
+              </span>
 
-            <div className="min-w-0">
-              <strong className="block truncate text-[12px] uppercase">{r.title}</strong>
-              <small className="block truncate text-faint">{r.sub}</small>
+              <div className="min-w-0 text-left">
+                <strong className="block truncate text-[12px] uppercase">{r.title}</strong>
+                <small className="block truncate text-faint">{r.sub}</small>
+              </div>
+
+              {r.href && r.action ? (
+                <Link
+                  href={r.href}
+                  className="tf-press rounded-full bg-ink px-3 py-1.5 text-[10px] font-extrabold uppercase text-bg"
+                >
+                  {r.action}
+                </Link>
+              ) : r.value ? (
+                <strong className={`text-[11px] tabular-nums ${r.hit ? 'text-accent' : 'text-soft'}`}>
+                  {r.value}
+                </strong>
+              ) : r.onCapture ? (
+                // No figure yet, so the affordance IS the answer to "how do I put one here".
+                <span className="grid h-6 w-6 place-items-center rounded-full border border-line text-faint">
+                  <Icon name="plus" size={13} />
+                </span>
+              ) : null}
+            </>
+          );
+
+          const shell = 'grid w-full grid-cols-[34px_1fr_auto] items-center gap-2.5';
+
+          // A capture row is tappable even once it holds a value: the number is self-reported, so
+          // correcting yesterday's guess has to stay one tap away.
+          return r.onCapture ? (
+            <button key={r.key} type="button" onClick={r.onCapture} className={`tf-press ${shell}`}>
+              {inner}
+            </button>
+          ) : (
+            <div key={r.key} className={shell}>
+              {inner}
             </div>
-
-            {r.href && r.action ? (
-              <Link
-                href={r.href}
-                className="tf-press rounded-full bg-ink px-3 py-1.5 text-[10px] font-extrabold uppercase text-bg"
-              >
-                {r.action}
-              </Link>
-            ) : r.value ? (
-              <strong className={`text-[11px] tabular-nums ${r.hit ? 'text-accent' : 'text-soft'}`}>
-                {r.value}
-              </strong>
-            ) : null}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </PortalCard>
   );
