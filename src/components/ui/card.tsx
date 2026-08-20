@@ -1,26 +1,30 @@
 import type { HTMLAttributes, ReactElement, ReactNode } from 'react';
 
 type CardProps = {
-  dark?: boolean;
   children: ReactNode;
 } & HTMLAttributes<HTMLDivElement>;
 
-/** Zero-border card. White surface with a subtle shadow, or near-black inset. */
-export function Card({
-  dark = false,
-  className = '',
-  children,
-  ...rest
-}: CardProps): ReactElement {
+/**
+ * Zero-border card. Surface ground with a subtle shadow.
+ *
+ * The `dark` variant is REMOVED, not deprecated, and it should not come back in this shape. It read
+ * `bg-ink text-bg`, which is an inversion rather than a role: correct in the light palette, where
+ * ink is #0f0f0f and bg is #e7e5df, and backwards inside `.tf-portal`, where ink is #ffffff and bg
+ * is #000000. It rendered a white block on a black screen on /community and, because those cards
+ * carried literal `text-white` copy, white-on-white on /you and /account.
+ *
+ * The rule it broke: `.tf-portal` re-themes anything written in ROLES for free and silently inverts
+ * anything written in the two LITERAL ends of a palette. A component that needs to stand off the
+ * page should name the role it wants (`bg-warm`), not assume which end is dark.
+ *
+ * Use `RaisedCard` from `@/components/portal/portal-chrome` for a card that must sit above the page
+ * in either palette. Use an explicit dark ground only where the content is white by design, as the
+ * membership and goal cards are until their screens get the 8.0 treatment.
+ */
+export function Card({ className = '', children, ...rest }: CardProps): ReactElement {
   return (
     <div
-      className={[
-        'rounded-2xl',
-        dark
-          ? 'bg-ink text-bg'
-          : 'bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.08)]',
-        className,
-      ].join(' ')}
+      className={['rounded-2xl bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.08)]', className].join(' ')}
       {...rest}
     >
       {children}

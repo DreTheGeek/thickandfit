@@ -7,6 +7,7 @@ import { PostModerationMenu } from '@/components/community/post-moderation-menu'
 import { createClient } from '@/lib/supabase/client';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
+import { RaisedCard } from '@/components/portal/portal-chrome';
 import { Icon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -313,7 +314,10 @@ function Comments({ postId, count }: { postId: string; count: number }): ReactEl
   );
 }
 
-function DeleteButton({ postId, dark }: { postId: string; dark?: boolean }): ReactElement {
+// The `dark` variant is gone with the inverted broadcast card it existed for: it painted the icon
+// in `text-bg`, which was light-on-dark by assumption and became black-on-black in the portal.
+// One treatment now, in roles, correct on either ground.
+function DeleteButton({ postId }: { postId: string }): ReactElement {
   const t = useTranslations('app.community');
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -333,10 +337,7 @@ function DeleteButton({ postId, dark }: { postId: string; dark?: boolean }): Rea
       onClick={remove}
       disabled={pending}
       aria-label={t('deletePost')}
-      className={[
-        'tf-press ml-auto shrink-0 rounded-full p-2 transition-colors disabled:opacity-40',
-        dark ? 'text-bg/55 hover:text-bg' : 'text-faint hover:text-ink',
-      ].join(' ')}
+      className="tf-press ml-auto shrink-0 rounded-full p-2 text-faint transition-colors hover:text-ink disabled:opacity-40"
     >
       <Icon name="trash" size={16} />
     </button>
@@ -396,24 +397,25 @@ function Broadcast({ post, canDelete }: { post: FeedPost; canDelete: boolean }):
   const t = useTranslations('app.community');
   const locale = useLocale();
   return (
-    <Card dark className="p-5">
+    <RaisedCard className="p-5">
       <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
         <Icon name="megaphone" size={14} />
         {t('coachBroadcast')}
-        {canDelete ? <DeleteButton postId={post.id} dark /> : null}
+        {canDelete ? <DeleteButton postId={post.id} /> : null}
       </div>
       <div className="mb-3 flex items-center gap-3">
-        <Avatar initials={post.author.initials} size={36} tone="warm" />
+        {/* muted, not warm: warm is this card's own ground now, so a warm avatar sat invisible on it. */}
+        <Avatar initials={post.author.initials} size={36} tone="muted" />
         <div>
-          <div className="text-[14px] font-semibold text-bg">{post.author.name}</div>
-          <span className="text-[12px] text-bg/55">{relativeTime(post.createdAt, locale)}</span>
+          <div className="text-[14px] font-semibold text-ink">{post.author.name}</div>
+          <span className="text-[12px] text-muted">{relativeTime(post.createdAt, locale)}</span>
         </div>
       </div>
-      <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-bg/90">{post.body}</p>
+      <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-soft">{post.body}</p>
       <div className="mt-4">
         <ReactionBar post={post} />
       </div>
-    </Card>
+    </RaisedCard>
   );
 }
 

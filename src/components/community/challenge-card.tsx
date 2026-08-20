@@ -2,9 +2,9 @@
 
 import { type ReactElement } from 'react';
 import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { Avatar } from '@/components/ui/avatar';
+import { RaisedCard } from '@/components/portal/portal-chrome';
 import type { ActiveChallenge } from '@/lib/community/types';
 
 // Pure-SVG / plain horizontal-bar leaderboard. recharts is banned on React 19, so the bars are
@@ -18,24 +18,27 @@ function Leaderboard({ challenge }: { challenge: ActiveChallenge }): ReactElemen
         const pct = Math.round((row.progress / max) * 100);
         return (
           <div key={row.profileId} className="flex items-center gap-3">
-            <span className="w-5 shrink-0 text-center text-[13px] font-display text-bg/70 tabular-nums">{i + 1}</span>
+            <span className="w-5 shrink-0 text-center text-[13px] font-display text-muted tabular-nums">{i + 1}</span>
             <Avatar initials={row.initials} size={28} tone={row.isViewer ? 'warm' : 'muted'} />
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="truncate text-[13px] font-medium text-bg">
+                <span className="truncate text-[13px] font-medium text-ink">
                   {row.isViewer ? t('you') : row.name}
                 </span>
-                <span className="shrink-0 text-[12px] tabular-nums text-bg/70">
+                <span className="shrink-0 text-[12px] tabular-nums text-muted">
                   {Math.round(row.progress)}
                   {challenge.metricUnit ? ` ${challenge.metricUnit}` : ''}
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-bg/15">
+              <div className="h-2 overflow-hidden rounded-full bg-line">
+                {/* Her own bar is INK, not warm. Warm is now this card's ground, so the old value
+                    painted her row in the card's own colour and her bar vanished. Ink reads against
+                    the track in both palettes and stays distinct from the accent everyone else gets. */}
                 <div
                   className="h-full rounded-full"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: row.isViewer ? 'var(--color-warm)' : 'var(--color-accent)',
+                    backgroundColor: row.isViewer ? 'var(--color-ink)' : 'var(--color-accent)',
                   }}
                 />
               </div>
@@ -63,21 +66,21 @@ export function ChallengeCard({
       : null;
 
   return (
-    <Card dark className="overflow-hidden p-5">
+    <RaisedCard className="overflow-hidden p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="mb-1.5 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
             <Icon name="bolt" size={14} />
             {t('activeChallenge')}
           </div>
-          <h2 className="tf-display text-[26px] leading-none text-bg">{challenge.title}</h2>
+          <h2 className="tf-display text-[26px] leading-none text-ink">{challenge.title}</h2>
           {challenge.description ? (
-            <p className="mt-2 text-[13px] leading-relaxed text-bg/70">{challenge.description}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted">{challenge.description}</p>
           ) : null}
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-4 text-[12px] text-bg/60">
+      <div className="mt-4 flex items-center gap-4 text-[12px] text-muted">
         <span className="inline-flex items-center gap-1.5">
           <Icon name="calendar" size={13} />
           {t('daysLeft', { count: challenge.daysLeft })}
@@ -90,11 +93,11 @@ export function ChallengeCard({
 
       {challenge.joined && goalPct !== null ? (
         <div className="mt-4">
-          <div className="mb-1 flex items-center justify-between text-[12px] text-bg/70">
+          <div className="mb-1 flex items-center justify-between text-[12px] text-muted">
             <span>{t('yourProgress')}</span>
             <span className="tabular-nums">{goalPct}%</span>
           </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-bg/15">
+          <div className="h-2.5 overflow-hidden rounded-full bg-line">
             <div className="h-full rounded-full bg-accent" style={{ width: `${goalPct}%` }} />
           </div>
         </div>
@@ -111,16 +114,16 @@ export function ChallengeCard({
         </button>
       ) : null}
 
-      <div className="mt-5 border-t border-bg/10 pt-4">
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-bg/55">
+      <div className="mt-5 border-t border-line pt-4">
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
           {t('leaderboard')}
         </div>
         {challenge.leaders.length > 0 ? (
           <Leaderboard challenge={challenge} />
         ) : (
-          <p className="text-[13px] text-bg/55">{t('noParticipants')}</p>
+          <p className="text-[13px] text-muted">{t('noParticipants')}</p>
         )}
       </div>
-    </Card>
+    </RaisedCard>
   );
 }

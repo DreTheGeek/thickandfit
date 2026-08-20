@@ -7,7 +7,6 @@ import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { LanguageToggle } from '@/components/i18n/language-toggle';
 import { Icon } from '@/components/ui/icons';
-import { Card } from '@/components/ui/card';
 import { PageTitle } from '@/components/ui/section';
 import { signOutAction } from '@/lib/auth/actions';
 import { DeleteAccount } from '@/components/account/delete-account';
@@ -65,9 +64,12 @@ export default async function AccountPage(): Promise<ReactElement> {
         <PageTitle>{t('you.accountSettings')}</PageTitle>
       </div>
 
-      {/* Membership card (tier + price) */}
+      {/* Membership card (tier + price).
+          Always dark, for the same reason as the goal card on /you: everything inside is literal
+          text-white, authored against `<Card dark>` when that always meant a dark card. Inside
+          `.tf-portal` that pair resolves to a WHITE card, so her tier and price were white on white. */}
       {tk ? (
-        <Card dark className="mb-6 p-5">
+        <div className="mb-6 rounded-2xl bg-[#19191c] p-5">
           <div className="text-[11px] font-semibold uppercase tracking-[2px] text-white/55">
             {t('account.membership')}
           </div>
@@ -83,7 +85,7 @@ export default async function AccountPage(): Promise<ReactElement> {
               {t('account.manage')}
             </Link>
           </div>
-        </Card>
+        </div>
       ) : null}
 
       <LanguageToggle

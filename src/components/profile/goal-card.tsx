@@ -6,7 +6,6 @@
 import { useState, useTransition, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 import { ProgressBar } from '@/components/ui/ring';
 import { setGoalTypeAction } from '@/lib/goals/actions';
@@ -135,10 +134,20 @@ export function GoalCard({
 
   return (
     <>
-      <Card dark className="mb-[22px] p-5">
+      {/* DELIBERATELY a literal dark ground, unlike the other two cards this fix touched.
+          They carried their text in role tokens, so `bg-warm text-ink` reads correctly on either
+          palette. This one does not: every value inside `header` and `body` is written in literal
+          `text-white/70`, `text-white/55` and `bg-white`, because it was authored against
+          `<Card dark>` back when that always meant a dark card. Inside `.tf-portal` that class pair
+          resolved to a WHITE card, so this was white text on white, invisible rather than merely
+          inverted, on the member's own profile.
+          Converting the copy to role tokens is the fuller fix and belongs with the Profile screen's
+          8.0 treatment. Until then the honest statement is that this card is always dark, so it says
+          so in one place instead of depending on a token whose direction flips underneath it. */}
+      <div className="mb-[22px] rounded-2xl bg-[#19191c] p-5 text-white">
         {header}
         {body}
-      </Card>
+      </div>
 
       {open && (
         <div
