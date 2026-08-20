@@ -42,10 +42,24 @@ export default async function CoachLessonsPage(): Promise<ReactElement> {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(l);
   }
+  /**
+   * Teaching order, then size.
+   *
+   * Sorting by size alone put Nutrition first because it is the biggest shelf, and buried "Getting
+   * started" underneath it. But this library is read in the order a member meets it: what she is
+   * handed in week one comes before the meal plans she works through for months. Anything outside
+   * the curated list falls back to size, so a category she invents later still appears sensibly
+   * without needing this list edited.
+   */
+  const ORDER = ['Getting started', 'Nutrition', 'Training', 'Mindset'];
+  const rank = (name: string): number => {
+    if (name === COACH_COPY.uncategorised) return 999;
+    const i = ORDER.indexOf(name);
+    return i === -1 ? 500 : i;
+  };
   const ordered = [...groups.entries()].sort((a, b) => {
-    if (a[0] === COACH_COPY.uncategorised) return 1;
-    if (b[0] === COACH_COPY.uncategorised) return -1;
-    return b[1].length - a[1].length;
+    const d = rank(a[0]) - rank(b[0]);
+    return d !== 0 ? d : b[1].length - a[1].length;
   });
 
   return (
