@@ -15,6 +15,7 @@ import 'server-only';
 // greeting appear above her own message.
 import { createServiceClient } from '@/lib/supabase/service';
 import { getCompanyCoach } from '@/lib/tenant/owner';
+import { resolveMemberTier, includesNutrition } from '@/lib/billing/member-tier';
 
 export type IntroArgs = {
   companyId: string;
@@ -29,32 +30,93 @@ export type IntroArgs = {
   goalLb?: { from: number; to: number } | null;
 };
 
-function body(firstName: string | null, locale: 'en' | 'es', goalLb: { from: number; to: number } | null): string {
+/**
+ * TWO MESSAGES, CHOSEN BY WHAT SHE ACTUALLY BOUGHT.
+ *
+ * Owner's rule, and it is the right one: training-only gets training language, nutrition gets
+ * nutrition language. The old single message told everybody to start logging their food, which for
+ * a training-only member promises a service she did not buy. That is a refund conversation, not a
+ * copy nit.
+ *
+ * The tier arrives already resolved from server-side entitlement state (lib/billing/member-tier.ts),
+ * never from a flag the client posted.
+ */
+function body(
+  firstName: string | null,
+  locale: 'en' | 'es',
+  goalLb: { from: number; to: number } | null,
+  nutrition: boolean,
+): string {
   const name = (firstName ?? '').trim();
 
   // Paragraphs are assembled whole and joined with a blank line. The first version built this from
   // sentence fragments joined with '', which silently collapsed the entire message into one wall of
   // text: the '' separators meant as blank lines produced nothing at all.
-  const paras: string[] =
-    locale === 'es'
-      ? [
-          `Hola${name ? ' ' + name : ''}, bienvenida. Soy Steph.`,
-          goalLb
-            ? `Ya vi lo que me contaste: de ${goalLb.from} a ${goalLb.to} lb. Con eso te armo tu plan a mano, no sale de una plantilla.`
-            : 'Ya vi lo que me contaste, y con eso te armo tu plan a mano, no sale de una plantilla.',
-          'Mientras lo preparo, empieza registrando tu comida. Es lo que más mueve la aguja y además me deja ver cómo comes de verdad, así el plan te queda a ti y no a una persona promedio.',
-          'Este chat es directo conmigo. Si algo te confunde, si tuviste una semana difícil, o si simplemente quieres contarme cómo te fue, escríbeme aquí. Te leo.',
-          'Vamos con todo. 🤍',
-        ]
-      : [
-          `Hey${name ? ' ' + name : ''}, welcome in. I'm Steph.`,
-          goalLb
-            ? `I saw what you told me: ${goalLb.from} to ${goalLb.to} lb. I build your plan by hand from that, it does not come out of a template.`
-            : 'I saw what you told me, and I build your plan by hand from it. It does not come out of a template.',
-          'While I put it together, start by logging your food. It moves the needle most, and it lets me see how you actually eat, so the plan fits you instead of some average person.',
-          'This chat comes straight to me. If something is confusing, if you had a rough week, or if you just want to tell me how it went, message me here. I read them.',
-          "Let's go. 🤍",
-        ];
+  // TRAINING-ONLY. Her words, kept as written: structure, progression, honest feedback, and a
+  // single next action. No mention of food logging anywhere, because that is the tier boundary.
+  const trainingEn: string[] = [
+    `Hey${name ? ' ' + name : ''}, you're officially in. I'm Steph. \u{1F90D}`,
+    goalLb
+      ? `I went through what you sent me, and I saw your goal: ${goalLb.from} \u2192 ${goalLb.to} lb.`
+      : 'I went through what you sent me, and I saw your goal.',
+    'Your training inside the app is built to give you structure, progression, and a clear plan every time you walk into the gym. No guessing what to do next.',
+    'Your first job is simple: start with your first workout and give me honest feedback on how it feels.',
+    "If something is too easy, too hard, uncomfortable, or you're unsure about an exercise, use this chat and tell me. The more I know about how you're responding to the training, the better we can keep you moving forward.",
+    "You don't need to be perfect. You need to stay consistent.",
+    "Show up. Follow the plan. Let's build from there. \u{1F90D}",
+  ];
+
+  const trainingEs: string[] = [
+    `Hola${name ? ' ' + name : ''}, ya est\u00e1s dentro. Soy Steph. \u{1F90D}`,
+    goalLb
+      ? `Revis\u00e9 lo que me enviaste y vi tu meta: ${goalLb.from} \u2192 ${goalLb.to} lb.`
+      : 'Revis\u00e9 lo que me enviaste y vi tu meta.',
+    'Tu entrenamiento en la app est\u00e1 hecho para darte estructura, progresi\u00f3n y un plan claro cada vez que entras al gym. Sin adivinar qu\u00e9 sigue.',
+    'Tu primera tarea es simple: empieza con tu primer entrenamiento y dime con honestidad c\u00f3mo se sinti\u00f3.',
+    'Si algo se siente muy f\u00e1cil, muy dif\u00edcil, inc\u00f3modo, o no est\u00e1s segura de un ejercicio, escr\u00edbeme por aqu\u00ed. Mientras m\u00e1s s\u00e9 de c\u00f3mo respondes al entrenamiento, mejor te puedo mover hacia adelante.',
+    'No necesitas ser perfecta. Necesitas ser constante.',
+    'Presentate. Sigue el plan. De ah\u00ed construimos. \u{1F90D}',
+  ];
+
+  // NUTRITION TIERS. Everything above plus the food-logging ask, because she is paying for someone
+  // to read it.
+  const nutritionEn: string[] = [
+    `Hey${name ? ' ' + name : ''}, you're officially in. I'm Steph. \u{1F90D}`,
+    goalLb
+      ? `I already went through what you sent me, and I saw the goal: ${goalLb.from} \u2192 ${goalLb.to} lb.`
+      : 'I already went through what you sent me, and I saw the goal.',
+    "From here, I'm building this around you. Your starting point, your schedule, how you actually eat, how you train, and what's realistic for your life. You're not getting the same plan everybody else gets.",
+    'Your only job today is to give me a real starting point.',
+    'Start logging your food exactly how you normally eat. Don\u2019t clean it up because you know I\u2019m looking. Don\u2019t skip the snacks. Don\u2019t try to have a \u201cgood day\u201d for me.',
+    'The more honest the data is, the better I can coach you.',
+    'And this chat is where we do this together. If something feels off, you\u2019re struggling, you miss a workout, you have a question about food, or you just need me to look at what\u2019s going on, send it here.',
+    'You do not need to be perfect for this to work. You just need to keep showing me what\u2019s actually happening so we can adjust.',
+    "I'll take care of the strategy.",
+    "You show up. I'll coach the rest. \u{1F90D}",
+  ];
+
+  const nutritionEs: string[] = [
+    `Hola${name ? ' ' + name : ''}, ya est\u00e1s dentro. Soy Steph. \u{1F90D}`,
+    goalLb
+      ? `Ya revis\u00e9 lo que me enviaste y vi la meta: ${goalLb.from} \u2192 ${goalLb.to} lb.`
+      : 'Ya revis\u00e9 lo que me enviaste y vi la meta.',
+    'De aqu\u00ed en adelante armo esto alrededor de ti. Tu punto de partida, tu horario, c\u00f3mo comes de verdad, c\u00f3mo entrenas y qu\u00e9 es realista para tu vida. No te va a tocar el mismo plan que a todas.',
+    'Tu \u00fanica tarea hoy es darme un punto de partida real.',
+    'Empieza a registrar tu comida exactamente como comes normalmente. No la arregles porque sabes que la estoy viendo. No te saltes los snacks. No intentes tener un \u201cd\u00eda bueno\u201d para m\u00ed.',
+    'Mientras m\u00e1s honestos sean los datos, mejor te puedo entrenar.',
+    'Y este chat es donde hacemos esto juntas. Si algo se siente raro, si te est\u00e1 costando, si te saltas un entreno, si tienes una duda de comida, o si solo necesitas que revise qu\u00e9 est\u00e1 pasando, m\u00e1ndamelo aqu\u00ed.',
+    'No necesitas ser perfecta para que esto funcione. Solo necesitas seguir mostr\u00e1ndome lo que de verdad pasa para poder ajustar.',
+    'Yo me encargo de la estrategia.',
+    'T\u00fa presentate. Del resto me encargo yo. \u{1F90D}',
+  ];
+
+  const paras: string[] = nutrition
+    ? locale === 'es'
+      ? nutritionEs
+      : nutritionEn
+    : locale === 'es'
+      ? trainingEs
+      : trainingEn;
 
   return paras.join('\n\n');
 }
@@ -87,7 +149,10 @@ export async function seedIntroMessage(args: IntroArgs): Promise<{ seeded: boole
       return { seeded: false };
     }
 
-    const text = body(args.firstName, args.locale, args.goalLb ?? null);
+    // Resolved from entitlement state on the server, never from a flag the client posted. A
+    // training-only member must not be told to log her food for a coach who is not reading it.
+    const tier = await resolveMemberTier(args.companyId, args.profileId);
+    const text = body(args.firstName, args.locale, args.goalLb ?? null, includesNutrition(tier));
 
     const { error } = await svc.from('messages').insert({
       company_id: args.companyId,
