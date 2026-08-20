@@ -27,6 +27,9 @@ import {
 } from '@/lib/community/actions';
 import { ChallengeCard } from '@/components/community/challenge-card';
 
+// Relative to Date.now(), so the value differs between the server render and hydration a moment
+// later: "59 minutes ago" becomes "1 hour ago" and React sees a text mismatch. Every call site
+// carries suppressHydrationWarning for the same reason message-thread.tsx does.
 function relativeTime(iso: string, locale: string): string {
   const then = new Date(iso).getTime();
   const diff = Date.now() - then;
@@ -280,7 +283,7 @@ function Comments({ postId, count }: { postId: string; count: number }): ReactEl
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-semibold text-ink">{c.author.name}</span>
-                  <span className="text-[11px] text-faint">{relativeTime(c.createdAt, locale)}</span>
+                  <span suppressHydrationWarning className="text-[11px] text-faint">{relativeTime(c.createdAt, locale)}</span>
                 </div>
                 <p className="whitespace-pre-wrap break-words text-[13px] text-soft">{c.body}</p>
               </div>
@@ -367,7 +370,7 @@ function PostCard({
             <span className="truncate text-[14px] font-semibold text-ink">{post.author.name}</span>
             {post.author.isCoach ? <Badge variant="accent">{t('coachBadge')}</Badge> : null}
           </div>
-          <span className="text-[12px] text-faint">{relativeTime(post.createdAt, locale)}</span>
+          <span suppressHydrationWarning className="text-[12px] text-faint">{relativeTime(post.createdAt, locale)}</span>
         </div>
         <span className="ml-auto inline-flex items-center gap-1">
           {!isOwn && (
@@ -408,7 +411,7 @@ function Broadcast({ post, canDelete }: { post: FeedPost; canDelete: boolean }):
         <Avatar initials={post.author.initials} size={36} tone="muted" />
         <div>
           <div className="text-[14px] font-semibold text-ink">{post.author.name}</div>
-          <span className="text-[12px] text-muted">{relativeTime(post.createdAt, locale)}</span>
+          <span suppressHydrationWarning className="text-[12px] text-muted">{relativeTime(post.createdAt, locale)}</span>
         </div>
       </div>
       <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-soft">{post.body}</p>

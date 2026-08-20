@@ -8,6 +8,18 @@ import type { ThreadMessage } from '@/lib/messages/messages';
 
 // Date context for the thread: which calendar day a message belongs to (divider grouping)
 // and a short time for each bubble.
+//
+// BOTH ARE TIMEZONE-DEPENDENT, so both are rendered with suppressHydrationWarning. toLocaleTimeString
+// has no timezone argument here, which is correct (she should see her own clock), but it means the
+// server renders 16:56 in the lambda's UTC and the browser renders 11:56 AM in hers. React saw two
+// different strings and threw #418 on every visit to /inbox, discarding the server HTML and
+// re-rendering the whole thread on the client.
+//
+// suppressHydrationWarning is the intended answer for exactly this: text that is SUPPOSED to differ
+// between server and client. The alternative, rendering the timestamps only after mount, flashes
+// blank on the one screen where the timing of a message is the point. The day divider gets the same
+// treatment for the same reason: it compares against `new Date()`, so a message sent at 9pm local
+// can be "Today" on her clock and yesterday on the server's.
 function dayKey(iso: string): string {
   return new Date(iso).toDateString();
 }
@@ -100,7 +112,10 @@ export function MessageThread({
                 {newDay ? (
                   <div className="flex items-center gap-3 py-2">
                     <div className="h-px flex-1 bg-divider" />
-                    <span className="text-[11px] font-medium uppercase tracking-[1px] text-faint">
+                    <span
+                      suppressHydrationWarning
+                      className="text-[11px] font-medium uppercase tracking-[1px] text-faint"
+                    >
                       {dayLabel(m.createdAt, locale, t('today'), t('yesterday'))}
                     </span>
                     <div className="h-px flex-1 bg-divider" />
@@ -115,7 +130,7 @@ export function MessageThread({
                   >
                     {m.body}
                   </div>
-                  <span className="mt-0.5 px-1 text-[10px] text-faint">
+                  <span suppressHydrationWarning className="mt-0.5 px-1 text-[10px] text-faint">
                     {timeLabel(m.createdAt, locale)}
                   </span>
                 </div>
