@@ -703,7 +703,11 @@
       "deadlineHard": "That is about {rate} {unit} a week. Doable, but it will be tight. {date} would be easier to hold on to.",
       "deadlineTooFast": "That is about {rate} {unit} a week, faster than I would coach anyone. I would aim for {date} instead, and you will keep it.",
       "deadlinePast": "That date has already passed. Pick one ahead of today.",
-      "planTarget": "Your target date"
+      "planTarget": "Your target date",
+      "blockedGoals": "Pick at least one goal to keep going.",
+      "blockedAbout": "Fill in your name, weight and goal weight to keep going.",
+      "blockedPregnancy": "Answer \"Anything we should know right now?\" to keep going.",
+      "blockedSafety": "Answer the pre-exercise safety question to keep going. Tap \"None of these\" if none apply."
     },
     "exercise": {
       "back": "Back",

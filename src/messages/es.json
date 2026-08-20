@@ -703,7 +703,11 @@
       "deadlineHard": "Serían como {rate} {unit} por semana. Se puede, pero va apretado. El {date} sería más fácil de sostener.",
       "deadlineTooFast": "Serían como {rate} {unit} por semana, más rápido de lo que yo recomendaría. Mejor apunta al {date} y lo vas a mantener.",
       "deadlinePast": "Esa fecha ya pasó. Elige una después de hoy.",
-      "planTarget": "Tu fecha meta"
+      "planTarget": "Tu fecha meta",
+      "blockedGoals": "Elige al menos una meta para continuar.",
+      "blockedAbout": "Completa tu nombre, peso y peso meta para continuar.",
+      "blockedPregnancy": "Responde \"¿Algo que debamos saber ahora?\" para continuar.",
+      "blockedSafety": "Responde la pregunta de seguridad para continuar. Toca \"Ninguna de estas\" si no aplica ninguna."
     },
     "exercise": {
       "back": "Espalda",

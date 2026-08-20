@@ -184,6 +184,10 @@ export function OnboardingFlow({
   // past". We record it as the first, so we need her to have actually said so. Tapping any chip,
   // including "None of these", flips this.
   const [safetyAnswered, setSafetyAnswered] = useState<boolean>(false);
+  // Injuries and conditions do not gate Continue, but their None chip told the same lie: it looked
+  // chosen before the member had read the question. Tracked so the chip reflects a real answer.
+  const [injuriesAnswered, setInjuriesAnswered] = useState<boolean>(false);
+  const [conditionsAnswered, setConditionsAnswered] = useState<boolean>(false);
   // Free text. Chips only capture what we thought to ask; real intake is "c-section in March, left
   // shoulder clicks overhead, allergic to shellfish". The raw text is the record and the server
   // extracts structure from it; nothing here replaces her words.
@@ -252,6 +256,23 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
   // The two questions on the health step that carry real risk if we guess the answer. Injuries and
   // conditions stay optional: a blank there is a missing nicety, a blank on these is a liability.
   const healthValid = pregnancy !== '' && safetyAnswered;
+
+  /**
+   * The one thing standing between her and the next screen, in words.
+   *
+   * Named for the QUESTION she has not answered, not for a field name. "Answer the pre-exercise
+   * safety question" is actionable; "healthValid is false" is not, and neither is a grey button.
+   */
+  const blockedReason: string | null =
+    step === S_GOALS && !goalsValid
+      ? t('blockedGoals')
+      : step === S_ABOUT && !step1Valid
+        ? t('blockedAbout')
+        : step === S_HEALTH && pregnancy === ''
+          ? t('blockedPregnancy')
+          : step === S_HEALTH && !safetyAnswered
+            ? t('blockedSafety')
+            : null;
 
   const goal = useMemo(() => deriveGoalDirection(primaryGoals), [primaryGoals]);
   // True when the derived direction holds weight steady but the member asked for a different number
@@ -517,10 +538,17 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
               <ChipRow
                 options={INJURIES}
                 selected={injuries}
-                onToggle={(v) => toggle(setInjuries, v)}
+                onToggle={(v) => {
+                  setInjuriesAnswered(true);
+                  toggle(setInjuries, v);
+                }}
                 label={(v) => th(`opt.injuries.${v}`)}
                 noneLabel={th('none')}
-                onNone={() => setInjuries([])}
+                noneActive={injuriesAnswered && injuries.length === 0}
+                onNone={() => {
+                  setInjuriesAnswered(true);
+                  setInjuries([]);
+                }}
               />
             </HealthSection>
 
@@ -528,10 +556,17 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
               <ChipRow
                 options={CONDITIONS}
                 selected={conditions}
-                onToggle={(v) => toggle(setConditions, v)}
+                onToggle={(v) => {
+                  setConditionsAnswered(true);
+                  toggle(setConditions, v);
+                }}
                 label={(v) => th(`opt.conditions.${v}`)}
                 noneLabel={th('none')}
-                onNone={() => setConditions([])}
+                noneActive={conditionsAnswered && conditions.length === 0}
+                onNone={() => {
+                  setConditionsAnswered(true);
+                  setConditions([]);
+                }}
               />
             </HealthSection>
 
@@ -554,6 +589,7 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
                 }}
                 label={(v) => th(`opt.safety.${v}`)}
                 noneLabel={th('safetyNone')}
+                noneActive={safetyAnswered && safety.length === 0}
                 onNone={() => {
                   setSafetyAnswered(true);
                   setSafety([]);
@@ -782,6 +818,16 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
         </p>
       )}
 
+      {/* WHY CONTINUE IS DEAD, said out loud.
+          A disabled button with no explanation is what turned a confusing screen into a support
+          ticket: every question looked answered, Continue did nothing, and there was nowhere to
+          find out why. Only rendered when the button is actually blocked, so it is never noise. */}
+      {blockedReason && (
+        <p role="status" className="mt-6 rounded-[12px] bg-warm px-4 py-3 text-[13px] leading-[1.5] text-soft">
+          {blockedReason}
+        </p>
+      )}
+
       {/* Footer */}
       <div className="mt-auto flex items-center gap-3 pt-8">
         {step > S_GOALS && step < S_PLAN && (
@@ -934,6 +980,7 @@ function ChipRow({
   label,
   noneLabel,
   onNone,
+  noneActive,
 }: {
   options: readonly string[];
   selected: string[];
@@ -941,6 +988,18 @@ function ChipRow({
   label: (value: string) => string;
   noneLabel?: string;
   onNone?: () => void;
+  /**
+   * Whether "None" has actually been CHOSEN.
+   *
+   * This used to be inferred as `selected.length === 0`, which is the state a question is in before
+   * anybody has read it. So "None of these" rendered highlighted from the moment the step opened, a
+   * member reasonably concluded she had answered, and on the PAR-Q that answer was the one gating
+   * Continue. The button stayed dead with every question looking answered, which is a support
+   * ticket, not a UI.
+   *
+   * Empty and unanswered are different states and the chip has to be told which one it is in.
+   */
+  noneActive?: boolean;
 }): ReactElement {
   return (
     <div className="flex flex-wrap gap-2">
@@ -948,7 +1007,7 @@ function ChipRow({
         <Chip key={o} label={label(o)} active={selected.includes(o)} onClick={() => onToggle(o)} />
       ))}
       {noneLabel && onNone && (
-        <Chip label={noneLabel} active={selected.length === 0} onClick={onNone} />
+        <Chip label={noneLabel} active={noneActive === true} onClick={onNone} />
       )}
     </div>
   );
