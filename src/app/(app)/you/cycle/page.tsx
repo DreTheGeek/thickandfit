@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { loadCycleSummary } from '@/lib/cycle/data';
-import { PageTitle } from '@/components/ui/section';
+import { PortalHeader } from '@/components/portal/portal-chrome';
 import { CycleScreen } from '@/components/cycle/cycle-screen';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ export default async function CyclePage(): Promise<ReactElement> {
 
   return (
     <div className="px-[22px] pb-28 pt-3">
-      <PageTitle>{t('title')}</PageTitle>
+      <PortalHeader title={t('title')} />
       <p className="mb-1 mt-2 text-[14px] leading-[1.55] text-soft">{t('intro')}</p>
       <p className="mb-7 text-[12px] text-faint">{t('privacy')}</p>
       <CycleScreen summary={summary} today={today} />

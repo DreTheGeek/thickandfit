@@ -6,7 +6,7 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { Icon } from '@/components/ui/icons';
-import { PageTitle } from '@/components/ui/section';
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { Card } from '@/components/ui/card';
 import { BillingActions } from '@/components/billing/billing-actions';
 import { isStripeConfigured } from '@/lib/billing/stripe';
@@ -119,12 +119,12 @@ export default async function BillingPage({
       : t('status.none');
 
   return (
-    <div className="px-[22px] pb-7 pt-3">
+    <PortalScreen>
       <div className="mb-5 flex items-center gap-3">
         <Link href="/account" aria-label={t('back')} className="tf-press text-faint">
           <Icon name="arrowLeft" size={20} />
         </Link>
-        <PageTitle>{t('title')}</PageTitle>
+        <PortalHeader title={t('title')} />
       </div>
 
       {/* Status + next charge card */}
@@ -251,6 +251,6 @@ export default async function BillingPage({
       </div>
 
       <p className="mt-6 text-center text-[12px] leading-relaxed text-faint">{t('honestNote')}</p>
-    </div>
+    </PortalScreen>
   );
 }

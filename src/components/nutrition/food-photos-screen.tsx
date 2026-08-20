@@ -6,8 +6,8 @@ import { useRef, useState, useTransition, type ReactElement } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { Icon } from '@/components/ui/icons';
-import { PageTitle } from '@/components/ui/section';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -105,11 +105,11 @@ export function FoodPhotosScreen({
   }
 
   return (
-    <div className="px-[22px] pb-7 pt-3">
+    <PortalScreen>
       <Link href="/nutrition" className="tf-press mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted hover:text-ink">
         <Icon name="arrowLeft" size={16} /> {t('mpBack')}
       </Link>
-      <PageTitle className="mb-1">{t('fpTitle')}</PageTitle>
+      <PortalHeader title={t('fpTitle')} />
       <p className="mb-5 text-[13px] text-faint">{t('fpSubtitle')}</p>
 
       <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={pickFile} className="hidden" />
@@ -196,6 +196,6 @@ export function FoodPhotosScreen({
           ))}
         </div>
       )}
-    </div>
+    </PortalScreen>
   );
 }

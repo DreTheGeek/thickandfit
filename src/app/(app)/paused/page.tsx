@@ -13,7 +13,7 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { isPaused } from '@/lib/billing/entitlement';
 import { redirect } from 'next/navigation';
-import { PageTitle } from '@/components/ui/section';
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
 
@@ -53,8 +53,8 @@ export default async function PausedPage(): Promise<ReactElement> {
     : null;
 
   return (
-    <div className="px-[22px] pb-7 pt-3">
-      <PageTitle className="mb-4">{t('title')}</PageTitle>
+    <PortalScreen>
+      <PortalHeader title={t('title')} />
 
       <Card className="p-5">
         <p className="text-[15px] leading-relaxed text-ink">
@@ -83,6 +83,6 @@ export default async function PausedPage(): Promise<ReactElement> {
           resume date with the member directly; putting a "resume now" control here would let a
           member restart billing early by accident and would contradict whatever they arranged. */}
       <p className="mt-6 text-[13px] leading-relaxed text-faint">{t('comeBackEarly')}</p>
-    </div>
+    </PortalScreen>
   );
 }

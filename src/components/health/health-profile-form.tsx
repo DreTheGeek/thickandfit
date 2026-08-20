@@ -4,6 +4,7 @@
 // sleep/stress, and a gentle relationship-with-food question. Writes to client_intake via the server
 // action, which the coach grounds on immediately. All copy localizes through next-intl (EN/ES).
 import { useState, useTransition } from "react";
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { Dispatch, ReactElement, SetStateAction } from "react";
@@ -98,8 +99,8 @@ export function HealthProfileForm({
   const safetyFlagged = safety.length > 0;
 
   return (
-    <div className="px-[22px] pb-28 pt-3">
-      <h1 className="tf-display mb-2 text-[32px]">{t("title")}</h1>
+    <PortalScreen className="pb-28">
+      <PortalHeader title={t("title")} />
       <p className="mb-1 text-[14px] leading-[1.55] text-soft">{t("intro")}</p>
       <p className="mb-7 text-[12px] text-faint">{t("privacy")}</p>
 
@@ -299,7 +300,7 @@ export function HealthProfileForm({
           </div>
         </div>
       </div>
-    </div>
+    </PortalScreen>
   );
 }
 

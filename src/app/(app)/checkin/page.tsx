@@ -6,9 +6,9 @@ import { requireEntitled } from '@/lib/auth/guards';
 import { getAssignedCheckins } from '@/lib/checkins/checkins';
 import { readCoachSettings } from '@/lib/coach/settings';
 import { Icon } from '@/components/ui/icons';
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { IconTile, ListRow } from '@/components/ui/list-row';
 import { Tag } from '@/components/ui/badge';
-import { PageTitle } from '@/components/ui/section';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +24,8 @@ export default async function CheckinPage(): Promise<ReactElement> {
     ctx.companyId && settings.isCheckinAllowed ? await getAssignedCheckins(ctx.companyId, ctx.userId) : [];
 
   return (
-    <div className="px-[22px] pb-7 pt-3">
-      <PageTitle className="mb-1">{t('title')}</PageTitle>
+    <PortalScreen>
+      <PortalHeader title={t('title')} />
       <p className="mb-5 text-[13px] text-faint">{t('subtitle')}</p>
 
       {!settings.isCheckinAllowed ? (
@@ -60,6 +60,6 @@ export default async function CheckinPage(): Promise<ReactElement> {
           ))}
         </div>
       )}
-    </div>
+    </PortalScreen>
   );
 }

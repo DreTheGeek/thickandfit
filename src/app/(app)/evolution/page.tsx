@@ -7,7 +7,7 @@ import { getTranslations } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
 import { getEvolution } from '@/lib/evolution/timeline';
 import { prefersGentleFraming } from '@/lib/health-profile/screening';
-import { PageTitle } from '@/components/ui/section';
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { EvolutionTimeline } from '@/components/evolution/evolution-timeline';
 
 export const dynamic = 'force-dynamic';
@@ -21,11 +21,11 @@ export default async function EvolutionPage(): Promise<ReactElement> {
   ]);
 
   return (
-    <div className="px-[22px] pb-7 pt-3">
+    <PortalScreen>
       <div className="mb-[18px]">
-        <PageTitle>{t('title')}</PageTitle>
+        <PortalHeader title={t('title')} />
       </div>
       <EvolutionTimeline data={data} gentle={gentle} />
-    </div>
+    </PortalScreen>
   );
 }

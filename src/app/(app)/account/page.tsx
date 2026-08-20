@@ -6,8 +6,8 @@ import { getTranslations } from 'next-intl/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { LanguageToggle } from '@/components/i18n/language-toggle';
+import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { Icon } from '@/components/ui/icons';
-import { PageTitle } from '@/components/ui/section';
 import { signOutAction } from '@/lib/auth/actions';
 import { DeleteAccount } from '@/components/account/delete-account';
 import { ChangeEmail } from '@/components/account/change-email';
@@ -56,12 +56,12 @@ export default async function AccountPage(): Promise<ReactElement> {
   const selfPrice = formatPriceCents(priceCentsForOffer(currentOffer(new Date())));
 
   return (
-    <div className="px-[22px] pb-7 pt-3">
+    <PortalScreen>
       <div className="mb-5 flex items-center gap-3">
         <Link href="/you" aria-label={t('common.back')} className="tf-press text-faint">
           <Icon name="arrowLeft" size={20} />
         </Link>
-        <PageTitle>{t('you.accountSettings')}</PageTitle>
+        <PortalHeader title={t('you.accountSettings')} />
       </div>
 
       {/* Membership card (tier + price).
@@ -143,6 +143,6 @@ export default async function AccountPage(): Promise<ReactElement> {
         <SectionLabel>{t('account.dangerZone')}</SectionLabel>
         <DeleteAccount />
       </div>
-    </div>
+    </PortalScreen>
   );
 }
