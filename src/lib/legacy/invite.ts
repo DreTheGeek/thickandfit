@@ -112,6 +112,19 @@ export async function inviteLegacyContact(
   dryRun: boolean,
 ): Promise<InviteOutcome> {
   const svc = createServiceClient();
+
+  // DRY RUN RETURNS BEFORE generateLink, AND THAT ORDER IS THE WHOLE POINT.
+  //
+  // generateLink({ type: 'invite' }) CREATES THE AUTH USER as a side effect of minting the link.
+  // It is not a read. The previous version generated the link and then skipped only the send, so a
+  // dry run silently provisioned an account for a real client and reported `sent: false`, which
+  // reads as "nothing happened". It happened once, to a real person, on production.
+  //
+  // A dry run must confirm the CONTACT is invitable, which the caller's query has already done by
+  // the time we are here: legacy, unclaimed, has an email, in this company. That is everything a
+  // dry run can honestly check without causing the thing it is checking.
+  if (dryRun) return { email: contact.email, linked: true, sent: false };
+
   const { data, error } = await svc.auth.admin.generateLink({
     type: 'invite',
     email: contact.email,
@@ -123,8 +136,6 @@ export async function inviteLegacyContact(
   const actionLink = data.properties.action_link;
   const locale = contact.language === 'es' ? 'es' : 'en';
   const { subject, html } = inviteEmail(contact.first_name, actionLink, locale);
-
-  if (dryRun) return { email: contact.email, linked: true, sent: false };
 
   const send = await sendInviteEmail(contact.email, subject, html);
   // Record the send attempt for deliverability tracking + the resend-webhook to update on bounce.
