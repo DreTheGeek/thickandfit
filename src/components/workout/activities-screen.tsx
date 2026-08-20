@@ -3,14 +3,11 @@
 // assigned plan + today's session; Library embeds the exercise browser; History
 // lists logged workouts. Re-skinned to the design-handoff prototype.
 import { useState } from 'react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
-import { Segmented } from '@/components/ui/segmented';
-import { HeroCard } from '@/components/ui/card';
-import { ButtonLink } from '@/components/ui/button';
-import { PageTitle, SectionTitle } from '@/components/ui/section';
-import { ProgressBar } from '@/components/ui/ring';
+import { PortalLabel } from '@/components/portal/today-cards';
+import { TrainTabs, WorkoutBanner, UpNext, SplitOverview } from '@/components/portal/train-cards';
+import { PageTitle } from '@/components/ui/section';
 import { ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
 import { EmptyState } from '@/components/states/empty-state';
@@ -58,13 +55,13 @@ export function ActivitiesScreen({
   activation: Activation;
 }): ReactElement {
   const t = useTranslations('app.activities');
+  const tn = useTranslations('app.nav');
   const [tab, setTab] = useState<Tab>('program');
 
   return (
     <div className="px-[22px] pb-7 pt-3">
-      <PageTitle className="mb-4">{t('title')}</PageTitle>
-      <Segmented
-        className="mb-5"
+      <PageTitle className="mb-4">{tn('activities')}</PageTitle>
+      <TrainTabs
         value={tab}
         onChange={setTab}
         options={[
@@ -81,26 +78,14 @@ export function ActivitiesScreen({
           <FirstSteps activation={activation} />
         ) : (
           <>
-            <HeroCard
-              image="/brand/img/steph-about.avif"
-              position="center 16%"
-              className="h-[188px]"
-            >
-              <div className="tf-display text-[30px] leading-none">{program.name}</div>
-              <div className="mt-1.5 text-[13px] text-white/70">
-                {t('weekOf', { week: program.week, total: program.totalWeeks })}
-              </div>
-              <ProgressBar
-                className="mt-3.5"
-                pct={program.pct}
-                color="var(--color-muted)"
-                track="rgba(255,255,255,0.2)"
-                height={4}
-              />
-              <div className="mt-2 text-[11px] text-white/65">
-                {t('dayOf', { day: program.day, total: program.totalDays })}
-              </div>
-            </HeroCard>
+            <PortalLabel>{t('todaysWorkout')}</PortalLabel>
+            <WorkoutBanner
+              title={program.name}
+              meta={`${t('weekOf', { week: program.week, total: program.totalWeeks })} · ${t('dayOf', { day: program.day, total: program.totalDays })}`}
+              href={`/workout/${program.planId}?day=${program.activeDay}`}
+              cta={t('startWorkout')}
+              imageIndex={program.activeDay}
+            />
 
             {/* The one line that keeps "Steph writes your plan by hand" honest once auto-assign is
                 on. She has a program on day one now, which is the improvement; being allowed to
@@ -122,32 +107,7 @@ export function ActivitiesScreen({
               </div>
             )}
 
-            {program.days.length > 1 && (
-              <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
-                {program.days.map((d) => {
-                  const active = d.index === program.activeDay;
-                  return (
-                    <Link
-                      key={d.index}
-                      href={`/workouts?day=${d.index}`}
-                      scroll={false}
-                      className={[
-                        'tf-press flex-none whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-medium',
-                        active
-                          ? 'bg-ink text-white'
-                          : 'border border-line text-soft',
-                      ].join(' ')}
-                    >
-                      {d.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-
-            <SectionTitle className="mb-2.5 mt-[22px]">
-              {t('todaysWorkout')}
-            </SectionTitle>
+            <div className="mt-[22px]" />
             {program.exercises.map((ex, i) => (
               <ListRow
                 key={ex.id + i}
@@ -160,13 +120,26 @@ export function ActivitiesScreen({
               />
             ))}
 
-            <ButtonLink
-              href={`/workout/${program.planId}?day=${program.activeDay}`}
-              size="block"
-              className="mt-6"
-            >
-              {t('startWorkout')}
-            </ButtonLink>
+            <UpNext
+              label={t('upNext')}
+              rows={program.days
+                .filter((d) => d.index > program.activeDay)
+                .slice(0, 3)
+                .map((d) => ({
+                  key: String(d.index),
+                  title: d.label,
+                  sub: t('dayOf', { day: d.index + 1, total: program.totalDays }),
+                  href: `/workouts?day=${d.index}`,
+                  imageIndex: d.index,
+                }))}
+            />
+
+            <SplitOverview
+              label={t('splitOverview')}
+              days={program.days}
+              activeIndex={program.activeDay}
+              hrefFor={(i) => `/workouts?day=${i}`}
+            />
           </>
         ))}
 

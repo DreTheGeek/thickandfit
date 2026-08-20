@@ -534,6 +534,8 @@
       "starterNote": "Esta es tu semana de arranque, para que tengas algo que entrenar hoy. Steph está leyendo tus respuestas y armando tu plan propio: reemplazará a este cuando esté listo.",
       "dayOf": "Día {day} de {total}",
       "todaysWorkout": "Entreno de hoy",
+      "upNext": "Lo que sigue",
+      "splitOverview": "Tu división",
       "noProgram": "Aún no tienes plan",
       "noProgramBody": "Tu entrenadora te asignará tu programa pronto.",
       "noHistory": "Sin entrenamientos registrados aún. Tu primero te está esperando.",
