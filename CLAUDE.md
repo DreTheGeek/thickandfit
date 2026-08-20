@@ -574,6 +574,49 @@ the page cannot drift from the product. "No card to start" was removed outright:
 card regardless of `trial_period_days` unless `payment_method_collection: 'if_required'` is set, and
 setting that means a trial can end with no card on file — a product decision, not a copy fix.
 
+## The 8.0 member portal: the two traps a green build does not catch
+
+The member app is being re-skinned to `.planning/design_handoff/8.0/`. File A
+(`client-portal.html`) is the CONTRACT; File B (`mobile-client-ui.html`) is a mood board with good
+ideas and one liability (a screen carrying a named competitor's logo). Where their hexes disagree,
+`globals.css` wins: it is the only one of the three with written reasoning per token.
+
+The palette is scoped by `.tf-portal`, applied in exactly ONE place
+(`src/components/app/subscriber-shell.tsx`). `git grep -c "tf-portal" src/` must stay at 1, or the
+containment that keeps the coach console out of this is gone.
+
+**Trap 1: the scope re-themes ROLES and silently inverts LITERALS.** `bg-surface` / `text-muted`
+follow the palette for free. `bg-ink text-bg` is an inversion, not a role: correct on the light
+palette (ink #0f0f0f, bg #e7e5df) and backwards inside the portal (ink #ffffff, bg #000000). Worse
+is `bg-ink` beside a literal `text-white`, which renders white on white and is invisible rather
+than merely wrong. **Nine instances were found and fixed, all shipped, all with a green build**:
+the challenge card, the coach broadcast, the goal card on /you, the membership card on /account,
+the support tab on EVERY portal screen, today's date in the week strip, the rest banner in the
+workout player, and the Android install pill. `<Card dark>` is deleted rather than deprecated,
+because leaving it is how the next one appears. Use `RaisedCard` from `portal/portal-chrome.tsx`,
+or an explicit dark ground where the copy is white by design.
+
+A filled CONTROL is the exception: `bg-ink text-bg` on a button is the handoff's `.btn-white` and is
+correct in both palettes. The rule is about surfaces, not pills.
+
+**Trap 2: `useTranslations` is the CLIENT hook.** A component that calls it and is rendered by an
+async server page throws on every request, behind a 200 and the error boundary's "Something went
+wrong". `tsc`, `eslint` and `next build` are all green: nothing about the call is statically wrong.
+The workout preview shipped this way. Either mark the component `'use client'` or use
+`getTranslations` from `next-intl/server`.
+
+**Both traps were caught by looking, not by building.** `node .qa-visual/portal-shots.mjs` signs in
+as a real member against PRODUCTION, shoots the portal at the handoff's own 390x844, and asserts per
+screen that the page did not render the error boundary and does contain a marker of its own content.
+It exits non-zero, so it is a test. Run it after any portal change; a passing build is not evidence
+a screen renders.
+
+The kit is `src/components/portal/`: `portal-chrome.tsx` (screen, header, tabs, button, media row,
+stat row, meter, data row, raised card), `today-cards.tsx`, `train-cards.tsx`, `capture-sheet.tsx`.
+It is deliberately free of `'use client'` so `you-screen.tsx`, an async server component, can consume
+it. Nav lives once in `src/components/nav/tabs.ts`, consumed by both the phone bar and the desktop
+rail, which had drifted to different tab sets.
+
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
 Gemini free-tier limits. Document limits and deferral decisions here as they approach.
