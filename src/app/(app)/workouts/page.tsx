@@ -81,7 +81,11 @@ export default async function WorkoutsPage({
           // curation (0105) must not erase history, and filtering this fails SILENTLY as an
           // untitled card with no demo rather than throwing.
           .from('exercises')
-          .select('id, name_en, name_es, video_mux_id')
+          // demo_storage_path, not video_mux_id alone: her 366 filmed demos live in storage and
+          // only 2 rows carry a Mux id, so the play badge on this list appeared on 2 of 1,305
+          // movements. Same root cause as the player. No signed URL is minted here, because this
+          // screen only needs to know a demo EXISTS; the player signs it when she opens the day.
+          .select('id, name_en, name_es, video_mux_id, demo_storage_path')
           .in('id', ids);
         const byId = new Map((exs ?? []).map((e) => [e.id, e]));
         exercises = exList.map((e) => {
@@ -91,7 +95,9 @@ export default async function WorkoutsPage({
             id: e.exercise_id,
             name: (locale === 'es' && meta?.name_es) || meta?.name_en || tEx('untitled'),
             sub: `${e.sets ?? '-'}${reps}`,
-            hasDemo: Boolean(meta?.video_mux_id),
+            hasDemo: Boolean(
+              meta?.video_mux_id || (meta as { demo_storage_path?: string | null } | undefined)?.demo_storage_path,
+            ),
             done: false,
           };
         });
