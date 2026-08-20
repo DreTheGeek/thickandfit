@@ -2666,7 +2666,8 @@
       "progress": "{done} of {total} done",
       "foodDone": "Done. Keep it going, it is what teaches the app how you eat.",
       "baselineDone": "Done. You will be glad you took it in six weeks.",
-      "communityDone": "Done. The women here are going through the same thing."
+      "communityDone": "Done. The women here are going through the same thing.",
+      "programNoteStarter": "This is your starting week so you can train today. Steph is reading your answers and personalising your plan; it replaces this one when it is ready."
     },
     "coachSettings": {
       "saveChanges": "Save changes",

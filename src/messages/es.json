@@ -2666,7 +2666,8 @@
       "progress": "{done} de {total} hechos",
       "foodDone": "Hecho. Sigue así, es lo que le enseña a la app cómo comes.",
       "baselineDone": "Hecho. En seis semanas te va a dar gusto tenerlo.",
-      "communityDone": "Hecho. Las mujeres de aquí van en lo mismo que tú."
+      "communityDone": "Hecho. Las mujeres de aquí van en lo mismo que tú.",
+      "programNoteStarter": "Esta es tu semana de arranque para que entrenes hoy. Steph está leyendo tus respuestas y personalizando tu plan; reemplazará a este cuando esté listo."
     },
     "coachSettings": {
       "saveChanges": "Guardar cambios",

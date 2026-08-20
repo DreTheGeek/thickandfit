@@ -208,6 +208,17 @@ export default async function WorkoutsPage({
   // Derived, never stored: the checklist ticks itself from her real rows.
   const activation = await getActivation(ctx.userId);
   return (
-    <ActivitiesScreen program={program} history={history} stats={stats} locale={locale} activation={activation} />
+    // hasStarterProgram is read HERE because STARTER_PROGRAM_ID is server-only by design. The
+    // first-run copy has to move with the flag: "Steph writes your plan by hand ... she will
+    // message you when it is ready" is true today and becomes a half-truth the moment auto-assign
+    // puts a plan there before she asks.
+    <ActivitiesScreen
+      program={program}
+      history={history}
+      stats={stats}
+      locale={locale}
+      activation={activation}
+      hasStarterProgram={(process.env.STARTER_PROGRAM_ID ?? '').trim().length > 0}
+    />
   );
 }

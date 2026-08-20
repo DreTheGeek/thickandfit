@@ -30,7 +30,22 @@ const COPY: Record<ActivationStep['key'], { titleKey: string; bodyKey: string }>
   community: { titleKey: 'stepCommunityTitle', bodyKey: 'stepCommunityBody' },
 };
 
-export function FirstSteps({ activation }: { activation: Activation }): ReactElement {
+export function FirstSteps({
+  activation,
+  hasStarterProgram = false,
+}: {
+  activation: Activation;
+  /**
+   * True when STARTER_PROGRAM_ID is set, so a plan was assigned at onboarding.
+   *
+   * The copy has to move with the flag. "Steph writes your plan by hand ... she will message you
+   * when it is ready" is true today and becomes a half-truth the moment auto-assign is on, because
+   * a plan is already sitting there. The honest version of the switched-on state is that this is a
+   * starting week and Steph is personalising it, which is both true and a better promise than
+   * silence. Threaded as a prop because STARTER_PROGRAM_ID is server-only by design.
+   */
+  hasStarterProgram?: boolean;
+}): ReactElement {
   const t = useTranslations('app.firstSteps');
 
   return (
@@ -83,7 +98,7 @@ export function FirstSteps({ activation }: { activation: Activation }): ReactEle
       {/* Demoted to a footnote, and honest: a person is writing it, so it is not instant. The old
           copy implied an imminent arrival that nothing scheduled. */}
       <p className="mt-1.5 border-t border-line pt-3 text-[13px] leading-relaxed text-faint">
-        {t('programNote')}
+        {t(hasStarterProgram ? 'programNoteStarter' : 'programNote')}
       </p>
     </section>
   );

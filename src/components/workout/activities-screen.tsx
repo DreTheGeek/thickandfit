@@ -48,12 +48,15 @@ export function ActivitiesScreen({
   stats,
   locale,
   activation,
+  hasStarterProgram = false,
 }: {
   program: ActivitiesProgram | null;
   history: HistoryItem[];
   stats: WorkoutStats | null;
   locale: string;
   activation: Activation;
+  /** STARTER_PROGRAM_ID is set, so onboarding already assigned her a plan. */
+  hasStarterProgram?: boolean;
 }): ReactElement {
   const t = useTranslations('app.activities');
   const tn = useTranslations('app.nav');
@@ -76,7 +79,7 @@ export function ActivitiesScreen({
         (program == null ? (
           // Not an empty state. "Your program's on the way" was a promise nothing in the system
           // kept, and it made waiting the activity on the one day she is most likely to leave.
-          <FirstSteps activation={activation} />
+          <FirstSteps activation={activation} hasStarterProgram={hasStarterProgram} />
         ) : (
           <>
             <PortalLabel>{t('todaysWorkout')}</PortalLabel>

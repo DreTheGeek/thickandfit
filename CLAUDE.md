@@ -257,6 +257,7 @@ eval correctly reports fat bias as n/a rather than a fabricated 0.
 | Secret | Rotated | By | Notes |
 |---|---|---|---|
 | CRON_SECRET | 2026-07-03 | Claude (launch hardening) | rotated to align Vercel prod + pg_cron registrations; old value unrecoverable (encrypted) |
+| VAPID keypair (web push) | 2026-08-20 | Claude | GENERATED, not rotated: web push had never been configured, so `isPushConfigured()` was false and every push silently no-opped while in-app rows still delivered. Self-generated keypair (`web-push`), no third-party account. `push_subscriptions` was empty, so nothing was invalidated. Public key is `NEXT_PUBLIC_` by design |
 | Supabase `smtp_pass` (Resend key) | 2026-07-30 | Claude (email restore) | new sending-only key `supabase-smtp-2026-07-30`; the previous value was cleared by a partial auth-config PATCH and is unrecoverable (the Management API returns it masked) |
 
 ## Supabase auth security posture (audited 2026-08-01)
@@ -673,6 +674,52 @@ like the same bug (73 rows >= 1000, max 3000) and is not: 3000s is a 50 minute i
 five minute one, and the values track the movement. `reps > 200` is eight rows of jump rope at 300 to
 500 skips, which is a real prescription. `weight` tops out at 158.76, which is lb. `rest_sec` was the
 only one.
+
+## Vercel production env, measured 2026-08-20
+
+`vercel env ls production` reads back names but not values (everything is Encrypted), so this is
+what EXISTS, not what it is set to. Absence is the useful signal.
+
+**Present:** Supabase (url / anon / service role), `RESEND_API_KEY`, `RESEND_FROM`,
+`OPENROUTER_API_KEY`, `CRON_SECRET`, `USDA_API_KEY`, GHL (3), Telegram (3),
+`PRELAUNCH_PREVIEW_TOKEN`, `LENUS_INGEST_TOKEN`, `NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED`, and as of
+2026-08-20 the VAPID pair.
+
+**Absent, and what each absence actually does:**
+
+| missing | effect |
+|---|---|
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | the paywall is inert by design; 1 entitlement, 0 webhook events. THE launch blocker, and only Stephanie can generate it |
+| `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` | **zero production error observability.** `instrumentation.ts` returns early with no DSN. Nothing crashes; nothing is reported either. Every bug found in the 8.0 work was found by looking, because there was nothing to alert |
+| `NEXT_PUBLIC_POSTHOG_KEY` | no analytics |
+| `STARTER_PROGRAM_ID` | nobody gets a program at signup; a coach assigns by hand from `/coach/awaiting` |
+| `STARTER_MEAL_PLAN_ID`, `COACH_AI_DAILY_LIMIT`, `STRIPE_TRIAL_DAYS` | the other inert flags, all documented above |
+| `TURNSTILE_SECRET_KEY` | Supabase-native captcha stays off on the AUTH endpoints |
+| `MUX_*` | fine. Her demos serve from Supabase storage; only 2 exercise rows carry a Mux id |
+
+**The PRELAUNCH_* switches are absent, which means the site is fully public.** That matches the
+Site Visibility section: both gates off.
+
+### `STARTER_PROGRAM_ID` is now one command
+
+The copy moves with the flag, which is what made this a product decision rather than a config
+change. `first-steps.tsx` takes `hasStarterProgram`, read server-side in `workouts/page.tsx`, and
+switches `programNote` for `programNoteStarter` ("this is your starting week, Steph is personalising
+it"). Both strings are in both catalogs. So flipping it no longer leaves the app claiming she writes
+every plan by hand while a plan is already sitting there.
+
+Three candidates, with demo coverage measured:
+
+| plan id | name | days | demos |
+|---|---|---|---|
+| `be17f103-6717-40da-b99a-7fe98d290637` | 12 week 3 day Beginner/Intermediate **@HOME** | 5 | 46/47 |
+| `2126bed8-1387-4f9a-9c68-e420d0cc42f7` | 12 week 3 day Training plan 1 | 5 | 49/52 |
+| `1d23587b-6d09-4594-9ce0-7d31eade9271` | 12 week 4 day Beginner/Intermediate | 6 | 67/69 |
+
+The @HOME one is the safest default: it needs no gym, so it cannot fail for a member who has not
+joined one yet.
+
+    vercel env add STARTER_PROGRAM_ID production   # paste the uuid, then redeploy
 
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
