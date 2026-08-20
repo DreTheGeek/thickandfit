@@ -42,7 +42,11 @@ export async function SubscriberShell({
     // bar retracts. dvh tracks the bar. That matters most in exactly the mode this is for.
     <div className="tf-portal flex h-[100dvh] justify-center overflow-hidden bg-bg">
       <SubscriberRail initialUnread={unread} profileId={profileId} />
-      <div className="relative flex h-full w-full max-w-[520px] flex-col bg-bg lg:max-w-[760px] lg:border-x lg:border-line">
+      {/* pt clears the notch. `viewport-fit=cover` made the page run edge to edge, which is what
+          lets the bottom bar sit against the home indicator, and the same change put the TOP of the
+          page under the status bar: the onboarding progress rail rendered behind the clock. env()
+          is 0 on hardware without an inset, so this is correct on every device. */}
+      <div className="relative flex h-full w-full max-w-[520px] flex-col bg-bg pt-[env(safe-area-inset-top)] lg:max-w-[760px] lg:border-x lg:border-line">
         <SubscriberTopBar initialUnread={unread} profileId={profileId} />
         <main className="tf-scroll flex-1 overscroll-contain">{children}</main>
         <BottomNav />

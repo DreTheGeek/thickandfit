@@ -56,6 +56,12 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  // App, not page. Pinch and double-tap zoom make a PWA feel like a website that happens to be on
+  // your phone: the layout is already built for this width, so a zoom is never a fix, it is a
+  // mis-tap she then has to undo. Text still scales with the OS accessibility setting, which is the
+  // control that actually matters for legibility.
+  maximumScale: 1,
+  userScalable: false,
   // Matches the manifest and the portal ground. The installed app is the dark member app; this is
   // the colour iOS and Android tint the status bar with.
   themeColor: '#000000',

@@ -362,7 +362,10 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
   const numCls = selectCls;
 
   return (
-    <div className="flex min-h-[calc(100vh-1px)] flex-col px-[28px] pb-7 pt-6">
+    // min-h-full, not 100vh. The shell is already exactly one viewport tall and scrolls its own
+    // main; asking for 100vh inside it overflowed by the address bar's height and gave the step a
+    // second scroll of its own, which is the "screen moves" nobody asked for.
+    <div className="flex min-h-full flex-col px-[28px] pb-7 pt-6">
       {/* Progress */}
       <ProgressBar pct={((step + 1) / TOTAL) * 100} color="var(--c-ink)" height={4} />
       <div className="mb-6 mt-2 text-[12px] text-faint">
@@ -1093,11 +1096,26 @@ function PredictionChart({ data, goal }: { data: CurvePoint[]; goal: number; uni
   const x = (i: number): number => (n <= 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW);
   const y = (v: number): number => padT + plotH - ((v - min) / span) * plotH;
   const line = data.map((d, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(d.val).toFixed(1)}`).join(' ');
+  // Closed under the curve, so the projection reads as a shape rather than a hairline. This is the
+  // screen that has to make twelve weeks feel worth starting, and a 2px line on a dark card was
+  // doing none of that work.
+  const area =
+    n > 0
+      ? `M${x(0).toFixed(1)},${(padT + plotH).toFixed(1)} ` +
+        data.map((d, i) => `L${x(i).toFixed(1)},${y(d.val).toFixed(1)}`).join(' ') +
+        ` L${x(n - 1).toFixed(1)},${(padT + plotH).toFixed(1)} Z`
+      : '';
   const ticks = [min, (min + max) / 2, max];
   const labelEvery = Math.max(1, Math.ceil(n / 6));
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
+      <defs>
+        <linearGradient id="gPredict" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--c-ink)" stopOpacity={0.18} />
+          <stop offset="100%" stopColor="var(--c-ink)" stopOpacity={0} />
+        </linearGradient>
+      </defs>
       {ticks.map((tk, i) => (
         <g key={i}>
           <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--c-divider)" strokeWidth={1} />
@@ -1112,11 +1130,24 @@ function PredictionChart({ data, goal }: { data: CurvePoint[]; goal: number; uni
         x2={W - padR}
         y1={y(goal)}
         y2={y(goal)}
-        stroke="#5EBE62"
+        stroke="var(--c-accent)"
         strokeWidth={1.5}
         strokeDasharray="4 4"
       />
-      <path d={line} fill="none" stroke="#0f0f0f" strokeWidth={2.5} />
+      {/* var(--c-ink), not #0f0f0f. A hardcoded near-black hex is invisible on this screen: the
+          member portal re-points --c-ink to #ffffff and a literal cannot follow it, which is why the
+          projection line was a dark smudge on a dark card. A token sweep for var(--color-*) could
+          not catch this one, because it was never a token. */}
+      {area && <path d={area} fill="url(#gPredict)" />}
+      <path d={line} fill="none" stroke="var(--c-ink)" strokeWidth={2.5} strokeLinecap="round" />
+      {/* Her start and her projected end, marked. The two numbers the card underneath states in
+          words, shown on the curve so the line has somewhere to begin and end. */}
+      {n > 1 && (
+        <>
+          <circle cx={x(0)} cy={y(data[0].val)} r={3.5} fill="var(--c-ink)" />
+          <circle cx={x(n - 1)} cy={y(data[n - 1].val)} r={3.5} fill="var(--c-ink)" />
+        </>
+      )}
 
       {data.map((d, i) =>
         i % labelEvery === 0 || i === n - 1 ? (
