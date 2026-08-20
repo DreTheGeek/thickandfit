@@ -5,54 +5,25 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { Wordmark } from '@/components/ui/wordmark';
-import { Icon, type IconName } from '@/components/ui/icons';
-import { Tag } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icons';
 import { signOutAction } from '@/lib/auth/actions';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { CommandPalette } from '@/components/nav/command-palette';
+import { TABS, isNavHidden } from '@/components/nav/tabs';
 
-type Tab = {
-  key: 'today' | 'community' | 'activities' | 'nutrition' | 'you';
-  href: string;
-  icon: IconName;
-  match: (p: string) => boolean;
-  soon?: boolean;
-};
-
-const TABS: Tab[] = [
-  { key: 'today', href: '/dashboard', icon: 'calendar', match: (p) => p === '/dashboard' },
-  { key: 'community', href: '/community', icon: 'community', match: (p) => p.startsWith('/community') },
-  {
-    key: 'activities',
-    href: '/workouts',
-    icon: 'dumbbell',
-    match: (p) =>
-      p.startsWith('/workouts') || p.startsWith('/exercises') || p.startsWith('/workout/') || p.startsWith('/history'),
-  },
-  { key: 'nutrition', href: '/nutrition', icon: 'nutrition', match: (p) => p.startsWith('/nutrition') },
-  {
-    key: 'you',
-    href: '/you',
-    icon: 'user',
-    // Deliberately NOT /inbox, unlike the bottom nav: the rail carries its own Messages link below
-    // this list, so matching /inbox here would light two rows at once.
-    //
-    // /evolution was missing and the bottom nav had it. This list and the one in bottom-nav.tsx are
-    // hand-duplicated and have already drifted once; if a third copy ever appears, they should share
-    // one definition instead.
-    match: (p) =>
-      p.startsWith('/you') ||
-      p.startsWith('/progress') ||
-      p.startsWith('/account') ||
-      p.startsWith('/evolution') ||
-      p.startsWith('/coach-chat'),
-  },
-];
-
-const HIDDEN = ['/onboarding', '/checkin'];
-function isHidden(path: string): boolean {
-  return HIDDEN.some((h) => path.startsWith(h)) || path.startsWith('/workout/');
-}
+/**
+ * The rail's one extra row, below the six shared tabs.
+ *
+ * It used to be Messages, because the rail had no Coach tab and /inbox needed a home. Coach now
+ * carries /inbox from the shared list, so a Messages row here would light two rows on the same URL.
+ * You takes the slot instead, which the phone reaches from the header and the rail otherwise could
+ * not reach at all.
+ *
+ * The match is narrow on purpose: /progress, /evolution and /coach-chat belong to Progress and Coach
+ * in the shared list, and claiming them here would light two rows again, which is the exact drift
+ * this file just stopped duplicating.
+ */
+const YOU_MATCH = (p: string): boolean => p.startsWith('/you') || p.startsWith('/account');
 
 /** Desktop/tablet (lg+) left nav rail for the subscriber app. */
 export function SubscriberRail({
@@ -65,7 +36,13 @@ export function SubscriberRail({
   const pathname = usePathname();
   const t = useTranslations('app.nav');
   const c = useTranslations('app.common');
-  if (isHidden(pathname)) return null;
+  if (isNavHidden(pathname)) return null;
+
+  const rowClass = (active: boolean): string =>
+    [
+      'flex items-center gap-3 rounded-full px-4 py-2.5 text-[14px] font-medium transition-colors',
+      active ? 'bg-warm font-semibold text-ink' : 'text-muted hover:bg-warm/60 hover:text-ink',
+    ].join(' ');
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
@@ -88,33 +65,16 @@ export function SubscriberRail({
               key={tab.key}
               href={tab.href}
               aria-current={active ? 'page' : undefined}
-              className={[
-                'flex items-center gap-3 rounded-full px-4 py-2.5 text-[14px] font-medium transition-colors',
-                active ? 'bg-warm font-semibold text-ink' : 'text-muted hover:bg-warm/60 hover:text-ink',
-              ].join(' ')}
+              className={rowClass(active)}
             >
               <Icon name={tab.icon} size={18} />
               {t(tab.key)}
-              {tab.soon && (
-                <span className="ml-auto">
-                  <Tag>{c('soon')}</Tag>
-                </span>
-              )}
             </Link>
           );
         })}
-        <Link
-          href="/inbox"
-          aria-current={pathname.startsWith('/inbox') ? 'page' : undefined}
-          className={[
-            'flex items-center gap-3 rounded-full px-4 py-2.5 text-[14px] font-medium transition-colors',
-            pathname.startsWith('/inbox')
-              ? 'bg-warm font-semibold text-ink'
-              : 'text-muted hover:bg-warm/60 hover:text-ink',
-          ].join(' ')}
-        >
-          <Icon name="chat" size={18} />
-          {t('messages')}
+        <Link href="/you" aria-current={YOU_MATCH(pathname) ? 'page' : undefined} className={rowClass(YOU_MATCH(pathname))}>
+          <Icon name="user" size={18} />
+          {t('you')}
         </Link>
       </nav>
       <div className="border-t border-line p-3">
