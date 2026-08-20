@@ -431,7 +431,12 @@
       "reason_self_harm": "Preocupación por autolesión",
       "reason_nudity": "Desnudez o contenido sexual",
       "reason_misinformation": "Información falsa",
-      "reason_other": "Otra cosa"
+      "reason_other": "Otra cosa",
+      "tabForYou": "Para ti",
+      "tabFollowing": "Siguiendo",
+      "tabChallenges": "Retos",
+      "noChallenge": "No hay ningún reto activo ahora. Steph empieza uno nuevo cada pocas semanas.",
+      "followingSoon": "Siguiendo llegará pronto. Por ahora todas las publicaciones están en Para ti."
     },
     "common": {
       "viewAll": "Ver todo",
@@ -1877,7 +1882,9 @@
       "coachHumanNote": "Steph lee estos mensajes ella misma. Responde cuando puede.",
       "actionLogFood": "Registrar comida",
       "actionCheckin": "Enviar check-in",
-      "actionViewPlan": "Ver plan"
+      "actionViewPlan": "Ver plan",
+      "coachName": "Coach Steph",
+      "coachReplyExpectation": "Suele responder en un día"
     },
     "gamification": {
       "dayStreak": "días seguidos",
@@ -1997,7 +2004,11 @@
       "pctToGoal": "Vas {n}% hacia tu meta.",
       "strengthEmpty": "Registra algunas sesiones y tus mejores levantamientos aparecen aquí.",
       "bestSet": "{weight} lb x {reps}",
-      "bestReps": "{reps} reps"
+      "bestReps": "{reps} reps",
+      "tabConsistency": "Constancia",
+      "statWorkouts": "Entrenos",
+      "statDaysLogged": "Días registrados",
+      "consistencyEmpty": "Tu resumen semanal aparece cuando tengas una semana de entrenamiento."
     },
     "nutrition": {
       "title": "Nutrición",

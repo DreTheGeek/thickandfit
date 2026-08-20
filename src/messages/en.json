@@ -431,7 +431,12 @@
       "reason_self_harm": "Self-harm concern",
       "reason_nudity": "Nudity or sexual content",
       "reason_misinformation": "False information",
-      "reason_other": "Something else"
+      "reason_other": "Something else",
+      "tabForYou": "For You",
+      "tabFollowing": "Following",
+      "tabChallenges": "Challenges",
+      "noChallenge": "No challenge running right now. Steph starts a new one every few weeks.",
+      "followingSoon": "Following is coming. Right now every post from the crew is in For You."
     },
     "common": {
       "viewAll": "View all",
@@ -1877,7 +1882,9 @@
       "coachHumanNote": "Steph reads these herself. She replies when she can.",
       "actionLogFood": "Log food",
       "actionCheckin": "Submit check-in",
-      "actionViewPlan": "View plan"
+      "actionViewPlan": "View plan",
+      "coachName": "Coach Steph",
+      "coachReplyExpectation": "Usually replies within a day"
     },
     "gamification": {
       "dayStreak": "day streak",
@@ -1997,7 +2004,11 @@
       "pctToGoal": "You're {n}% to your goal.",
       "strengthEmpty": "Log a few sessions and your best lifts show up here.",
       "bestSet": "{weight} lb x {reps}",
-      "bestReps": "{reps} reps"
+      "bestReps": "{reps} reps",
+      "tabConsistency": "Consistency",
+      "statWorkouts": "Workouts",
+      "statDaysLogged": "Days logged",
+      "consistencyEmpty": "Your weekly summary appears once you have a week of training behind you."
     },
     "nutrition": {
       "title": "Nutrition",

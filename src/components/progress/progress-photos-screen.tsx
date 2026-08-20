@@ -8,7 +8,7 @@ import { useMemo, useRef, useState, useTransition, type ReactElement } from 'rea
 import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
-import { PortalScreen, PortalHeader, PortalTabs, PortalMeter, PortalDataRow } from '@/components/portal/portal-chrome';
+import { PortalScreen, PortalHeader, PortalTabs, PortalMeter, PortalDataRow, PortalStatRow } from '@/components/portal/portal-chrome';
 import { PortalCard, PortalLabel } from '@/components/portal/today-cards';
 import { WeightTrendChart } from '@/components/progress/weight-trend-chart';
 import type { StrengthSummary } from '@/lib/progress/strength';
@@ -16,7 +16,7 @@ import { RecipeImage } from '@/components/coach/recipe-image';
 import { PhysiqueAnalysisButton } from '@/components/progress/physique-analysis';
 import { BodyProgress } from '@/components/progress/body-progress';
 import { createClient } from '@/lib/supabase/client';
-import type { BodyStats } from '@/lib/body/types';
+import type { BodyStats, WeekRollup } from '@/lib/body/types';
 import {
   recordPhotoAction,
   listPhotosAction,
@@ -37,10 +37,11 @@ const KG_TO_LB = 2.20462;
  * job is to show progress, and this app fails open everywhere so an empty tab and a broken query
  * look identical. It appears once there is a story to tell, which happens on its own as she trains.
  *
- * `gallery` and `compare` keep their VALUES so every existing ?tab= link still resolves; the
- * handoff calls them Photos and Compare, which is what the labels say.
+ * `gallery` keeps its VALUE so /you's existing ?tab= link still resolves; the contract labels it
+ * Photos, which is what the label says. `compare` stays reachable by URL but is off the tab row:
+ * the contract's fifth tab is Consistency, and Compare lives inside the Photos screen there.
  */
-export type Tab = 'overview' | 'body' | 'strength' | 'gallery' | 'compare';
+export type Tab = 'overview' | 'body' | 'strength' | 'gallery' | 'consistency' | 'compare';
 
 export function ProgressPhotosScreen({
   initialPhotos,
@@ -75,7 +76,7 @@ export function ProgressPhotosScreen({
     { value: 'body', label: t('tabBody') },
     ...(strength?.hasEnough ? [{ value: 'strength' as Tab, label: t('tabStrength') }] : []),
     { value: 'gallery', label: t('tabGallery') },
-    { value: 'compare', label: t('tabCompare') },
+    { value: 'consistency', label: t('tabConsistency') },
   ];
 
   return (
@@ -92,6 +93,8 @@ export function ProgressPhotosScreen({
         <Strength strength={strength} />
       ) : tab === 'gallery' ? (
         <Gallery photos={photos} profileId={profileId} locale={locale} onChanged={refresh} />
+      ) : tab === 'consistency' ? (
+        <Consistency rollups={body.rollups} locale={locale} />
       ) : (
         <Compare photos={photos} locale={locale} />
       )}
@@ -160,6 +163,54 @@ function Overview({
           <p className="mt-2.5 text-center text-[13px] text-soft">{t('pctToGoal', { n: goal.pct })}</p>
         </PortalCard>
       )}
+    </div>
+  );
+}
+
+/**
+ * Consistency: the week-by-week rollup getBodyStats already computes and nothing rendered.
+ *
+ * The contract's fifth Progress tab. It is the one tab on this screen that is about SHOWING UP
+ * rather than about results, which is why it is worth its own place: a member whose weight is flat
+ * for a fortnight can still see four trained weeks behind her, and that is usually the true answer
+ * to "is this working".
+ */
+function Consistency({ rollups, locale }: { rollups: WeekRollup[]; locale: string }): ReactElement {
+  const t = useTranslations('app.progress');
+  if (rollups.length === 0) {
+    return <p className="py-12 text-center text-[13px] text-faint">{t('consistencyEmpty')}</p>;
+  }
+  const fmt = (iso: string): string => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(
+      new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1),
+    );
+  };
+  // Newest first: the week she is in is the one she came to check.
+  const weeks = [...rollups].reverse();
+  return (
+    <div className="grid gap-2.5">
+      {weeks.map((w) => (
+        <PortalCard key={w.startOn} className="p-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <PortalLabel>{`${fmt(w.startOn)} - ${fmt(w.endOn)}`}</PortalLabel>
+            {w.weightDeltaLb != null && w.weightDeltaLb !== 0 && (
+              <span className="text-[12px] tabular-nums text-muted">
+                {w.weightDeltaLb > 0 ? `+${w.weightDeltaLb}` : w.weightDeltaLb} lb
+              </span>
+            )}
+          </div>
+          <PortalStatRow
+            className="mt-2"
+            order="label-first"
+            divider
+            stats={[
+              { key: 'w', label: t('statWorkouts'), value: String(w.workouts) },
+              { key: 'd', label: t('statDaysLogged'), value: String(w.daysLogged) },
+            ]}
+          />
+        </PortalCard>
+      ))}
     </div>
   );
 }

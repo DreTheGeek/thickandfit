@@ -25,7 +25,7 @@ export default async function ProgressPage({
   const sp = await searchParams;
   // Every previous value still resolves. /you links ?tab=body and the handoff's Photos entry point
   // is ?tab=gallery, so widening the vocabulary must not orphan either.
-  const TABS: Tab[] = ['overview', 'body', 'strength', 'gallery', 'compare'];
+  const TABS: Tab[] = ['overview', 'body', 'strength', 'gallery', 'consistency', 'compare'];
   const initialTab: Tab = TABS.includes(sp.tab as Tab) ? (sp.tab as Tab) : 'overview';
   const tz = await getProfileTimezone(ctx.userId);
 

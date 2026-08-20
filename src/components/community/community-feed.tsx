@@ -4,6 +4,7 @@ import { useOptimistic, useRef, useState, useTransition, type ReactElement } fro
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { PostModerationMenu } from '@/components/community/post-moderation-menu';
+import { PortalTabs } from '@/components/portal/portal-chrome';
 import { createClient } from '@/lib/supabase/client';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
@@ -327,6 +328,7 @@ function DeleteButton({ postId }: { postId: string }): ReactElement {
   const t = useTranslations('app.community');
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [feedTab, setFeedTab] = useState<FeedTab>('foryou');
 
   function remove(): void {
     if (pending) return;
@@ -425,6 +427,8 @@ function Broadcast({ post, canDelete }: { post: FeedPost; canDelete: boolean }):
   );
 }
 
+type FeedTab = 'foryou' | 'following' | 'challenges';
+
 export function CommunityFeed({
   data,
   canBroadcast,
@@ -437,6 +441,7 @@ export function CommunityFeed({
   const t = useTranslations('app.community');
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [feedTab, setFeedTab] = useState<FeedTab>('foryou');
 
   function join(): void {
     if (!data.challenge || pending) return;
@@ -449,34 +454,70 @@ export function CommunityFeed({
 
   const empty = !data.broadcast && data.posts.length === 0;
 
+  /**
+   * The contract's three tabs.
+   *
+   * FOLLOWING IS HONEST ABOUT ITSELF. There is no follow graph in this app: nothing stores who
+   * follows whom, so the tab cannot filter anything and inventing a subset of the same feed would
+   * be a lie dressed as a feature. It says what it is and what it will be. That is better than
+   * hiding a tab the design specifies, and much better than a tab that silently shows everything
+   * while implying it shows a chosen few.
+   *
+   * CHALLENGES is real: it is the challenge card, which already renders whenever one is live, given
+   * its own tab instead of stacked above the feed where it competes with the composer.
+   */
+  const posts = empty ? null : data.posts;
+
   return (
-    <div className="space-y-4">
-      {data.challenge ? <ChallengeCard challenge={data.challenge} onJoin={join} joining={pending} /> : null}
+    <>
+      <PortalTabs<FeedTab>
+        value={feedTab}
+        onChange={setFeedTab}
+        options={[
+          { value: 'foryou', label: t('tabForYou') },
+          { value: 'following', label: t('tabFollowing') },
+          { value: 'challenges', label: t('tabChallenges') },
+        ]}
+      />
 
-      <Composer canBroadcast={canBroadcast} viewerId={viewerId} />
-
-      {data.broadcast ? (
-        <Broadcast
-          post={data.broadcast}
-          canDelete={canBroadcast || data.broadcast.author.id === viewerId}
-        />
-      ) : null}
-
-      {empty ? (
-        <Card className="p-8 text-center">
-          <p className="text-[15px] font-semibold text-ink">{t('emptyTitle')}</p>
-          <p className="mt-1 text-[13px] text-muted">{t('emptyBody')}</p>
-        </Card>
+      {feedTab === 'challenges' ? (
+        <div className="space-y-4">
+          {data.challenge ? (
+            <ChallengeCard challenge={data.challenge} onJoin={join} joining={pending} />
+          ) : (
+            <p className="py-12 text-center text-[13px] text-faint">{t('noChallenge')}</p>
+          )}
+        </div>
+      ) : feedTab === 'following' ? (
+        <p className="py-12 text-center text-[13px] leading-relaxed text-faint">{t('followingSoon')}</p>
       ) : (
-        data.posts.map((p) => (
-          <PostCard
-            key={p.id}
-            post={p}
-            canDelete={canBroadcast || p.author.id === viewerId}
-            viewerId={viewerId}
-          />
-        ))
+        <div className="space-y-4">
+          <Composer canBroadcast={canBroadcast} viewerId={viewerId} />
+
+          {data.broadcast ? (
+            <Broadcast
+              post={data.broadcast}
+              canDelete={canBroadcast || data.broadcast.author.id === viewerId}
+            />
+          ) : null}
+
+          {posts === null ? (
+            <Card className="p-8 text-center">
+              <p className="text-[15px] font-semibold text-ink">{t('emptyTitle')}</p>
+              <p className="mt-1 text-[13px] text-muted">{t('emptyBody')}</p>
+            </Card>
+          ) : (
+            posts.map((p) => (
+              <PostCard
+                key={p.id}
+                post={p}
+                canDelete={canBroadcast || p.author.id === viewerId}
+                viewerId={viewerId}
+              />
+            ))
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 }
