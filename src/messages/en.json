@@ -2557,7 +2557,10 @@
       "today": "Today",
       "yesterday": "Yesterday",
       "messagePlaceholder": "Message...",
-      "send": "Send"
+      "send": "Send",
+      "prBadge": "PR",
+      "prSet": "{weight} lb x {reps}",
+      "prReps": "{reps} reps"
     },
     "cycle": {
       "title": "Your cycle",

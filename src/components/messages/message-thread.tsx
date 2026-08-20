@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type ReactElement } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { Icon } from '@/components/ui/icons';
 import { createClient } from '@/lib/supabase/client';
 import { sendMessageAction } from '@/lib/messages/message-actions';
 import type { ThreadMessage } from '@/lib/messages/messages';
@@ -46,14 +47,32 @@ function timeLabel(iso: string, locale: string): string {
 // Supabase Realtime INSERT subscription on this client's thread; sends echo back over the same
 // channel, so we never optimistically duplicate. Unique channel topic per mount avoids reusing an
 // already-subscribed channel on remount.
+export type ThreadPR = {
+  exerciseId: string;
+  name: string;
+  weight: number;
+  reps: number;
+  bodyweight: boolean;
+  achievedAt: string;
+};
+
 export function MessageThread({
   clientId,
   viewerId,
   initialMessages,
+  prs = [],
 }: {
   clientId: string;
   viewerId: string;
   initialMessages: ThreadMessage[];
+  /**
+   * Recent personal records, rendered INTO the timeline by date. The handoff embeds this card in
+   * the coach thread and the obvious build is a `messages` row, which would be wrong twice: the
+   * coach console reads that table, so every PR would land in Stephanie's inbox as something to
+   * read, and a row in a conversation is a thing somebody said. These are read from set_logs and
+   * drawn here, so the card is a fact about her training rather than a message nobody sent.
+   */
+  prs?: ThreadPR[];
 }): ReactElement {
   const t = useTranslations('app.messages');
   const locale = useLocale();
@@ -98,29 +117,67 @@ export function MessageThread({
     });
   }
 
+  // One timeline, ordered by time. A PR that landed on Tuesday belongs under Tuesday's divider,
+  // not pinned above or below the conversation.
+  type Item =
+    | { kind: 'msg'; at: string; msg: ThreadMessage }
+    | { kind: 'pr'; at: string; pr: ThreadPR };
+  const items: Item[] = [
+    ...messages.map((m): Item => ({ kind: 'msg', at: m.createdAt, msg: m })),
+    ...prs.map((p): Item => ({ kind: 'pr', at: p.achievedAt, pr: p })),
+  ].sort((a, b) => a.at.localeCompare(b.at));
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 space-y-2 overflow-y-auto p-4">
-        {messages.length === 0 ? (
+        {items.length === 0 ? (
           <p className="pt-8 text-center text-[13px] text-faint">{t('noMessages')}</p>
         ) : (
-          messages.map((m, i) => {
+          items.map((item, i) => {
+            const newDay = i === 0 || dayKey(item.at) !== dayKey(items[i - 1].at);
+            const dayDivider = newDay ? (
+              <div className="flex items-center gap-3 py-2">
+                <div className="h-px flex-1 bg-divider" />
+                <span
+                  suppressHydrationWarning
+                  className="text-[11px] font-medium uppercase tracking-[1px] text-faint"
+                >
+                  {dayLabel(item.at, locale, t('today'), t('yesterday'))}
+                </span>
+                <div className="h-px flex-1 bg-divider" />
+              </div>
+            ) : null;
+
+            if (item.kind === 'pr') {
+              const p = item.pr;
+              return (
+                <div key={`pr-${p.exerciseId}-${p.achievedAt}`}>
+                  {dayDivider}
+                  {/* The handoff's `.workout-context` card with its PR badge. Deliberately NOT a
+                      chat bubble: it is not something either of them said. */}
+                  <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface px-3.5 py-3">
+                    <span className="grid h-9 w-9 flex-none place-items-center rounded-[10px] bg-warm text-faint">
+                      <Icon name="dumbbell" size={16} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <strong className="block truncate text-[13px]">{p.name}</strong>
+                      <small className="block text-faint">
+                        {p.bodyweight ? t('prReps', { reps: p.reps }) : t('prSet', { weight: p.weight, reps: p.reps })}
+                      </small>
+                    </span>
+                    <span className="flex-none rounded-full bg-accent px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.5px] text-accent-ink">
+                      {t('prBadge')}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+
+            const m = item.msg;
             const mine = m.senderId === viewerId;
-            const newDay = i === 0 || dayKey(m.createdAt) !== dayKey(messages[i - 1].createdAt);
             return (
               <div key={m.id}>
-                {newDay ? (
-                  <div className="flex items-center gap-3 py-2">
-                    <div className="h-px flex-1 bg-divider" />
-                    <span
-                      suppressHydrationWarning
-                      className="text-[11px] font-medium uppercase tracking-[1px] text-faint"
-                    >
-                      {dayLabel(m.createdAt, locale, t('today'), t('yesterday'))}
-                    </span>
-                    <div className="h-px flex-1 bg-divider" />
-                  </div>
-                ) : null}
+                {dayDivider}
                 <div className={mine ? 'flex flex-col items-end' : 'flex flex-col items-start'}>
                   <div
                     className={[

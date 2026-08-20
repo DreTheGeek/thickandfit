@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { requireAuthOrPaused } from '@/lib/auth/guards';
 import { getThread } from '@/lib/messages/messages';
+import { getRecentPRs } from '@/lib/workout/recent-prs';
 import { MessageThread } from '@/components/messages/message-thread';
 import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { CoachTabs } from '@/components/portal/coach-tabs';
@@ -15,7 +16,12 @@ export default async function InboxPage(): Promise<ReactElement> {
   const ctx = await requireAuthOrPaused();
   const t = await getTranslations('app.you');
   const tn = await getTranslations('app.nav');
-  const messages = await getThread(ctx.userId);
+  const [messages, prs] = await Promise.all([
+    getThread(ctx.userId),
+    // Read from set_logs and drawn into the timeline, not stored as messages: the coach console
+    // reads the same table, so a PR row would land in Stephanie's inbox as something to read.
+    ctx.companyId ? getRecentPRs(ctx.companyId, ctx.userId) : Promise.resolve([]),
+  ]);
 
   return (
     <PortalScreen>
@@ -26,7 +32,7 @@ export default async function InboxPage(): Promise<ReactElement> {
       <CoachTabs />
       <CoachActions />
       <div className="flex h-[68vh] flex-col overflow-hidden rounded-2xl border border-line">
-        <MessageThread clientId={ctx.userId} viewerId={ctx.userId} initialMessages={messages} />
+        <MessageThread clientId={ctx.userId} viewerId={ctx.userId} initialMessages={messages} prs={prs} />
       </div>
       <p className="mt-2.5 text-[11px] text-faint">{t('coachHumanNote')}</p>
     </PortalScreen>
