@@ -96,3 +96,6 @@ supabase/.temp/*
 
 # Screenshot output from portal-shots.mjs (regenerate, do not commit)
 .qa-visual/portal/
+
+# Dev server output (pnpm dev > dev-run.log)
+dev-run.log
