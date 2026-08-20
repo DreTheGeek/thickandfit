@@ -22,16 +22,32 @@ export function WeightTrendChart({
   const plotH = H - padT - padB;
   const n = series.length;
 
+  /**
+   * THE SCALE FOLLOWS HER DATA, NOT HER GOAL.
+   *
+   * The goal used to join the min/max, so a member 24lb out had a y-axis spanning 164 to 138 while
+   * her actual range was 165 to 155. Ten pounds of real work rendered as a flat line in the top
+   * third of the card: technically accurate and it reads as nothing happening, on the one screen
+   * whose entire job is to show that something did.
+   *
+   * So the axis is built from the readings. The goal still gets its line, and when it falls outside
+   * the view it is CLAMPED to the bottom edge rather than dropped, so "141" stays visible as a
+   * marker of how far there is to go without flattening how far she has come. `goalOutside` drives
+   * the label so a pinned line cannot be misread as a goal she is nearly touching.
+   */
   const vals = series.map((p) => p.lb);
-  const withGoal = goalLb != null ? [...vals, goalLb] : vals;
-  const rawMin = Math.min(...withGoal);
-  const rawMax = Math.max(...withGoal);
+  const rawMin = Math.min(...vals);
+  const rawMax = Math.max(...vals);
   const spread = Math.max(4, rawMax - rawMin);
   const min = rawMin - spread * 0.15;
   const max = rawMax + spread * 0.15;
+  const goalOutside = goalLb != null && (goalLb < min || goalLb > max);
 
   const x = (i: number): number => (n <= 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW);
   const y = (v: number): number => padT + plotH - ((v - min) / (max - min)) * plotH;
+
+  // Kept a few px inside the plot so the dashes and the label are both fully drawn.
+  const goalY = goalLb == null ? 0 : Math.min(padT + plotH - 2, Math.max(padT + 12, y(goalLb)));
 
   const line = series.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.lb).toFixed(1)}`).join(' ');
   const area =
@@ -65,17 +81,21 @@ export function WeightTrendChart({
 
       {goalLb != null && (
         <g>
+          {/* Clamped into the plot. An off-scale goal drawn at its true y sits outside the viewBox
+              and simply disappears, which is how "no goal set" and "goal is 24lb away" would end up
+              looking identical. Pinned to the edge and dimmed instead, so it reads as a marker of
+              distance rather than a line she is about to cross. */}
           <line
             x1={padL}
             x2={W - padR}
-            y1={y(goalLb)}
-            y2={y(goalLb)}
+            y1={goalY}
+            y2={goalY}
             stroke="var(--c-ink)"
             strokeWidth={1.5}
             strokeDasharray="5 5"
-            opacity={0.5}
+            opacity={goalOutside ? 0.35 : 0.5}
           />
-          <text x={W - padR} y={y(goalLb) - 5} textAnchor="end" fontSize="11" fill="var(--c-muted)">
+          <text x={W - padR} y={goalY - 5} textAnchor="end" fontSize="11" fill="var(--c-muted)">
             {goalLabel} {Math.round(goalLb)}
           </text>
         </g>
