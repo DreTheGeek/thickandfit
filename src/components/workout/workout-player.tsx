@@ -709,15 +709,19 @@ export function WorkoutPlayer({
 
         {/* Rest banner */}
         {rest !== null && (
-          <div className="mt-4 flex items-center justify-between rounded-2xl bg-ink px-5 py-3 text-white">
-            <span className="text-[12px] uppercase tracking-[2px] text-white/70">
+          // text-bg, not text-white. bg-ink resolves to #ffffff inside .tf-portal, so this rendered
+          // a white banner carrying white text: the rest countdown, the word REST and the skip
+          // control were all invisible, mid-set, on the one screen she is looking at with a timer
+          // running. Correct on the light palette, which is why it survived a year.
+          <div className="mt-4 flex items-center justify-between rounded-2xl bg-ink px-5 py-3 text-bg">
+            <span className="text-[12px] uppercase tracking-[2px] text-bg/70">
               {t('rest')}
             </span>
             <span className="font-display text-[24px]">{rest}s</span>
             <button
               type="button"
               onClick={() => setRest(null)}
-              className="tf-press text-[12px] uppercase tracking-[1px] text-white/70"
+              className="tf-press text-[12px] uppercase tracking-[1px] text-bg/70"
             >
               {t('skipRest')}
             </button>

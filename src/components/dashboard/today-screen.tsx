@@ -369,7 +369,9 @@ export function TodayScreen({
           <div key={d.key} className="text-center">
             <div className="text-[11px] text-faint">{d.label}</div>
             {d.isToday ? (
-              <div className="mx-auto mt-1 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-ink text-[13px] text-white">
+              // text-bg, not text-white: bg-ink is #ffffff inside .tf-portal, so a literal white
+              // number sat invisible inside a white circle and today had no date on it.
+              <div className="mx-auto mt-1 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-ink text-[13px] text-bg">
                 {d.day}
               </div>
             ) : d.completed ? (

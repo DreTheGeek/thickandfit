@@ -41,6 +41,7 @@ export function DiaryScreen({
   isToday: boolean;
 }): ReactElement {
   const t = useTranslations('app.nutrition');
+  const tn = useTranslations('app.nav');
   const locale = useLocale();
   const router = useRouter();
   const [favSet, setFavSet] = useState<Set<string>>(() => new Set(favoriteIds));
@@ -179,8 +180,11 @@ export function DiaryScreen({
 
   return (
     <PortalScreen>
+      {/* The nav label, not t('title'): the tab at the bottom of this screen says Fuel and the
+          header said Nutrition, which is two names for one place. The handoff's header is FUEL.
+          Train made the same change for the same reason. */}
       <PortalHeader
-        title={t('title')}
+        title={tn('nutrition')}
         sub={dateLabel}
         right={
           <>
@@ -190,9 +194,15 @@ export function DiaryScreen({
               label={t('prevDay')}
               flip
             />
+            {/* Always a PAIR, even on today where there is no tomorrow to go to. A lone back-chevron
+                sitting on the right edge reads as "close" rather than as "the day before". */}
             {nextDate ? (
               <PortalIconButton icon="chevronRight" href={`/nutrition?date=${nextDate}`} label={t('nextDay')} />
-            ) : null}
+            ) : (
+              <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full text-line">
+                <Icon name="chevronRight" size={16} />
+              </span>
+            )}
           </>
         }
       />
@@ -262,7 +272,10 @@ export function DiaryScreen({
             score >= 7 ? 'bg-accent/12 text-accent' : 'bg-warm text-muted',
           ].join(' ')}
         >
-          <Icon name="sparkles" size={12} />
+          {/* Was a sparkle. The day score is arithmetic over her own logged macros against her own
+              targets, so dressing it as machine-magic both misdescribes it and breaks the brand
+              rule. A check reads as "you hit it", which is what it means. */}
+          <Icon name="check" size={12} />
           {t('dayScore', { n: score })}
         </div>
       )}

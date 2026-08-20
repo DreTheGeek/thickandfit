@@ -558,9 +558,11 @@ export function PhotoScan({
             <Icon name="camera" size={18} />
           </span>
           <span className="min-w-0">
+            {/* No sparkle. It is the universal "a machine did this" glyph, and this product's whole
+                position is that the method is HERS, in her voice, with the estimate presented
+                honestly rather than as magic. The camera already says what this button does. */}
             <span className="flex items-center gap-1.5 text-[14px] font-semibold">
               {t('photoScanTitle')}
-              <Icon name="sparkles" size={14} />
             </span>
             <span className="block text-[12px] text-faint">{t('photoScanSubtitle')}</span>
           </span>

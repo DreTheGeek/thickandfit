@@ -62,7 +62,11 @@ export function SupportWidget(): ReactElement {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="tf-press fixed right-0 bottom-[168px] z-40 rounded-l-lg bg-ink px-2 py-4 text-[11px] font-semibold uppercase tracking-[1px] text-white shadow-lg [writing-mode:vertical-rl] lg:bottom-28"
+        // text-bg, not text-white. `bg-ink` is a ROLE and flips: near-black on the light palette,
+        // #ffffff inside .tf-portal. Paired with a literal white it produced a white tab carrying
+        // white text, so the member portal's support entry point was a blank slab with an invisible
+        // label. `text-bg` is the other half of the same role and stays legible on either ground.
+        className="tf-press fixed right-0 bottom-[168px] z-40 rounded-l-lg bg-ink px-2 py-4 text-[11px] font-semibold uppercase tracking-[1px] text-bg shadow-lg [writing-mode:vertical-rl] lg:bottom-28"
         aria-label={t('title')}
       >
         {t('tab')}

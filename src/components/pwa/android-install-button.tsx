@@ -32,7 +32,9 @@ export function AndroidInstallButton() {
       }}
       /* Ink, not the hardcoded functional green (brand rule: green signals state, not chrome).
          Moved to bottom-left so it no longer sits on top of the quick-add FAB at bottom-right. */
-      className="tf-press fixed bottom-4 left-4 z-50 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white shadow-lg"
+      // text-bg, not text-white: this renders from the ROOT layout, so it appears over the member
+      // portal too, where bg-ink is #ffffff and a literal white label vanishes into its own pill.
+      className="tf-press fixed bottom-4 left-4 z-50 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-bg shadow-lg"
     >
       {t('installApp')}
     </button>
