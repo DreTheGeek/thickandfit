@@ -546,7 +546,13 @@
       "previewEstimateNote": "El tiempo es un estimado: asume un ritmo constante y los descansos que pide tu plan.",
       "previewEquipment": "Lo que necesitas",
       "previewSuperset": "Superserie",
-      "previewGroup": "Juntos"
+      "previewGroup": "Juntos",
+      "myPlan": "Mi plan",
+      "programs": "Programas",
+      "favorites": "Favoritos",
+      "current": "Actual",
+      "noPrograms": "Tus programas aparecen aquí cuando Steph te asigne uno.",
+      "weeksN": "{n} semanas"
     },
     "library": {
       "searchPlaceholder": "Buscar ejercicios",
@@ -2163,7 +2169,9 @@
       "modeSearch": "Buscar",
       "modeBarcode": "Código",
       "modeFavorites": "Favoritos",
-      "photoTotalKcal": "{n} calorías"
+      "photoTotalKcal": "{n} calorías",
+      "tabMeals": "Comidas",
+      "tabNutrition": "Nutrición"
     },
     "disclaimer": {
       "title": "Antes de empezar",

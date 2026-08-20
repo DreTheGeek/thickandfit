@@ -546,7 +546,13 @@
       "previewEstimateNote": "Time is an estimate: it assumes a steady tempo and the rest your plan asks for.",
       "previewEquipment": "What you need",
       "previewSuperset": "Superset",
-      "previewGroup": "Together"
+      "previewGroup": "Together",
+      "myPlan": "My Plan",
+      "programs": "Programs",
+      "favorites": "Favorites",
+      "current": "Current",
+      "noPrograms": "Your programs appear here once Steph assigns one.",
+      "weeksN": "{n} weeks"
     },
     "library": {
       "searchPlaceholder": "Search exercises",
@@ -2163,7 +2169,9 @@
       "modeSearch": "Search",
       "modeBarcode": "Barcode",
       "modeFavorites": "Favorites",
-      "photoTotalKcal": "{n} calories"
+      "photoTotalKcal": "{n} calories",
+      "tabMeals": "Meals",
+      "tabNutrition": "Nutrition"
     },
     "disclaimer": {
       "title": "Before you begin",

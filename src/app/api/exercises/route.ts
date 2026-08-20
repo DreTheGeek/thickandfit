@@ -16,14 +16,32 @@ async function GET_h(req: Request) {
   const muscle = searchParams.get('muscle');
   const equipment = searchParams.get('equipment');
   const difficulty = searchParams.get('difficulty');
+  // Her starred movements. The table and its write action already existed for the coach console;
+  // this is the member's half of the same feature.
+  const onlyFavorites = searchParams.get('favorites') === '1';
 
   const supabase = createServiceClient();
+
+  let favoriteIds: string[] | null = null;
+  if (onlyFavorites) {
+    const { data: favs } = await supabase
+      .from('exercise_favorites')
+      .select('exercise_id')
+      .eq('profile_id', ctx.userId);
+    favoriteIds = ((favs ?? []) as { exercise_id: string }[]).map((r) => r.exercise_id);
+    // No stars is an empty list, not an unfiltered one. `.in()` with [] would return nothing anyway,
+    // but returning early makes that a decision rather than an accident of PostgREST behaviour.
+    if (favoriteIds.length === 0) return apiSuccess({ exercises: [] });
+  }
+
   let query = supabase
     .from('exercises')
     .select('id, name_en, name_es, muscle_group, equipment, difficulty, video_mux_id, is_own_demo')
     // Curated out (0105). The single door behind the program builder and the exercise browser, so
     // one filter here covers both pickers.
     .is('archived_at', null);
+
+  if (favoriteIds) query = query.in('id', favoriteIds);
 
   query = ctx.companyId
     ? query.or(`company_id.is.null,company_id.eq.${ctx.companyId}`)

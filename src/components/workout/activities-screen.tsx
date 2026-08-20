@@ -40,7 +40,18 @@ export type HistoryItem = {
 };
 export type WorkoutStats = { thisWeek: number; total: number; volumeLb: number };
 
-type Tab = 'program' | 'library' | 'history';
+/**
+ * The contract's three tabs come first and in its order: My Plan, Programs, Favorites.
+ *
+ * Library and History follow rather than being replaced by them. Both are real, used features over
+ * 1,305 movements and her logged sessions, and the contract is a static mock whose tab row was
+ * never asked to carry them. Dropping working screens to match the count would be matching a
+ * picture at the member's expense. The row scrolls, so five costs nothing.
+ *
+ * `program` keeps its VALUE so nothing that links here breaks; the contract's wording is on the
+ * label.
+ */
+type Tab = 'program' | 'programs' | 'favorites' | 'library' | 'history';
 
 export function ActivitiesScreen({
   program,
@@ -49,6 +60,7 @@ export function ActivitiesScreen({
   locale,
   activation,
   hasStarterProgram = false,
+  allPlans = [],
 }: {
   program: ActivitiesProgram | null;
   history: HistoryItem[];
@@ -57,6 +69,8 @@ export function ActivitiesScreen({
   activation: Activation;
   /** STARTER_PROGRAM_ID is set, so onboarding already assigned her a plan. */
   hasStarterProgram?: boolean;
+  /** Every plan ever assigned to her, newest first, for the Programs tab. */
+  allPlans?: { id: string; name: string; weeks: number | null }[];
 }): ReactElement {
   const t = useTranslations('app.activities');
   const tn = useTranslations('app.nav');
@@ -69,7 +83,9 @@ export function ActivitiesScreen({
         value={tab}
         onChange={setTab}
         options={[
-          { value: 'program', label: t('program') },
+          { value: 'program', label: t('myPlan') },
+          { value: 'programs', label: t('programs') },
+          { value: 'favorites', label: t('favorites') },
           { value: 'library', label: t('library') },
           { value: 'history', label: t('history') },
         ]}
@@ -150,6 +166,36 @@ export function ActivitiesScreen({
             />
           </>
         ))}
+
+      {/* Every program she has been given, newest first. /workouts renders plans[0] and nothing
+          showed the rest, so a member on her third block had no way to look back at the first two. */}
+      {tab === 'programs' &&
+        (allPlans.length === 0 ? (
+          <EmptyState title={t('noPrograms')} />
+        ) : (
+          <div>
+            {allPlans.map((pl, i) => (
+              <ListRow
+                key={pl.id}
+                href={`/workout/${pl.id}`}
+                divider={i < allPlans.length - 1}
+                title={pl.name}
+                sub={pl.weeks ? t('weeksN', { n: pl.weeks }) : ''}
+                trailing={
+                  i === 0 ? (
+                    <span className="rounded-full bg-warm px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.5px] text-soft">
+                      {t('current')}
+                    </span>
+                  ) : undefined
+                }
+              />
+            ))}
+          </div>
+        ))}
+
+      {/* Starred movements. The table and its actions already existed for the coach console; this
+          is the member's half of the same feature, not a new one. */}
+      {tab === 'favorites' && <ExerciseBrowser locale={locale} onlyFavorites />}
 
       {tab === 'library' && <ExerciseBrowser locale={locale} />}
 

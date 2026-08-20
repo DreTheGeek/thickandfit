@@ -43,7 +43,14 @@ const labelKey = (slug: string): string =>
 const humanize = (slug: string): string =>
   slug.replace(/[\s-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactElement {
+export function ExerciseBrowser({
+  locale = 'en',
+  onlyFavorites = false,
+}: {
+  locale?: string;
+  /** Narrow to her starred movements. Drives the Favorites tab on Train. */
+  onlyFavorites?: boolean;
+}): ReactElement {
   const t = useTranslations('app.library');
   // t() on a missing key renders the key path itself, which is how "library.muscles.neck" would end
   // up printed on a card. t.has() is the guard, humanize() is the readable fallback.
@@ -66,6 +73,7 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
     if (q) p.set('q', q);
     if (muscle) p.set('muscle', muscle);
     if (equipment) p.set('equipment', equipment);
+    if (onlyFavorites) p.set('favorites', '1');
     fetch(`/api/exercises?${p.toString()}`, { signal: ctrl.signal })
       .then((r) => r.json())
       .then((j) => {
@@ -76,7 +84,7 @@ export function ExerciseBrowser({ locale = 'en' }: { locale?: string }): ReactEl
         if (e?.name !== 'AbortError') setState('error');
       });
     return () => ctrl.abort();
-  }, [q, muscle, equipment, reloadKey]);
+  }, [q, muscle, equipment, reloadKey, onlyFavorites]);
 
   const select =
     'border border-line bg-surface px-3 py-2.5 text-[13px] text-ink outline-none focus:border-ink';

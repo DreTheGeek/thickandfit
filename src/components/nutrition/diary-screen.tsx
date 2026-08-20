@@ -207,16 +207,16 @@ export function DiaryScreen({
         }
       />
 
-      {/* Three routes, not three local views. Plan and Photos already exist and were reachable only
-          from the You menu, which is two taps and a screen away from the place she is actually
-          thinking about food. The handoff's third tab is "Nutrition" with no defined content; rather
-          than invent one, the row carries what this app really has. */}
+      {/* The contract's wording, on three routes rather than three local views.
+          Meals is her meal plan and Nutrition is the food photo record, which are the two things
+          this app actually has behind those names. Both existed and were reachable only from the
+          You menu, two taps from the place she is thinking about food. */}
       <PortalTabs
         value={'today' as const}
         options={[
           { value: 'today' as const, label: t('tabToday') },
-          { value: 'plan' as const, label: t('tabPlan') },
-          { value: 'photos' as const, label: t('tabPhotos') },
+          { value: 'plan' as const, label: t('tabMeals') },
+          { value: 'photos' as const, label: t('tabNutrition') },
         ]}
         variant="grid"
         hrefFor={(v) => (v === 'plan' ? '/nutrition/plan' : v === 'photos' ? '/nutrition/photos' : '/nutrition')}

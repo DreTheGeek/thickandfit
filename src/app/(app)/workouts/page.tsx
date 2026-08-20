@@ -45,6 +45,8 @@ export default async function WorkoutsPage({
   let program: ActivitiesProgram | null = null;
   let history: HistoryItem[] = [];
   let stats: WorkoutStats | null = null;
+  // Hoisted: `plans` is scoped to the entitled branch, and the Programs tab needs it at render.
+  let allPlans: { id: string; name: string; weeks: number | null }[] = [];
 
   if (ctx.companyId) {
     // On a break, the program half of this screen is closed and the history half is not. Skipping
@@ -57,6 +59,11 @@ export default async function WorkoutsPage({
           ctx.companyId,
           ctx.userId,
         )) as unknown as AssignedPlan[]);
+    allPlans = plans.map((pl) => ({
+      id: pl.id,
+      name: (locale === 'es' && pl.name_es) || pl.name_en || '',
+      weeks: pl.weeks ?? null,
+    }));
     const plan = plans[0];
 
     if (plan) {
@@ -219,6 +226,9 @@ export default async function WorkoutsPage({
       locale={locale}
       activation={activation}
       hasStarterProgram={(process.env.STARTER_PROGRAM_ID ?? '').trim().length > 0}
+      // Every plan ever assigned, for the Programs tab. getAssignedPlans already returned them all
+      // and the page used only plans[0], so a member on her third block could not look back.
+      allPlans={allPlans}
     />
   );
 }
