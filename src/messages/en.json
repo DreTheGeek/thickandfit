@@ -1976,7 +1976,20 @@
       "chest": "Chest",
       "arms": "Arms",
       "thighs": "Thighs",
-      "bodyFat": "Body fat"
+      "bodyFat": "Body fat",
+      "tabOverview": "Overview",
+      "tabStrength": "Strength",
+      "weightTrend": "Weight trend",
+      "last90Days": "Last 90 days",
+      "totalChange": "Total change",
+      "progressSummary": "Summary",
+      "startWeight": "Start weight",
+      "timeToGoal": "Time to goal",
+      "weeksN": "{n, plural, one {# week} other {# weeks}}",
+      "pctToGoal": "You're {n}% to your goal.",
+      "strengthEmpty": "Log a few sessions and your best lifts show up here.",
+      "bestSet": "{weight} lb x {reps}",
+      "bestReps": "{reps} reps"
     },
     "nutrition": {
       "title": "Nutrition",

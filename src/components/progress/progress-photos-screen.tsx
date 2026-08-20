@@ -8,8 +8,10 @@ import { useMemo, useRef, useState, useTransition, type ReactElement } from 'rea
 import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icons';
-import { PageTitle } from '@/components/ui/section';
-import { Segmented } from '@/components/ui/segmented';
+import { PortalScreen, PortalHeader, PortalTabs, PortalMeter, PortalDataRow } from '@/components/portal/portal-chrome';
+import { PortalCard, PortalLabel } from '@/components/portal/today-cards';
+import { WeightTrendChart } from '@/components/progress/weight-trend-chart';
+import type { StrengthSummary } from '@/lib/progress/strength';
 import { RecipeImage } from '@/components/coach/recipe-image';
 import { PhysiqueAnalysisButton } from '@/components/progress/physique-analysis';
 import { BodyProgress } from '@/components/progress/body-progress';
@@ -26,17 +28,37 @@ const BUCKET = 'progress-photos';
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB, matches the bucket cap.
 const KG_TO_LB = 2.20462;
 
-type Tab = 'gallery' | 'body' | 'compare';
+/**
+ * Five tabs, per the handoff, and `strength` is CONDITIONAL.
+ *
+ * set_logs holds 25 sets across 4 movements for one member today: the app is pre-launch, and her
+ * 256 migrating clients arrive with session-level Lenus history and no set-level loads at all. A
+ * Strength tab would render an empty state on day one for every one of them, on the screen whose
+ * job is to show progress, and this app fails open everywhere so an empty tab and a broken query
+ * look identical. It appears once there is a story to tell, which happens on its own as she trains.
+ *
+ * `gallery` and `compare` keep their VALUES so every existing ?tab= link still resolves; the
+ * handoff calls them Photos and Compare, which is what the labels say.
+ */
+export type Tab = 'overview' | 'body' | 'strength' | 'gallery' | 'compare';
 
 export function ProgressPhotosScreen({
   initialPhotos,
   profileId,
   body,
-  initialTab = 'gallery',
+  goal = null,
+  weeksToGo = null,
+  strength = null,
+  initialTab = 'overview',
 }: {
   initialPhotos: ProgressPhoto[];
   profileId: string;
   body: BodyStats;
+  /** Start / current / goal and percent, from the SAME helper Today reads. */
+  goal?: { startLb: number; currentLb: number; goalLb: number; pct: number } | null;
+  /** Weeks to goal at her current pace, or null when the engine has no honest date to give. */
+  weeksToGo?: number | null;
+  strength?: StrengthSummary | null;
   initialTab?: Tab;
 }): ReactElement {
   const t = useTranslations('app.progress');
@@ -48,34 +70,125 @@ export function ProgressPhotosScreen({
     setPhotos(await listPhotosAction());
   }
 
+  const tabs: { value: Tab; label: string }[] = [
+    { value: 'overview', label: t('tabOverview') },
+    { value: 'body', label: t('tabBody') },
+    ...(strength?.hasEnough ? [{ value: 'strength' as Tab, label: t('tabStrength') }] : []),
+    { value: 'gallery', label: t('tabGallery') },
+    { value: 'compare', label: t('tabCompare') },
+  ];
+
   return (
-    <div className="px-[22px] pb-7 pt-3">
-      <div className="mb-1.5">
-        <PageTitle>{t('title')}</PageTitle>
-      </div>
-      <p className="mb-[18px] text-[13px] text-faint">
-        {tab === 'body' ? t('bodySubtitle') : t('subtitle')}
-      </p>
+    <PortalScreen>
+      <PortalHeader title={t('title')} sub={tab === 'body' ? t('bodySubtitle') : t('subtitle')} />
 
-      <div className="mb-[22px]">
-        <Segmented<Tab>
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'gallery', label: t('tabGallery') },
-            { value: 'body', label: t('tabBody') },
-            { value: 'compare', label: t('tabCompare') },
-          ]}
-        />
-      </div>
+      <PortalTabs<Tab> value={tab} onChange={setTab} options={tabs} />
 
-      {tab === 'body' ? (
+      {tab === 'overview' ? (
+        <Overview body={body} goal={goal} weeksToGo={weeksToGo} />
+      ) : tab === 'body' ? (
         <BodyProgress body={body} />
+      ) : tab === 'strength' ? (
+        <Strength strength={strength} />
       ) : tab === 'gallery' ? (
         <Gallery photos={photos} profileId={profileId} locale={locale} onChanged={refresh} />
       ) : (
         <Compare photos={photos} locale={locale} />
       )}
+    </PortalScreen>
+  );
+}
+
+/**
+ * The handoff's Overview: the weight trend, the summary rows, and the same percentage Today shows.
+ * Both read weightGoalFromKg, so the two screens cannot drift on the one number a member is most
+ * likely to check twice.
+ */
+function Overview({
+  body,
+  goal,
+  weeksToGo,
+}: {
+  body: BodyStats;
+  goal: { startLb: number; currentLb: number; goalLb: number; pct: number } | null;
+  weeksToGo: number | null;
+}): ReactElement {
+  const t = useTranslations('app.progress');
+  const series = body.weightSeries;
+  const totalLb =
+    series.length > 1
+      ? Math.round((series[series.length - 1].lb - series[0].lb) * 10) / 10
+      : null;
+
+  return (
+    <div className="grid gap-2.5">
+      <PortalCard className="p-3.5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <PortalLabel>{t('weightTrend')}</PortalLabel>
+            <div className="mt-0.5 text-[11px] text-faint">{t('last90Days')}</div>
+          </div>
+          {totalLb != null && (
+            <div className="text-right">
+              <strong className="block text-[15px] tabular-nums">
+                {totalLb > 0 ? `+${totalLb}` : totalLb} lb
+              </strong>
+              <span className="text-[8px] uppercase tracking-[0.6px] text-faint">{t('totalChange')}</span>
+            </div>
+          )}
+        </div>
+        <div className="mt-3">
+          {/* The goal line is drawn where she has one. The chart already knows how to include it in
+              its own scale, so passing it also stops the trend filling the frame and hiding how far
+              there is left to go. */}
+          <WeightTrendChart series={series} goalLb={goal?.goalLb ?? null} goalLabel={t('goalWeight')} />
+        </div>
+      </PortalCard>
+
+      {goal && (
+        <PortalCard className="p-3.5">
+          <PortalLabel>{t('progressSummary')}</PortalLabel>
+          <div className="mt-1.5">
+            <PortalDataRow label={t('startWeight')} value={`${goal.startLb} lb`} />
+            <PortalDataRow label={t('currentWeight')} value={`${goal.currentLb} lb`} />
+            <PortalDataRow label={t('goalWeight')} value={`${goal.goalLb} lb`} />
+            {weeksToGo != null && (
+              <PortalDataRow label={t('timeToGoal')} value={t('weeksN', { n: weeksToGo })} tone="hit" />
+            )}
+          </div>
+          <PortalMeter className="mt-3" pct={goal.pct} />
+          <p className="mt-2.5 text-center text-[13px] text-soft">{t('pctToGoal', { n: goal.pct })}</p>
+        </PortalCard>
+      )}
+    </div>
+  );
+}
+
+/** Her strongest set per movement. Only rendered when there is enough history to mean something. */
+function Strength({ strength }: { strength: StrengthSummary | null }): ReactElement {
+  const t = useTranslations('app.progress');
+  if (!strength || strength.movements.length === 0) {
+    return <p className="py-12 text-center text-[13px] text-faint">{t('strengthEmpty')}</p>;
+  }
+  return (
+    <div className="grid gap-2.5">
+      {strength.movements.map((m) => (
+        <PortalCard key={m.exerciseId} className="flex items-center justify-between gap-3 p-3.5">
+          <div className="min-w-0">
+            <strong className="block truncate text-[13px]">{m.name}</strong>
+            <small className="block text-faint">
+              {m.bestWeight > 0
+                ? t('bestSet', { weight: m.bestWeight, reps: m.bestReps })
+                : t('bestReps', { reps: m.bestReps })}
+            </small>
+          </div>
+          {m.gainLb != null && m.gainLb !== 0 && (
+            <strong className={`flex-none text-[13px] tabular-nums ${m.gainLb > 0 ? 'text-accent' : ''}`}>
+              {m.gainLb > 0 ? `+${m.gainLb}` : m.gainLb} lb
+            </strong>
+          )}
+        </PortalCard>
+      ))}
     </div>
   );
 }

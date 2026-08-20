@@ -3,6 +3,7 @@
 import type { ReactElement } from 'react';
 import { getLocale } from 'next-intl/server';
 import { requireEntitled } from '@/lib/auth/guards';
+import { weightGoalFromKg, type WeightGoal } from '@/lib/goals/weight-goal';
 import { createClient } from '@/lib/supabase/server';
 import { getCompanyCoach } from '@/lib/tenant/owner';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
@@ -127,27 +128,20 @@ export default async function DashboardPage(): Promise<ReactElement> {
     ? { consumed: diary.totals, target: diary.target }
     : null;
 
-  const KG_TO_LB = 2.20462;
-
   // Weight/goal progress for the Today card (start -> current -> goal), reusing the onboarding start
   // + the latest logged weight. Only once onboarded + a goal weight exists.
+  //
+  // The arithmetic lives in lib/goals/weight-goal.ts because Progress shows the SAME percentage at
+  // the foot of its Overview tab. It was inline here, so wiring the second screen meant importing
+  // from a page module or writing it twice, and two copies of a number that must agree between two
+  // screens is a defect with a date on it.
   let onbStartedAt: string | null = null;
-  let weightGoal: { startLb: number; currentLb: number; goalLb: number; pct: number } | null = null;
+  let weightGoal: WeightGoal | null = null;
   if (goalRows) {
     const [{ data: onb }, { data: lw }] = goalRows;
     onbStartedAt = ((onb as { completed_at?: string | null } | null)?.completed_at) ?? null;
     const a = (onb?.answers ?? null) as { weightKg?: number; goalWeightKg?: number } | null;
-    if (a?.weightKg && a?.goalWeightKg) {
-      const startLb = Math.round(a.weightKg * KG_TO_LB);
-      const goalLb = Math.round(a.goalWeightKg * KG_TO_LB);
-      const currentLb = lw ? Math.round(Number(lw.weight_kg) * KG_TO_LB) : startLb;
-      const span = Math.abs(startLb - goalLb) || 1;
-      // Directional progress: only movement TOWARD the goal counts (abs() made moving away from the
-      // goal fill the bar too). Clamped 0-100.
-      const toward = (currentLb - startLb) * Math.sign(goalLb - startLb);
-      const pct = Math.max(0, Math.min(100, Math.round((toward / span) * 100)));
-      weightGoal = { startLb, currentLb, goalLb, pct };
-    }
+    weightGoal = weightGoalFromKg(a?.weightKg, a?.goalWeightKg, lw ? Number(lw.weight_kg) : null);
   }
 
   // All date math anchors on the MEMBER's calendar day (`today` = localDay(tz), computed above),

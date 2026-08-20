@@ -1976,7 +1976,20 @@
       "chest": "Pecho",
       "arms": "Brazos",
       "thighs": "Muslos",
-      "bodyFat": "Grasa corporal"
+      "bodyFat": "Grasa corporal",
+      "tabOverview": "Resumen",
+      "tabStrength": "Fuerza",
+      "weightTrend": "Tendencia de peso",
+      "last90Days": "Últimos 90 días",
+      "totalChange": "Cambio total",
+      "progressSummary": "Resumen",
+      "startWeight": "Peso inicial",
+      "timeToGoal": "Tiempo a tu meta",
+      "weeksN": "{n, plural, one {# semana} other {# semanas}}",
+      "pctToGoal": "Vas {n}% hacia tu meta.",
+      "strengthEmpty": "Registra algunas sesiones y tus mejores levantamientos aparecen aquí.",
+      "bestSet": "{weight} lb x {reps}",
+      "bestReps": "{reps} reps"
     },
     "nutrition": {
       "title": "Nutrición",
