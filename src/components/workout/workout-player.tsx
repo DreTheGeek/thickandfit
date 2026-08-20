@@ -57,6 +57,18 @@ export type PlayerExercise = {
   muscleKey: string | null;
   video_mux_id: string | null;
   /**
+   * A playable URL for HER filmed demo, minted server-side (src/lib/exercises/demo-url.ts).
+   *
+   * 366 of her demos came across in the Lenus sweep and land in `exercises.demo_storage_path`; only
+   * 2 rows have a Mux id, so reading `video_mux_id` alone showed a dumbbell icon on 1,303 of 1,305
+   * movements. Her filmed demos are the reason this app exists rather than a spreadsheet, and they
+   * were reaching only the coach's own exercise page.
+   *
+   * A signed URL rather than the path: the bucket is private and the path must not reach the DOM,
+   * or the library is enumerable by anyone who reads the page source.
+   */
+  demoUrl: string | null;
+  /**
    * Prescription detail imported from her Lenus programming. 1,531 of her 2,497 exercises sit
    * inside a superset and nothing in the app said so, which meant a member performed them as
    * straight sets with full rest: a different workout from the one she wrote.
@@ -72,7 +84,7 @@ export type PlayerExercise = {
   bestReps: number | null;
 };
 type Substitute = {
-  exercise: { id: string; name_en: string; name_es: string | null } | null;
+  exercise: { id: string; name_en: string; name_es: string | null; demoUrl?: string | null } | null;
   reason_tag: string | null;
 };
 type LoggedSet = {
@@ -206,6 +218,10 @@ export function WorkoutPlayer({
   const [showComplete, setShowComplete] = useState(false); // post-workout rating sheet
   const [setsCount, setSetsCount] = useState(0); // sets logged, snapshotted when the sheet opens
   const [prs, setPrs] = useState<PR[]>([]);
+  // Exercise ids whose demo would not play. Keyed by id rather than a single boolean because the
+  // player walks a session without remounting: one dead file must not blank the demo on every
+  // movement after it. A signed URL that expired mid-session lands here and degrades to the icon.
+  const [demoFailed, setDemoFailed] = useState<Set<string>>(new Set());
   const [enjoyment, setEnjoyment] = useState<number | null>(null);
   const [effort, setEffort] = useState<number | null>(null);
   const logged = useRef<LoggedSet[]>(draft ? toLoggedSets(draft.sets) : []);
@@ -338,7 +354,22 @@ export function WorkoutPlayer({
       setExercises((list) =>
         list.map((item, i) =>
           // A substitute has no history in this flow: clear the bests so we never claim a false PR.
-          i === idx ? { ...item, exercise_id: s.exercise!.id, name, bestE1rm: null, bestReps: null } : item,
+          //
+          // The VIDEO must move with the swap for the same reason. Spreading `...item` alone kept
+          // the previous movement's footage under the new name, so she would have been shown a demo
+          // of the exercise she just swapped away from. video_mux_id is cleared rather than carried
+          // (it belongs to the old row) and demoUrl comes from the substitute the API signed.
+          i === idx
+            ? {
+                ...item,
+                exercise_id: s.exercise!.id,
+                name,
+                video_mux_id: null,
+                demoUrl: s.exercise!.demoUrl ?? null,
+                bestE1rm: null,
+                bestReps: null,
+              }
+            : item,
         ),
       );
       // Remember it, or a recovery would put her back on the machine that was broken or taken.
@@ -524,6 +555,13 @@ export function WorkoutPlayer({
             {fmtClock(elapsed)}
           </div>
         </div>
+        {/* THREE SOURCES, IN THIS ORDER, and the order is the whole point.
+            Mux first where it exists (2 rows today, adaptive streaming, the direction of travel).
+            Then HER filmed demo from storage, which is 366 of the 367 movements she shot and which
+            no member-facing surface could reach until now: the player read video_mux_id alone, so
+            1,303 of 1,305 movements showed a dumbbell icon while her footage sat in the bucket.
+            The icon is last and means "not filmed", which for ~940 seeded catalog movements is
+            simply true. */}
         {ex.video_mux_id ? (
           <MuxPlayer
             playbackId={ex.video_mux_id}
@@ -531,6 +569,28 @@ export function WorkoutPlayer({
             accentColor="#5EBE62"
             className="absolute inset-0 h-full w-full"
           />
+        ) : ex.demoUrl && !demoFailed.has(ex.exercise_id) ? (
+          <video
+            key={ex.exercise_id}
+            controls
+            playsInline
+            loop
+            // metadata only: a form demo is opened glance-by-glance between sets, and pre-pulling
+            // every clip in a 12-movement session would cost megabytes on gym wifi for footage she
+            // may never open. Matches the coach page's demo for the same reason.
+            preload="metadata"
+            onError={() =>
+              setDemoFailed((prev) => {
+                const next = new Set(prev);
+                next.add(ex.exercise_id);
+                return next;
+              })
+            }
+            aria-label={ex.name}
+            className="absolute inset-0 h-full w-full bg-black object-contain"
+          >
+            <source src={ex.demoUrl} type="video/mp4" />
+          </video>
         ) : (
           <div className="text-white/50">
             <Icon name="dumbbell" size={90} strokeWidth={1.5} />

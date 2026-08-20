@@ -7,6 +7,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { WorkoutPlayer, type PlayerExercise } from '@/components/workout/workout-player';
 import { recommendForSession } from '@/lib/workout/logging';
 import { readCoachSettings } from '@/lib/coach/settings';
+import { demoUrls } from '@/lib/exercises/demo-url';
 import { loadCycleLogs } from '@/lib/cycle/data';
 import { currentPhase } from '@/lib/cycle/phase';
 
@@ -74,11 +75,22 @@ export default async function WorkoutPage({
       // curation (0105) must not erase history, and filtering this fails SILENTLY as an
       // untitled card with no demo rather than throwing.
       .from('exercises')
-      .select('id, name_en, name_es, cues_en, cues_es, muscle_group, video_mux_id')
+      // demo_storage_path carries HER filmed demo (366 of 367 movements). It is selected here and
+      // resolved to a signed URL below; the path itself must never reach the browser, because the
+      // bucket is private and a path in the DOM is an index of the library.
+      .select('id, name_en, name_es, cues_en, cues_es, muscle_group, video_mux_id, demo_storage_path')
       .in('id', ids),
     supabase.from('muscle_groups').select('key, label_en, label_es'),
   ]);
   const byId = new Map((exs ?? []).map((e) => [e.id, e]));
+
+  // ONE round trip for the whole session's demos rather than one per movement. A 12-exercise day
+  // would otherwise mint 12 signed URLs serially on the server before the page could render.
+  const demoSigned = await demoUrls(
+    (exs ?? [])
+      .map((e) => (e as { demo_storage_path?: string | null }).demo_storage_path)
+      .filter((p): p is string => typeof p === 'string' && p.length > 0),
+  );
   const muscleLabel = new Map(
     (muscles ?? []).map((m) => [m.key, locale === 'es' ? (m.label_es ?? m.label_en) : m.label_en]),
   );
@@ -123,6 +135,9 @@ export default async function WorkoutPage({
       muscle: meta?.muscle_group ? (muscleLabel.get(meta.muscle_group) ?? meta.muscle_group) : null,
       muscleKey: meta?.muscle_group ?? null,
       video_mux_id: meta?.video_mux_id ?? null,
+      demoUrl:
+        demoSigned.get((meta as { demo_storage_path?: string | null } | undefined)?.demo_storage_path ?? '') ??
+        null,
       overload: hint
         ? {
             action: hint.action,
