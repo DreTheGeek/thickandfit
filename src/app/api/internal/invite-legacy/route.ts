@@ -20,6 +20,8 @@ const Body = z
   .object({
     dryRun: z.boolean().optional(),
     limit: z.number().int().min(1).max(1000).optional(),
+    /** Invite ONE named legacy client instead of the batch. */
+    email: z.string().email().optional(),
   })
   .strict();
 
@@ -50,7 +52,9 @@ async function POST_h(req: NextRequest): Promise<NextResponse> {
   const origin = req.nextUrl.origin;
   const result = await inviteLegacyClients((company as { id: string }).id, origin, {
     dryRun: parsed.data.dryRun ?? true,
-    limit: parsed.data.limit ?? 50,
+    // A single-email invite must not also be capped by a batch limit meant for the sweep.
+    limit: parsed.data.email ? 1000 : (parsed.data.limit ?? 50),
+    email: parsed.data.email,
   });
 
   void logCronRun('invite-legacy-manual', 'success', {

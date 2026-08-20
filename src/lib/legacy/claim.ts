@@ -10,6 +10,7 @@ import { after } from 'next/server';
 import { requireAuth } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { autoAssignStarterProgram } from '@/lib/programs/auto-assign';
 import { importLegacyPhotos } from '@/lib/legacy/photo-import';
 import { indexMemberSources } from '@/lib/coach-ai/memory-index';
 
@@ -46,6 +47,18 @@ export async function claimLegacyAction(): Promise<ClaimResult> {
     const lenusId = (profile?.lenus_profile_id as string | null) ?? result.lenus_id ?? null;
     const imp = await importLegacyPhotos(ctx.userId, ctx.companyId, lenusId);
     photosImported = imp.imported;
+
+    // A STARTER PROGRAM, on the same terms as a new signup.
+    //
+    // autoAssignStarterProgram only ever ran from /api/onboarding/submit, and a migrating client
+    // never goes through onboarding: she follows an invite, claims her account, and arrives with
+    // her whole history and nothing to train. That is the worst possible first screen for the
+    // person being asked to leave a platform she already pays for.
+    //
+    // Same function, so the same guarantees hold: inert unless STARTER_PROGRAM_ID is set, verifies
+    // the plan belongs to this company, and NEVER overrides a coach. If Steph has already assigned
+    // her something by hand, this does nothing.
+    await autoAssignStarterProgram(ctx.companyId, ctx.userId);
 
     // Backfill this newly-claimed client's history into the coach's memory + graph now that their
     // Lenus data (contact-keyed) is queryable. Runs after the response so it never delays the claim;

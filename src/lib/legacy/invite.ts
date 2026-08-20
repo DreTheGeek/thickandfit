@@ -143,7 +143,7 @@ export async function inviteLegacyContact(
 export async function inviteLegacyClients(
   companyId: string,
   origin: string,
-  opts: { dryRun?: boolean; limit?: number } = {},
+  opts: { dryRun?: boolean; limit?: number; email?: string } = {},
 ): Promise<InviteBatchResult> {
   const dryRun = opts.dryRun ?? true; // SAFE DEFAULT: do not send unless explicitly told to
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 1000);
@@ -158,6 +158,31 @@ export async function inviteLegacyClients(
     .is('profile_id', null)
     .not('email', 'is', null)
     .limit(limit);
+
+  // ONE NAMED PERSON, not the batch. Moving a single client across is the normal first move: you
+  // pick someone, you invite her, you watch it land. Without this the only way in was a batch that
+  // emails up to a thousand people, which nobody sensible runs to test one.
+  //
+  // Applied as a filter on the SAME query rather than a separate path, so a single invite cannot
+  // reach anybody the batch would refuse: already claimed, not a legacy client, no email on file.
+  if (opts.email) {
+    const wanted = opts.email.trim().toLowerCase();
+    const match = ((contacts ?? []) as LegacyContact[]).filter(
+      (c) => (c.email ?? '').toLowerCase() === wanted,
+    );
+    const one = match.length > 0 ? match : null;
+    if (!one) {
+      return { dryRun, total: 0, linked: 0, sent: 0, outcomes: [] };
+    }
+    const outcome = await inviteLegacyContact(one[0], origin, dryRun);
+    return {
+      dryRun,
+      total: 1,
+      linked: outcome.linked ? 1 : 0,
+      sent: outcome.sent ? 1 : 0,
+      outcomes: [outcome],
+    };
+  }
 
   if (error) {
     console.error('inviteLegacyClients read:', error.message);
