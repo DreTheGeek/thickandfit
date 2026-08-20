@@ -87,7 +87,7 @@ export function GoalCard({
           </div>
         </div>
         <div className="relative">
-          <ProgressBar pct={goal.pct} color="var(--color-accent)" track="#2a2a2a" />
+          <ProgressBar pct={goal.pct} color="var(--c-accent)" track="#2a2a2a" />
           <span
             className="absolute top-[-3px] h-3 w-3 -translate-x-1/2 rounded-full bg-white"
             style={{ left: `${goal.pct}%` }}

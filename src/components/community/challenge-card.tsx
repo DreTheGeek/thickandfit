@@ -38,7 +38,7 @@ function Leaderboard({ challenge }: { challenge: ActiveChallenge }): ReactElemen
                   className="h-full rounded-full"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: row.isViewer ? 'var(--color-ink)' : 'var(--color-accent)',
+                    backgroundColor: row.isViewer ? 'var(--c-ink)' : 'var(--c-accent)',
                   }}
                 />
               </div>

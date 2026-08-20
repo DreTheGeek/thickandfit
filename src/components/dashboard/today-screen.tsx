@@ -491,7 +491,7 @@ function NutritionCard({
           pct={Math.min(100, kcalPct)}
           size={116}
           thickness={9}
-          color={kcalOver ? 'var(--color-alert)' : 'var(--color-ink)'}
+          color={kcalOver ? 'var(--c-alert)' : 'var(--c-ink)'}
         >
           <div className="text-center">
             <div className="tf-display text-[28px] leading-none">{Math.abs(kcalLeft)}</div>
@@ -557,7 +557,7 @@ function CatchUpCard({
                 <div className="mt-2.5">
                   <ProgressBar
                     pct={c.challenge.goal > 0 ? (c.challenge.progress / c.challenge.goal) * 100 : 0}
-                    color="var(--color-accent)"
+                    color="var(--c-accent)"
                     height={6}
                   />
                   <div className="mt-1 text-[12px] text-faint">

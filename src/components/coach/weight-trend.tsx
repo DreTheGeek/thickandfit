@@ -67,8 +67,8 @@ export function WeightTrend({
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
       <defs>
         <linearGradient id="gWeight" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--color-ink)" stopOpacity={0.14} />
-          <stop offset="100%" stopColor="var(--color-ink)" stopOpacity={0} />
+          <stop offset="0%" stopColor="var(--c-ink)" stopOpacity={0.14} />
+          <stop offset="100%" stopColor="var(--c-ink)" stopOpacity={0} />
         </linearGradient>
       </defs>
 
@@ -80,11 +80,11 @@ export function WeightTrend({
             x2={W - padR}
             y1={y(startKg)}
             y2={y(startKg)}
-            stroke="var(--color-line)"
+            stroke="var(--c-line)"
             strokeWidth={1}
             strokeDasharray="2 4"
           />
-          <text x={padL - 6} y={y(startKg) + 3} textAnchor="end" fontSize={9} fill="var(--color-faint)">
+          <text x={padL - 6} y={y(startKg) + 3} textAnchor="end" fontSize={9} fill="var(--c-faint)">
             {startKg.toFixed(1)}
           </text>
         </g>
@@ -102,21 +102,21 @@ export function WeightTrend({
       )}
 
       <path d={area} fill="url(#gWeight)" />
-      <path d={line} fill="none" stroke="var(--color-ink)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+      <path d={line} fill="none" stroke="var(--c-ink)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
 
       {points.map((p, i) => (
-        <circle key={`${p.on}-${i}`} cx={x(i)} cy={y(p.kg)} r={i === n - 1 ? 3.5 : 1.8} fill="var(--color-ink)">
+        <circle key={`${p.on}-${i}`} cx={x(i)} cy={y(p.kg)} r={i === n - 1 ? 3.5 : 1.8} fill="var(--c-ink)">
           <title>{`${p.on}: ${p.kg.toFixed(1)} kg`}</title>
         </circle>
       ))}
 
-      <text x={x(n - 1)} y={y(last.kg) - 9} textAnchor="end" fontSize={10} fontWeight={600} fill="var(--color-ink)">
+      <text x={x(n - 1)} y={y(last.kg) - 9} textAnchor="end" fontSize={10} fontWeight={600} fill="var(--c-ink)">
         {last.kg.toFixed(1)}
       </text>
 
       {points.map((p, i) =>
         i % labelEvery === 0 || i === n - 1 ? (
-          <text key={`t-${p.on}-${i}`} x={x(i)} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--color-faint)">
+          <text key={`t-${p.on}-${i}`} x={x(i)} y={H - 8} textAnchor="middle" fontSize={9} fill="var(--c-faint)">
             {fmtDate(p.on)}
           </text>
         ) : null,

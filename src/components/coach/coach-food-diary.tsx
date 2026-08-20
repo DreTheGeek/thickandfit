@@ -23,7 +23,7 @@ export function CoachFoodDiary({ week }: { week: CoachDiaryWeek }): ReactElement
   const chartMax = Math.max(target.kcal, ...days.map((d) => d.kcal), 1);
 
   const macros = [
-    { label: t('nutKcal'), consumed: Math.round(totals.kcal), target: target.kcal, color: 'var(--color-ink)', unit: '' },
+    { label: t('nutKcal'), consumed: Math.round(totals.kcal), target: target.kcal, color: 'var(--c-ink)', unit: '' },
     { label: t('macroProtein'), consumed: Math.round(totals.proteinG), target: target.proteinG, color: 'var(--color-macro-protein)', unit: 'g' },
     { label: t('macroCarbs'), consumed: Math.round(totals.carbG), target: target.carbG, color: 'var(--color-macro-carbs)', unit: 'g' },
     { label: t('macroFat'), consumed: Math.round(totals.fatG), target: target.fatG, color: 'var(--color-macro-fat)', unit: 'g' },

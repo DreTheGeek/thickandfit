@@ -23,22 +23,22 @@ export function ScanVolumeChart({ data, title }: { data: DayCount[]; title: stri
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
       {[0, max / 2, max].map((tk, i) => (
         <g key={i}>
-          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--color-divider)" strokeWidth={1} />
-          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="10" fill="var(--color-faint)">
+          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--c-divider)" strokeWidth={1} />
+          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="10" fill="var(--c-faint)">
             {Math.round(tk)}
           </text>
         </g>
       ))}
       {data.map((d, i) => (
         <g key={d.date}>
-          <rect x={x(i)} y={y(d.scans)} width={bw} height={Math.max(0, padT + plotH - y(d.scans))} fill="var(--color-ink)" opacity={0.25} rx={2}>
+          <rect x={x(i)} y={y(d.scans)} width={bw} height={Math.max(0, padT + plotH - y(d.scans))} fill="var(--c-ink)" opacity={0.25} rx={2}>
             <title>{`${d.date}: ${d.scans} ${title}${d.corrected ? `, ${d.corrected} corrected` : ''}`}</title>
           </rect>
           {d.corrected > 0 ? (
-            <rect x={x(i)} y={y(d.corrected)} width={bw} height={Math.max(0, padT + plotH - y(d.corrected))} fill="var(--color-ink)" opacity={0.75} rx={2} />
+            <rect x={x(i)} y={y(d.corrected)} width={bw} height={Math.max(0, padT + plotH - y(d.corrected))} fill="var(--c-ink)" opacity={0.75} rx={2} />
           ) : null}
           {i % labelEvery === 0 ? (
-            <text x={x(i) + bw / 2} y={H - 8} textAnchor="middle" fontSize="9" fill="var(--color-faint)">
+            <text x={x(i) + bw / 2} y={H - 8} textAnchor="middle" fontSize="9" fill="var(--c-faint)">
               {d.date.slice(5)}
             </text>
           ) : null}

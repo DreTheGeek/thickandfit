@@ -23,16 +23,16 @@ export function CalibrationChart({ data, emptyLabel }: { data: CalibrationBucket
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
       {[0, 50, 100].map((tk) => (
         <g key={tk}>
-          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--color-divider)" strokeWidth={1} />
-          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="10" fill="var(--color-faint)">
+          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--c-divider)" strokeWidth={1} />
+          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="10" fill="var(--c-faint)">
             {tk}%
           </text>
         </g>
       ))}
       {/* Perfect-calibration reference: corrections fall linearly as confidence rises. */}
-      <line x1={x(0) + bw / 2} y1={y(95)} x2={x(n - 1) + bw / 2} y2={y(5)} stroke="var(--color-faint)" strokeWidth={1.5} strokeDasharray="5 4" />
+      <line x1={x(0) + bw / 2} y1={y(95)} x2={x(n - 1) + bw / 2} y2={y(5)} stroke="var(--c-faint)" strokeWidth={1.5} strokeDasharray="5 4" />
       {!hasData ? (
-        <text x={W / 2} y={H / 2} textAnchor="middle" fontSize="12" fill="var(--color-faint)">
+        <text x={W / 2} y={H / 2} textAnchor="middle" fontSize="12" fill="var(--c-faint)">
           {emptyLabel}
         </text>
       ) : (
@@ -41,7 +41,7 @@ export function CalibrationChart({ data, emptyLabel }: { data: CalibrationBucket
             <rect x={x(i)} y={y(b.correctedPct)} width={bw} height={Math.max(0, padT + plotH - y(b.correctedPct))} fill="#5EBE62" opacity={b.items ? 0.8 : 0.15} rx={2}>
               <title>{`${b.decile}% confidence: ${b.correctedPct}% corrected (${b.items} items)`}</title>
             </rect>
-            <text x={x(i) + bw / 2} y={H - 10} textAnchor="middle" fontSize="9" fill="var(--color-faint)">
+            <text x={x(i) + bw / 2} y={H - 10} textAnchor="middle" fontSize="9" fill="var(--c-faint)">
               {b.decile}
             </text>
           </g>

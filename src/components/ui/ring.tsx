@@ -8,8 +8,8 @@ export function ProgressRing({
   pct,
   size = 64,
   thickness,
-  color = 'var(--color-ink)',
-  track = 'var(--color-line)',
+  color = 'var(--c-ink)',
+  track = 'var(--c-line)',
   children,
 }: {
   pct: number;
@@ -43,8 +43,8 @@ export function ProgressRing({
 /** Flat horizontal progress track. */
 export function ProgressBar({
   pct,
-  color = 'var(--color-muted)',
-  track = 'var(--color-line)',
+  color = 'var(--c-muted)',
+  track = 'var(--c-line)',
   height = 6,
   className = '',
 }: {

@@ -54,7 +54,7 @@ export function CoachInterview({ initial }: { initial: Record<string, string> })
           <span className="font-semibold uppercase tracking-[1px] text-faint">{t('interviewProgress')}</span>
           <span className="font-semibold">{answered}/{total}</span>
         </div>
-        <ProgressBar pct={pct} color="var(--color-accent)" height={8} />
+        <ProgressBar pct={pct} color="var(--c-accent)" height={8} />
       </div>
 
       <div className="space-y-3">

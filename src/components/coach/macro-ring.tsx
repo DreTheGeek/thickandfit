@@ -30,7 +30,7 @@ export function MacroRing({
   let offset = 0;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${kcal} kcal`}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-warm)" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--c-warm)" strokeWidth={stroke} />
       {segs.map((s, i) => {
         const len = s.frac * circ;
         const el = (

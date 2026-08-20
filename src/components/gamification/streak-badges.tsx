@@ -60,7 +60,7 @@ export function StreakBadges({
               cy={RING_SIZE / 2}
               r={r}
               fill="none"
-              stroke="var(--color-line)"
+              stroke="var(--c-line)"
               strokeWidth={RING_STROKE}
             />
             <circle
@@ -68,7 +68,7 @@ export function StreakBadges({
               cy={RING_SIZE / 2}
               r={r}
               fill="none"
-              stroke="var(--color-accent)"
+              stroke="var(--c-accent)"
               strokeWidth={RING_STROKE}
               strokeLinecap="round"
               strokeDasharray={`${dash} ${c - dash}`}

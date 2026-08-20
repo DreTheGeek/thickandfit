@@ -212,7 +212,7 @@ export function MacroPlanner({
           value={flex}
           onChange={(e) => setFlex(Number(e.target.value))}
           aria-label={t('mpFlex')}
-          className="w-full accent-[var(--color-ink)]"
+          className="w-full accent-[var(--c-ink)]"
         />
         <div className="mt-2 grid grid-cols-3 gap-2 text-center">
           {(

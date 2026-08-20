@@ -343,7 +343,7 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
   return (
     <div className="flex min-h-[calc(100vh-1px)] flex-col px-[28px] pb-7 pt-6">
       {/* Progress */}
-      <ProgressBar pct={((step + 1) / TOTAL) * 100} color="var(--color-ink)" height={4} />
+      <ProgressBar pct={((step + 1) / TOTAL) * 100} color="var(--c-ink)" height={4} />
       <div className="mb-6 mt-2 text-[12px] text-faint">
         {t('stepOf', { step: step + 1, total: TOTAL })}
       </div>
@@ -1041,8 +1041,8 @@ function PredictionChart({ data, goal }: { data: CurvePoint[]; goal: number; uni
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
       {ticks.map((tk, i) => (
         <g key={i}>
-          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--color-divider)" strokeWidth={1} />
-          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="9" fill="var(--color-faint)">
+          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--c-divider)" strokeWidth={1} />
+          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="9" fill="var(--c-faint)">
             {Math.round(tk)}
           </text>
         </g>
@@ -1061,7 +1061,7 @@ function PredictionChart({ data, goal }: { data: CurvePoint[]; goal: number; uni
 
       {data.map((d, i) =>
         i % labelEvery === 0 || i === n - 1 ? (
-          <text key={`w${i}`} x={x(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="var(--color-faint)">
+          <text key={`w${i}`} x={x(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="var(--c-faint)">
             {d.week}
           </text>
         ) : null,

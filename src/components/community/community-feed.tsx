@@ -163,7 +163,7 @@ function Composer({ canBroadcast, viewerId }: { canBroadcast: boolean; viewerId:
                 type="checkbox"
                 checked={broadcast}
                 onChange={(e) => setBroadcast(e.target.checked)}
-                className="h-4 w-4 accent-[var(--color-accent)]"
+                className="h-4 w-4 accent-[var(--c-accent)]"
               />
               <span className="inline-flex items-center gap-1">
                 <Icon name="megaphone" size={14} />

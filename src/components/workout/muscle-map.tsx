@@ -41,8 +41,8 @@ const MUSCLE_MAP: Record<string, { front?: Region[]; back?: Region[] }> = {
   neck: { front: ['neck'], back: ['neck'] },
 };
 
-const BASE = 'var(--color-warm)';
-const LINE = 'var(--color-line)';
+const BASE = 'var(--c-warm)';
+const LINE = 'var(--c-line)';
 const ON = '#5EBE62';
 
 function fill(active: Set<Region>, id: Region): string {

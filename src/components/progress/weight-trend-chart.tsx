@@ -49,15 +49,15 @@ export function WeightTrendChart({
       <defs>
         {/* Ink line + fill: green is functional-only (the delta figure), never a decorative trend line. */}
         <linearGradient id="gWeight" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--color-ink)" stopOpacity={0.14} />
-          <stop offset="100%" stopColor="var(--color-ink)" stopOpacity={0} />
+          <stop offset="0%" stopColor="var(--c-ink)" stopOpacity={0.14} />
+          <stop offset="100%" stopColor="var(--c-ink)" stopOpacity={0} />
         </linearGradient>
       </defs>
 
       {ticks.map((tk, i) => (
         <g key={i}>
-          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--color-divider)" strokeWidth={1} />
-          <text x={padL - 8} y={y(tk) + 3} textAnchor="end" fontSize="11" fill="var(--color-faint)">
+          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--c-divider)" strokeWidth={1} />
+          <text x={padL - 8} y={y(tk) + 3} textAnchor="end" fontSize="11" fill="var(--c-faint)">
             {Math.round(tk)}
           </text>
         </g>
@@ -70,29 +70,29 @@ export function WeightTrendChart({
             x2={W - padR}
             y1={y(goalLb)}
             y2={y(goalLb)}
-            stroke="var(--color-ink)"
+            stroke="var(--c-ink)"
             strokeWidth={1.5}
             strokeDasharray="5 5"
             opacity={0.5}
           />
-          <text x={W - padR} y={y(goalLb) - 5} textAnchor="end" fontSize="11" fill="var(--color-muted)">
+          <text x={W - padR} y={y(goalLb) - 5} textAnchor="end" fontSize="11" fill="var(--c-muted)">
             {goalLabel} {Math.round(goalLb)}
           </text>
         </g>
       )}
 
       {area && <path d={area} fill="url(#gWeight)" />}
-      {n > 1 && <path d={line} fill="none" stroke="var(--color-ink)" strokeWidth={2.5} />}
+      {n > 1 && <path d={line} fill="none" stroke="var(--c-ink)" strokeWidth={2.5} />}
 
       {series.map((p, i) => (
-        <circle key={i} cx={x(i)} cy={y(p.lb)} r={n > 30 ? 1.8 : 3} fill="var(--color-ink)">
+        <circle key={i} cx={x(i)} cy={y(p.lb)} r={n > 30 ? 1.8 : 3} fill="var(--c-ink)">
           <title>{`${p.on}: ${p.lb} lb`}</title>
         </circle>
       ))}
 
       {series.map((p, i) =>
         i % labelEvery === 0 || i === n - 1 ? (
-          <text key={`l${i}`} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--color-faint)">
+          <text key={`l${i}`} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10" fill="var(--c-faint)">
             {p.on.slice(5)}
           </text>
         ) : null,

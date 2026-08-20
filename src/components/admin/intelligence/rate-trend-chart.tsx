@@ -35,14 +35,14 @@ export function RateTrendChart({ data, unit, emptyLabel }: { data: RatePoint[]; 
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" preserveAspectRatio="xMidYMid meet" role="img">
       {[0, max / 2, max].map((tk, i) => (
         <g key={i}>
-          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--color-divider)" strokeWidth={1} />
-          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="10" fill="var(--color-faint)">
+          <line x1={padL} x2={W - padR} y1={y(tk)} y2={y(tk)} stroke="var(--c-divider)" strokeWidth={1} />
+          <text x={padL - 6} y={y(tk) + 3} textAnchor="end" fontSize="10" fill="var(--c-faint)">
             {Math.round(tk)}{unit}
           </text>
         </g>
       ))}
       {values.length === 0 ? (
-        <text x={W / 2} y={H / 2} textAnchor="middle" fontSize="12" fill="var(--color-faint)">
+        <text x={W / 2} y={H / 2} textAnchor="middle" fontSize="12" fill="var(--c-faint)">
           {emptyLabel}
         </text>
       ) : (
@@ -56,7 +56,7 @@ export function RateTrendChart({ data, unit, emptyLabel }: { data: RatePoint[]; 
             ) : null,
           )}
           {data.map((d, i) => (
-            <text key={`l${i}`} x={x(i)} y={H - 8} textAnchor="middle" fontSize="9" fill="var(--color-faint)">
+            <text key={`l${i}`} x={x(i)} y={H - 8} textAnchor="middle" fontSize="9" fill="var(--c-faint)">
               {d.label.slice(5)}
             </text>
           ))}
