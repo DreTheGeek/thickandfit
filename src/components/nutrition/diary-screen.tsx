@@ -74,7 +74,15 @@ export function DiaryScreen({
   const [q, setQ] = useState('');
   const [results, setResults] = useState<FoodLite[]>([]);
   const [sel, setSel] = useState<FoodLite | null>(null);
-  const [mode, setMode] = useState<'search' | 'barcode'>('search');
+  /**
+   * The one way in she has chosen, out of the five this app actually offers.
+   *
+   * It replaces a search/barcode pill that lived INSIDE the find card, with the scanner, the
+   * favourites and the recents as three more blocks stacked around it. Every one of these already
+   * shipped; four of the five were just not presented as a choice, so a member scanning a packaged
+   * food had to back out of the scanner and hunt for the barcode field.
+   */
+  const [addMode, setAddMode] = useState<'scan' | 'describe' | 'search' | 'barcode' | 'favorites'>('scan');
   const [barcode, setBarcode] = useState('');
   const [scanState, setScanState] = useState<'idle' | 'loading' | 'not_found'>('idle');
   const [grams, setGrams] = useState(100);
@@ -283,10 +291,30 @@ export function DiaryScreen({
             </button>
           </div>
 
-          <PhotoScan logDate={isToday ? undefined : date} />
+          {/* Five ways in, all of which already shipped. Scrolls rather than squeezes: five Spanish
+              labels at 12px do not fit 390px minus the gutter. */}
+          <PortalTabs
+            value={addMode}
+            onChange={(v) => {
+              setAddMode(v);
+              setSel(null);
+              setScanState('idle');
+            }}
+            options={[
+              { value: 'scan' as const, label: t('modeScan') },
+              { value: 'describe' as const, label: t('modeDescribe') },
+              { value: 'search' as const, label: t('modeSearch') },
+              { value: 'barcode' as const, label: t('modeBarcode') },
+              { value: 'favorites' as const, label: t('modeFavorites') },
+            ]}
+          />
+
+          {(addMode === 'scan' || addMode === 'describe') && (
+            <PhotoScan logDate={isToday ? undefined : date} entry={addMode === 'scan' ? 'photo' : 'text'} />
+          )}
 
       {/* Favorites: starred foods, one tap. */}
-      {favorites.length > 0 && (
+      {addMode === 'favorites' && favorites.length > 0 && (
         <div className="mt-5">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-faint">
             {t('favorites')}
@@ -307,7 +335,7 @@ export function DiaryScreen({
       )}
 
       {/* Recently logged: one tap to re-log a food you eat often. */}
-      {recents.length > 0 && (
+      {addMode === 'favorites' && recents.length > 0 && (
         <div className="mt-5">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-faint">
             {t('recentFoods')}
@@ -327,28 +355,11 @@ export function DiaryScreen({
         </div>
       )}
 
-      {/* Add food */}
-      <div className="mt-5 rounded-2xl border border-line bg-surface p-5">
-        {/* Search / barcode mode toggle */}
-        <div className="mb-3 flex w-fit overflow-hidden rounded-full border border-line">
-          {(['search', 'barcode'] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => {
-                setMode(m);
-                setSel(null);
-                setScanState('idle');
-              }}
-              className={['tf-press flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] font-semibold', mode === m ? 'bg-ink text-bg' : 'text-muted'].join(' ')}
-            >
-              <Icon name={m === 'search' ? 'search' : 'barcode'} size={14} />
-              {t(m === 'search' ? 'searchMode' : 'barcodeMode')}
-            </button>
-          ))}
-        </div>
-
-        {mode === 'search' ? (
+      {/* Find: search or barcode. Rendered for both, because the selected-food editor below (portion,
+          meal slot, Add) is shared by search, barcode AND a favourite, and hiding it per mode would
+          strand a food she had already picked. */}
+      <div className={(addMode === 'search' || addMode === 'barcode' || sel) ? 'mt-4' : 'hidden'}>
+        {addMode === 'search' && (
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-faint">
               <Icon name="search" size={16} />
@@ -361,7 +372,8 @@ export function DiaryScreen({
               className="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-[14px] outline-none placeholder:text-faint focus:border-ink"
             />
           </div>
-        ) : (
+        )}
+        {addMode === 'barcode' && (
           <div>
             <div className="flex gap-2">
               <div className="relative flex-1">

@@ -165,6 +165,7 @@ export function PhotoScan({
   onOpenChange,
   hideTrigger = false,
   logDate,
+  entry = 'both',
 }: {
   /** Controlled open state (e.g. driven by the global capture FAB). Omit for the self-contained diary card. */
   open?: boolean;
@@ -173,6 +174,18 @@ export function PhotoScan({
   hideTrigger?: boolean;
   /** ISO date of the day being viewed; omit for today. Logs land on this day, not always today. */
   logDate?: string;
+  /**
+   * Which way in to offer on the idle screen.
+   *
+   * 'both' is the original behaviour and stays the default, so the FAB is unchanged. Fuel passes
+   * 'photo' or 'text' because it now presents the ways to log food as one row of modes, and showing
+   * a camera and a description box stacked inside the "Describe" mode would be two answers to a
+   * question she has already answered.
+   *
+   * The scan PIPELINE is untouched by this: it is one idle screen branching, and every phase after
+   * it (analyzing, review, product, clarify, the error states) is shared.
+   */
+  entry?: 'both' | 'photo' | 'text';
 } = {}): ReactElement {
   const t = useTranslations('app.nutrition');
   const router = useRouter();
@@ -573,6 +586,7 @@ export function PhotoScan({
 
             {phase === 'idle' && (
               <div className="space-y-3">
+                {entry !== 'text' && (
                 <button
                   type="button"
                   onClick={() => {
@@ -594,7 +608,12 @@ export function PhotoScan({
                   <Icon name="camera" size={28} />
                   <span className="text-[13px] font-medium">{t('photoTakeOrUpload')}</span>
                 </button>
-                <p className="text-center text-[11px] uppercase tracking-wide text-faint">{t('textScanOr')}</p>
+                )}
+                {entry === 'both' && (
+                  <p className="text-center text-[11px] uppercase tracking-wide text-faint">{t('textScanOr')}</p>
+                )}
+                {entry !== 'photo' && (
+                <>
                 <textarea
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
@@ -610,6 +629,8 @@ export function PhotoScan({
                 >
                   {t('textScanCta')}
                 </button>
+                </>
+                )}
               </div>
             )}
 

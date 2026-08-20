@@ -2115,7 +2115,12 @@
       "calories": "Calories",
       "mealsLabel": "Meals",
       "addMeal": "Add meal",
-      "close": "Close"
+      "close": "Close",
+      "modeScan": "Scan",
+      "modeDescribe": "Describe",
+      "modeSearch": "Search",
+      "modeBarcode": "Barcode",
+      "modeFavorites": "Favorites"
     },
     "disclaimer": {
       "title": "Before you begin",
