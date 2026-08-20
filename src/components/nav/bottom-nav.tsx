@@ -14,7 +14,10 @@ export function BottomNav(): ReactElement | null {
 
   return (
     <nav
-      className="flex flex-none border-t border-line bg-[rgba(5,5,6,0.96)] px-2.5 pb-4 pt-2 backdrop-blur-lg lg:hidden"
+      // pb clears the iPhone home indicator. 16px is right on a device without one; on an iPhone
+      // with a 34px indicator the bar sat underneath it and the labels were half-covered in the
+      // installed app. env() returns 0 where there is no inset, so the calc is correct on both.
+      className="flex flex-none border-t border-line bg-[rgba(5,5,6,0.96)] px-2.5 pt-2 pb-[calc(16px+env(safe-area-inset-bottom))] backdrop-blur-lg lg:hidden"
       aria-label={t('today')}
     >
       {TABS.map((tab) => {

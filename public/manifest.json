@@ -2,7 +2,7 @@
   "name": "Thick & Fit",
   "short_name": "Thick & Fit",
   "description": "Creator-led bilingual fitness coaching: workouts, nutrition, and community in your language.",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -34,5 +34,10 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "id": "/dashboard",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
   ]
 }

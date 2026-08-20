@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -41,6 +41,25 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.teamthickandfi
 // <=165 chars so search engines show it whole (was 237, truncated in results).
 const SITE_DESCRIPTION =
   "Fitness coaching for women: custom workouts, macro-based meal plans, daily accountability, and a real community. Fall in love with the journey.";
+
+/**
+ * viewportFit: 'cover' is the whole reason this export exists.
+ *
+ * Without it iOS letterboxes the page inside the safe area and every env(safe-area-inset-*)
+ * resolves to 0, so safe-area padding is silently dead code. With it the page runs edge to edge and
+ * the insets report real numbers, which is what lets the bottom bar clear the home indicator.
+ *
+ * It matters only in the installed PWA and on notched hardware, which is exactly the surface that
+ * never gets tested in a desktop browser.
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  // Matches the manifest and the portal ground. The installed app is the dark member app; this is
+  // the colour iOS and Android tint the status bar with.
+  themeColor: '#000000',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
