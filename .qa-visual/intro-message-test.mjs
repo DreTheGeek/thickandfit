@@ -10,6 +10,10 @@ src = src
   .slice(0, src.indexOf('export async function seedIntroMessage'))
   .replace(/^\s*import\s+'server-only';\s*$/m, '')
   .replace(/^\s*import\s+\{\s*createServiceClient\s*\}.*$/m, '')
+  // Strip EVERY @/ import, not a named list. The list version broke silently the day
+  // getCompanyCoach was added: the test could no longer load the module at all, so the copy it
+  // guards went unchecked while the suite looked like it was merely one red line among many.
+  .replace(/^\s*import\s+.*from\s+'@\/.*$/gm, '')
   // The body builder is module-private in the real file; expose it for the test only.
   .replace('function body(', 'export function body(');
 

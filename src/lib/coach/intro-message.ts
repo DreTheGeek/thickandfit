@@ -87,16 +87,54 @@ export async function seedIntroMessage(args: IntroArgs): Promise<{ seeded: boole
       return { seeded: false };
     }
 
+    const text = body(args.firstName, args.locale, args.goalLb ?? null);
+
     const { error } = await svc.from('messages').insert({
       company_id: args.companyId,
       client_id: args.profileId,
       sender_id: senderId,
-      body: body(args.firstName, args.locale, args.goalLb ?? null),
+      body: text,
     });
     if (error) {
       console.error('seedIntroMessage insert:', error.message);
       return { seeded: false };
     }
+
+    /**
+     * AND into the contact-keyed archive, because that is the thread the COACH reads.
+     *
+     * This conversation lives in two tables on purpose: `messages` is the live in-app thread the
+     * member sees and Realtime delivers, `client_messages` is the contact-keyed archive the coach
+     * console renders and the 13,345 imported Lenus messages sit in. sendCoachMessageToClient
+     * writes both. This wrote only the first, so Stephanie's welcome was invisible on her own
+     * screen: a coach opening that client saw the member's replies and not the message being
+     * replied to, which reads as a one-sided thread and as the coach having ignored her.
+     *
+     * Best effort. The member has her greeting either way, and failing onboarding over an archive
+     * row would be the wrong trade.
+     */
+    const { data: contact } = await svc
+      .from('contacts')
+      .select('id')
+      .eq('company_id', args.companyId)
+      .eq('profile_id', args.profileId)
+      .maybeSingle();
+    const contactId = (contact as { id: string } | null)?.id ?? null;
+    if (contactId) {
+      const { error: archErr } = await svc.from('client_messages').insert({
+        company_id: args.companyId,
+        contact_id: contactId,
+        profile_id: args.profileId,
+        is_from_coach: true,
+        sender_name: 'Steph',
+        body: text,
+        msg_type: 'coach',
+        sent_at: new Date().toISOString(),
+        source: 'app',
+      });
+      if (archErr) console.error('seedIntroMessage archive:', archErr.message);
+    }
+
     return { seeded: true };
   } catch (e) {
     console.error('seedIntroMessage:', e instanceof Error ? e.message : e);
