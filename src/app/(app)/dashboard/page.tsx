@@ -17,6 +17,8 @@ import { getPrediction } from '@/lib/prediction/read';
 import { getMealIntelligence } from '@/lib/intelligence/meal-recs';
 import { IntelligenceCard } from '@/components/dashboard/intelligence-card';
 import { TodayScreen, type WeekDay, type TodayNutrition, type CatchUp } from '@/components/dashboard/today-screen';
+import { MemberTourCard } from '@/components/portal/member-tour-card';
+import { getMemberTour } from '@/lib/member/tour';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,6 +94,10 @@ export default async function DashboardPage(): Promise<ReactElement> {
     ]);
 
   const firstName = (profile?.full_name ?? '').trim().split(/\s+/)[0] ?? '';
+  // A SLOT, like `intelligence`: the card is a client component but every value it shows is
+  // server-derived, and Today is already a client boundary. Resolving here keeps the tier lookup and
+  // six existence checks on the server.
+  const tour = ctx.companyId ? await getMemberTour(ctx.companyId, ctx.userId) : null;
   const today = localToday(tz);
   const coach = coachOwner?.name ? { name: coachOwner.name } : null;
   const onboarded = Boolean(ctx.companyId && summary?.hasOnboarded);
@@ -184,6 +190,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
   return (
     <TodayScreen
       intelligence={<IntelligenceCard prediction={prediction} meals={meals} />}
+      tour={tour ? <MemberTourCard tour={tour} firstName={firstName} /> : null}
       dateLabel={dateLabel}
       weekDays={weekDays}
       initial={summary}

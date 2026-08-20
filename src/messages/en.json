@@ -2901,6 +2901,37 @@
         "closing": "Proud of you. Keep it going this week.",
         "closingNone": "Nothing logged this time, and that is information too. Pick one habit and start there this week."
       }
+    },
+    "tour": {
+      "title": "Start here",
+      "titleNamed": "Start here, {name}",
+      "progress": "{done} of {total} done",
+      "step": {
+        "workout": {
+          "title": "Do your first workout",
+          "why": "Your plan is already waiting. Her filmed demo plays on every movement."
+        },
+        "food": {
+          "title": "Log what you ate today",
+          "why": "Snap a photo and it does the macros. This is what Steph reads to build your plan around you."
+        },
+        "weight": {
+          "title": "Log your starting weight",
+          "why": "One number today is what every chart in here measures from."
+        },
+        "photos": {
+          "title": "Take your first progress photos",
+          "why": "You will want these in six weeks. Only you and your coach can see them."
+        },
+        "coach": {
+          "title": "Message your coach",
+          "why": "This chat goes straight to Steph. Tell her anything that feels off."
+        },
+        "community": {
+          "title": "Say hi to the crew",
+          "why": "The women in here are doing the same thing you are."
+        }
+      }
     }
   },
   "faq": {

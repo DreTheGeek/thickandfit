@@ -2901,6 +2901,37 @@
         "closing": "Orgullosa de ti. Sigue así esta semana.",
         "closingNone": "Esta vez no registraste nada, y eso también me dice algo. Elige un hábito y empieza por ahí esta semana."
       }
+    },
+    "tour": {
+      "title": "Empieza aquí",
+      "titleNamed": "Empieza aquí, {name}",
+      "progress": "{done} de {total} listo",
+      "step": {
+        "workout": {
+          "title": "Haz tu primer entrenamiento",
+          "why": "Tu plan ya te está esperando. Su demo filmada se reproduce en cada movimiento."
+        },
+        "food": {
+          "title": "Registra lo que comiste hoy",
+          "why": "Toma una foto y ella saca los macros. Esto es lo que Steph lee para armar tu plan."
+        },
+        "weight": {
+          "title": "Registra tu peso inicial",
+          "why": "Un número hoy es desde donde mide cada gráfica de aquí."
+        },
+        "photos": {
+          "title": "Toma tus primeras fotos de progreso",
+          "why": "Las vas a querer en seis semanas. Solo tú y tu coach las ven."
+        },
+        "coach": {
+          "title": "Escríbele a tu coach",
+          "why": "Este chat llega directo a Steph. Cuéntale lo que sea que se sienta raro."
+        },
+        "community": {
+          "title": "Saluda a las demás",
+          "why": "Las mujeres de aquí están haciendo lo mismo que tú."
+        }
+      }
     }
   },
   "faq": {

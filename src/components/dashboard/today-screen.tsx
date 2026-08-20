@@ -48,6 +48,7 @@ export function TodayScreen({
   supportEmail,
   daily,
   intelligence,
+  tour,
 }: {
   dateLabel: string;
   weekDays: WeekDay[];
@@ -63,6 +64,8 @@ export function TodayScreen({
    *  its data is derived server-side and none of it is interactive), so it cannot be imported here
    *  in a 'use client' module and arrives as a prop instead. */
   intelligence?: ReactNode;
+  /** The first-run checklist. Server-rendered and passed in, same as `intelligence`. */
+  tour?: ReactNode;
 }): ReactElement {
   const t = useTranslations('app');
   const locale = useLocale();
@@ -282,6 +285,12 @@ export function TodayScreen({
   return (
     <div className="px-[22px] pb-7 pt-3">
       {header}
+
+      {/* ABOVE the transformation card, and only while it has anything to say.
+          On day one every number below is a zero: 0% to goal, 0 of 197g protein, an empty week
+          strip. A wall of zeroes is not a dashboard, it is an empty room, and it is the first thing
+          a new member sees. This is what belongs there until she has filled it in. */}
+      {tour}
 
       {/* 8.0 Today: transformation status, the day's four asks, then the two-up. This is the whole
           screen the handoff draws. The modules below it (habits, nutrition detail, catch-up) are
