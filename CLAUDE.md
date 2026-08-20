@@ -490,6 +490,18 @@ spike. Instead:
   app-signup member record 404'd.
 - The pause feature was dead at the CHECK constraint.
 
+**0144 was the same story, found 2026-08-20.** `seasonal_campaigns` had never been created, so
+`generateSeasonalCampaigns` (the third of the three automated senders) read a table that did not
+exist and failed open. Applied and verified; the table is empty and every row defaults to inactive,
+which is the design.
+
+**There is now a guard: `node .qa-visual/schema-applied-test.mjs`.** It parses every CREATE TABLE and
+ADD COLUMN out of `supabase/migrations/` and asserts each one exists in the live database, exiting
+non-zero when it does not. Run it after any migration and before any launch. It currently reports
+132 tables and 55 added columns, all present. `tenant-boundary-test.mjs` reads the SQL FILES and
+passed throughout both incidents: that one checks what the migrations SAY, this one checks whether
+anybody ran them.
+
 **The lesson is not "remember to apply migrations".** It is that this app's fail-open convention,
 which is right for a single unreadable table, turns an unapplied migration into a console that looks
 calm and is lying. A migration that ships with its code and not with its schema has no failing test
