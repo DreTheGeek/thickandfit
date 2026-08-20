@@ -532,7 +532,14 @@
       "startWorkout": "Start Workout",
       "statThisWeek": "This week",
       "statTotal": "Total",
-      "statVolume": "Volume (lb)"
+      "statVolume": "Volume (lb)",
+      "back": "Back",
+      "previewTotalTime": "Total time",
+      "previewActiveTime": "Working time",
+      "previewMovements": "Movements",
+      "previewMinutes": "~{n} min",
+      "previewEstimateNote": "Time is an estimate: it assumes a steady tempo and the rest your plan asks for.",
+      "previewEquipment": "What you need"
     },
     "library": {
       "searchPlaceholder": "Search exercises",
@@ -750,7 +757,8 @@
       "thenStraightInto": "Then straight into",
       "amrap": "AMRAP",
       "restoredSets": "Picked up where you left off — {count, plural, one {# set} other {# sets}} already logged.",
-      "restoredStartOver": "Start over"
+      "restoredStartOver": "Start over",
+      "day": "Day"
     },
     "coach": {
       "overview": "Overview",

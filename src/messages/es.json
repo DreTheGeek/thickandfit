@@ -532,7 +532,14 @@
       "startWorkout": "Empezar entreno",
       "statThisWeek": "Esta semana",
       "statTotal": "Total",
-      "statVolume": "Volumen (lb)"
+      "statVolume": "Volumen (lb)",
+      "back": "Atrás",
+      "previewTotalTime": "Tiempo total",
+      "previewActiveTime": "Tiempo activo",
+      "previewMovements": "Movimientos",
+      "previewMinutes": "~{n} min",
+      "previewEstimateNote": "El tiempo es un estimado: asume un ritmo constante y los descansos que pide tu plan.",
+      "previewEquipment": "Lo que necesitas"
     },
     "library": {
       "searchPlaceholder": "Buscar ejercicios",
@@ -750,7 +757,8 @@
       "thenStraightInto": "Y de una vez",
       "amrap": "Máximo de reps",
       "restoredSets": "Retomamos donde te quedaste: {count, plural, one {# serie} other {# series}} ya registradas.",
-      "restoredStartOver": "Empezar de nuevo"
+      "restoredStartOver": "Empezar de nuevo",
+      "day": "Día"
     },
     "coach": {
       "overview": "Resumen",

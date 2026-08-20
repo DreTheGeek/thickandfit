@@ -8,6 +8,7 @@ import { WorkoutPlayer, type PlayerExercise } from '@/components/workout/workout
 import { recommendForSession } from '@/lib/workout/logging';
 import { readCoachSettings } from '@/lib/coach/settings';
 import { demoUrls } from '@/lib/exercises/demo-url';
+import { SessionPreview, type PreviewExercise } from '@/components/workout/session-preview';
 import { loadCycleLogs } from '@/lib/cycle/data';
 import { currentPhase } from '@/lib/cycle/phase';
 
@@ -32,11 +33,11 @@ export default async function WorkoutPage({
   searchParams,
 }: {
   params: Promise<{ planId: string }>;
-  searchParams: Promise<{ day?: string }>;
+  searchParams: Promise<{ day?: string; preview?: string }>;
 }): Promise<ReactElement> {
   const ctx = await requireEntitled();
   const { planId } = await params;
-  const { day: dayParam } = await searchParams;
+  const { day: dayParam, preview: previewParam } = await searchParams;
   const locale = await getLocale();
 
   const supabase = createServiceClient();
@@ -78,7 +79,7 @@ export default async function WorkoutPage({
       // demo_storage_path carries HER filmed demo (366 of 367 movements). It is selected here and
       // resolved to a signed URL below; the path itself must never reach the browser, because the
       // bucket is private and a path in the DOM is an index of the library.
-      .select('id, name_en, name_es, cues_en, cues_es, muscle_group, video_mux_id, demo_storage_path')
+      .select('id, name_en, name_es, cues_en, cues_es, muscle_group, equipment, video_mux_id, demo_storage_path')
       .in('id', ids),
     supabase.from('muscle_groups').select('key, label_en, label_es'),
   ]);
@@ -156,6 +157,50 @@ export default async function WorkoutPage({
 
   const programName =
     (locale === 'es' && program.plan.name_es) || program.plan.name_en;
+
+  const dayLabel = session.day_label ?? tEx('untitled');
+  const weekLine = `${tEx('day')} ${dayIndex + 1} / ${program.sessions.length}`;
+
+  /**
+   * The pre-start screen, reusing this loader rather than owning a route of its own.
+   *
+   * Everything it needs is already resolved above, so a separate route would mean a second copy of
+   * the assignment check, the day clamp and the exercise join, and two places for those to drift.
+   * The player is still the default: ?preview=1 is what the exercise rows on Train link to, while
+   * the banner's START WORKOUT goes straight to training, because by then she has decided.
+   */
+  if (previewParam === '1') {
+    const previewExercises: PreviewExercise[] = exList.map((e) => {
+      const meta = byId.get(e.exercise_id);
+      return {
+        exercise_id: e.exercise_id,
+        name: (locale === 'es' && meta?.name_es) || meta?.name_en || tEx('untitled'),
+        sets: e.sets,
+        reps: e.reps,
+        repsMin: e.reps_min,
+        repsMax: e.reps_max,
+        restSec: e.rest_sec,
+        equipment: (meta as { equipment?: string | null } | undefined)?.equipment ?? null,
+        // The same three-source test the player applies, so the play badge here and the video there
+        // can never disagree about whether a movement has footage.
+        hasDemo:
+          !!meta?.video_mux_id ||
+          !!demoSigned.get((meta as { demo_storage_path?: string | null } | undefined)?.demo_storage_path ?? ''),
+        groupKey: e.group_key,
+        groupKind: e.group_kind,
+      };
+    });
+    return (
+      <SessionPreview
+        day={dayIndex}
+        dayLabel={dayLabel}
+        programName={programName}
+        weekLine={weekLine}
+        exercises={previewExercises}
+        startHref={`/workout/${planId}?day=${dayIndex}`}
+      />
+    );
+  }
 
   // HER CYCLE, WHERE IT IS ACTIONABLE.
   //

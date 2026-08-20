@@ -281,6 +281,25 @@ export function WorkoutPlayer({
 
   const ex = exercises[idx];
   const totalSets = ex?.sets ?? 1;
+
+  /**
+   * How far through the WHOLE session she is, as a percentage of prescribed sets.
+   *
+   * Counted in sets rather than in exercises, because exercises are not equal: a 5x5 and a single
+   * set of sprints are one movement each and nothing like the same amount of work left. Sets are the
+   * unit she actually performs, so a bar driven by them moves at roughly the rate the session does.
+   *
+   * Everything already completed, plus the sets logged inside the current movement. An exercise with
+   * no prescribed count falls back to 1 so a session of untracked movements still advances rather
+   * than sitting at zero to the end.
+   */
+  const sessionPct = (() => {
+    const setsIn = (e: PlayerExercise): number => e.sets ?? 1;
+    const total = exercises.reduce((a, e) => a + setsIn(e), 0);
+    if (total <= 0) return 0;
+    const done = exercises.slice(0, idx).reduce((a, e) => a + setsIn(e), 0) + (setNum - 1);
+    return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+  })();
   // Prefill from the progressive-overload recommendation when we have one, else the plan target.
   const [reps, setReps] = useState(ex?.overload?.reps ?? ex?.reps ?? 10);
   const [weight, setWeight] = useState(ex?.overload?.weight ?? ex?.weight ?? 0);
@@ -553,6 +572,32 @@ export function WorkoutPlayer({
           {/* Total elapsed workout time. */}
           <div className="flex h-[34px] min-w-[34px] items-center justify-center rounded-full bg-black/40 px-2.5 text-[13px] font-semibold tabular-nums text-white">
             {fmtClock(elapsed)}
+          </div>
+        </div>
+
+        {/* SESSION progress, which is the one thing neither handoff screen agreed on and the one
+            question the player could not answer. File A shows "SET 3 OF 4", which is where she is
+            inside this movement; File B shows "20:34 · 23%" with a segment per exercise, which is
+            how much of the whole workout is behind her. "How much longer?" is the question people
+            actually ask mid-session, and the movement counter cannot answer it.
+
+            Pure client arithmetic over state already held: sets logged against the session's total
+            prescribed sets. No query, no new prop. */}
+        <div className="absolute inset-x-4 bottom-3 z-10">
+          <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold tabular-nums text-white/70">
+            <span>{fmtClock(elapsed)}</span>
+            <span>{sessionPct}%</span>
+          </div>
+          <div className="flex gap-1">
+            {exercises.map((e, i) => (
+              <span
+                key={e.exercise_id + i}
+                className={[
+                  'h-1 flex-1 rounded-full',
+                  i < idx ? 'bg-white' : i === idx ? 'bg-white/60' : 'bg-white/20',
+                ].join(' ')}
+              />
+            ))}
           </div>
         </div>
         {/* THREE SOURCES, IN THIS ORDER, and the order is the whole point.

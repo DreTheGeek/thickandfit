@@ -109,10 +109,14 @@ export function ActivitiesScreen({
             )}
 
             <div className="mt-[22px]" />
+            {/* ?preview=1, not straight into the session. Every one of these rows used to link to
+                the live player, so tapping a movement to see what it was started her workout: the
+                timer running, the first set staged, no way back that did not look like quitting.
+                The banner's START WORKOUT still goes straight in, because by then she has decided. */}
             {program.exercises.map((ex, i) => (
               <ListRow
                 key={ex.id + i}
-                href={`/workout/${program.planId}?day=${program.activeDay}`}
+                href={`/workout/${program.planId}?day=${program.activeDay}&preview=1`}
                 divider={i < program.exercises.length - 1}
                 leading={<ExerciseThumb hasDemo={ex.hasDemo} />}
                 title={ex.name}
