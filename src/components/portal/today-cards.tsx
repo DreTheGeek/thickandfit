@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import type { ReactElement, ReactNode } from 'react';
 import { Icon } from '@/components/ui/icons';
+import { PortalStatRow, PortalMeter } from '@/components/portal/portal-chrome';
 
 /** The handoff's .card: --surface-2 ground, hairline white border, 20px radius. */
 export function PortalCard({
@@ -85,22 +86,16 @@ export function TransformCard({
 
         <PortalLabel>{labelToGoal}</PortalLabel>
 
-        <div className="mt-[18px] grid grid-cols-3 gap-2">
-          {[
-            { v: startLb, l: labelStart },
-            { v: currentLb, l: labelCurrent },
-            { v: goalLb, l: labelGoal },
-          ].map((c) => (
-            <div key={c.l}>
-              <strong className="block text-[13px] tabular-nums">{c.v}</strong>
-              <span className="text-[8px] uppercase tracking-[0.6px] text-faint">{c.l}</span>
-            </div>
-          ))}
-        </div>
+        <PortalStatRow
+          className="mt-[18px]"
+          stats={[
+            { key: 'start', value: startLb, label: labelStart },
+            { key: 'current', value: currentLb, label: labelCurrent },
+            { key: 'goal', value: goalLb, label: labelGoal },
+          ]}
+        />
 
-        <div className="mt-[13px] h-[5px] overflow-hidden rounded-full bg-warm">
-          <i className="block h-full rounded-full bg-ink" style={{ width: `${clamped}%` }} />
-        </div>
+        <PortalMeter pct={clamped} className="mt-[13px]" />
       </div>
     </PortalCard>
   );

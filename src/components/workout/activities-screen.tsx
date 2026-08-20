@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 import { PortalLabel } from '@/components/portal/today-cards';
-import { TrainTabs, WorkoutBanner, UpNext, SplitOverview } from '@/components/portal/train-cards';
+import { WorkoutBanner, UpNext, SplitOverview } from '@/components/portal/train-cards';
+import { PortalTabs } from '@/components/portal/portal-chrome';
 import { PageTitle } from '@/components/ui/section';
 import { ListRow } from '@/components/ui/list-row';
 import { CompletionCheck } from '@/components/ui/completion';
@@ -61,7 +62,7 @@ export function ActivitiesScreen({
   return (
     <div className="px-[22px] pb-7 pt-3">
       <PageTitle className="mb-4">{tn('activities')}</PageTitle>
-      <TrainTabs
+      <PortalTabs
         value={tab}
         onChange={setTab}
         options={[

@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import type { ReactElement, ReactNode } from 'react';
 import { PortalCard, PortalLabel } from '@/components/portal/today-cards';
+import { PortalMediaRow } from '@/components/portal/portal-chrome';
 
 /**
  * Her own shoot, standing in for the handoff's stock gym photography.
@@ -27,40 +28,6 @@ const SHOOT = [
 
 export function shootImage(index: number): string {
   return SHOOT[Math.abs(index) % SHOOT.length];
-}
-
-/** The handoff's .train-tabs: underline on the active one, no pill, no fill. */
-export function TrainTabs<T extends string>({
-  value,
-  onChange,
-  options,
-}: {
-  value: T;
-  onChange: (v: T) => void;
-  options: { value: T; label: string }[];
-}): ReactElement {
-  return (
-    <div className="mb-3 flex gap-[18px]" role="tablist">
-      {options.map((o) => {
-        const active = o.value === value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(o.value)}
-            className={[
-              'tf-press text-[12px]',
-              active ? 'border-b-2 border-ink pb-2 text-ink' : 'pb-2 text-faint',
-            ].join(' ')}
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
 }
 
 /**
@@ -125,18 +92,20 @@ export function UpNext({
       <PortalLabel>{label}</PortalLabel>
       <div className="mt-3 grid gap-2.5">
         {rows.map((r) => (
-          <Link key={r.key} href={r.href} className="tf-press grid grid-cols-[53px_1fr] items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={shootImage(r.imageIndex)}
-              alt=""
-              className="h-[53px] w-[53px] rounded-[9px] object-cover"
-            />
-            <div className="min-w-0">
-              <strong className="block truncate text-[12px]">{r.title}</strong>
-              <small className="block truncate text-faint">{r.sub}</small>
-            </div>
-          </Link>
+          <PortalMediaRow
+            key={r.key}
+            href={r.href}
+            title={r.title}
+            sub={r.sub}
+            thumb={
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={shootImage(r.imageIndex)}
+                alt=""
+                className="h-[53px] w-[53px] rounded-[9px] object-cover"
+              />
+            }
+          />
         ))}
       </div>
     </PortalCard>
