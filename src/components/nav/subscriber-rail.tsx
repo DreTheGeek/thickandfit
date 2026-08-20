@@ -48,11 +48,13 @@ export function SubscriberRail({
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
       <div className="flex h-16 items-center justify-between px-6">
         <Link href="/dashboard">
-          {/* tone="white". The default is the BLACK wordmark, which is correct on the marketing
-              site and on the coach console, and invisible here: this rail only ever renders inside
-              .tf-portal, on a #121214 ground. Her brand mark was a dark smudge in the corner of the
-              member's desktop nav. */}
-          <Wordmark height={22} tone="white" />
+{/* The BLACK mark, inverted only inside the dark portal.
+              A static tone cannot work here any more: the rail is bg-surface, which is white on the
+              light palette and #121214 on the dark one, so whichever tone is hardcoded is invisible
+              on one of them. This was tone="white" when the portal was dark-only and became a white
+              mark on a white rail the day light became the default. The variant follows the
+              attribute on <html>, so it flips with the theme. */}
+          <Wordmark height={22} className="[[data-portal-theme='dark']_&]:invert" />
         </Link>
         <div className="flex items-center gap-1">
           <CommandPalette audience="member" />

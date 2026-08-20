@@ -11,8 +11,8 @@ export default function AppLoading(): ReactElement {
       {/* `dark:invert` was dead code here: the dark variant is defined as [data-theme="dark"] and
           the member portal is a CLASS scope (.tf-portal) that never sets it, so the black wordmark
           sat invisible on black. This route serves BOTH shells, member (dark) and coach (light), so
-          the tone cannot be a static prop; the arbitrary variant inverts only inside the portal. */}
-      <Wordmark height={18} className="mb-6 opacity-25 [.tf-portal_&]:invert" />
+          the tone cannot be a static prop; the variant follows the theme attribute on <html>. */}
+      <Wordmark height={18} className="mb-6 opacity-25 [[data-portal-theme='dark']_&]:invert" />
       <Skeleton className="h-9 w-40" />
       <Skeleton className="mt-5 h-36 rounded-2xl" />
       <Skeleton className="mt-5 h-14" />

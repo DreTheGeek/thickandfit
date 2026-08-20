@@ -17,7 +17,11 @@ export function BottomNav(): ReactElement | null {
       // pb clears the iPhone home indicator. 16px is right on a device without one; on an iPhone
       // with a 34px indicator the bar sat underneath it and the labels were half-covered in the
       // installed app. env() returns 0 where there is no inset, so the calc is correct on both.
-      className="flex flex-none border-t border-line bg-[rgba(5,5,6,0.96)] px-2.5 pt-2 pb-[calc(16px+env(safe-area-inset-bottom))] backdrop-blur-lg lg:hidden"
+      // bg-surface/95, not a hardcoded rgba(5,5,6). The handoff is a dark design and that literal was
+      // its near-black bar; the moment the portal could be light it became a black slab under a
+      // cream page, and the ACTIVE tab, which is text-ink, went black on black. The first tab simply
+      // looked missing. A role follows the palette; a literal cannot.
+      className="flex flex-none border-t border-line bg-surface/95 px-2.5 pt-2 pb-[calc(16px+env(safe-area-inset-bottom))] backdrop-blur-lg lg:hidden"
       aria-label={t('today')}
     >
       {TABS.map((tab) => {
