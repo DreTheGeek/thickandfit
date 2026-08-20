@@ -21,8 +21,23 @@ import type { ThreadMessage } from '@/lib/messages/messages';
 // blank on the one screen where the timing of a message is the point. The day divider gets the same
 // treatment for the same reason: it compares against `new Date()`, so a message sent at 9pm local
 // can be "Today" on her clock and yesterday on the server's.
+/**
+ * Which day a message groups under. UTC, and that is the whole point.
+ *
+ * This was `new Date(iso).toDateString()`, which is LOCAL, so the server (UTC) and the browser (her
+ * timezone) could disagree about whether two messages fall on the same day. That decides whether a
+ * divider ELEMENT exists, so the server HTML and the client tree had different structure and React
+ * threw #418 with an HTML mismatch, discarding the server render.
+ *
+ * suppressHydrationWarning cannot help here: it covers text and attributes, not a node that exists
+ * on one side and not the other. The key has to be deterministic instead. The visible LABEL stays
+ * local, which is what she should read, and carries the suppression.
+ *
+ * Cost: a message sent late at night groups under the next UTC day. That is a few hours of edge, and
+ * the alternative is re-rendering the whole thread on every load.
+ */
 function dayKey(iso: string): string {
-  return new Date(iso).toDateString();
+  return iso.slice(0, 10);
 }
 function dayLabel(iso: string, locale: string, todayLabel: string, yesterdayLabel: string): string {
   const d = new Date(iso);
