@@ -1872,7 +1872,10 @@
       "cycle": "Tu ciclo",
       "coachTabSteph": "Steph",
       "coachTabAssistant": "Tu coach",
-      "coachHumanNote": "Steph lee estos mensajes ella misma. Responde cuando puede."
+      "coachHumanNote": "Steph lee estos mensajes ella misma. Responde cuando puede.",
+      "actionLogFood": "Registrar comida",
+      "actionCheckin": "Enviar check-in",
+      "actionViewPlan": "Ver plan"
     },
     "gamification": {
       "dayStreak": "días seguidos",

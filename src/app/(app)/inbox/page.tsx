@@ -7,6 +7,7 @@ import { getThread } from '@/lib/messages/messages';
 import { MessageThread } from '@/components/messages/message-thread';
 import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { CoachTabs } from '@/components/portal/coach-tabs';
+import { CoachActions } from '@/components/portal/coach-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,7 @@ export default async function InboxPage(): Promise<ReactElement> {
           her to discover that the coach she can reach has two different front doors. */}
       <PortalHeader title={tn('coach')} />
       <CoachTabs />
+      <CoachActions />
       <div className="flex h-[68vh] flex-col overflow-hidden rounded-2xl border border-line">
         <MessageThread clientId={ctx.userId} viewerId={ctx.userId} initialMessages={messages} />
       </div>

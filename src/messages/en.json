@@ -1872,7 +1872,10 @@
       "cycle": "Your cycle",
       "coachTabSteph": "Steph",
       "coachTabAssistant": "Your coach",
-      "coachHumanNote": "Steph reads these herself. She replies when she can."
+      "coachHumanNote": "Steph reads these herself. She replies when she can.",
+      "actionLogFood": "Log food",
+      "actionCheckin": "Submit check-in",
+      "actionViewPlan": "View plan"
     },
     "gamification": {
       "dayStreak": "day streak",

@@ -8,6 +8,7 @@ import { CoachChat } from '@/components/coach-ai/coach-chat';
 import { getTranslations } from 'next-intl/server';
 import { PortalScreen, PortalHeader } from '@/components/portal/portal-chrome';
 import { CoachTabs } from '@/components/portal/coach-tabs';
+import { CoachActions } from '@/components/portal/coach-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ export default async function CoachChatPage(): Promise<ReactElement> {
     <PortalScreen>
       <PortalHeader title={tn('coach')} />
       <CoachTabs />
+      <CoachActions />
       <CoachChat initialMessages={history} configured={isConfigured()} />
     </PortalScreen>
   );
