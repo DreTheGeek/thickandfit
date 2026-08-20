@@ -32,7 +32,7 @@ import type { ReactElement } from 'react';
 import { useTranslations } from 'next-intl';
 import { PortalCard, PortalLabel } from '@/components/portal/today-cards';
 import { PortalButton, PortalStatRow } from '@/components/portal/portal-chrome';
-import { shootImage } from '@/components/portal/train-cards';
+import { shootImage } from '@/lib/brand/shoot';
 import { Icon } from '@/components/ui/icons';
 
 export type PreviewExercise = {

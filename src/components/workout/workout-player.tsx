@@ -233,6 +233,17 @@ export function WorkoutPlayer({
   const [enjoyment, setEnjoyment] = useState<number | null>(null);
   const [effort, setEffort] = useState<number | null>(null);
   const logged = useRef<LoggedSet[]>(draft ? toLoggedSets(draft.sets) : []);
+  /**
+   * A render-safe mirror of `logged`.
+   *
+   * The ref stays authoritative: submitLog and detectPRs read it, and it must survive without
+   * re-rendering. But the set table needs the same data DURING render, and reading a ref there is a
+   * real violation rather than a style one. React may discard and replay a render, and a ref read
+   * that way can return a value from an attempt that never committed. It happens to work today
+   * because logSet mutates and then immediately advances setNum; that is a coincidence of ordering,
+   * not a guarantee, and it is exactly the kind of thing that breaks silently later.
+   */
+  const [loggedView, setLoggedView] = useState<LoggedSet[]>(draft ? toLoggedSets(draft.sets) : []);
   const wakeRef = useRef<WakeLockSentinel | null>(null);
   // Substitutions, by exercise index. A ref rather than state: nothing renders from it, and it has
   // to be readable from saveDraft without adding a dependency that re-creates the callback.
@@ -465,20 +476,23 @@ export function WorkoutPlayer({
     clearDraft(sessionId);
     setRestored(0);
     setExercises(initialExercises);
+    setLoggedView([]);
     setIdx(0);
     setSetNum(1);
     setElapsed(0);
   }, [sessionId, initialExercises]);
 
   const logSet = useCallback((): void => {
-    logged.current.push({
+    const entry: LoggedSet = {
       exercise_id: ex.exercise_id,
       set_number: setNum,
       reps,
       weight,
       completed: true,
       difficulty,
-    });
+    };
+    logged.current.push(entry);
+    setLoggedView((prev) => [...prev, entry]);
     setDifficulty('moderate'); // reset the RPE tap for the next set
 
     if (setNum < totalSets) {
@@ -770,7 +784,7 @@ export function WorkoutPlayer({
           </div>
           {Array.from({ length: totalSets }, (_, i) => {
             const n = i + 1;
-            const done = logged.current.find(
+            const done = loggedView.find(
               (l) => l.exercise_id === ex.exercise_id && l.set_number === n,
             );
             const prev = ex.previousSets.find((p) => p.setNumber === n);

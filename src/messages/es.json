@@ -1869,7 +1869,8 @@
           "method": "Lo que sabe el método",
           "coaching": "Tus ajustes de coaching"
         }
-      }
+      },
+      "planAssigned": "{n, plural, one {# clienta} other {# clientas}}"
     },
     "you": {
       "title": "Tú",

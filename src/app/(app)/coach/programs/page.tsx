@@ -7,10 +7,13 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { PageTitle } from '@/components/ui/section';
 import { ButtonLink } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
+import { shootImage } from '@/lib/brand/shoot';
 
 export const dynamic = 'force-dynamic';
 
-type PlanRow = { id: string; name_en: string; weeks: number; is_template: boolean; days: number };
+type PlanRow = {
+  /** How many clients are on it. Only rendered when it is not zero. */
+  assigned: number; id: string; name_en: string; weeks: number; is_template: boolean; days: number };
 
 export default async function CoachProgramsPage(): Promise<ReactElement> {
   const ctx = await requireCoach();
@@ -24,7 +27,7 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
     // name does not always say it. Sorted by name rather than updated_at: the import stamped all 40
     // within the same minute, so recency ordering scrambled a library whose names are already
     // deliberately sequential (Month 1, Month 2, Month 3).
-    const [{ data }, { data: sessionRows }] = await Promise.all([
+    const [{ data }, { data: sessionRows }, { data: assignRows }] = await Promise.all([
       supabase
         .from('plans')
         .select('id, name_en, weeks, is_template')
@@ -35,12 +38,23 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
         .is('archived_at', null)
         .order('name_en', { ascending: true }),
       supabase.from('sessions').select('plan_id').eq('company_id', ctx.companyId),
+      // Who is actually ON each program. The single most useful fact when choosing one to assign,
+      // and the library never showed it: every card looked equally used.
+      supabase.from('plan_assignments').select('plan_id').eq('company_id', ctx.companyId),
     ]);
+    const assignedCount = new Map<string, number>();
+    for (const a of (assignRows ?? []) as { plan_id: string | null }[]) {
+      if (a.plan_id) assignedCount.set(a.plan_id, (assignedCount.get(a.plan_id) ?? 0) + 1);
+    }
     const dayCount = new Map<string, number>();
     for (const s of (sessionRows ?? []) as { plan_id: string | null }[]) {
       if (s.plan_id) dayCount.set(s.plan_id, (dayCount.get(s.plan_id) ?? 0) + 1);
     }
-    plans = ((data ?? []) as Omit<PlanRow, 'days'>[]).map((p) => ({ ...p, days: dayCount.get(p.id) ?? 0 }));
+    plans = ((data ?? []) as Omit<PlanRow, 'days' | 'assigned'>[]).map((p) => ({
+      ...p,
+      days: dayCount.get(p.id) ?? 0,
+      assigned: assignedCount.get(p.id) ?? 0,
+    }));
   }
 
   // Her own families, read off the names she chose. Order is the order she works in: the numbered
@@ -97,15 +111,37 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
                 {t(g.key)} <span className="text-line">·</span> {g.plans.length}
               </h2>
               <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
-                {g.plans.map((p) => (
+                {g.plans.map((p, i) => (
                   <Link
                     key={p.id}
                     href={`/coach/programs/${p.id}`}
-                    className="tf-press flex items-center justify-between gap-4 rounded-2xl bg-surface px-4 py-3.5 hover:shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                    className="tf-press group flex items-stretch gap-0 overflow-hidden rounded-2xl bg-surface transition-shadow hover:shadow-[0_2px_12px_rgba(0,0,0,0.10)]"
                   >
+                    {/* Her photography, not a stock library and not a coloured block. This is a
+                        screen she opens dozens of times a week to pick from her own work, and a
+                        column of identical white pills gave her nothing to recognise a program BY.
+                        Indexed so a program keeps its picture between visits. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
+                    <img
+                      src={shootImage(i)}
+                      alt=""
+                      className="h-[74px] w-[74px] flex-none object-cover"
+                    />
+                    <span className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3">
                     {/* Wraps rather than truncates. Two lines of a name she wrote beats one line
                         with the distinguishing half cut off. */}
-                    <span className="min-w-0 text-[14px] font-medium leading-snug text-ink">{p.name_en}</span>
+                      <span className="min-w-0">
+                        <span className="block text-[14px] font-semibold leading-snug text-ink">
+                          {p.name_en}
+                        </span>
+                        {/* Who is on it, only when somebody is. A "0 clients" badge on every card
+                            is the same no-information wallpaper the flat grid already was. */}
+                        {p.assigned > 0 && (
+                          <span className="mt-1 inline-block rounded-full bg-warm px-2 py-0.5 text-[11px] font-semibold text-soft">
+                            {t('planAssigned', { n: p.assigned })}
+                          </span>
+                        )}
+                      </span>
                     <span className="flex shrink-0 items-center gap-2.5 text-[12px] text-muted">
                       {/* Duration only when SHE stated one. Lenus stores no length on a template,
                           so the name is the only statement of it and the import defaults to 12.
@@ -119,6 +155,7 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
                           : t('planDays', { n: p.days })}
                       </span>
                       <Icon name="chevronRight" size={16} className="text-line" />
+                    </span>
                     </span>
                   </Link>
                 ))}

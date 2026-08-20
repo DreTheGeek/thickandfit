@@ -7,28 +7,9 @@
 import Link from 'next/link';
 import type { ReactElement, ReactNode } from 'react';
 import { PortalCard, PortalLabel } from '@/components/portal/today-cards';
+import { shootImage } from '@/lib/brand/shoot';
 import { PortalMediaRow } from '@/components/portal/portal-chrome';
 
-/**
- * Her own shoot, standing in for the handoff's stock gym photography.
- *
- * The handoff points every workout image at Unsplash. These are the real files in public/brand/shoot,
- * and using them here is correct rather than merely available: it is HER program, so her training
- * photography is the honest illustration for it. Picked by index so a given day keeps the same photo
- * between renders instead of shuffling under the member.
- */
-const SHOOT = [
-  '/brand/shoot/deadlift.avif',
-  '/brand/shoot/legpress.avif',
-  '/brand/shoot/cable.avif',
-  '/brand/shoot/rack-pose.avif',
-  '/brand/shoot/power-stance.avif',
-  '/brand/shoot/trust-process.avif',
-] as const;
-
-export function shootImage(index: number): string {
-  return SHOOT[Math.abs(index) % SHOOT.length];
-}
 
 /**
  * Today's workout: a 150px banner with the session name over a darkening gradient, and the one
