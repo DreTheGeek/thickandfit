@@ -60,17 +60,37 @@ suffix. Build Profile D (Consumer App): API internal-only, no API Settings UI, M
 
 ---
 
-## Branch Map (CRITICAL, read before any work)
+## Branch Map: ABANDONED, everything is on `main` (measured 2026-08-19)
+
+The phased-branch model below was the plan and is not what happened. Measured, not remembered:
+
+| branch | last commit | behind main | unique commits |
+|---|---|---|---|
+| `main` | 2026-08-19 | - | production, everything |
+| `phase-2` | 2026-07-02 | 498 | 0 |
+| `phase-3` | 2026-06-21 | 641 | 2 (a merge and a revert) |
+
+Phase 2 and Phase 3 work (nutrition, community, AI coach, gamification, MCP) shipped straight to
+`main`. Both branches are stale and hold nothing `main` lacks. **Following the steps below would
+branch a new feature off a two-month-old tree**, which is the only reason this section is still
+here rather than deleted: the instruction was live long enough that it may be in someone's habits.
+
+Build on `main`. A PRD header's `Branch:` field is a record of the original plan, not an
+instruction. Delete `phase-2` and `phase-3` when someone is confident nothing references them.
+
+<details><summary>The original policy, superseded</summary>
+
 - `main` = Phase 1 (PRD-00 through PRD-12). This is production.
 - `phase-2` = Phase 2 (PRD-13 through PRD-30). Do not merge to main until Phase 1 ships.
 - `phase-3` = Phase 3 (PRD-31 through PRD-47). Do not merge until Phase 2 ships.
 
-Before writing any code:
 1. Read the PRD header `Branch:` field.
 2. `git branch` to confirm you are on the correct branch.
 3. If the PRD targets phase-2/phase-3: `git checkout main && git pull`, then
    `git checkout <phase> && git rebase main` (or rebase onto the prior phase) BEFORE building.
 4. Never push Phase 2/3 code to main until that phase is ready to ship.
+
+</details>
 
 ---
 
@@ -450,13 +470,49 @@ signups write `Self-Guided`/`Team Thick & Fit`/`1-on-1 with Steph` — and nothi
 which Lenus value is which tier. Guessing would cap a woman paying for 1-on-1 coaching at the free
 number. Settle the mapping with her before wiring it.
 
-## Three migrations are written and NOT applied (0142, 0143, plus 0140/0141)
+## 0140 to 0143: APPLIED 2026-08-19, and what they had been silently breaking
 
-`.planning/RUNBOOK-2026-08-14.md` steps 1, 1b, 1c. Apply in number order — 0143's RLS policy calls
+All four were written on 2026-08-14, shipped as code to `main`, and never run against the database.
+Applied and verified 2026-08-19. Keep the notes below: the reasoning is still the reasoning, and the
+five days they sat unapplied are the useful part.
+
+**What "shipped but unapplied" actually looked like, because none of it threw.** Every call site
+fails open (`console.error` then `return []`), so there was no error page anywhere and no Sentry
+spike. Instead:
+
+- Her whole 41-program library read as EMPTY in `/coach/programs` and in the assignment picker,
+  from 2026-08-14. A coach opening `/coach/awaiting` to keep the "Steph writes your plan by hand"
+  promise had nothing to assign.
+- `getEngagementSweep` selects `assigned_coach_id`, so it returned zero rows. That one function
+  feeds `/coach/quiet`, the attention chip AND both nudge ladders, so the daily cron ran, logged
+  success, and sent nothing to anyone.
+- `/coach/subscribers/[id]` read the same column, got null, and called `notFound()`. Every
+  app-signup member record 404'd.
+- The pause feature was dead at the CHECK constraint.
+
+**The lesson is not "remember to apply migrations".** It is that this app's fail-open convention,
+which is right for a single unreadable table, turns an unapplied migration into a console that looks
+calm and is lying. A migration that ships with its code and not with its schema has no failing test
+anywhere. `node .qa-visual/tenant-boundary-test.mjs` reads the SQL FILES, not the database, so it
+passed throughout.
+
+Verified after applying: `paused` in the entitlements CHECK, `plans.archived_at` present with 41
+plans visible, `auth_company_id()` SECURITY DEFINER, `coach_coverage` with RLS on and one policy,
+`profiles.assigned_coach_id` present and the sweep returning rows again.
+
+**On 0142's stated trap: the auth hook IS configured.** `hook_custom_access_token_enabled = true`,
+pointing at `public.custom_access_token_hook` (checked via the Management API 2026-08-19). So the 70
+policies that scope through `current_company_id()`, which reads the JWT claim ONLY with no fallback,
+do resolve. Do not assume that from this line alone if the hook is ever touched: it is the single
+point of failure for those 70, and `auth_company_id()` (with its `profiles` fallback) is the safer
+shape for anything new.
+
+Original notes, still accurate. `.planning/RUNBOOK-2026-08-14.md` steps 1, 1b, 1c. Apply in number order: 0143's RLS policy calls
 `auth_company_id()`, which 0142 creates.
 
 - **0140 / 0141** — the `paused` entitlement status and `plans.archived_at`. Until 0140 lands,
   `pauseMemberAction` fails at the CHECK constraint and the whole pause feature is dead code.
+  (Applied 2026-08-19.)
 - **0142 tenant boundary** — 21 policies granted on `is_coach()` with no company predicate. The
   trap: the obvious fix (`current_company_id()`) reads a JWT CUSTOM CLAIM injected by an auth hook
   that is a manual post-deploy step, so if it was never set the migration denies every coach read in
