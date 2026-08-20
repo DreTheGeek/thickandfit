@@ -48,7 +48,11 @@ export function SubscriberRail({
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
       <div className="flex h-16 items-center justify-between px-6">
         <Link href="/dashboard">
-          <Wordmark height={22} />
+          {/* tone="white". The default is the BLACK wordmark, which is correct on the marketing
+              site and on the coach console, and invisible here: this rail only ever renders inside
+              .tf-portal, on a #121214 ground. Her brand mark was a dark smudge in the corner of the
+              member's desktop nav. */}
+          <Wordmark height={22} tone="white" />
         </Link>
         <div className="flex items-center gap-1">
           <CommandPalette audience="member" />

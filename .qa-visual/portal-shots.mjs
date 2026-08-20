@@ -14,13 +14,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
 
-const BASE = process.argv[2] ?? 'https://www.teamthickandfit.com';
+const args = process.argv.slice(2);
+const BASE = args.find((a) => a.startsWith('http')) ?? 'https://www.teamthickandfit.com';
+/**
+ * Desktop mode. Every screen in this re-skin was designed against the handoff's 390px phone, and
+ * the shell swaps the bottom bar for a left rail at lg, so 1280 is a genuinely different layout
+ * rather than the same one wider. Shots land in a `desktop/` subfolder so a phone run does not
+ * overwrite them.
+ */
+const DESKTOP = args.includes('--desktop');
 const EMAIL = process.env.E2E_MEMBER_EMAIL ?? 'sample.sam@thickandfit.test';
 const PASSWORD = process.env.E2E_MEMBER_PASSWORD ?? 'TFSample2026!';
-const OUT = path.join(process.cwd(), '.qa-visual', 'portal');
+const OUT = path.join(process.cwd(), '.qa-visual', 'portal', DESKTOP ? 'desktop' : 'phone');
 
 // 390x844 is the handoff's own phone frame, so a shot here is directly comparable to the mock.
-const PHONE = { width: 390, height: 844 };
+// 1280x900 is past the lg breakpoint, where SubscriberRail replaces the bottom nav.
+const VIEWPORT = DESKTOP ? { width: 1280, height: 900 } : { width: 390, height: 844 };
 
 const SHOTS = [
   { name: '01-today', route: '/dashboard', expect: /transformation status/i },
@@ -29,6 +38,10 @@ const SHOTS = [
   { name: '04-fuel-add', route: '/nutrition', click: 'text=/add meal/i', expect: /scan|escanear/i },
   { name: '05-community', route: '/community' },
   { name: '06-you', route: '/you' },
+  { name: '08-progress', route: '/progress', expect: /weight trend|tendencia/i },
+  { name: '10-coach', route: '/inbox', expect: /steph/i },
+  { name: '11-coach-chat', route: '/coach-chat', expect: /steph/i },
+  { name: '09-progress-body', route: '/progress?tab=body', expect: /./ },
   // Resolved at runtime from the Train screen, because the plan id is per-member.
   { name: '07-preview', route: null, fromRoute: '/workouts', from: 'a[href*="preview=1"]', expect: /start workout|empezar/i },
 ];
@@ -46,7 +59,7 @@ const ERROR_MARKER = /something went wrong/i;
 fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: PHONE, deviceScaleFactor: 2 });
+const ctx = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: DESKTOP ? 1 : 2 });
 const page = await ctx.newPage();
 
 // Console errors are worth having next to the pictures: a screen can look right and still be
@@ -57,7 +70,7 @@ page.on('console', (m) => {
 });
 page.on('pageerror', (e) => problems.push(`pageerror: ${String(e).slice(0, 160)}`));
 
-console.log(`base: ${BASE}`);
+console.log(`base: ${BASE}  viewport: ${VIEWPORT.width}x${VIEWPORT.height}`);
 await page.goto(`${BASE}/auth/sign-in`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 await page.fill('input[name=email]', EMAIL);
 await page.fill('input[name=password]', PASSWORD);

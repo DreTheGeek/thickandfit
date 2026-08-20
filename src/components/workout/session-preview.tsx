@@ -237,11 +237,17 @@ export function SessionPreview({
       </div>
 
       {/* Sticky, because the list is long and the one action on this screen must not require
-          scrolling back to reach. */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg px-[22px] py-3.5">
-        <PortalButton href={startHref} variant="action">
-          {t('startWorkout')}
-        </PortalButton>
+          scrolling back to reach.
+          `fixed` is viewport-relative, so on desktop this bar ran the full 1280px while the content
+          sat in the shell's 760px column: a yellow band across the whole window, unattached to the
+          screen it belongs to. The inner wrapper matches the shell's own max widths (520 / 760) so
+          it stays the width of the thing it is the bottom of. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center">
+        <div className="w-full max-w-[520px] border-t border-line bg-bg px-[22px] py-3.5 lg:max-w-[760px]">
+          <PortalButton href={startHref} variant="action">
+            {t('startWorkout')}
+          </PortalButton>
+        </div>
       </div>
     </div>
   );
