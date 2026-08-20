@@ -605,11 +605,26 @@ wrong". `tsc`, `eslint` and `next build` are all green: nothing about the call i
 The workout preview shipped this way. Either mark the component `'use client'` or use
 `getTranslations` from `next-intl/server`.
 
-**Both traps were caught by looking, not by building.** `node .qa-visual/portal-shots.mjs` signs in
-as a real member against PRODUCTION, shoots the portal at the handoff's own 390x844, and asserts per
-screen that the page did not render the error boundary and does contain a marker of its own content.
-It exits non-zero, so it is a test. Run it after any portal change; a passing build is not evidence
-a screen renders.
+**Every one of these was caught by looking, not by building.** `node .qa-visual/portal-shots.mjs`
+signs in as a real member against PRODUCTION, shoots eleven screens, and asserts per screen that the
+page did not render the error boundary and does contain a marker of its own content. It exits
+non-zero, so it is a test, not a gallery. Run it after any portal change.
+
+    node .qa-visual/portal-shots.mjs              phone 390x844, English
+    node .qa-visual/portal-shots.mjs --desktop    1280x900, where the rail replaces the bottom bar
+    node .qa-visual/portal-shots.mjs --es         Spanish
+
+Three things only the non-default modes showed: her wordmark was the BLACK svg on the dark rail, the
+preview's sticky CTA ran the full 1280 while its content sat in the shell's 760 column, and
+`(app)/loading.tsx` carried a `dark:invert` that never fires (the dark variant is `[data-theme="dark"]`
+and `.tf-portal` is a class scope). **--es sets the ui_locale COOKIE and must do so AFTER sign-in**:
+the middleware only defaults that cookie when absent, but the sign-in action then writes it from the
+member's PROFILE, so setting it first yields an entirely English run that reports every screen green.
+
+A fourth class the tool caught: a HYDRATION mismatch. /inbox threw React #418 on every visit because
+message timestamps format with no timezone, so the server rendered UTC and the browser rendered hers.
+Both halves are individually valid, so no build can see it. Timezone- and now-relative text carries
+`suppressHydrationWarning`, which is what it is for.
 
 The kit is `src/components/portal/`: `portal-chrome.tsx` (screen, header, tabs, button, media row,
 stat row, meter, data row, raised card), `today-cards.tsx`, `train-cards.tsx`, `capture-sheet.tsx`.
