@@ -38,7 +38,14 @@ function e1rm(weight: number, reps: number): number {
 export async function getRecentPRs(
   companyId: string,
   profileId: string,
-  withinDays = 30,
+  /**
+   * 90 days, matching how far back a coach thread realistically reaches.
+   *
+   * It was 30, which made the timeline inconsistent with itself: the conversation shows messages
+   * from June while the card that belongs beside them is filtered out. The card is interleaved into
+   * a thread, so its window has to be the thread's, not an arbitrary "recent".
+   */
+  withinDays = 90,
   limit = 3,
 ): Promise<RecentPR[]> {
   const svc = createServiceClient();
