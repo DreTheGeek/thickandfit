@@ -77,23 +77,27 @@ export function PortalIconButton({
   href,
   onClick,
   label,
+  flip = false,
 }: {
   icon: IconName;
   href?: string;
   onClick?: () => void;
   label: string;
+  /** Mirrors the glyph. The icon set has one chevron, so "back" is "forward" turned around. */
+  flip?: boolean;
 }): ReactElement {
   const cls = 'tf-press grid h-9 w-9 place-items-center rounded-full bg-warm text-ink';
+  const glyph = <Icon name={icon} size={16} className={flip ? 'rotate-180' : undefined} />;
   if (href) {
     return (
       <Link href={href} aria-label={label} className={cls}>
-        <Icon name={icon} size={16} />
+        {glyph}
       </Link>
     );
   }
   return (
     <button type="button" onClick={onClick} aria-label={label} className={cls}>
-      <Icon name={icon} size={16} />
+      {glyph}
     </button>
   );
 }
@@ -130,7 +134,7 @@ export function PortalHeader({
  * ---------------------------------------------------------------------------------------------- */
 
 /**
- * The handoff's tab rows: `.train-tabs` (underline) and `.fuel-tabs` (a filled grid).
+ * The handoff's tab rows: `.train-tabs` (underline) and `.fuel-tabs` (equal columns, no fill).
  *
  * SCROLLS RATHER THAN SQUEEZES, and that is the whole design decision in this component. A flex row
  * shrinks each item until the label wraps, which reads as broken rather than as full; UnderlineTabs
@@ -147,34 +151,54 @@ export function PortalTabs<T extends string>({
   onChange,
   options,
   variant = 'underline',
+  hrefFor,
   className = '',
 }: {
   value: T;
-  onChange: (v: T) => void;
+  onChange?: (v: T) => void;
   options: { value: T; label: string }[];
   variant?: 'underline' | 'grid';
+  /**
+   * When set, tabs are Links rather than buttons.
+   *
+   * Both kinds exist in the handoff and they are not interchangeable. Progress and Train switch a
+   * view in place, so those are buttons over local state. Fuel's three tabs are three different
+   * screens that already have routes, and rendering those as buttons would cost prefetch, the back
+   * button, and the ability to open one in a new tab.
+   */
+  hrefFor?: (v: T) => string;
   className?: string;
 }): ReactElement {
+  const press = (v: T): void => onChange?.(v);
   if (variant === 'grid') {
+    // The handoff's `.fuel-tabs`: equal columns, 11px, centred, active in ink. NOT a pill and NOT
+    // filled. An earlier draft made it a segmented control, which is the shape this app uses
+    // elsewhere but is not what the handoff draws, and a filled pill on Fuel would have competed
+    // with the calorie figure that the screen exists to show.
     return (
       <div
         role="tablist"
-        className={`mb-3 grid gap-1.5 rounded-full bg-warm p-1 ${className}`}
+        className={`mb-2.5 grid ${className}`}
         style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0,1fr))` }}
       >
         {options.map((o) => {
           const active = o.value === value;
-          return (
+          const cls = [
+            'tf-press truncate pb-2.5 text-center text-[11px]',
+            active ? 'text-ink' : 'text-muted',
+          ].join(' ');
+          return hrefFor ? (
+            <Link key={o.value} href={hrefFor(o.value)} role="tab" aria-selected={active} className={cls}>
+              {o.label}
+            </Link>
+          ) : (
             <button
               key={o.value}
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => onChange(o.value)}
-              className={[
-                'tf-press truncate rounded-full py-2 text-center text-[11px] font-semibold',
-                active ? 'bg-ink text-bg' : 'text-muted',
-              ].join(' ')}
+              onClick={() => press(o.value)}
+              className={cls}
             >
               {o.label}
             </button>
@@ -197,7 +221,7 @@ export function PortalTabs<T extends string>({
             type="button"
             role="tab"
             aria-selected={active}
-            onClick={() => onChange(o.value)}
+            onClick={() => press(o.value)}
             className={[
               'tf-press flex-none snap-start whitespace-nowrap pb-2 text-[12px]',
               active ? 'border-b-2 border-ink text-ink' : 'text-faint',
@@ -343,11 +367,22 @@ export function PortalStatRow({
   stats,
   size = 'sm',
   align = 'left',
+  order = 'value-first',
+  divider = false,
   className = '',
 }: {
   stats: { key: string; value: ReactNode; label: string; tone?: 'default' | 'hit' }[];
   size?: 'sm' | 'lg';
   align?: 'left' | 'center' | 'spread';
+  /**
+   * The handoff genuinely puts these two ways round and it is not an inconsistency: `.weight-grid`
+   * on Today leads with the figure, because the figure is the point; `.macro-row` on Fuel leads with
+   * PROTEIN / CARBS / FATS, because with three of them side by side the label is what she scans
+   * first to find the one she wants.
+   */
+  order?: 'value-first' | 'label-first';
+  /** `.macro-row` rules a hairline between cells; `.weight-grid` does not. */
+  divider?: boolean;
   className?: string;
 }): ReactElement {
   // No font-weight on `sm`: the element is a <strong>, so the browser default already applies, and
@@ -371,12 +406,20 @@ export function PortalStatRow({
             : align === 'center'
               ? 'text-center'
               : 'text-left';
+        const figure = (
+          <strong className={`block tabular-nums ${valueCls} ${s.tone === 'hit' ? 'text-accent' : ''}`}>
+            {s.value}
+          </strong>
+        );
+        const caption = (
+          <span className="block text-[8px] uppercase tracking-[0.6px] text-faint">{s.label}</span>
+        );
+        // Hairline BETWEEN cells only, so the row does not open with a rule against the gutter.
+        const rule = divider && i > 0 ? 'border-l border-line pl-2.5' : '';
         return (
-          <div key={s.key} className={cellAlign}>
-            <strong className={`block tabular-nums ${valueCls} ${s.tone === 'hit' ? 'text-accent' : ''}`}>
-              {s.value}
-            </strong>
-            <span className="block text-[8px] uppercase tracking-[0.6px] text-faint">{s.label}</span>
+          <div key={s.key} className={`${cellAlign} ${rule}`}>
+            {order === 'label-first' ? caption : figure}
+            {order === 'label-first' ? figure : caption}
           </div>
         );
       })}

@@ -2108,7 +2108,14 @@
       },
       "autoLogged": "Registrado: {items}",
       "autoUndo": "Deshacer",
-      "mpEmptyCta": "Registrar una comida"
+      "mpEmptyCta": "Registrar una comida",
+      "tabToday": "Hoy",
+      "tabPlan": "Plan",
+      "tabPhotos": "Fotos",
+      "calories": "Calorías",
+      "mealsLabel": "Comidas",
+      "addMeal": "Agregar comida",
+      "close": "Cerrar"
     },
     "disclaimer": {
       "title": "Antes de empezar",

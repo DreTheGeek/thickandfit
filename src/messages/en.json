@@ -2108,7 +2108,14 @@
       },
       "autoLogged": "Logged: {items}",
       "autoUndo": "Undo",
-      "mpEmptyCta": "Log a meal"
+      "mpEmptyCta": "Log a meal",
+      "tabToday": "Today",
+      "tabPlan": "Plan",
+      "tabPhotos": "Photos",
+      "calories": "Calories",
+      "mealsLabel": "Meals",
+      "addMeal": "Add meal",
+      "close": "Close"
     },
     "disclaimer": {
       "title": "Before you begin",

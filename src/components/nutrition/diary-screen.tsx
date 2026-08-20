@@ -5,30 +5,21 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
-import { MacroRing } from '@/components/coach/macro-ring';
+import { PortalCard, PortalLabel } from '@/components/portal/today-cards';
+import {
+  PortalScreen,
+  PortalHeader,
+  PortalIconButton,
+  PortalTabs,
+  PortalButton,
+  PortalMeter,
+  PortalStatRow,
+} from '@/components/portal/portal-chrome';
 import { PhotoScan } from '@/components/nutrition/photo-scan';
 import { CoachMomentCard } from '@/components/nutrition/coach-moment-card';
 import type { CoachMoment } from '@/lib/nutrition/coach-moment';
 import { searchFoodsAction, getFoodDetailAction, logFoodAction, deleteFoodLogAction, lookupBarcodeAction, toggleFavoriteAction } from '@/lib/nutrition/diary-actions';
 import { MEAL_SLOTS, macrosForGrams, effectiveGrams, dayScore, type DiaryDay, type FoodLite, type FoodPortion, type FoodState, type MealSlot } from '@/lib/nutrition/macros';
-
-function MacroBar({ label, value, target, color }: { label: string; value: number; target: number; color: string }): ReactElement {
-  const pct = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0;
-  const over = target > 0 && value > target;
-  return (
-    <div>
-      <div className="mb-1 flex items-center justify-between text-[12px]">
-        <span className="font-semibold uppercase tracking-[0.5px] text-faint">{label}</span>
-        <span className="tabular-nums text-soft">
-          {Math.round(value)} / {Math.round(target)}g
-        </span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-warm">
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: over ? 'var(--color-alert)' : color }} />
-      </div>
-    </div>
-  );
-}
 
 export function DiaryScreen({
   diary,
@@ -88,6 +79,10 @@ export function DiaryScreen({
   const [scanState, setScanState] = useState<'idle' | 'loading' | 'not_found'>('idle');
   const [grams, setGrams] = useState(100);
   const [slot, setSlot] = useState<MealSlot>('breakfast');
+  // The add-food block is closed by default. It used to be four always-open entry points stacked
+  // above the day's meals, which pushed what she had eaten below the fold on the screen whose job
+  // is to show it.
+  const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   // Post-log coaching line, returned by the log action itself.
   const [coachMoment, setCoachMoment] = useState<CoachMoment | null>(null);
@@ -175,87 +170,120 @@ export function DiaryScreen({
   const slotLabel = (s: MealSlot): string => t(s);
 
   return (
-    <div className="mx-auto w-full max-w-[760px] px-4 py-6 sm:px-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <h1 className="tf-display text-[26px]">{t('title')}</h1>
-        <div className="flex items-center gap-0.5">
-          <Link
-            href={`/nutrition?date=${prevDate}`}
-            aria-label={t('prevDay')}
-            className="tf-press flex h-10 w-10 items-center justify-center text-muted hover:text-ink"
-          >
-            <Icon name="chevronRight" size={18} className="rotate-180" />
-          </Link>
-          <span className="min-w-[92px] text-center text-[13px] font-semibold">{dateLabel}</span>
-          {nextDate ? (
-            <Link
-              href={`/nutrition?date=${nextDate}`}
-              aria-label={t('nextDay')}
-              className="tf-press flex h-10 w-10 items-center justify-center text-muted hover:text-ink"
-            >
-              <Icon name="chevronRight" size={18} />
-            </Link>
-          ) : (
-            <span className="flex h-8 w-8 items-center justify-center text-line">
-              <Icon name="chevronRight" size={18} />
-            </span>
-          )}
-          {!isToday && (
-            <Link
-              href="/nutrition"
-              className="tf-press ml-1 rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-muted hover:text-ink"
-            >
-              {t('today')}
-            </Link>
-          )}
-        </div>
-      </div>
+    <PortalScreen>
+      <PortalHeader
+        title={t('title')}
+        sub={dateLabel}
+        right={
+          <>
+            <PortalIconButton
+              icon="chevronRight"
+              href={`/nutrition?date=${prevDate}`}
+              label={t('prevDay')}
+              flip
+            />
+            {nextDate ? (
+              <PortalIconButton icon="chevronRight" href={`/nutrition?date=${nextDate}`} label={t('nextDay')} />
+            ) : null}
+          </>
+        }
+      />
 
-      {/* Daily summary */}
-      <div className="rounded-2xl border border-line bg-surface p-5">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-4">
-            <MacroRing proteinG={totals.proteinG} carbG={totals.carbG} fatG={totals.fatG} kcal={totals.kcal} size={92} />
-            <div>
-              <div className="font-display text-[24px] leading-none tabular-nums">{Math.round(totals.kcal)}</div>
-              <div className="text-[12px] text-faint">
-                {target ? t('ofTargetKcal', { target: Math.round(target.kcal) }) : t('kcalToday')}
-              </div>
-              {target && <div className="mt-1 text-[12px] font-semibold text-accent-ink">{t('kcalLeft', { n: kcalLeft })}</div>}
-              {score != null && (
-                <div
-                  className={[
-                    'mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
-                    score >= 7 ? 'bg-accent/12 text-accent' : 'bg-warm text-muted',
-                  ].join(' ')}
-                >
-                  <Icon name="sparkles" size={12} />
-                  {t('dayScore', { n: score })}
-                </div>
-              )}
+      {/* Three routes, not three local views. Plan and Photos already exist and were reachable only
+          from the You menu, which is two taps and a screen away from the place she is actually
+          thinking about food. The handoff's third tab is "Nutrition" with no defined content; rather
+          than invent one, the row carries what this app really has. */}
+      <PortalTabs
+        value={'today' as const}
+        options={[
+          { value: 'today' as const, label: t('tabToday') },
+          { value: 'plan' as const, label: t('tabPlan') },
+          { value: 'photos' as const, label: t('tabPhotos') },
+        ]}
+        variant="grid"
+        hrefFor={(v) => (v === 'plan' ? '/nutrition/plan' : v === 'photos' ? '/nutrition/photos' : '/nutrition')}
+      />
+
+      {!isToday && (
+        <Link
+          href="/nutrition"
+          className="tf-press mb-2.5 inline-block rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold text-muted hover:text-ink"
+        >
+          {t('today')}
+        </Link>
+      )}
+
+      {/* The handoff's `.calorie-line`: one figure against its target, a rail, and the three macros.
+          It replaces the ring-plus-three-bars block. Same numbers, and the ring is not deleted from
+          the codebase (the coach console still uses it), it just stops being this screen's hero:
+          the handoff leads with the number she came to check, not with a chart of it. */}
+      <div className="border-y border-line py-3.5">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <PortalLabel>{t('calories')}</PortalLabel>
+            <div className="mt-0.5">
+              <strong className="text-[26px] tabular-nums leading-none">{Math.round(totals.kcal)}</strong>
+              {target ? (
+                <span className="ml-1.5 text-[12px] text-muted">/ {Math.round(target.kcal)}</span>
+              ) : null}
             </div>
           </div>
-          {target && (
-            <div className="flex flex-1 flex-col gap-2.5">
-              <MacroBar label={t('protein')} value={totals.proteinG} target={target.proteinG} color="var(--color-macro-protein)" />
-              <MacroBar label={t('carbs')} value={totals.carbG} target={target.carbG} color="var(--color-macro-carbs)" />
-              <MacroBar label={t('fat')} value={totals.fatG} target={target.fatG} color="var(--color-macro-fat)" />
-            </div>
-          )}
+          {target ? <span className="flex-none text-[12px] text-muted">{t('kcalLeft', { n: kcalLeft })}</span> : null}
         </div>
-        {diary.targetSource === 'default' && <p className="mt-3 text-[11px] text-faint">{t('defaultTargetNote')}</p>}
-        {diary.targetSource === 'onboarding' && (
-          <p className="mt-3 text-[11px] text-faint">{t('onboardingTargetNote')}</p>
-        )}
-        {/* Directly under the day's numbers, because the line is about those numbers. Only appears
-            after a log in this session; a fresh page load shows the totals alone. */}
-        <CoachMomentCard moment={coachMoment} />
+
+        {target ? <PortalMeter className="mt-2.5" pct={(totals.kcal / Math.max(1, target.kcal)) * 100} /> : null}
+
+        {target ? (
+          <PortalStatRow
+            className="mt-[17px]"
+            order="label-first"
+            divider
+            stats={[
+              { key: 'p', label: t('protein'), value: `${Math.round(totals.proteinG)} / ${Math.round(target.proteinG)}g` },
+              { key: 'c', label: t('carbs'), value: `${Math.round(totals.carbG)} / ${Math.round(target.carbG)}g` },
+              { key: 'f', label: t('fat'), value: `${Math.round(totals.fatG)} / ${Math.round(target.fatG)}g` },
+            ]}
+          />
+        ) : null}
       </div>
 
-      {/* Photo-to-macro: the wedge. Snap a meal, confirm, log. Logs land on the viewed day, not today. */}
-      <div className="mt-5">
-        <PhotoScan logDate={isToday ? undefined : date} />
-      </div>
+      {score != null && (
+        <div
+          className={[
+            'mt-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold',
+            score >= 7 ? 'bg-accent/12 text-accent' : 'bg-warm text-muted',
+          ].join(' ')}
+        >
+          <Icon name="sparkles" size={12} />
+          {t('dayScore', { n: score })}
+        </div>
+      )}
+
+      {diary.targetSource === 'default' && <p className="mt-2 text-[11px] text-faint">{t('defaultTargetNote')}</p>}
+      {diary.targetSource === 'onboarding' && (
+        <p className="mt-2 text-[11px] text-faint">{t('onboardingTargetNote')}</p>
+      )}
+      <CoachMomentCard moment={coachMoment} />
+
+      {/* Everything that ADDS food now lives behind the button under the meal list, where the
+          handoff puts it. It was a permanently-open scanner, favourites, recents and a search box
+          stacked above the day's meals, so the screen opened on four ways to enter food and pushed
+          what she had actually eaten below the fold. CaptureFab still offers the scanner globally. */}
+      {adding && (
+        <div className="mt-5 rounded-2xl border border-line bg-surface p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <PortalLabel>{t('addMeal')}</PortalLabel>
+            <button
+              type="button"
+              onClick={() => setAdding(false)}
+              aria-label={t('close')}
+              className="tf-press text-faint hover:text-ink"
+            >
+              <Icon name="x" size={16} />
+            </button>
+          </div>
+
+          <PhotoScan logDate={isToday ? undefined : date} />
 
       {/* Favorites: starred foods, one tap. */}
       {favorites.length > 0 && (
@@ -497,16 +525,24 @@ export function DiaryScreen({
             </div>
           )
         )}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Meals */}
       <div className="mt-5 flex flex-col gap-4">
+        <PortalLabel>{t('mealsLabel')}</PortalLabel>
         {MEAL_SLOTS.map((s) => {
           const rows = entries.filter((e) => e.mealSlot === s);
           if (rows.length === 0) return null;
           const slotKcal = rows.reduce((a, r) => a + r.kcal, 0);
           return (
-            <div key={s} className="rounded-2xl border border-line bg-surface p-4">
+            // One card per slot with its entries inside, NOT the handoff's single summary row per
+            // meal. The handoff draws "Breakfast / Greek Yogurt Bowl / 420 cal" as one line, which
+            // reads beautifully and has nowhere to delete an individual food from. Her diary holds
+            // several foods per slot and she has to be able to remove the one she got wrong, so the
+            // card keeps its rows and takes the 8.0 treatment around them.
+            <PortalCard key={s} className="p-4">
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[12px] font-semibold uppercase tracking-[1px] text-faint">{slotLabel(s)}</div>
                 <div className="text-[12px] tabular-nums text-faint">{Math.round(slotKcal)} kcal</div>
@@ -525,13 +561,19 @@ export function DiaryScreen({
                   </button>
                 </div>
               ))}
-            </div>
+            </PortalCard>
           );
         })}
         {entries.length === 0 && (
           <p className="rounded-2xl border border-dashed border-line py-12 text-center text-sm text-faint">{t('noEntriesYet')}</p>
         )}
       </div>
-    </div>
+
+      {!adding && (
+        <PortalButton variant="outline" onClick={() => setAdding(true)} className="mt-4">
+          {`+ ${t('addMeal')}`}
+        </PortalButton>
+      )}
+    </PortalScreen>
   );
 }
