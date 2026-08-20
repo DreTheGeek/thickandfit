@@ -7,8 +7,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { createClient } from '@/lib/supabase/server';
 import { getBusinessOverview, type Bucket, type TagStat } from '@/lib/coach/overview';
 import { getAttention } from '@/lib/coach/attention';
-import { getCoachOrientation } from '@/lib/coach/orientation';
-import { CoachOrientationCard } from '@/components/coach/coach-orientation';
+import { getCoachTour } from '@/lib/coach/tour';
+import { CoachTourCard } from '@/components/coach/coach-tour-card';
 import { getCoverageContext } from '@/lib/coach/coverage';
 import { RevenueChart } from '@/components/coach/revenue-chart';
 import { formatCents } from '@/components/coach/money';
@@ -99,11 +99,11 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
     return <div className="p-8 text-sm text-muted">{t('emptyOverview')}</div>;
   }
   const money = (cents: number): string => formatCents(cents, 'USD', locale, 0);
-  const [o, attention, coverage, orientation] = await Promise.all([
+  const [o, attention, coverage, tour] = await Promise.all([
     getBusinessOverview(ctx.companyId),
     getAttention(ctx.companyId),
     getCoverageContext(ctx.companyId, ctx.userId),
-    getCoachOrientation(ctx.companyId),
+    getCoachTour(ctx.companyId, ctx.userId),
   ]);
   const revenuePoints = o.revenueByMonth.map((m) => ({
     label: m.label,
@@ -185,8 +185,8 @@ export default async function CoachOverviewPage(): Promise<ReactElement> {
 
       {/* ABOVE the numbers. The KPI tiles answer "how is the business doing", which is the owner's
           question and one a new coach cannot act on. This answers "what do I do", which is the only
-          question anybody has on their first morning. It removes itself once every step is done. */}
-      <CoachOrientationCard orientation={orientation} firstName={firstName} />
+          question anybody has in their first week. It removes itself once every step is done. */}
+      <CoachTourCard tour={tour} />
 
       {/* Above the queues, because it changes what they MEAN. Someone covering for another coach is
           looking at a console that quietly grew overnight, and a queue that got bigger for a reason

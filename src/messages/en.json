@@ -1837,30 +1837,33 @@
       "campaignKeyTaken": "A campaign already uses that key.",
       "campaignWindowLabel": "{from} to {to}",
       "navCampaigns": "Campaigns",
-      "orientation": {
-        "title": "Start here",
-        "titleNamed": "Start here, {name}",
-        "subtitle": "Four places worth knowing before anything else. Each one disappears once you have used it, and this card goes with the last of them.",
-        "progress": "{done} of {total} done",
-        "clients": {
-          "title": "Your clients",
-          "body": "{n} people are on your roster.",
-          "empty": "Nobody on the roster yet."
+      "tour": {
+        "title": "Finish learning the console",
+        "progress": "{done} of {total} complete",
+        "see": "See →",
+        "do": "Do it →",
+        "group": {
+          "people": "Your people",
+          "programming": "Programming",
+          "comms": "Talking to them",
+          "assistant": "The assistant",
+          "setup": "Setup"
         },
-        "awaiting": {
-          "title": "Who is waiting on a plan",
-          "body": "{n} have finished onboarding.",
-          "empty": "Nobody is waiting right now."
-        },
-        "programs": {
-          "title": "Her program library",
-          "body": "{n} programs you can assign.",
-          "empty": "No programs in the library yet."
-        },
-        "knowledge": {
-          "title": "Teach the assistant",
-          "body": "{n} things it knows in her voice.",
-          "empty": "It knows nothing yet. Add what you would tell a client twice."
+        "step": {
+          "clients": "Your client roster",
+          "awaiting": "Who is waiting on a plan",
+          "quiet": "Who has gone quiet",
+          "programs": "Her program library",
+          "assign": "Assign your first program",
+          "exercises": "The exercise library",
+          "mealPlans": "Meal plans",
+          "inbox": "Your inbox",
+          "reply": "Answer a client",
+          "forms": "Check-in forms",
+          "community": "The community feed",
+          "knowledge": "Teach the assistant",
+          "method": "What the method knows",
+          "coaching": "Your coaching settings"
         }
       }
     },
