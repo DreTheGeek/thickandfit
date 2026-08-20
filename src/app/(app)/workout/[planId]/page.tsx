@@ -8,6 +8,7 @@ import { WorkoutPlayer, type PlayerExercise } from '@/components/workout/workout
 import { recommendForSession } from '@/lib/workout/logging';
 import { readCoachSettings } from '@/lib/coach/settings';
 import { demoUrls } from '@/lib/exercises/demo-url';
+import { normalizeRestSeconds } from '@/lib/workout/rest';
 import { SessionPreview, type PreviewExercise } from '@/components/workout/session-preview';
 import { loadCycleLogs } from '@/lib/cycle/data';
 import { currentPhase } from '@/lib/cycle/phase';
@@ -179,7 +180,7 @@ export default async function WorkoutPage({
         reps: e.reps,
         repsMin: e.reps_min,
         repsMax: e.reps_max,
-        restSec: e.rest_sec,
+        restSec: normalizeRestSeconds(e.rest_sec),
         equipment: (meta as { equipment?: string | null } | undefined)?.equipment ?? null,
         // The same three-source test the player applies, so the play badge here and the video there
         // can never disagree about whether a movement has footage.

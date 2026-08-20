@@ -539,7 +539,9 @@
       "previewMovements": "Movements",
       "previewMinutes": "~{n} min",
       "previewEstimateNote": "Time is an estimate: it assumes a steady tempo and the rest your plan asks for.",
-      "previewEquipment": "What you need"
+      "previewEquipment": "What you need",
+      "previewSuperset": "Superset",
+      "previewGroup": "Together"
     },
     "library": {
       "searchPlaceholder": "Search exercises",

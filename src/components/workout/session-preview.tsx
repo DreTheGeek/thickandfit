@@ -123,9 +123,16 @@ export function SessionPreview({
   // during render is what react-hooks/immutability forbids, and it is right to: with Strict Mode or
   // a partial re-render the carried value is not guaranteed to start clean, so headings could
   // silently stop appearing.
+  // group_key is an opaque UUID from her Lenus export, NOT a name. The first version printed it as
+  // the heading, so the screen carried "418D67A7-0C65-47FF-9370-9440F19FE1B7" above a pair of
+  // banded squats. It is only useful for detecting where one group ends and the next begins; the
+  // word comes from group_kind, which is 'superset' on 1,531 rows and null on the rest.
   const rows = exercises.map((e, i) => ({
     e,
-    heading: e.groupKey && e.groupKey !== (exercises[i - 1]?.groupKey ?? null) ? e.groupKey : null,
+    heading:
+      e.groupKey && e.groupKey !== (exercises[i - 1]?.groupKey ?? null) && e.groupKind
+        ? t(e.groupKind === 'superset' ? 'previewSuperset' : 'previewGroup')
+        : null,
   }));
 
   return (

@@ -160,6 +160,13 @@ for (const p of doc.programs) {
         const noteParts = [ex.note, ws.note, pr.extra].filter(Boolean);
         const note = noteParts.length ? [...new Set(noteParts)].join(' · ').slice(0, 2000) : null;
         const weight = ex.weight?.range?.lower ?? null;
+        // Lenus carries restTime in MILLISECONDS and the column is called rest_sec. Writing it
+        // through unconverted is what put 1,454 prescribed rests 1000x too high, and the player
+        // ticks that value down once a second: a set of banded squats opened a five and a half
+        // hour countdown. Fixed in the data by migration 0145 and defended on read by
+        // src/lib/workout/rest.ts; converted HERE so this importer's next run does not undo both.
+        const restMs = ex.restTime ?? ws.restTime ?? null;
+        const restSec = restMs == null ? null : Math.min(600, Math.max(1, Math.round(restMs / 1000)));
         exN += 1;
         statements.push(
           `insert into session_exercises
@@ -167,7 +174,7 @@ for (const p of doc.programs) {
               rest_sec, rounds, notes, group_key, group_kind, is_amrap, sort_order)
            select ${lit(COMPANY)}, se.id, ${lit(id)}, ${lit(ws.rounds ?? 1)}, ${lit(pr.reps)}, ${lit(pr.reps_min)},
                   ${lit(pr.reps_max)}, ${lit(pr.time_sec)}, ${lit(weight)},
-                  ${lit(ex.restTime ?? ws.restTime ?? null)}, ${lit(ws.rounds ?? null)}, ${lit(note)},
+                  ${lit(restSec)}, ${lit(ws.rounds ?? null)}, ${lit(note)},
                   ${isGroup ? lit(ws.id) : 'null'}, ${isGroup ? lit('superset') : 'null'}, ${pr.is_amrap},
                   ${order}
            from sessions se where se.company_id = ${lit(COMPANY)} and se.lenus_id = ${lit(s.id)};`,

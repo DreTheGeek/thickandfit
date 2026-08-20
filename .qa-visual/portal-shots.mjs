@@ -30,7 +30,7 @@ const SHOTS = [
   { name: '05-community', route: '/community' },
   { name: '06-you', route: '/you' },
   // Resolved at runtime from the Train screen, because the plan id is per-member.
-  { name: '07-preview', route: null, from: 'a[href*="preview=1"]', expect: /start workout|empezar/i },
+  { name: '07-preview', route: null, fromRoute: '/workouts', from: 'a[href*="preview=1"]', expect: /start workout|empezar/i },
 ];
 
 /**
@@ -74,10 +74,6 @@ if (page.url().includes('/auth/')) {
 }
 console.log(`signed in, landed on ${new URL(page.url()).pathname}`);
 
-// Train first: the preview shot resolves its URL from a link on this screen.
-await page.goto(`${BASE}/workouts`, { waitUntil: 'networkidle' }).catch(() => {});
-await page.waitForTimeout(1200);
-
 let failures = 0;
 
 for (const s of SHOTS) {
@@ -85,10 +81,16 @@ for (const s of SHOTS) {
 
   let route = s.route;
   if (!route && s.from) {
-    // A route whose URL depends on this member's own data.
+    // A route whose URL depends on this member's own data, so it is read off the screen that links
+    // to it. That screen has to be OPEN to read it: the first version resolved the selector against
+    // whatever page the previous shot had left behind, found nothing, and skipped silently, which
+    // is the same shape of miss this whole tool exists to stop.
+    await page.goto(`${BASE}${s.fromRoute}`, { waitUntil: 'networkidle', timeout: 60_000 }).catch(() => {});
+    await page.waitForTimeout(1500);
     route = await page.getAttribute(s.from, 'href').catch(() => null);
     if (!route) {
-      console.log(`  ${s.name.padEnd(14)} SKIPPED (no element matching ${s.from})`);
+      console.log(`  ${s.name.padEnd(14)} FAILED (no ${s.from} on ${s.fromRoute})`);
+      failures += 1;
       continue;
     }
   }
@@ -107,7 +109,13 @@ for (const s of SHOTS) {
   await page.screenshot({ path: file, fullPage: true });
 
   // The assertions, in the order they catch things.
-  const body = (await page.textContent('body').catch(() => '')) ?? '';
+  //
+  // innerText, NOT textContent. textContent returns the text of every node in the tree including
+  // <script>, and next-intl serialises the whole message catalogue into the flight payload, so the
+  // error boundary's own copy is present on every page that renders correctly. The first version of
+  // this check used textContent and reported all six screens broken while every one of them was
+  // fine. innerText is the visible text, which is the thing being asserted about.
+  const body = (await page.evaluate(() => document.body.innerText).catch(() => '')) ?? '';
   const notes = [];
   if (ERROR_MARKER.test(body)) {
     notes.push('RENDERED THE ERROR BOUNDARY');
@@ -126,9 +134,6 @@ for (const s of SHOTS) {
 
   console.log(`  ${s.name.padEnd(14)} ${String(route).slice(0, 34).padEnd(36)} ${notes.length ? notes.join(' | ') : 'ok'}`);
   newProblems.forEach((p) => console.log(`      ${p}`));
-
-  // Land back on Train so the next data-derived link can be resolved from it.
-  if (s.from) await page.goto(`${BASE}/workouts`, { waitUntil: 'networkidle' }).catch(() => {});
 }
 
 await browser.close();

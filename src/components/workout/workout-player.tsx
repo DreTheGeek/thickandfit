@@ -21,6 +21,7 @@ import {
   type WorkoutDraft,
   type DraftSet,
 } from '@/lib/workout/draft';
+import { normalizeRestSeconds } from '@/lib/workout/rest';
 
 export type OverloadHint = {
   action: 'increase_reps' | 'increase_weight' | 'hold' | 'deload';
@@ -478,7 +479,12 @@ export function WorkoutPlayer({
       // her at the next set, not make her redo the one she already logged.
       saveDraft(idx, setNum + 1);
       setSetNum((n) => n + 1);
-      if (ex.rest_sec) setRest(ex.rest_sec);
+      {
+        // Normalised: the column is named seconds and mostly holds milliseconds, so the raw
+        // value started a five-hour countdown. See lib/workout/rest.ts.
+        const r = normalizeRestSeconds(ex.rest_sec);
+        if (r) setRest(r);
+      }
     } else if (idx < exercises.length - 1) {
       const next = exercises[idx + 1];
       saveDraft(idx + 1, 1);
@@ -487,7 +493,12 @@ export function WorkoutPlayer({
       setReps(next.overload?.reps ?? next.reps ?? 10);
       setWeight(next.overload?.weight ?? next.weight ?? 0);
       setTab('instructions');
-      if (ex.rest_sec) setRest(ex.rest_sec);
+      {
+        // Normalised: the column is named seconds and mostly holds milliseconds, so the raw
+        // value started a five-hour countdown. See lib/workout/rest.ts.
+        const r = normalizeRestSeconds(ex.rest_sec);
+        if (r) setRest(r);
+      }
     } else {
       // Last set of the last exercise: open the rating sheet (PRs + enjoyment/effort). Don't finish yet.
       // Still saved: the sheet is where enjoyment and effort get chosen, and a tab that dies on that

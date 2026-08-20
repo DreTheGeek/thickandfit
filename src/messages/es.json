@@ -539,7 +539,9 @@
       "previewMovements": "Movimientos",
       "previewMinutes": "~{n} min",
       "previewEstimateNote": "El tiempo es un estimado: asume un ritmo constante y los descansos que pide tu plan.",
-      "previewEquipment": "Lo que necesitas"
+      "previewEquipment": "Lo que necesitas",
+      "previewSuperset": "Superserie",
+      "previewGroup": "Juntos"
     },
     "library": {
       "searchPlaceholder": "Buscar ejercicios",
