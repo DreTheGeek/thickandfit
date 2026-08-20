@@ -93,3 +93,6 @@ ios/DerivedData/
 supabase/.temp/*
 !supabase/.temp/cli-latest
 !supabase/.temp/linked-project.json
+
+# Screenshot output from portal-shots.mjs (regenerate, do not commit)
+.qa-visual/portal/
