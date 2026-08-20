@@ -29,7 +29,10 @@ export function CaptureFab(): ReactElement | null {
           setOpen(true);
         }}
         aria-label={t('logFood')}
-        className="tf-press fixed bottom-[84px] right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-ink text-bg shadow-[0_8px_24px_rgba(0,0,0,0.28)] lg:bottom-8 lg:right-8"
+        // absolute, not fixed. The shell column is now positioned, and `fixed` anchored this to the
+        // VIEWPORT corner, which on desktop parked it far to the right of the 760px column it
+        // belongs to. Absolute keeps it over the content on every width.
+        className="tf-press absolute bottom-[96px] right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-ink text-bg shadow-[0_8px_24px_rgba(0,0,0,0.28)] lg:bottom-8 lg:right-8"
       >
         <Icon name="plus" size={26} />
       </button>
