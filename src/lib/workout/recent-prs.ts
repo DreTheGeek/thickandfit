@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { epley1rm, beatsBest } from '@/lib/workout/epley';
 
 /**
  * Her recent personal records, for the card the handoff embeds in the coach thread.
@@ -15,10 +16,9 @@ import { createServiceClient } from '@/lib/supabase/service';
  * rendered fact about her week rather than a fabricated message, it cannot desync from set_logs,
  * and deleting it is not a thing anyone needs to do.
  *
- * EPLEY, matching detectPRs in the player and getStrength on Progress, so the three cannot disagree
- * about what "best" means. It is defined three times now, which is two too many; the honest fix is
- * one shared module, and that is a refactor of the player's client-side path rather than something
- * to smuggle into this change.
+ * Epley and the near-tie margin both come from lib/workout/epley.ts, which the player's detectPRs
+ * and getStrength on Progress also use, so the three surfaces cannot disagree about what counts as
+ * a best.
  */
 
 export type RecentPR = {
@@ -30,10 +30,6 @@ export type RecentPR = {
   bodyweight: boolean;
   achievedAt: string;
 };
-
-function e1rm(weight: number, reps: number): number {
-  return weight * (1 + reps / 30);
-}
 
 export async function getRecentPRs(
   companyId: string,
@@ -87,12 +83,12 @@ export async function getRecentPRs(
     const weight = Number(s.weight ?? 0);
     const reps = Number(s.reps ?? 0);
     const bodyweight = weight <= 0;
-    const score = bodyweight ? reps : e1rm(weight, reps);
+    const score = bodyweight ? reps : epley1rm(weight, reps);
     const prev = bestSoFar.get(s.exercise_id);
     bestSoFar.set(s.exercise_id, Math.max(prev ?? 0, score));
     // No prior history is a BASELINE, not a record. Telling somebody their first ever set of an
     // exercise is a personal best is technically true and reads as a participation trophy.
-    if (prev === undefined || score <= prev) continue;
+    if (prev === undefined || !beatsBest(score, prev)) continue;
     prs.push({
       exerciseId: s.exercise_id,
       name: s.exercise_id,

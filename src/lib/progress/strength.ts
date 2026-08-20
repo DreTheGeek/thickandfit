@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { epley1rm } from '@/lib/workout/epley';
 
 /**
  * Her strongest set per movement, and how it has moved.
@@ -46,11 +47,6 @@ export type StrengthSummary = {
   movements: StrengthMovement[];
 };
 
-/** Epley. The same formula detectPRs uses, so the two can never disagree about what "best" means. */
-function e1rm(weight: number, reps: number): number {
-  return weight * (1 + reps / 30);
-}
-
 export async function getStrength(profileId: string, limit = 8): Promise<StrengthSummary> {
   const svc = createServiceClient();
 
@@ -92,7 +88,7 @@ export async function getStrength(profileId: string, limit = 8): Promise<Strengt
     if (!day || !s.exercise_id) continue;
     const weight = Number(s.weight ?? 0);
     const reps = Number(s.reps ?? 0);
-    const score = weight > 0 ? e1rm(weight, reps) : reps;
+    const score = weight > 0 ? epley1rm(weight, reps) : reps;
     const days = byExercise.get(s.exercise_id) ?? new Map<string, StrengthPoint>();
     const prev = days.get(day);
     if (!prev || score > prev.e1rm) days.set(day, { on: day, e1rm: score, weight, reps });

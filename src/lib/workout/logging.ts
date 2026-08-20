@@ -2,6 +2,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
+import { epley1rm } from '@/lib/workout/epley';
 import { recommendNext, type SetResult, type RepRange } from '@/lib/overload/recommend';
 import { explainRecommendation } from '@/lib/overload/explain';
 import { after } from 'next/server';
@@ -153,12 +154,6 @@ export type OverloadHint = {
   lastReps: number | null;
 };
 
-// Epley estimated 1-rep max. Normalizes weight x reps so "more reps at the same load"
-// and "more load" both register as progress.
-function epley(weight: number, reps: number): number {
-  return weight * (1 + reps / 30);
-}
-
 // Best weighted e1RM and best bodyweight reps across a set history (completed sets only).
 function bestsFromHistory(sets: SetResult[]): { bestE1rm: number | null; bestReps: number | null } {
   let bestE1rm = 0;
@@ -169,7 +164,7 @@ function bestsFromHistory(sets: SetResult[]): { bestE1rm: number | null; bestRep
     const weight = s.weight ?? 0;
     if (reps > bestReps) bestReps = reps;
     if (weight > 0 && reps > 0) {
-      const e = epley(weight, reps);
+      const e = epley1rm(weight, reps);
       if (e > bestE1rm) bestE1rm = e;
     }
   }

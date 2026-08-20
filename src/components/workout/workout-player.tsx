@@ -23,6 +23,7 @@ import {
 } from '@/lib/workout/draft';
 import { normalizeRestSeconds } from '@/lib/workout/rest';
 import { PortalButton } from '@/components/portal/portal-chrome';
+import { epley1rm, beatsBest } from '@/lib/workout/epley';
 
 export type OverloadHint = {
   action: 'increase_reps' | 'increase_weight' | 'hold' | 'deload';
@@ -122,7 +123,7 @@ function detectPRs(exercises: PlayerExercise[], sets: LoggedSet[]): PR[] {
     for (const s of mine) {
       if (!bestReps || s.reps > bestReps.reps) bestReps = s;
       if (s.weight > 0 && s.reps > 0) {
-        const e = s.weight * (1 + s.reps / 30);
+        const e = epley1rm(s.weight, s.reps);
         if (e > sesE1rm) {
           sesE1rm = e;
           bestWeighted = s;
@@ -130,7 +131,7 @@ function detectPRs(exercises: PlayerExercise[], sets: LoggedSet[]): PR[] {
       }
     }
 
-    if (ex.bestE1rm !== null && bestWeighted && sesE1rm > ex.bestE1rm + 0.5) {
+    if (ex.bestE1rm !== null && bestWeighted && beatsBest(sesE1rm, ex.bestE1rm)) {
       prs.push({ exerciseId: ex.exercise_id, name: ex.name, weight: bestWeighted.weight, reps: bestWeighted.reps, bodyweight: false });
     } else if (ex.bestE1rm === null && ex.bestReps !== null && bestReps && bestReps.reps > ex.bestReps) {
       prs.push({ exerciseId: ex.exercise_id, name: ex.name, weight: 0, reps: bestReps.reps, bodyweight: true });
