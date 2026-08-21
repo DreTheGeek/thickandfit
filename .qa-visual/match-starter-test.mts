@@ -79,6 +79,39 @@ want('gym / experienced / 3 takes the 3-day over the 4-day ADVANCED', pick('gym'
 // last resort rather than a habit.
 want('gym / experienced / 4 stays advanced', pick('gym', 'experienced', 4), GYM_4_ADV);
 
+// --- an UNLABELLED level suits anyone ----------------------------------------------------------
+// Her eight @HOME programs carry no level in their names. Under the first version of the matcher
+// `null !== 'beginner_intermediate'` fell to the ban, so every one of them was unreachable and
+// unarchiving them would have changed nothing at all. These pin that it cannot come back.
+{
+  const HOME_5_UNLABELLED: StarterCandidate = {
+    id: 'home-5-null',
+    name_en: 'Month 1: 8 week 5 day @HOME',
+    days_per_week: 5,
+    level: null,
+    location: 'home',
+  };
+  const withHome = [...LIBRARY, HOME_5_UNLABELLED];
+  const at = (loc: string, exp: string, d: number) =>
+    chooseStarterPlan(withHome, { location: loc, experience: exp, daysPerWeek: d })?.plan.id ?? null;
+
+  // A home member who can train 5 days now gets the 5-day plan instead of the only 3-day one.
+  if (at('home', 'some', 5) !== 'home-5-null') fails.push('home/some/5 should reach the unlabelled 5-day home plan');
+  // And an experienced one, because an unlabelled plan is not an advanced plan but it is not banned.
+  if (at('home', 'experienced', 5) !== 'home-5-null') fails.push('home/experienced/5 should reach it too');
+  // A home member who can only train 3 days still gets the 3-day: days outrank a level nobody stated.
+  if (at('home', 'some', 3) !== HOME_3) fails.push('home/some/3 should stay on the 3-day home plan');
+  // AN UNLABELLED PLAN MUST NOT BEAT ONE THAT STATES HER LEVEL at the same day count. A gym member
+  // asking for 5 keeps the labelled gym plan; the home one loses on location anyway, so add a
+  // labelled and an unlabelled option at identical days to test the level term alone.
+  const bothAt5: StarterCandidate[] = [
+    { id: 'gym-5-labelled', name_en: '5 day', days_per_week: 5, level: 'beginner_intermediate', location: 'gym' },
+    { id: 'gym-5-null', name_en: '5 day untagged', days_per_week: 5, level: null, location: 'gym' },
+  ];
+  const chosen = chooseStarterPlan(bothAt5, { location: 'gym', experience: 'some', daysPerWeek: 5 });
+  if (chosen?.plan.id !== 'gym-5-labelled') fails.push('a plan stating her level must beat an unlabelled one');
+}
+
 // --- rule 3: nearest days, ties round DOWN -----------------------------------------------------
 // No 6-day plan exists; 5 is nearest.
 want('gym / some / 6', pick('gym', 'some', 6), GYM_5);

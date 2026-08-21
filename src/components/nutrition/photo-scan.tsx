@@ -27,6 +27,7 @@ import { decodeBarcodeFromImage } from '@/lib/nutrition/barcode-scan';
 import { measureImageQuality, type ImageQuality } from '@/lib/nutrition/image-quality';
 // No-ops on the web and imports nothing into the browser bundle; see the header of bridge.ts.
 import { capturePhoto, tapFeedback } from '@/lib/native/bridge';
+import { DictateButton } from '@/components/ui/dictate-button';
 
 // Client-safe mirror of the server pipeline's response shape (server module is server-only).
 type Macros = { kcal: number; proteinG: number; carbG: number; fatG: number };
@@ -624,6 +625,16 @@ export function PhotoScan({
                   placeholder={t('textScanPlaceholder')}
                   className="w-full resize-none rounded-2xl border border-line bg-bg p-3 text-[14px] outline-none placeholder:text-faint focus:border-ink"
                 />
+                {/* SPEAK IT INSTEAD OF TYPING IT.
+                    DictateButton has existed and been correct since 2026-08-13 and its only consumer
+                    was a COACH screen, so the one place a member describes a meal in her own words
+                    was keyboard-only. Describing lunch out loud is easier than typing it one-handed
+                    in a kitchen, and this is the whole of what MyFitnessPal calls "voice log".
+
+                    It recognises in her locale (useLocale inside), appends rather than replaces so a
+                    second sentence does not wipe the first, and renders NULL where the browser has
+                    no speech API. Absence is not a failure here, it is the feature degrading. */}
+                <DictateButton value={desc} onAppend={setDesc} className="self-start" />
                 <button
                   type="button"
                   onClick={() => void onDescribe()}

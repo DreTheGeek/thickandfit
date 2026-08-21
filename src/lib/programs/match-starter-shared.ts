@@ -103,6 +103,9 @@ const LOCATION_PENALTY = 1000;
 const DAY_GAP = 40;
 const OVER_PENALTY = 10;
 const LEVEL_DROP = 25;
+// Cheaper than dropping a level, because "she did not label it" is weaker evidence of a mismatch
+// than "she labelled it as the other thing". Still non-zero, so a plan that states her level wins.
+const LEVEL_UNKNOWN = 12;
 
 export function chooseStarterPlan(
   candidates: StarterCandidate[],
@@ -123,8 +126,19 @@ export function chooseStarterPlan(
     // mismatch, which is rule 3's second half. Rising is banned outright rather than made expensive,
     // because "expensive" still gets chosen when nothing else fits, and nothing else fitting is
     // exactly when a beginner would be handed an ADVANCED block.
+    //
+    // AN UNLABELLED PLAN SUITS ANYONE, and getting this wrong made a whole feature inert. Her eight
+    // @HOME programs carry no level in their names: the gym siblings say BEGINNER or ADVANCED, the
+    // home ones say nothing. Under the old test `null !== 'beginner_intermediate'` fell straight to
+    // the ban, so unarchiving them and tagging days and location would have changed NOTHING and
+    // every at-home member would have stayed on the one plan this was written to stop.
+    //
+    // Guessing a level off a name that does not state one is the alternative, and it is worse: it
+    // is how an ADVANCED block reaches a beginner. Costing slightly more than an exact match is the
+    // honest reading. It means "she did not say", not "it does not fit".
     if (p.level !== level) {
-      if (level === 'advanced' && p.level === 'beginner_intermediate') s += LEVEL_DROP;
+      if (p.level == null) s += LEVEL_UNKNOWN;
+      else if (level === 'advanced' && p.level === 'beginner_intermediate') s += LEVEL_DROP;
       else return Number.POSITIVE_INFINITY;
     }
     // Days: distance, with a thumb on the scale against going OVER what she said she can manage.

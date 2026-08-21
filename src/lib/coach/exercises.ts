@@ -184,9 +184,24 @@ async function loadExercises(companyId: string, locale: string, profileId: strin
 
 type FacetKey = 'q' | 'muscle' | 'equipment' | 'own' | 'film' | 'demo' | 'block';
 
+/**
+ * Has this movement been filmed?
+ *
+ * FOOTAGE IS PROOF, and reading the manual flag alone was telling her a flat lie. `filmed_at` is a
+ * checkbox on the exercise row and it is null on ALL 366 of her coach-authored movements, while all
+ * 366 have a file in `demo_storage_path`. So the library reported "0 of 366 filmed" and offered 366
+ * movements as "still to film" to a woman who had filmed every one of them.
+ *
+ * The flag survives as an override for the real case it was built for: shot on a Sunday, not yet
+ * uploaded. It can say yes before the file exists; it must not be able to say no after it does.
+ */
+function isFilmed(r: ExerciseRow): boolean {
+  return r.hasDemo || r.filmedAt != null;
+}
+
 /** Her own, not yet shot. Only coach-authored rows are hers to film, so seed content never qualifies. */
 function isToFilm(r: ExerciseRow): boolean {
-  return r.isCoachAuthored && !r.filmedAt;
+  return r.isCoachAuthored && !isFilmed(r);
 }
 
 function matches(r: ExerciseRow, f: ExerciseFilters, exclude: FacetKey | null): boolean {
@@ -283,7 +298,7 @@ export async function getExercisesPage(
       toFilm: filmPool.filter(isToFilm).length,
       hasDemo: demoPool.filter((r) => r.hasDemo).length,
     },
-    filming: { filmed: hers.filter((r) => r.filmedAt).length, total: hers.length },
+    filming: { filmed: hers.filter(isFilmed).length, total: hers.length },
   };
 }
 
