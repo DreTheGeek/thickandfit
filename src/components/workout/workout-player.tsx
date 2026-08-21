@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Confetti, useConfetti } from '@/components/ui/confetti';
 import { MuscleMap } from '@/components/workout/muscle-map';
 import {
+  newClientSessionId,
   readDraft,
   writeDraft,
   clearDraft,
@@ -277,6 +278,15 @@ export function WorkoutPlayer({
    * not a guarantee, and it is exactly the kind of thing that breaks silently later.
    */
   const [loggedView, setLoggedView] = useState<LoggedSet[]>(draft ? toLoggedSets(draft.sets) : []);
+  /**
+   * The id every save of THIS session carries.
+   *
+   * Reused from the draft when one is being restored, so a recovered workout updates the row her
+   * earlier sets already made rather than starting a second one beside it. Generated once, lazily,
+   * because useState(newClientSessionId()) would mint a fresh id on every render and only keep the
+   * first.
+   */
+  const [clientSessionId] = useState<string>(() => draft?.clientSessionId ?? newClientSessionId());
   const wakeRef = useRef<WakeLockSentinel | null>(null);
   /**
    * ONE video element for the whole session, never remounted.
@@ -323,9 +333,10 @@ export function WorkoutPlayer({
         setNum: nextSetNum,
         elapsed: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
         swaps: swapsRef.current,
+        clientSessionId,
       } satisfies WorkoutDraft);
     },
-    [sessionId, startedAt],
+    [sessionId, startedAt, clientSessionId],
   );
 
   // When this session actually started, in wall-clock terms. Set once and never reassigned, so
@@ -548,31 +559,52 @@ export function WorkoutPlayer({
    * sending `weight: null` for a banded squat would be rejected by Zod; sending 0 would be worse,
    * because it validates and then lies in the history forever.
    */
+  /**
+   * SAVES ARE SERIALIZED, and that is not caution, it is required.
+   *
+   * The endpoint replaces this session's sets on every save (delete-then-insert, keyed by
+   * client_session_id). Two saves in flight at once can interleave their delete and insert and drop
+   * work. She can tap Log Set twice in three seconds, so this is a real race, not a theoretical one.
+   */
+  const chain = useRef<Promise<boolean>>(Promise.resolve(true));
+
+  const send = useCallback(
+    async (pct: number): Promise<boolean> => {
+      const res = await fetch('/api/workouts/log', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId ?? undefined,
+          // Makes every save of this session land in ONE row. See migration 0151.
+          client_session_id: clientSessionId,
+          completion_pct: pct,
+          enjoyment: enjoyment ?? undefined,
+          effort: effort ?? undefined,
+          sets: logged.current.map((x) => ({
+            exercise_id: x.exercise_id,
+            set_number: x.set_number,
+            ...(x.reps == null ? {} : { reps: x.reps }),
+            ...(x.weight == null ? {} : { weight: x.weight }),
+            ...(x.durationSec == null ? {} : { duration_sec: x.durationSec }),
+            completed: x.completed,
+            difficulty: x.difficulty,
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error(`save failed: ${res.status}`);
+      return true;
+    },
+    [sessionId, enjoyment, effort, clientSessionId],
+  );
+
   const persist = useCallback(
     async (pct: number): Promise<boolean> => {
       setSaveFailed(false);
       setSaving(true);
+      const run = chain.current.catch(() => false).then(() => send(pct));
+      chain.current = run.catch(() => false);
       try {
-        const res = await fetch('/api/workouts/log', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            session_id: sessionId ?? undefined,
-            completion_pct: pct,
-            enjoyment: enjoyment ?? undefined,
-            effort: effort ?? undefined,
-            sets: logged.current.map((x) => ({
-              exercise_id: x.exercise_id,
-              set_number: x.set_number,
-              ...(x.reps == null ? {} : { reps: x.reps }),
-              ...(x.weight == null ? {} : { weight: x.weight }),
-              ...(x.durationSec == null ? {} : { duration_sec: x.durationSec }),
-              completed: x.completed,
-              difficulty: x.difficulty,
-            })),
-          }),
-        });
-        if (!res.ok) throw new Error(`save failed: ${res.status}`);
+        await run;
         // Safely on the server now. Leaving the draft behind would offer to restore a workout she
         // has already logged, and accepting that offer would log it twice.
         clearDraft(sessionId);
@@ -585,7 +617,38 @@ export function WorkoutPlayer({
       setSaving(false);
       return true;
     },
-    [sessionId, enjoyment, effort],
+    [sessionId, send],
+  );
+
+  /**
+   * SAVE EVERY SET, AS SHE DOES IT.
+   *
+   * THE BUG THIS CLOSES, reproduced against production before it was written: log four sets, leave
+   * with the phone's back gesture, and workout_logs, set_logs and workout_completion_history are all
+   * still empty. api_request_log showed no POST at all, because there had never been one to make.
+   *
+   * Everything used to buffer in memory and localStorage and go up in ONE request, from the Finish
+   * button on the rating sheet after the last set of the last exercise. That is the rarest way a
+   * session actually ends. She stops early, the gym closes, the phone is evicted, she uses the back
+   * gesture, which on a phone IS how you leave a screen. Every one of those lost the lot, silently,
+   * and the exit sheet added earlier only covered the in-app back arrow.
+   *
+   * Quiet on purpose: no spinner, no error state, no draft clearing. The draft is still the safety
+   * net for the gym basement with no signal, so a failed autosave changes nothing she can see and
+   * the next set tries again with the whole session attached. The explicit save at the end is still
+   * the one that reports success or failure to her.
+   */
+  const autosave = useCallback(
+    (pct: number): void => {
+      chain.current = chain.current
+        .catch(() => false)
+        .then(() => send(pct))
+        .catch((e: unknown) => {
+          console.error('workout autosave:', e instanceof Error ? e.message : e);
+          return false;
+        });
+    },
+    [send],
   );
 
   /**
@@ -684,6 +747,12 @@ export function WorkoutPlayer({
     setLoggedView((prev) => [...prev, entry]);
     setDifficulty('moderate'); // reset the RPE tap for the next set
 
+    // TO THE SERVER, NOW. The draft below is the offline fallback; this is the record. See autosave.
+    // sessionPct is computed from the state BEFORE this set advanced the counters, so it understates
+    // by one set until the next render. That is the right direction: a completion percentage should
+    // never run ahead of the work.
+    autosave(sessionPct);
+
     if (setNum < totalSets) {
       // Saved with the position she is moving TO, not the one she just left: a recovery should put
       // her at the next set, not make her redo the one she already logged.
@@ -730,7 +799,7 @@ export function WorkoutPlayer({
       setShowComplete(true);
       if (found.length) fire();
     }
-  }, [ex, setNum, totalSets, idx, exercises, reps, weight, difficulty, fire, saveDraft, kind, weighted, work]);
+  }, [ex, setNum, totalSets, idx, exercises, reps, weight, difficulty, fire, saveDraft, kind, weighted, work, autosave, sessionPct]);
 
   // SUPERSET CONTEXT. Everything sharing a group_key is performed back to back, so the member needs
   // to know before she starts the set, not after. Without this the app rendered her supersets as

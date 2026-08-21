@@ -22,6 +22,14 @@ const setSchema = z.object({
 });
 export const logSchema = z.object({
   session_id: z.string().uuid().optional(),
+  /**
+   * A client-generated id for ONE session, so the same workout can be saved repeatedly as she goes
+   * and land in one row. See migration 0151 for why this exists at all.
+   *
+   * Length-capped rather than uuid-validated: it comes from a browser and its only job is stability,
+   * so a strict format would turn a malformed client into a rejected workout for no gain.
+   */
+  client_session_id: z.string().min(8).max(64).optional(),
   completion_pct: z.number().int().min(0).max(100).optional(),
   enjoyment: z.number().int().min(1).max(5).optional(),
   effort: z.number().int().min(1).max(5).optional(),
@@ -35,19 +43,44 @@ export async function saveWorkoutLog(
   input: LogInput,
 ): Promise<{ workoutLogId: string; setsLogged: number }> {
   const supabase = createServiceClient();
-  const { data: log } = await supabase
-    .from('workout_logs')
-    .insert({
-      company_id: companyId,
-      profile_id: profileId,
-      session_id: input.session_id ?? null,
-      completion_pct: input.completion_pct ?? null,
-      enjoyment: input.enjoyment ?? null,
-      effort: input.effort ?? null,
-    })
-    .select('id')
-    .single();
-  if (!log) throw new Error('Log failed');
+
+  /**
+   * ONE ROW PER SESSION, however many times she saves it.
+   *
+   * The player now posts after every logged set instead of once at the end, because posting once at
+   * the end meant a member who left any way other than the Finish button lost the whole workout,
+   * and on a phone the back gesture is how you leave. Without the upsert that autosave would create
+   * a new workout_log per set: a 20-movement session would appear as 47 workouts.
+   *
+   * Keyed on (profile_id, client_session_id) via the partial unique index in 0151. A caller that
+   * sends no id keeps the old insert-a-new-row behaviour, which is what the legacy importer and any
+   * future server-side writer want.
+   */
+  const row = {
+    company_id: companyId,
+    profile_id: profileId,
+    session_id: input.session_id ?? null,
+    completion_pct: input.completion_pct ?? null,
+    enjoyment: input.enjoyment ?? null,
+    effort: input.effort ?? null,
+    ...(input.client_session_id ? { client_session_id: input.client_session_id } : {}),
+  };
+  const { data: log, error: logErr } = input.client_session_id
+    ? await supabase
+        .from('workout_logs')
+        .upsert(row, { onConflict: 'profile_id,client_session_id' })
+        .select('id')
+        .single()
+    : await supabase.from('workout_logs').insert(row).select('id').single();
+  // Loud. This used to be a bare `if (!log) throw new Error('Log failed')`, which discarded the
+  // reason and left nothing to read when a save stopped working.
+  if (logErr || !log) throw new Error(`Log failed: ${logErr?.message ?? 'no row returned'}`);
+
+  // REPLACE, not append. Every save carries the whole session so far, so the previous save's rows
+  // have to go or set 1 accumulates a copy per subsequent set.
+  if (input.client_session_id) {
+    await supabase.from('set_logs').delete().eq('workout_log_id', log.id);
+  }
 
   if (input.sets.length) {
     const rows = input.sets.map((s) => ({
@@ -65,7 +98,14 @@ export async function saveWorkoutLog(
   }
   await supabase
     .from('workout_completion_history')
-    .insert({ company_id: companyId, profile_id: profileId, workout_log_id: log.id, status: 'completed' });
+    // ONE row per workout_log, not one per save. This table is what gamification reads to decide
+    // whether she trained today and what the weekly target counts, so an autosave firing on every
+    // set would inflate a single session into forty. The unique index backing this is in 0151;
+    // logging.ts is the only writer in the codebase, so making it unique was safe.
+    .upsert(
+      { company_id: companyId, profile_id: profileId, workout_log_id: log.id, status: 'completed' },
+      { onConflict: 'workout_log_id', ignoreDuplicates: true },
+    );
 
   emitEvent({
     companyId,

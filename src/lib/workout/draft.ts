@@ -37,12 +37,36 @@ export type WorkoutDraft = {
   /** Substitutions by exercise index. Storing the whole exercise list would carry instructions,
    *  cues and media for no reason; a swap is the only thing about the list she can change in here. */
   swaps: Record<number, { exercise_id: string; name: string }>;
+  /**
+   * The id this session is saved under on the server.
+   *
+   * Kept in the draft rather than regenerated, so a recovered session UPDATES the row her earlier
+   * sets already created instead of starting a second workout beside it. Optional because a v2
+   * draft written before autosave existed has none, and a session that starts saving halfway
+   * through is still better than one that does not save at all.
+   */
+  clientSessionId?: string;
 };
 
 // 2: reps/weight became nullable and durationSec arrived, so a v1 draft read by this code would
 // restore a timed movement as 0 reps at 0 lb. readDraft rejects a mismatched version outright,
 // which is the whole point of the field: a 12-hour-lived object needs no migration, only a refusal.
 export const DRAFT_VERSION = 2;
+
+/**
+ * A stable id for one session's saves.
+ *
+ * crypto.randomUUID where it exists, which is everywhere this app runs (it needs a secure context,
+ * and so does the service worker). The fallback is not security-sensitive: this value only has to
+ * be unique per profile, and it is scoped by profile_id in the index.
+ */
+export function newClientSessionId(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
 
 /**
  * Past this, it is a different day's workout.
@@ -99,6 +123,7 @@ export function readDraft(sessionId: string | null, now = Date.now(), s: DraftSt
       setNum: Number.isInteger(d.setNum) && d.setNum >= 1 ? d.setNum : 1,
       elapsed: Number.isFinite(d.elapsed) && d.elapsed >= 0 ? d.elapsed : 0,
       swaps: d.swaps && typeof d.swaps === 'object' ? d.swaps : {},
+      clientSessionId: typeof d.clientSessionId === 'string' ? d.clientSessionId : undefined,
     };
   } catch {
     return null;
