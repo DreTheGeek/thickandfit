@@ -75,6 +75,9 @@ export async function peopleTabs(): Promise<SectionTab[]> {
     { href: '/coach/clients', label: t('navClients') },
     { href: '/coach/subscribers', label: t('navMembers') },
     { href: '/coach/leads', label: t('navLeads') },
+    // Getting the 272 migrated clients an account is a PEOPLE job, and it belongs beside the lists
+    // of those same people rather than in a settings tree nobody opens.
+    { href: '/coach/invites', label: t('navInvites') },
   ];
 }
 

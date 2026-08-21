@@ -113,7 +113,7 @@ const SECTIONS: NavSection[] = [
  */
 const GROUPS: Record<string, string[]> = {
   '/coach/awaiting': ['/coach/awaiting', '/coach/intake', '/coach/quiet', '/coach/plan-renewals'],
-  '/coach/clients': ['/coach/clients', '/coach/subscribers', '/coach/leads'],
+  '/coach/clients': ['/coach/clients', '/coach/subscribers', '/coach/leads', '/coach/invites'],
   '/coach/programs': ['/coach/programs', '/coach/exercises', '/coach/spanish'],
   '/coach/tool/meal-plans': ['/coach/tool/meal-plans', '/coach/tool/recipes', '/coach/tool/recipe-books'],
   '/coach/approvals': ['/coach/approvals', '/coach/drafts', '/coach/assignments'],
