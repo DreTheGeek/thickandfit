@@ -187,12 +187,23 @@
       "none": "None",
       "safetyNone": "None of these",
       "sec": {
-        "foods": {
-          "q": "Any foods you don’t eat?"
-        },
         "allergies": {
           "q": "Allergies (optional)",
           "ph": "e.g. peanuts, shellfish"
+        },
+        "conditions": {
+          "q": "Do any of these apply to you?",
+          "why": "Things like PCOS, insulin resistance, and thyroid change how your body handles food and training. Your coach builds around them."
+        },
+        "experience": {
+          "q": "How would you describe your training experience?"
+        },
+        "food": {
+          "q": "So we support you the right way, anything to be mindful of?",
+          "why": "This shapes how your coach talks about food with you. There is no wrong answer."
+        },
+        "foods": {
+          "q": "Any foods you don’t eat?"
         },
         "injuries": {
           "q": "Any injuries or areas to work around?"
@@ -201,9 +212,8 @@
           "q": "Tell your coach more (optional)",
           "ph": "e.g. left knee, no deep squats"
         },
-        "conditions": {
-          "q": "Do any of these apply to you?",
-          "why": "Things like PCOS, insulin resistance, and thyroid change how your body handles food and training. Your coach builds around them."
+        "meds": {
+          "q": "Anything that affects your appetite, weight, or energy? (optional)"
         },
         "pregnancy": {
           "q": "Anything we should know right now?"
@@ -213,27 +223,30 @@
           "why": "The standard pre-exercise safety check.",
           "note": "Thanks for sharing. Please get your doctor’s OK before starting intense exercise, and your coach will keep things gentle."
         },
-        "meds": {
-          "q": "Anything that affects your appetite, weight, or energy? (optional)"
-        },
-        "experience": {
-          "q": "How would you describe your training experience?"
-        },
         "sleep": {
           "q": "How’s your sleep lately?"
         },
         "stress": {
           "q": "And your stress?"
         },
-        "food": {
-          "q": "So we support you the right way, anything to be mindful of?",
-          "why": "This shapes how your coach talks about food with you. There is no wrong answer."
+        "trainingDays": {
+          "q": "How many days a week can you train?"
         },
         "trainingLocation": {
           "q": "Where will you train?"
         }
       },
       "opt": {
+        "conditions": {
+          "pcos": "PCOS",
+          "insulin_resistance": "Insulin resistance / prediabetes",
+          "type2_diabetes": "Type 2 diabetes",
+          "hypothyroid": "Hypothyroid / Hashimoto’s",
+          "menopause": "Perimenopause / menopause",
+          "endometriosis": "Endometriosis",
+          "high_bp": "High blood pressure",
+          "ibs": "IBS / gut issues"
+        },
         "dietary": {
           "dairy": "Dairy",
           "gluten": "Gluten",
@@ -245,6 +258,17 @@
           "vegetarian": "Vegetarian",
           "vegan": "Vegan"
         },
+        "experience": {
+          "new": "New to this",
+          "some": "Some experience",
+          "experienced": "Very experienced"
+        },
+        "food": {
+          "ok": "I’m good with tracking",
+          "struggled": "I’ve struggled with disordered eating",
+          "light_tracking": "I’d rather not track calories closely",
+          "prefer_not": "Prefer not to say"
+        },
         "injuries": {
           "knees": "Knees",
           "lower_back": "Lower back",
@@ -253,15 +277,12 @@
           "hips": "Hips",
           "neck": "Neck"
         },
-        "conditions": {
-          "pcos": "PCOS",
-          "insulin_resistance": "Insulin resistance / prediabetes",
-          "type2_diabetes": "Type 2 diabetes",
-          "hypothyroid": "Hypothyroid / Hashimoto’s",
-          "menopause": "Perimenopause / menopause",
-          "endometriosis": "Endometriosis",
-          "high_bp": "High blood pressure",
-          "ibs": "IBS / gut issues"
+        "meds": {
+          "glp1": "GLP-1 (Ozempic / Wegovy)",
+          "thyroid": "Thyroid medication",
+          "birth_control": "Birth control / hormones",
+          "antidepressant": "Antidepressant / anxiety",
+          "steroids": "Steroids"
         },
         "pregnancy": {
           "none": "No",
@@ -277,18 +298,6 @@
           "joint_problem": "Bone or joint problem",
           "bp_meds": "On heart / BP medication"
         },
-        "meds": {
-          "glp1": "GLP-1 (Ozempic / Wegovy)",
-          "thyroid": "Thyroid medication",
-          "birth_control": "Birth control / hormones",
-          "antidepressant": "Antidepressant / anxiety",
-          "steroids": "Steroids"
-        },
-        "experience": {
-          "new": "New to this",
-          "some": "Some experience",
-          "experienced": "Very experienced"
-        },
         "sleep": {
           "lt5": "Under 5h",
           "5to6": "5-6h",
@@ -300,11 +309,10 @@
           "moderate": "Moderate",
           "high": "High"
         },
-        "food": {
-          "ok": "I’m good with tracking",
-          "struggled": "I’ve struggled with disordered eating",
-          "light_tracking": "I’d rather not track calories closely",
-          "prefer_not": "Prefer not to say"
+        "trainingDays": {
+          "3": "3 days a week",
+          "4": "4 days a week",
+          "5": "5 days a week"
         },
         "trainingLocation": {
           "home": "Home",
@@ -1311,11 +1319,15 @@
       "lenusId": "Lenus ID",
       "lessonNoCategory": "Uncategorised",
       "lessonsSentTitle": "Lessons received",
+      "levelAdvanced": "Advanced",
+      "levelBeginner": "Beginner / Intermediate",
       "library": "Library",
       "libraryIntro": "Everything you build with, organized. Templates, content, and automation you reuse across clients.",
       "lifetimePaid": "Lifetime paid",
       "listTruncated": "Showing the first {n} clients. The list is capped, so totals and filters reflect a partial view.",
       "liveActivity": "Live Activity",
+      "locationGym": "A gym",
+      "locationHome": "No gym needed",
       "lostReasonLabel": "Lost reason",
       "mArms": "Arms",
       "mBodyFat": "Body fat",
@@ -1504,6 +1516,7 @@
       "moveDown": "Move down",
       "moveUp": "Move up",
       "movementCount": "{count, plural, =0 {nothing yet} one {# movement} other {# movements}}",
+      "movementDays": "{count} days a week",
       "mpActivity_athlete": "Athlete",
       "mpActivity_high": "Very active",
       "mpActivity_light": "Lightly active",
@@ -1610,6 +1623,7 @@
       "noTasks": "No tasks yet",
       "noTransactions": "No payments recorded.",
       "noUpcoming": "Nothing scheduled.",
+      "notSet": "Not set",
       "noteFailed": "Could not save the note. Try again.",
       "nps": "NPS rating",
       "nutAvgKcal": "Avg kcal",
@@ -1650,8 +1664,11 @@
       "planBasic": "Basic",
       "planBootcamp": "Bootcamp",
       "planDays": "{n, plural, one {# day} other {# days}}",
+      "planDaysPerWeek": "Days a week",
       "planDaysWeeks": "{d, plural, one {# day} other {# days}} · {w} weeks",
       "planDelivery": "Plan delivery",
+      "planLevel": "Level",
+      "planLocation": "Needs",
       "planNotesError": "Could not save",
       "planNotesHint": "Add guidance the client sees on their plan, e.g. free low-cal add-ins if they're still hungry.",
       "planNotesPlaceholder": "e.g. If you're not full, feel free to add spinach, onions, or cucumbers - they're virtually free.",
@@ -1791,6 +1808,8 @@
       "standingChurned": "Churned",
       "standingHealthy": "Healthy",
       "startedAt": "Started",
+      "starterCandidate": "Offer this program to new members",
+      "starterCandidateHelp": "When somebody signs up, the app picks her a program from the ones ticked here, using the days, level and location below against what she answered at signup. Leave it off for anything written for one client.",
       "stat_calories": "Cal target",
       "stat_days": "Days",
       "stat_workouts": "Workouts",

@@ -255,11 +255,17 @@ export async function getCoachOnboarding(
     svc.from('contacts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
     // Scoped to THIS coach: her own first assignment, not the company's. A new assistant coach must
     // not inherit Stephanie's tick and be told she has already learned this.
+    //
+    // assigned_by, added in 0149. The first draft of this queried `created_by`, which does not exist
+    // on plan_assignments: Supabase errors, the count reads as zero, and the step sits permanently
+    // unticked with nothing anywhere reporting a problem. Third instance of that exact shape in this
+    // file's history, which is why every query here is now written out and run against the live
+    // database rather than assumed.
     svc
       .from('plan_assignments')
       .select('id', { count: 'exact', head: true })
       .eq('company_id', companyId)
-      .eq('created_by', profileId),
+      .eq('assigned_by', profileId),
     svc
       .from('client_messages')
       .select('id', { count: 'exact', head: true })

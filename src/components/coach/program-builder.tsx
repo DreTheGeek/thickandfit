@@ -47,7 +47,18 @@ export type BuilderEx = {
   groupKind: string | null;
 };
 type Day = { label: string; exercises: BuilderEx[] };
-export type BuilderInitial = { id?: string; nameEn: string; nameEs: string; weeks: number; days: Day[] };
+export type BuilderInitial = {
+  id?: string;
+  nameEn: string;
+  nameEs: string;
+  weeks: number;
+  days: Day[];
+  /** The three axes the starter matcher reads, plus the opt-in. See lib/programs/match-starter. */
+  daysPerWeek?: number | null;
+  level?: string | null;
+  location?: string | null;
+  isStarterCandidate?: boolean;
+};
 type SubOption = { id: string; name: string };
 
 const input = 'border border-line bg-surface px-3 py-2 text-[14px] text-ink outline-none focus:border-ink';
@@ -91,6 +102,12 @@ export function ProgramBuilder({
   const [nameEn, setNameEn] = useState(initial.nameEn);
   const [nameEs, setNameEs] = useState(initial.nameEs);
   const [weeks, setWeeks] = useState(initial.weeks || 4);
+  const [daysPerWeek, setDaysPerWeek] = useState<string>(
+    initial.daysPerWeek != null ? String(initial.daysPerWeek) : '',
+  );
+  const [level, setLevel] = useState<string>(initial.level ?? '');
+  const [location, setLocation] = useState<string>(initial.location ?? '');
+  const [isStarter, setIsStarter] = useState<boolean>(initial.isStarterCandidate === true);
   const [days, setDays] = useState<Day[]>(initial.days);
   const [planId, setPlanId] = useState<string | undefined>(initial.id);
   const [busy, setBusy] = useState(false);
@@ -220,6 +237,10 @@ export function ProgramBuilder({
       name_en: nameEn || 'Untitled program',
       name_es: nameEs || undefined,
       weeks,
+      days_per_week: daysPerWeek === '' ? null : Number(daysPerWeek),
+      level: level === '' ? null : level,
+      location: location === '' ? null : location,
+      is_starter_candidate: isStarter,
       sessions: days.map((d) => ({
         day_label: d.label || 'Day',
         // EVERY FIELD. See the header: an omission here is not a missing feature, it is deletion.
@@ -334,6 +355,92 @@ export function ProgramBuilder({
             }}
           />
         </label>
+      </div>
+
+      {/* WHO THIS PROGRAM IS FOR.
+          Onboarding asks a new member how many days she can train, where, and how experienced she
+          is, and the matcher picks her program from these three answers. Before this existed the
+          answers were collected and never read: everybody got one hardcoded plan.
+
+          Off by default. A program is offered to strangers only when somebody ticks the box, which
+          is what keeps "Eddies workout plan" and the one-client blocks out of it. */}
+      <div className="mb-5 rounded-2xl bg-surface p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            checked={isStarter}
+            onChange={(e) => {
+              setIsStarter(e.target.checked);
+              setDirty(true);
+            }}
+            className="mt-0.5"
+          />
+          <span className="min-w-0">
+            <span className="block text-[14px] font-semibold text-ink">{t('starterCandidate')}</span>
+            <span className="mt-0.5 block text-[12.5px] leading-relaxed text-muted">
+              {t('starterCandidateHelp')}
+            </span>
+          </span>
+        </label>
+
+        {isStarter && (
+          <div className="mt-3.5 grid grid-cols-1 gap-3 border-t border-divider pt-3.5 sm:grid-cols-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold uppercase tracking-[1px] text-faint">
+                {t('planDaysPerWeek')}
+              </span>
+              <select
+                className={input}
+                value={daysPerWeek}
+                onChange={(e) => {
+                  setDaysPerWeek(e.target.value);
+                  setDirty(true);
+                }}
+              >
+                <option value="">{t('notSet')}</option>
+                {[2, 3, 4, 5, 6].map((n) => (
+                  <option key={n} value={n}>
+                    {t('movementDays', { count: n })}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold uppercase tracking-[1px] text-faint">
+                {t('planLevel')}
+              </span>
+              <select
+                className={input}
+                value={level}
+                onChange={(e) => {
+                  setLevel(e.target.value);
+                  setDirty(true);
+                }}
+              >
+                <option value="">{t('notSet')}</option>
+                <option value="beginner_intermediate">{t('levelBeginner')}</option>
+                <option value="advanced">{t('levelAdvanced')}</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold uppercase tracking-[1px] text-faint">
+                {t('planLocation')}
+              </span>
+              <select
+                className={input}
+                value={location}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  setDirty(true);
+                }}
+              >
+                <option value="">{t('notSet')}</option>
+                <option value="home">{t('locationHome')}</option>
+                <option value="gym">{t('locationGym')}</option>
+              </select>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* DAY TABS. One day on screen at a time; the count under each name is how much work it is. */}

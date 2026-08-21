@@ -51,6 +51,12 @@ export const saveProgramSchema = z.object({
   name_en: z.string().min(1),
   name_es: z.string().optional(),
   weeks: z.number().int().min(1).max(52).default(4),
+  // The taxonomy the starter matcher reads (0148). Editable here so a program she writes from now
+  // on can be offered to new members without somebody going back to SQL.
+  days_per_week: z.number().int().min(1).max(7).nullable().optional(),
+  level: z.enum(['beginner_intermediate', 'advanced']).nullable().optional(),
+  location: z.enum(['home', 'gym']).nullable().optional(),
+  is_starter_candidate: z.boolean().optional(),
   sessions: z.array(sessionSchema),
 });
 export type SaveProgramInput = z.infer<typeof saveProgramSchema>;
@@ -62,13 +68,31 @@ export async function saveProgram(companyId: string, createdBy: string, input: S
   if (planId) {
     await supabase
       .from('plans')
-      .update({ name_en: input.name_en, name_es: input.name_es ?? null, weeks: input.weeks })
+      .update({
+        name_en: input.name_en,
+        name_es: input.name_es ?? null,
+        weeks: input.weeks,
+        days_per_week: input.days_per_week ?? null,
+        level: input.level ?? null,
+        location: input.location ?? null,
+        is_starter_candidate: input.is_starter_candidate ?? false,
+      })
       .eq('id', planId)
       .eq('company_id', companyId);
   } else {
     const { data } = await supabase
       .from('plans')
-      .insert({ company_id: companyId, name_en: input.name_en, name_es: input.name_es ?? null, weeks: input.weeks, created_by: createdBy })
+      .insert({
+        company_id: companyId,
+        name_en: input.name_en,
+        name_es: input.name_es ?? null,
+        weeks: input.weeks,
+        days_per_week: input.days_per_week ?? null,
+        level: input.level ?? null,
+        location: input.location ?? null,
+        is_starter_candidate: input.is_starter_candidate ?? false,
+        created_by: createdBy,
+      })
       .select('id')
       .single();
     planId = data?.id;
@@ -115,7 +139,7 @@ export async function getProgram(companyId: string, planId: string) {
   const supabase = createServiceClient();
   const { data: plan } = await supabase
     .from('plans')
-    .select('id, name_en, name_es, weeks, is_template')
+    .select('id, name_en, name_es, weeks, is_template, days_per_week, level, location, is_starter_candidate')
     .eq('id', planId)
     .eq('company_id', companyId)
     .maybeSingle();
@@ -153,7 +177,14 @@ export async function markTemplate(companyId: string, planId: string) {
   return { is_template: true };
 }
 
-export async function assignProgram(companyId: string, planId: string, profileId: string) {
+export async function assignProgram(
+  companyId: string,
+  planId: string,
+  profileId: string,
+  /** The coach doing it. Recorded so the member-facing copy can tell a human choice from the
+   *  matcher's, and so a new coach's checklist does not inherit somebody else's work. */
+  assignedBy: string | null = null,
+) {
   const supabase = createServiceClient();
 
   // Ownership guard: never trust client-supplied ids. The plan and the target
@@ -190,6 +221,10 @@ export async function assignProgram(companyId: string, planId: string, profileId
       plan_id: planId,
       profile_id: profileId,
       assigned_at: new Date().toISOString(),
+      // A human chose this. NULL here means the matcher did, and /workouts keys its "Steph writes
+      // your plan by hand" copy off exactly that difference. Overwritten on re-assign for the same
+      // reason assigned_at is: re-assigning IS a new assignment, by whoever just did it.
+      assigned_by: assignedBy,
     },
     { onConflict: 'plan_id,profile_id' },
   );
@@ -213,9 +248,12 @@ export async function getAssignedPlans(companyId: string, profileId: string) {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from('plan_assignments')
-    .select('plan:plan_id (id, name_en, name_es, weeks)')
+    // assigned_by comes back too: a NULL means the matcher chose this plan, and /workouts changes
+    // what it PROMISES her on that basis. Selected here rather than in a second query because the
+    // caller needs both together and they are one row.
+    .select('assigned_by, plan:plan_id (id, name_en, name_es, weeks)')
     .eq('company_id', companyId)
     .eq('profile_id', profileId)
     .order('assigned_at', { ascending: false });
-  return (data ?? []).map((r) => r.plan);
+  return (data ?? []).map((r) => ({ ...(r.plan as object), assignedBy: r.assigned_by }));
 }

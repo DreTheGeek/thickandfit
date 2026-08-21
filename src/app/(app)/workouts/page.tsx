@@ -16,7 +16,14 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-type AssignedPlan = { id: string; name_en: string; name_es: string | null; weeks: number };
+type AssignedPlan = {
+  id: string;
+  name_en: string;
+  name_es: string | null;
+  weeks: number;
+  /** NULL means the matcher chose this plan rather than a coach. Drives the first-run copy. */
+  assignedBy: string | null;
+};
 type SessionExercise = {
   exercise_id: string;
   sets: number | null;
@@ -47,6 +54,7 @@ export default async function WorkoutsPage({
   let stats: WorkoutStats | null = null;
   // Hoisted: `plans` is scoped to the entitled branch, and the Programs tab needs it at render.
   let allPlans: { id: string; name: string; weeks: number | null }[] = [];
+  let autoAssignedPlanIds = new Set<string>();
 
   if (ctx.companyId) {
     // On a break, the program half of this screen is closed and the history half is not. Skipping
@@ -59,6 +67,11 @@ export default async function WorkoutsPage({
           ctx.companyId,
           ctx.userId,
         )) as unknown as AssignedPlan[]);
+    // The plans SHE was given without a human choosing them. Drives the first-run copy: see
+    // isStarter below.
+    autoAssignedPlanIds = new Set(
+      plans.filter((pl) => pl.assignedBy == null).map((pl) => pl.id),
+    );
     allPlans = plans.map((pl) => ({
       id: pl.id,
       name: (locale === 'es' && pl.name_es) || pl.name_en || '',
@@ -162,16 +175,18 @@ export default async function WorkoutsPage({
         })),
         activeDay: dayIndex,
         exercises,
-        // TRUE only while she is on the auto-assigned starter.
+        // TRUE only while she is on a program the SOFTWARE chose.
         //
-        // Compared against the env var rather than a column on plan_assignments: the starter IS
-        // that plan id, so the comparison cannot drift, and a coach assigning her something real
-        // turns this off by doing so, with nothing to remember to clear.
+        // Read from plan_assignments.assigned_by (0149), not from STARTER_PROGRAM_ID. The env var
+        // stopped being the right signal the moment the matcher could assign without it being set:
+        // it would have said "a coach wrote this by hand" about a plan nobody had looked at.
+        // A coach assigning her something turns this off by doing so, with nothing to remember to
+        // clear, which is the property the old comparison was reaching for and no longer had.
         //
-        // Without it, flipping STARTER_PROGRAM_ID on makes "Steph writes your plan by hand" a
-        // half-truth. She opens the app on day one, sees a program, and reasonably concludes that
-        // generic starting week is the plan a human wrote for her.
-        isStarter: plan.id === (process.env.STARTER_PROGRAM_ID ?? '').trim(),
+        // Without it, "Steph writes your plan by hand, she will message you when it is ready"
+        // becomes a half-truth: she opens the app on day one, sees a program, and reasonably
+        // concludes that generic starting week is the plan a human wrote for her.
+        isStarter: autoAssignedPlanIds.has(plan.id),
       };
     }
 
@@ -215,17 +230,17 @@ export default async function WorkoutsPage({
   // Derived, never stored: the checklist ticks itself from her real rows.
   const activation = await getActivation(ctx.userId);
   return (
-    // hasStarterProgram is read HERE because STARTER_PROGRAM_ID is server-only by design. The
-    // first-run copy has to move with the flag: "Steph writes your plan by hand ... she will
-    // message you when it is ready" is true today and becomes a half-truth the moment auto-assign
-    // puts a plan there before she asks.
+    // hasStarterProgram now answers "did a human choose any of this", read from assigned_by rather
+    // than from an env var. The first-run copy has to move with the reality: "Steph writes your plan
+    // by hand ... she will message you when it is ready" is true when a coach assigned it, and a
+    // half-truth the moment the matcher put a plan there before she asked.
     <ActivitiesScreen
       program={program}
       history={history}
       stats={stats}
       locale={locale}
       activation={activation}
-      hasStarterProgram={(process.env.STARTER_PROGRAM_ID ?? '').trim().length > 0}
+      hasStarterProgram={autoAssignedPlanIds.size > 0}
       // Every plan ever assigned, for the Programs tab. getAssignedPlans already returned them all
       // and the page used only plans[0], so a member on her third block could not look back.
       allPlans={allPlans}

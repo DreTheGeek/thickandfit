@@ -36,6 +36,9 @@ export const healthProfileSchema = z.object({
   // Where they train. Pre-paywall (captured in the onboarding wizard) because it decides whether the
   // plan preview on the next screen is executable at all.
   trainingLocation: z.enum(TRAINING_LOCATION).optional(),
+  // Days a week she can train. Bounded to the block sizes Stephanie has written; see
+  // lib/programs/match-starter-shared.ts, which is the only thing that reads it.
+  trainingDays: z.number().int().min(3).max(5).optional(),
   sleep: z.enum(SLEEP).optional(),
   stress: z.enum(STRESS).optional(),
   foodRelationship: z.enum(FOOD_REL).optional(),
@@ -137,6 +140,13 @@ export function mapIntakeToHealthProfile(
     medications: keep(MEDICATIONS, hp.medications),
     trainingExperience: one(EXPERIENCE, row.training_experience),
     trainingLocation: one(TRAINING_LOCATION, hp.trainingLocation),
+    // Read back defensively: this is a JSONB blob, so a value written by an older build (or by
+    // hand) could be a string, a 7, or absent. Anything outside the range Stephanie writes blocks
+    // for becomes null, and the matcher treats null as "she did not say".
+    trainingDays: ((): 3 | 4 | 5 | undefined => {
+      const n = Number((hp as Record<string, unknown>).trainingDays);
+      return n === 3 || n === 4 || n === 5 ? n : undefined;
+    })(),
     sleep: one(SLEEP, (sleep as Record<string, unknown>).sleep),
     stress: one(STRESS, (sleep as Record<string, unknown>).stress),
     foodRelationship: one(
@@ -255,6 +265,9 @@ export async function saveHealthProfile(
         // Preserve a previously stored location when this caller did not ask for it, so the
         // pre-paywall answer is not wiped by a later post-paywall save that omits it.
         trainingLocation: input.trainingLocation ?? (prevHp.trainingLocation ?? null),
+        // Same preservation rule as location above: a later post-paywall save that omits this must
+        // not wipe the pre-paywall answer that chose her program.
+        trainingDays: input.trainingDays ?? (prevHp.trainingDays ?? null),
       },
     },
     source: "app_intake",

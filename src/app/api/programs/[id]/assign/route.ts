@@ -31,7 +31,7 @@ async function POST_h(req: Request, { params }: { params: Promise<{ id: string }
   if (!parsed.success) return apiError('Invalid input', 422);
 
   const planId = (await params).id;
-  const result = await assignProgram(ctx.companyId, planId, parsed.data.profile_id);
+  const result = await assignProgram(ctx.companyId, planId, parsed.data.profile_id, ctx.userId);
   logCoachAction(createServiceClient(), {
     companyId: ctx.companyId,
     userId: ctx.userId,

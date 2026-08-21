@@ -93,6 +93,13 @@ export default async function ProgramBuilderPage({
           nameEn: program.plan.name_en,
           nameEs: program.plan.name_es ?? '',
           weeks: program.plan.weeks,
+          // The taxonomy the starter matcher reads. Loaded so a save cannot blank it, same rule as
+          // every other field on this screen.
+          daysPerWeek: (program.plan as { days_per_week?: number | null }).days_per_week ?? null,
+          level: (program.plan as { level?: string | null }).level ?? null,
+          location: (program.plan as { location?: string | null }).location ?? null,
+          isStarterCandidate:
+            (program.plan as { is_starter_candidate?: boolean }).is_starter_candidate === true,
           days: program.sessions.map((s) => ({
             label: s.day_label,
             exercises: (s.exercises as SessionExercise[]).map((e) => {

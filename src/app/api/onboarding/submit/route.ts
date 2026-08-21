@@ -57,6 +57,9 @@ const submitSchema = onboardingInputSchema.extend({
       safety: z.array(z.enum(SAFETY)).max(SAFETY.length).default([]),
       trainingExperience: z.enum(EXPERIENCE).optional(),
       trainingLocation: z.enum(TRAINING_LOCATION).optional(),
+      // Decides which of her programs this member starts on. Bounded to the block sizes Stephanie
+      // has actually written, so a modified client cannot post 7 and land nowhere.
+      trainingDays: z.number().int().min(3).max(5).optional(),
       // Free text, in the member's own words. Capped generously; the extractor truncates further.
       notes: z.string().trim().max(2000).optional(),
     })
@@ -153,6 +156,7 @@ async function POST_h(req: Request) {
           safety: health.safety,
           trainingExperience: health.trainingExperience ?? existing.trainingExperience,
           trainingLocation: health.trainingLocation ?? existing.trainingLocation,
+          trainingDays: health.trainingDays ?? existing.trainingDays,
         });
         if (!saved.ok) console.error('onboarding saveHealthProfile: write failed');
 

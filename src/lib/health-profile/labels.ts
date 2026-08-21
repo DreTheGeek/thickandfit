@@ -61,6 +61,14 @@ export const EXPERIENCE = ["new", "some", "experienced"] as const;
 // Vocabulary matches the waitlist quiz (waitlist_quiz_responses.where) so a lead is never re-asked in
 // different words.
 export const TRAINING_LOCATION = ["home", "gym", "both"] as const;
+// How many days a week she can train. Asked because it DECIDES her program: Stephanie's library is
+// built as 3, 4 and 5 day blocks and nothing was reading this, so every new member got the same
+// hardcoded plan. See lib/programs/match-starter-shared.ts.
+//
+// Only 3, 4 and 5 are offered, because those are the only blocks she has written. Offering 2 or 6
+// would collect an answer the library cannot honour and then quietly round it, which is a worse
+// experience than a question that admits its range.
+export const TRAINING_DAYS = ["3", "4", "5"] as const;
 export const SLEEP = ["lt5", "5to6", "7to8", "gt8"] as const;
 export const STRESS = ["low", "moderate", "high"] as const;
 export const FOOD_REL = [
@@ -75,6 +83,7 @@ export type MedicationSlug = (typeof MEDICATIONS)[number];
 export type SafetySlug = (typeof SAFETY)[number];
 export type PregnancySlug = (typeof PREGNANCY)[number];
 export type TrainingLocationSlug = (typeof TRAINING_LOCATION)[number];
+export type TrainingDaysSlug = (typeof TRAINING_DAYS)[number];
 
 // English labels the coach prompt reads. Kept concise; the parenthetical on a few gives the model the
 // coaching-relevant "so what" (why the fact changes nutrition or training).

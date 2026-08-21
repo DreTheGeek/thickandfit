@@ -26,6 +26,7 @@ import {
   SAFETY,
   EXPERIENCE,
   TRAINING_LOCATION,
+  TRAINING_DAYS,
 } from '@/lib/health-profile/labels';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/ring';
@@ -205,6 +206,9 @@ export function OnboardingFlow({
   // One tap each, and both are already asked in the waitlist quiz, so a lead answers nothing new.
   const [experience, setExperience] = useState<string>('some');
   const [trainingLocation, setTrainingLocation] = useState<string>('both');
+  // Defaults to 3, the lowest block she writes. A member who skips the question gets the plan with
+  // the fewest sessions to miss, which is the direction that keeps somebody training.
+  const [trainingDays, setTrainingDays] = useState<string>('3');
   const safetyFlagged = safety.length > 0;
 
 // Functional updater, NOT `set(list.filter(...))`. React batches updates, so two chip taps inside
@@ -359,6 +363,7 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
             notes: notes.trim() || undefined,
             trainingExperience: experience,
             trainingLocation,
+            trainingDays: Number(trainingDays),
           },
         }),
       });
@@ -536,6 +541,21 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
                 {TRAINING_LOCATION.map((x) => (
                   <option key={x} value={x}>
                     {th(`opt.trainingLocation.${x}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {/* THE QUESTION THAT PICKS HER PROGRAM. It was never asked, so every new member was
+                handed the same hardcoded plan regardless of what she could actually manage. */}
+            <Field label={th('sec.trainingDays.q')}>
+              <select
+                className={selectCls}
+                value={trainingDays}
+                onChange={(e) => setTrainingDays(e.target.value)}
+              >
+                {TRAINING_DAYS.map((x) => (
+                  <option key={x} value={x}>
+                    {th(`opt.trainingDays.${x}`)}
                   </option>
                 ))}
               </select>

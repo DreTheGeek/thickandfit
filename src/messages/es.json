@@ -187,12 +187,23 @@
       "none": "Ninguno",
       "safetyNone": "Ninguno de estos",
       "sec": {
-        "foods": {
-          "q": "¿Hay alimentos que no comes?"
-        },
         "allergies": {
           "q": "Alergias (opcional)",
           "ph": "ej. cacahuates, mariscos"
+        },
+        "conditions": {
+          "q": "¿Aplica alguno de estos?",
+          "why": "Cosas como el SOP (PCOS), la resistencia a la insulina y la tiroides cambian cómo tu cuerpo maneja la comida y el entrenamiento. Tu entrenadora se adapta a ellas."
+        },
+        "experience": {
+          "q": "¿Cómo describes tu experiencia entrenando?"
+        },
+        "food": {
+          "q": "Para apoyarte de la mejor forma, ¿hay algo que debamos tener presente?",
+          "why": "Esto define cómo tu entrenadora habla de la comida contigo. No hay respuesta incorrecta."
+        },
+        "foods": {
+          "q": "¿Hay alimentos que no comes?"
         },
         "injuries": {
           "q": "¿Alguna lesión o zona que debamos cuidar?"
@@ -201,9 +212,8 @@
           "q": "Cuéntale más a tu entrenadora (opcional)",
           "ph": "ej. rodilla izquierda, sin sentadillas profundas"
         },
-        "conditions": {
-          "q": "¿Aplica alguno de estos?",
-          "why": "Cosas como el SOP (PCOS), la resistencia a la insulina y la tiroides cambian cómo tu cuerpo maneja la comida y el entrenamiento. Tu entrenadora se adapta a ellas."
+        "meds": {
+          "q": "¿Algo que afecte tu apetito, peso o energía? (opcional)"
         },
         "pregnancy": {
           "q": "¿Hay algo que debamos saber ahora mismo?"
@@ -213,27 +223,30 @@
           "why": "La verificación de seguridad estándar antes de entrenar.",
           "note": "Gracias por contarnos. Consulta con tu médico antes de empezar ejercicio intenso, y tu entrenadora irá con calma."
         },
-        "meds": {
-          "q": "¿Algo que afecte tu apetito, peso o energía? (opcional)"
-        },
-        "experience": {
-          "q": "¿Cómo describes tu experiencia entrenando?"
-        },
         "sleep": {
           "q": "¿Cómo está tu sueño últimamente?"
         },
         "stress": {
           "q": "¿Y tu estrés?"
         },
-        "food": {
-          "q": "Para apoyarte de la mejor forma, ¿hay algo que debamos tener presente?",
-          "why": "Esto define cómo tu entrenadora habla de la comida contigo. No hay respuesta incorrecta."
+        "trainingDays": {
+          "q": "¿Cuántos días a la semana puedes entrenar?"
         },
         "trainingLocation": {
           "q": "¿Dónde vas a entrenar?"
         }
       },
       "opt": {
+        "conditions": {
+          "pcos": "SOP (PCOS)",
+          "insulin_resistance": "Resistencia a la insulina / prediabetes",
+          "type2_diabetes": "Diabetes tipo 2",
+          "hypothyroid": "Hipotiroidismo / Hashimoto",
+          "menopause": "Perimenopausia / menopausia",
+          "endometriosis": "Endometriosis",
+          "high_bp": "Presión alta",
+          "ibs": "Colon irritable / problemas digestivos"
+        },
         "dietary": {
           "dairy": "Lácteos",
           "gluten": "Gluten",
@@ -245,6 +258,17 @@
           "vegetarian": "Vegetariana",
           "vegan": "Vegana"
         },
+        "experience": {
+          "new": "Nueva en esto",
+          "some": "Algo de experiencia",
+          "experienced": "Muy experimentada"
+        },
+        "food": {
+          "ok": "Estoy bien con el registro",
+          "struggled": "He tenido problemas con la alimentación",
+          "light_tracking": "Prefiero no contar calorías de cerca",
+          "prefer_not": "Prefiero no decir"
+        },
         "injuries": {
           "knees": "Rodillas",
           "lower_back": "Espalda baja",
@@ -253,15 +277,12 @@
           "hips": "Caderas",
           "neck": "Cuello"
         },
-        "conditions": {
-          "pcos": "SOP (PCOS)",
-          "insulin_resistance": "Resistencia a la insulina / prediabetes",
-          "type2_diabetes": "Diabetes tipo 2",
-          "hypothyroid": "Hipotiroidismo / Hashimoto",
-          "menopause": "Perimenopausia / menopausia",
-          "endometriosis": "Endometriosis",
-          "high_bp": "Presión alta",
-          "ibs": "Colon irritable / problemas digestivos"
+        "meds": {
+          "glp1": "GLP-1 (Ozempic / Wegovy)",
+          "thyroid": "Medicamento de tiroides",
+          "birth_control": "Anticonceptivos / hormonas",
+          "antidepressant": "Antidepresivo / ansiedad",
+          "steroids": "Esteroides"
         },
         "pregnancy": {
           "none": "No",
@@ -277,18 +298,6 @@
           "joint_problem": "Problema de huesos o articulaciones",
           "bp_meds": "Tomo medicamento del corazón / presión"
         },
-        "meds": {
-          "glp1": "GLP-1 (Ozempic / Wegovy)",
-          "thyroid": "Medicamento de tiroides",
-          "birth_control": "Anticonceptivos / hormonas",
-          "antidepressant": "Antidepresivo / ansiedad",
-          "steroids": "Esteroides"
-        },
-        "experience": {
-          "new": "Nueva en esto",
-          "some": "Algo de experiencia",
-          "experienced": "Muy experimentada"
-        },
         "sleep": {
           "lt5": "Menos de 5h",
           "5to6": "5-6h",
@@ -300,11 +309,10 @@
           "moderate": "Moderado",
           "high": "Alto"
         },
-        "food": {
-          "ok": "Estoy bien con el registro",
-          "struggled": "He tenido problemas con la alimentación",
-          "light_tracking": "Prefiero no contar calorías de cerca",
-          "prefer_not": "Prefiero no decir"
+        "trainingDays": {
+          "3": "3 días a la semana",
+          "4": "4 días a la semana",
+          "5": "5 días a la semana"
         },
         "trainingLocation": {
           "home": "En casa",
@@ -1311,11 +1319,15 @@
       "lenusId": "ID de Lenus",
       "lessonNoCategory": "Sin categoría",
       "lessonsSentTitle": "Lecciones recibidas",
+      "levelAdvanced": "Avanzado",
+      "levelBeginner": "Principiante / Intermedio",
       "library": "Biblioteca",
       "libraryIntro": "Todo lo que usas para crear, organizado. Plantillas, contenido y automatización reutilizables con tus clientes.",
       "lifetimePaid": "Total pagado",
       "listTruncated": "Mostrando los primeros {n} clientes. La lista está limitada, por lo que los totales y filtros reflejan una vista parcial.",
       "liveActivity": "Actividad en vivo",
+      "locationGym": "Gimnasio",
+      "locationHome": "Sin gimnasio",
       "lostReasonLabel": "Razón de pérdida",
       "mArms": "Brazos",
       "mBodyFat": "Grasa corporal",
@@ -1504,6 +1516,7 @@
       "moveDown": "Bajar",
       "moveUp": "Subir",
       "movementCount": "{count, plural, =0 {nada todavía} one {# ejercicio} other {# ejercicios}}",
+      "movementDays": "{count} días a la semana",
       "mpActivity_athlete": "Atleta",
       "mpActivity_high": "Muy activa",
       "mpActivity_light": "Poco activa",
@@ -1610,6 +1623,7 @@
       "noTasks": "Aún no hay tareas",
       "noTransactions": "Sin pagos registrados.",
       "noUpcoming": "Nada programado.",
+      "notSet": "Sin definir",
       "noteFailed": "No se pudo guardar la nota. Inténtalo de nuevo.",
       "nps": "NPS",
       "nutAvgKcal": "Prom. kcal",
@@ -1650,8 +1664,11 @@
       "planBasic": "Básico",
       "planBootcamp": "Bootcamp",
       "planDays": "{n, plural, one {# día} other {# días}}",
+      "planDaysPerWeek": "Días a la semana",
       "planDaysWeeks": "{d, plural, one {# día} other {# días}} · {w} semanas",
       "planDelivery": "Entrega de planes",
+      "planLevel": "Nivel",
+      "planLocation": "Necesita",
       "planNotesError": "No se pudo guardar",
       "planNotesHint": "Agrega indicaciones que tu clienta verá en su plan, por ejemplo agregados bajos en calorías si se queda con hambre.",
       "planNotesPlaceholder": "ej. Si no quedas satisfecha, agrega espinaca, cebolla o pepino, casi no suman nada.",
@@ -1791,6 +1808,8 @@
       "standingChurned": "Perdido",
       "standingHealthy": "Saludable",
       "startedAt": "Inicio",
+      "starterCandidate": "Ofrecer este programa a nuevas clientas",
+      "starterCandidateHelp": "Cuando alguien se registra, la app le elige un programa entre los marcados aquí, usando los días, el nivel y el lugar de abajo contra lo que respondió al registrarse. Déjalo apagado para lo que escribiste para una sola clienta.",
       "stat_calories": "Meta cal",
       "stat_days": "Días",
       "stat_workouts": "Entrenos",

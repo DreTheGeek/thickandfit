@@ -29,11 +29,19 @@ export async function getAssignedCheckins(
   if (rows.length === 0) return [];
 
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-  const { data: resp } = await sb
+  // submitted_at, NOT created_at. form_responses has no created_at column, so this filter errored
+  // on every call: PostgREST returned an error object, the destructure ignored it, `resp` was
+  // undefined, and doneSet was empty FOREVER. 859 real responses sit in this table and not one of
+  // them has ever marked a check-in as done on the member's screen.
+  //
+  // The error is checked now rather than swallowed. A read that fails should not be able to report
+  // "she has completed nothing", which is indistinguishable from the truth and is what hid this.
+  const { data: resp, error: respErr } = await sb
     .from('form_responses')
     .select('form_id')
     .eq('profile_id', profileId)
-    .gte('created_at', since);
+    .gte('submitted_at', since);
+  if (respErr) console.error('listCheckins form_responses:', respErr.message);
   const doneSet = new Set(((resp ?? []) as { form_id: string }[]).map((r) => r.form_id));
 
   return rows.map((r) => ({
