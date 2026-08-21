@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { inviteLegacyClients } from '@/lib/legacy/invite';
-import { logCoachAction } from '@/lib/coach/audit';
+import { logCoachActionNow } from '@/lib/coach/audit';
 
 /**
  * Sending real email to real people, from a button.
@@ -17,7 +17,9 @@ import { logCoachAction } from '@/lib/coach/audit';
  *   2. The batch will not exceed MAX_BATCH per call, whatever the form says.
  *   3. Confirmation is checked ON THE SERVER against the number of people it is about to email, so
  *      a mistyped or stale form cannot send to a larger set than the one that was confirmed.
- *   4. Every send is written to the coach audit log with who and how many.
+ *   4. Every send is written to the audit log with who and how many, AWAITED. Fire-and-forget
+ *      loses that row when the serverless function freezes, which is exactly what happened the
+ *      first time this was tested: the email genuinely sent and nothing recorded who sent it.
  *
  * inviteLegacyClients does the rest: it only ever selects legacy CLIENT contacts in this company
  * who have an email and have never claimed an account, so none of these can reach a lead, another
@@ -70,7 +72,7 @@ export async function inviteOneAction(formData: FormData): Promise<InviteActionR
     if (res.total === 0) {
       return { ok: false, sent: 0, failed: 0, message: 'notFound' };
     }
-    logCoachAction(createServiceClient(), {
+    await logCoachActionNow(createServiceClient(), {
       companyId: ctx.companyId,
       userId: ctx.userId,
       entityType: 'contact',
@@ -114,7 +116,7 @@ export async function inviteBatchAction(formData: FormData): Promise<InviteActio
     const origin = originFromHeaders(await headers());
     const res = await inviteLegacyClients(ctx.companyId, origin, { dryRun: false, limit: size });
 
-    logCoachAction(createServiceClient(), {
+    await logCoachActionNow(createServiceClient(), {
       companyId: ctx.companyId,
       userId: ctx.userId,
       entityType: 'contact',
