@@ -12,68 +12,67 @@ import { Icon, type IconName } from '@/components/ui/icons';
 type NavItem = { key: string; href: string; icon: IconName };
 type NavSection = { headerKey: string; items: NavItem[] };
 
-// The coaching console, grouped the way Stephanie's previous platform grouped it, because that
-// grouping is the one she already has in her hands: Dashboard, Clients, Leads, Chat, Toolbox,
-// Settings. Trimmed to shipped routes only (WP9): tooling that does not exist yet is left out
-// entirely rather than badged "soon", so every visible item routes to a real, data-bound screen.
-//
-// TOOLBOX IS ONE FLAT LIST ON PURPOSE. It used to be split three ways (Training / Nutrition /
-// Content & Check-ins), which is our taxonomy, not hers: she scans a single alphabetical list and
-// picks. The order below is her list's order for the items we have, so the relative positions she
-// learned still hold. Programs sits where "training templates" sat, at the end, not under P.
-//
-// SCOPE RULE for anything added here: this portal is about PEOPLE and PROGRAMMING. A number about a
-// woman belongs here; a number about the system belongs in the operator portal on the admin. host.
-// Scan accuracy, model latency and service probes used to live here (navIntelligence, appHealth) and
-// were moved to /admin/intelligence and /admin/health for exactly that reason.
+/**
+ * The coaching console sidebar: 16 rows, down from 26.
+ *
+ * THE COMPLAINT: "a lot of the stuff on the side tab could have been put into fewer tabs because
+ * those are a lot a lot of fucking tabs on the side... this should need to be ADHD friendly. I'm
+ * not gonna lie. This gonna stress her the fuck out. Like, you got meal plans, recipe books, and
+ * recipes. All that could have been in one tab."
+ *
+ * NOTHING WAS DELETED. Ten screens moved from being their own sidebar row to being a TAB on the row
+ * of the group they belong to (components/coach/section-tabs.tsx). Every route still exists, still
+ * has its own URL, still loads its own data. What changed is that the sidebar now answers "what am
+ * I doing" rather than "what screens exist", and near-neighbours filed as strangers are back
+ * together:
+ *
+ *   Needs you    awaiting + intake + quiet + plan-renewals   one question, four queues
+ *   People       clients + members + leads                   clients vs members was a real
+ *                                                            confusion, not just a long list
+ *   Training     programs + exercises + spanish
+ *   Nutrition    meal plans + recipes + recipe books         named by the owner
+ *   Approvals    approvals + drafts + assignments
+ *   Assistant    method + knowledge
+ *
+ * The two settings children (client-app, coaching prefs) also lose their rows. They were promoted
+ * out of /coach/settings so she would not have to hunt for them; the settings page lists them both
+ * at the top, and two extra rows in a sidebar she finds overwhelming is the more expensive problem.
+ *
+ * Each group's row points at the FIRST tab, so the landing screen and the leftmost tab agree.
+ *
+ * SCOPE RULE for anything added here: this portal is about PEOPLE and PROGRAMMING. A number about a
+ * woman belongs here; a number about the system belongs in the operator portal on the admin. host.
+ * Scan accuracy, model latency and service probes live at /admin/intelligence and /admin/health.
+ *
+ * Before adding a row, ask whether it is a TAB on a row that already exists. That is how the list
+ * got to 26.
+ */
 const SECTIONS: NavSection[] = [
   {
     headerKey: 'overview',
     items: [
       { key: 'navHome', href: '/coach', icon: 'home' },
-      { key: 'navBilling', href: '/coach/billing', icon: 'card' },
+      // The four member queues. Intake is "read what she wrote", awaiting is "she is still waiting
+      // on the plan we promised", quiet is "she stopped waiting", renewals is "hers is finishing".
+      // Same woman at four points, so one row.
+      { key: 'navNeedsYou', href: '/coach/awaiting', icon: 'clipboard' },
     ],
   },
   {
     headerKey: 'navClients',
     items: [
-      { key: 'navClients', href: '/coach/clients', icon: 'user' },
-      // App accounts, as distinct from CRM contacts above: a woman who signed up but has not finished
-      // onboarding has a profile and no contact row, so she appears here and nowhere else. This was
-      // reachable only by deep link before, which is why /coach/subscribers/[id]'s back button led to
-      // a page with no way in.
-      { key: 'navMembers', href: '/coach/subscribers', icon: 'community' },
-      // Sits directly under Clients on purpose: it is a queue about specific new members, and the
-      // whole point of over-flagging in the extractor is that a human passes by here.
-      { key: 'navIntake', href: '/coach/intake', icon: 'clipboard' },
-      // The other half of the same promise. Intake is "read what she wrote"; this is "she is still
-      // waiting on the plan we told her you were writing". Adjacent because they are the same member
-      // on the same day, and separating them by three sections is how one of them gets forgotten.
-      { key: 'navAwaiting', href: '/coach/awaiting', icon: 'clipboard' },
-      // The third queue about a specific member on a specific day. Awaiting is "she is still waiting
-      // on you"; this is "she stopped waiting". Same section because they are the same person a few
-      // weeks apart, and the whole value of this one is being seen before billing notices.
-      { key: 'navQuiet', href: '/coach/quiet', icon: 'user' },
-      // The fourth queue in the same section, and the one she asked for by name: a program reaching
-      // the end of its weeks. Awaiting is "she never got one", quiet is "she stopped showing up",
-      // this is "hers is finishing".
-      { key: 'navPlanRenewals', href: '/coach/plan-renewals', icon: 'clipboard' },
-      // Not a queue like the four above: nothing accumulates here. It sits with them because it is
-      // the thing you set BEFORE leaving, and a rota buried in a settings tree is a rota nobody
-      // fills in — which is the whole failure this feature exists to prevent.
+      { key: 'navPeople', href: '/coach/clients', icon: 'user' },
+      { key: 'navBilling', href: '/coach/billing', icon: 'card' },
+      // Not a queue: nothing accumulates in either. They sit together because both are things you
+      // set BEFORE a date and then stop thinking about, and a rota buried in a settings tree is a
+      // rota nobody fills in.
       { key: 'navCoverage', href: '/coach/coverage', icon: 'user' },
-      // Beside coverage rather than with the queues: both are things you set AHEAD of a date and
-      // then stop thinking about, which is the opposite of a queue you work down.
       { key: 'navCampaigns', href: '/coach/campaigns', icon: 'funnel' },
-      // Leads is a sibling of Clients on her old top-level nav, not a child. It stays in this
-      // section rather than getting a header of its own, because a one-item section is a header
-      // with nothing under it.
-      { key: 'navLeads', href: '/coach/leads', icon: 'funnel' },
     ],
   },
   {
     // Her word is Chat, so the item is Chat. Community and Challenges join it because all three are
-    // "talking to people", and neither is the group-programming surface her Client groups was.
+    // "talking to people".
     headerKey: 'navInbox',
     items: [
       { key: 'navInbox', href: '/coach/inbox', icon: 'chat' },
@@ -82,51 +81,64 @@ const SECTIONS: NavSection[] = [
     ],
   },
   {
-    // Mid-ticket coaching (WP8). drafts = assistant-facing; approvals + assignments are approver-facing
-    // and redirect non-approvers at the page level (requireApprover), so the links are role-agnostic.
-    headerKey: 'navMidTicket',
+    headerKey: 'bucketLibrary',
     items: [
-      { key: 'navDrafts', href: '/coach/drafts', icon: 'file' },
-      { key: 'navApprovals', href: '/coach/approvals', icon: 'clipboard' },
-      { key: 'navAssignments', href: '/coach/assignments', icon: 'user' },
-    ],
-  },
-  {
-    headerKey: 'bucketToolbox',
-    items: [
-      { key: 'toolExercises', href: '/coach/exercises', icon: 'dumbbell' },
-      // Beside the exercise library because it is a job about that library, but deliberately NOT at
-      // /coach/exercises/spanish: isActive() matches on prefix, so a child route of an item already
-      // in this list lights up both rows at once.
-      { key: 'navSpanish', href: '/coach/spanish', icon: 'book' },
-      { key: 'forms', href: '/coach/forms', icon: 'file' },
-      { key: 'toolMealPlans', href: '/coach/tool/meal-plans', icon: 'nutrition' },
-      { key: 'toolRecipeBooks', href: '/coach/tool/recipe-books', icon: 'book' },
-      { key: 'toolRecipes', href: '/coach/tool/recipes', icon: 'nutrition' },
+      { key: 'navTraining', href: '/coach/programs', icon: 'dumbbell' },
+      { key: 'navNutrition', href: '/coach/tool/meal-plans', icon: 'nutrition' },
       { key: 'toolLessons', href: '/coach/tool/lessons', icon: 'book' },
-      { key: 'programs', href: '/coach/programs', icon: 'clipboard' },
+      { key: 'forms', href: '/coach/forms', icon: 'file' },
     ],
   },
   {
     headerKey: 'navSettings',
     items: [
+      // Mid-ticket coaching (WP8). approvals + assignments are approver-facing and redirect
+      // non-approvers at the page level (requireApprover), so the link is role-agnostic.
+      { key: 'navApprovals', href: '/coach/approvals', icon: 'clipboard' },
+      { key: 'navAssistant', href: '/coach/method', icon: 'sparkles' },
+      // The checklist and the written manual. "A new coach is lost when they open this software."
+      { key: 'navGettingStarted', href: '/coach/getting-started', icon: 'book' },
       { key: 'navSettings', href: '/coach/settings', icon: 'gear' },
-      // The two preference screens carried over from the platform she is leaving. Listed separately
-      // rather than buried inside /coach/settings because that is where she expects to find them:
-      // one click from the sidebar, not one click plus a hunt down a page of account cards.
-      { key: 'navClientApp', href: '/coach/settings/client-app', icon: 'grid' },
-      { key: 'navCoachingPrefs', href: '/coach/settings/coaching', icon: 'ruler' },
-      { key: 'navKnowledge', href: '/coach/settings/knowledge', icon: 'sparkles' },
-      // Sits beside the knowledge base because that is where she teaches it; this is where she sees
-      // what it did with what she taught.
-      { key: 'navMethod', href: '/coach/method', icon: 'pulse' },
     ],
   },
 ];
 
+/**
+ * The screens each grouped row stands for.
+ *
+ * A row now points at the FIRST tab of its group, so without this, opening /coach/quiet from the
+ * "Needs you" tabs would leave the sidebar highlighting nothing and the console would read as
+ * having navigated somewhere off the map. Keyed by the row's href, and it must stay in step with
+ * lib/coach/section-tabs.ts, which is the list the tabs themselves are built from.
+ */
+const GROUPS: Record<string, string[]> = {
+  '/coach/awaiting': ['/coach/awaiting', '/coach/intake', '/coach/quiet', '/coach/plan-renewals'],
+  '/coach/clients': ['/coach/clients', '/coach/subscribers', '/coach/leads'],
+  '/coach/programs': ['/coach/programs', '/coach/exercises', '/coach/spanish'],
+  '/coach/tool/meal-plans': ['/coach/tool/meal-plans', '/coach/tool/recipes', '/coach/tool/recipe-books'],
+  '/coach/approvals': ['/coach/approvals', '/coach/drafts', '/coach/assignments'],
+  '/coach/method': ['/coach/method', '/coach/settings/knowledge'],
+  '/coach/getting-started': ['/coach/getting-started', '/coach/training'],
+};
+
+function matches(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(href + '/');
+}
+
 function isActive(pathname: string, href: string): boolean {
   if (href === '/coach') return pathname === '/coach';
-  return pathname === href || pathname.startsWith(href + '/');
+  const group = GROUPS[href];
+  if (group) {
+    // Longest first, so /coach/settings/knowledge is not claimed by a shorter sibling elsewhere.
+    return group.some((h) => matches(pathname, h));
+  }
+  // A row that is NOT a group entry must not claim a path some group owns. /coach/settings would
+  // otherwise light up on /coach/settings/knowledge, which belongs to Assistant.
+  const ownedElsewhere = Object.entries(GROUPS).some(
+    ([entry, members]) => entry !== href && members.some((h) => h !== href && matches(pathname, h) && h.startsWith(href + '/')),
+  );
+  if (ownedElsewhere) return false;
+  return matches(pathname, href);
 }
 
 export function CoachNav({ onNavigate }: { onNavigate?: () => void }): ReactElement {

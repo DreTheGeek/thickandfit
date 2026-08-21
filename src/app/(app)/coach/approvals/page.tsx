@@ -8,6 +8,8 @@ import { requireApprover } from '@/lib/auth/guards';
 import { listPendingQueue, listDecidedQueue } from '@/lib/coach/approval';
 import { ApprovalQueue } from '@/components/coach/approval-queue';
 import { PageTitle } from '@/components/ui/section';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { approvalTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,8 +32,11 @@ export default async function CoachApprovalsPage(): Promise<ReactElement> {
     listDecidedQueue(companyId),
   ]);
 
+  const sectionTabs = await approvalTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/approvals" />
       <PageTitle className="mb-2">{t('approvalsTitle')}</PageTitle>
       <p className="mb-5 text-[13px] text-faint">{t('approvalsIntro')}</p>
       <ApprovalQueue pending={pending} decided={decided} />

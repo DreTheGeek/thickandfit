@@ -8,6 +8,8 @@ import { PageTitle } from '@/components/ui/section';
 import { ButtonLink } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
 import { shootImage } from '@/lib/brand/shoot';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { trainingTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,8 +80,11 @@ export default async function CoachProgramsPage(): Promise<ReactElement> {
     .filter((k) => buckets.has(k))
     .map((k) => ({ key: k, plans: buckets.get(k)! }));
 
+  const sectionTabs = await trainingTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/programs" />
       <div className="mb-1 flex items-center justify-between gap-4">
         <PageTitle>{t('programs')}</PageTitle>
         <ButtonLink href="/coach/programs/new" size="sm" className="shrink-0">

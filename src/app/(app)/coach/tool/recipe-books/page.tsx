@@ -6,6 +6,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { getRecipeBooks } from '@/lib/coach/recipes';
 import { Eyebrow, PageTitle } from '@/components/ui/section';
 import { RecipeImage } from '@/components/coach/recipe-image';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { nutritionTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +17,11 @@ export default async function CoachRecipeBooksPage(): Promise<ReactElement> {
   if (!ctx.companyId) return <div className="p-8 text-sm text-muted">{t('noData')}</div>;
   const books = await getRecipeBooks(ctx.companyId);
 
+  const sectionTabs = await nutritionTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/tool/recipe-books" />
       <Eyebrow>{t('bucketToolbox')}</Eyebrow>
       <PageTitle className="mb-5 mt-1">{t('toolRecipeBooks')}</PageTitle>
 

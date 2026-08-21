@@ -6,6 +6,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { parseExerciseFilters, getExercisesPage } from '@/lib/coach/exercises';
 import { Eyebrow, PageTitle } from '@/components/ui/section';
 import { ExercisesView } from '@/components/coach/exercises-view';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { trainingTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,8 +28,11 @@ export default async function CoachExercisesPage({
   // profileId, not companyId: a favourite is the reading coach's own shortlist (0118).
   const page = await getExercisesPage(ctx.companyId, filters, locale, ctx.userId);
 
+  const sectionTabs = await trainingTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/exercises" />
       <Eyebrow>{t('bucketToolbox')}</Eyebrow>
       <PageTitle className="mb-1 mt-1">{t('toolExercises')}</PageTitle>
       <p className="tf-measure mb-5 text-[13px] text-muted">{t('exercisesSubtitle')}</p>

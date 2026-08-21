@@ -7,6 +7,8 @@ import { parseRecipeFilters, getRecipesPage } from '@/lib/coach/recipes';
 import { Eyebrow, PageTitle } from '@/components/ui/section';
 import { Icon } from '@/components/ui/icons';
 import { RecipesView } from '@/components/coach/recipes-view';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { nutritionTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +24,11 @@ export default async function CoachRecipesPage({
   const filters = parseRecipeFilters(await searchParams);
   const page = await getRecipesPage(ctx.companyId, filters, locale, ctx.userId);
 
+  const sectionTabs = await nutritionTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/tool/recipes" />
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <Eyebrow>{t('bucketToolbox')}</Eyebrow>

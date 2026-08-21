@@ -12,6 +12,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { PageTitle } from '@/components/ui/section';
 import { SubscribersList, type CoachSubscriber } from '@/components/coach/subscribers-list';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { peopleTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,8 +68,11 @@ export default async function CoachSubscribersPage(): Promise<ReactElement> {
     }));
   }
 
+  const sectionTabs = await peopleTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/subscribers" />
       <PageTitle className="mb-2">{t('navMembers')}</PageTitle>
       <p className="mb-6 max-w-[68ch] text-[13px] leading-relaxed text-faint">{t('membersSubtitle')}</p>
       <SubscribersList rows={rows} />

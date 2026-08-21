@@ -5,6 +5,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { createServiceClient } from '@/lib/supabase/service';
 import { Eyebrow, PageTitle } from '@/components/ui/section';
 import { SpanishReview } from '@/components/coach/spanish-review';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { trainingTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +21,11 @@ export default async function CoachSpanishPage(): Promise<ReactElement> {
     svc.from('exercises').select('id', { count: 'exact', head: true }),
   ]);
 
+  const sectionTabs = await trainingTabs();
+
   return (
     <div className="mx-auto w-full max-w-4xl">
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/spanish" />
       <Eyebrow>{t('bucketToolbox')}</Eyebrow>
       <PageTitle className="mb-1 mt-1">{t('esTitle')}</PageTitle>
       <p className="tf-measure mb-5 text-[13px] text-muted">{t('esIntro')}</p>

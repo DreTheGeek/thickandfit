@@ -9,6 +9,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { listAwaitingProgram, OVERDUE_DAYS } from '@/lib/coach/awaiting-program';
 import { getCoverageContext, filterToMine } from '@/lib/coach/coverage';
 import { QueueScope } from '@/components/coach/queue-scope';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { needsYouTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,8 +39,11 @@ export default async function CoachAwaitingPage({
 
   // Renders its own heading rather than borrowing AdminPage from the admin portal: that component
   // carries the admin portal's own max-w-5xl and padding, which fought the coach container.
+  const sectionTabs = await needsYouTabs(ctx.companyId);
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/awaiting" />
       <h1 className="font-display text-2xl uppercase tracking-tight sm:text-3xl">Waiting on a program</h1>
       <p className="tf-measure mt-1 text-[13px] text-muted">
         Finished onboarding, no training plan assigned yet. Oldest first, because a queue sorted

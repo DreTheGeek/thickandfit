@@ -12,6 +12,8 @@ import {
 } from '@/lib/coach/assignments';
 import { AssignmentTable } from '@/components/coach/assignment-table';
 import { PageTitle } from '@/components/ui/section';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { approvalTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,8 +38,11 @@ export default async function CoachAssignmentsPage(): Promise<ReactElement> {
     listSubscribers(companyId),
   ]);
 
+  const sectionTabs = await approvalTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/assignments" />
       <PageTitle className="mb-2">{t('assignmentsTitle')}</PageTitle>
       <p className="mb-5 text-[13px] text-faint">{t('assignmentsIntro')}</p>
       <AssignmentTable

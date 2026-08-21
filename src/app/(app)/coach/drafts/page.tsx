@@ -11,6 +11,8 @@ import { listAssignedClients, type CoachProfileLite } from '@/lib/coach/assignme
 import { listClientsForApprover, listContactsForDraft } from '@/lib/coach/picker';
 import { DraftComposer } from '@/components/coach/draft-composer';
 import { PageTitle } from '@/components/ui/section';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { approvalTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,8 +41,11 @@ export default async function CoachDraftsPage(): Promise<ReactElement> {
     listMyDrafts(companyId, ctx.userId),
   ]);
 
+  const sectionTabs = await approvalTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/drafts" />
       <PageTitle className="mb-2">{t('draftsTitle')}</PageTitle>
       <p className="mb-5 text-[13px] text-faint">{t('draftsIntro')}</p>
 

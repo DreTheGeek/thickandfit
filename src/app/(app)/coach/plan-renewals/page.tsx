@@ -11,6 +11,8 @@ import type { ReactElement } from 'react';
 import Link from 'next/link';
 import { requireCoach } from '@/lib/auth/guards';
 import { listExpiringPlans } from '@/lib/coach/plan-followups';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { needsYouTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,8 +32,11 @@ export default async function CoachPlanRenewalsPage(): Promise<ReactElement> {
   const off = trainingWindowDays === null && mealWindowDays === null;
   const overdue = items.filter((i) => i.daysLeft < 0).length;
 
+  const sectionTabs = await needsYouTabs(ctx.companyId);
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/plan-renewals" />
       <h1 className="font-display text-2xl uppercase tracking-tight sm:text-3xl">Plans running out</h1>
       <p className="tf-measure mt-1 text-[13px] text-muted">
         Programs reaching the end of their weeks, and meal plans past their follow-up. Soonest first,

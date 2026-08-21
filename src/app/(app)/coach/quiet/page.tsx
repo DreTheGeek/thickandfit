@@ -15,6 +15,8 @@ import { listEngagementRisk } from '@/lib/engagement/risk';
 import { TIER_LABEL, type RiskTier } from '@/lib/engagement/risk-shared';
 import { getCoverageContext, filterToMine } from '@/lib/coach/coverage';
 import { QueueScope } from '@/components/coach/queue-scope';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { needsYouTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,8 +59,11 @@ export default async function CoachQuietPage({
 
   const urgent = rows.filter((r) => r.tier === 'ghost' || r.tier === 'at_risk').length;
 
+  const sectionTabs = await needsYouTabs(ctx.companyId);
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/quiet" />
       <h1 className="font-display text-2xl uppercase tracking-tight sm:text-3xl">Gone quiet</h1>
       <p className="tf-measure mt-1 text-[13px] text-muted">
         Members who have stopped logging, training and checking in. This is not the billing list:

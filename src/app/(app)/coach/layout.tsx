@@ -5,7 +5,6 @@
 // This layout deliberately does no auth work. requireCoach() stays on each page, matching the
 // per-page guard rule in src/app/(app)/layout.tsx.
 import type { ReactElement, ReactNode } from 'react';
-import { CoachTourTracker } from '@/components/coach/coach-tour-tracker';
 
 export default function CoachLayout({ children }: { children: ReactNode }): ReactElement {
   return (
@@ -14,7 +13,6 @@ export default function CoachLayout({ children }: { children: ReactNode }): Reac
           out of sync; eleven can, and the twelfth page anybody adds would silently never tick.
           The action re-derives the step from the path server-side, so this cannot mark anything the
           coach did not actually open. */}
-      <CoachTourTracker />
       {children}
     </div>
   );

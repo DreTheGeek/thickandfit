@@ -12,6 +12,8 @@ import { countAnswered } from '@/lib/coach/interview-bank';
 import { Icon } from '@/components/ui/icons';
 import { PageTitle } from '@/components/ui/section';
 import { KnowledgeBuilder } from '@/components/coach-ai/knowledge-builder';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { assistantTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +26,11 @@ export default async function CoachKnowledgePage(): Promise<ReactElement> {
   const { answered, total } = countAnswered(answers);
   const aiConfigured = isConfigured();
 
+  const sectionTabs = await assistantTabs();
+
   return (
     <div className="mx-auto w-full max-w-3xl">
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/settings/knowledge" />
       <PageTitle className="mb-2">{t('pageTitle')}</PageTitle>
       <p className="mb-6 text-[14px] text-muted">{t('pageIntro')}</p>
 

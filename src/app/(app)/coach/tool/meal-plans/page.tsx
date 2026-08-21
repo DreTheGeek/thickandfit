@@ -7,6 +7,8 @@ import { parseMealPlanFilters, getMealPlansPage } from '@/lib/coach/meal-plans';
 import { Eyebrow, PageTitle } from '@/components/ui/section';
 import { Icon } from '@/components/ui/icons';
 import { MealPlansView } from '@/components/coach/meal-plans-view';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { nutritionTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,8 +23,11 @@ export default async function CoachMealPlansPage({
   const filters = parseMealPlanFilters(await searchParams);
   const page = await getMealPlansPage(ctx.companyId, filters);
 
+  const sectionTabs = await nutritionTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/tool/meal-plans" />
       <div className="flex items-start justify-between gap-3">
         <div>
           <Eyebrow>{t('bucketToolbox')}</Eyebrow>

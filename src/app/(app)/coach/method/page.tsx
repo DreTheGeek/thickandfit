@@ -9,6 +9,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { getMethodStatus } from '@/lib/coach/method-status';
 import { Eyebrow } from '@/components/ui/section';
 import { Icon } from '@/components/ui/icons';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { assistantTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,8 +57,11 @@ export default async function CoachMethodPage(): Promise<ReactElement> {
 
   const interviewLeft = Math.max(0, s.interviewTotal - s.interviewAnswered);
 
+  const sectionTabs = await assistantTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/method" />
       <Eyebrow>{t('methodEyebrow')}</Eyebrow>
       <h1 className="tf-display mt-1 text-[30px]">{t('methodTitle')}</h1>
       <p className="tf-measure mb-7 mt-1 text-[13px] text-faint">{t('methodIntro')}</p>

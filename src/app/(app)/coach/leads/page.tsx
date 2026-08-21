@@ -6,6 +6,8 @@ import { parseLeadFilters, getPipelineBoard, getLastSync } from '@/lib/coach/lea
 import { Eyebrow, PageTitle } from '@/components/ui/section';
 import { LeadsView } from '@/components/coach/leads-view';
 import { SyncNowButton } from '@/components/coach/sync-now-button';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { peopleTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,8 +29,11 @@ export default async function CoachLeadsPage({
     ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(lastSync))
     : null;
 
+  const sectionTabs = await peopleTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/leads" />
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <Eyebrow>{t('navLeads')}</Eyebrow>

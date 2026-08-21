@@ -9,6 +9,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { listIntakeReviews } from '@/lib/coach/intake-review';
 import { IntakeReviewQueue } from '@/components/coach/intake-review-queue';
 import { PageTitle } from '@/components/ui/section';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { needsYouTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +18,11 @@ export default async function CoachIntakePage(): Promise<ReactElement> {
   const ctx = await requireCoach();
   const items = ctx.companyId ? await listIntakeReviews(ctx.companyId) : [];
 
+  const sectionTabs = await needsYouTabs(ctx.companyId);
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/intake" />
       <PageTitle className="mb-2">Intake to review</PageTitle>
       <p className="mb-5 max-w-[62ch] text-[13px] leading-relaxed text-faint">
         What a member wrote in her own words at signup, when it mentions something worth a human read.

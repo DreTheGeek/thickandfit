@@ -6,6 +6,8 @@ import { requireCoach } from '@/lib/auth/guards';
 import { parseClientFilters, getClientsPage, getSavedSegments } from '@/lib/coach/clients';
 import { Eyebrow, PageTitle } from '@/components/ui/section';
 import { ClientsView } from '@/components/coach/clients-view';
+import { CoachSectionTabs } from '@/components/coach/section-tabs';
+import { peopleTabs } from '@/lib/coach/section-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,8 +30,11 @@ export default async function CoachClientsPage({
     getSavedSegments(ctx.companyId),
   ]);
 
+  const sectionTabs = await peopleTabs();
+
   return (
     <div>
+      <CoachSectionTabs tabs={sectionTabs} active="/coach/clients" />
       <Eyebrow>{t('navClients')}</Eyebrow>
       <PageTitle className="mb-5 mt-1">{t('clientsTitle')}</PageTitle>
       <ClientsView page={page} segments={segments} filters={filters} locale={locale} />
