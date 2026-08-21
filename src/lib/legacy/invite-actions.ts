@@ -76,9 +76,10 @@ export async function inviteOneAction(formData: FormData): Promise<InviteActionR
       companyId: ctx.companyId,
       userId: ctx.userId,
       entityType: 'contact',
-      entityId: email,
+      // The CONTACT's uuid. entity_id is a uuid column, so the email goes in new_state.
+      entityId: res.outcomes[0]?.contactId ?? null,
       action: 'invite',
-      newState: { sent: res.sent, mode: 'single' },
+      newState: { email, sent: res.sent, mode: 'single' },
     });
     revalidatePath('/coach/invites');
     return {
@@ -120,9 +121,16 @@ export async function inviteBatchAction(formData: FormData): Promise<InviteActio
       companyId: ctx.companyId,
       userId: ctx.userId,
       entityType: 'contact',
-      entityId: `batch:${size}`,
+      // A batch is not one entity. The people it reached are named in new_state instead.
+      entityId: null,
       action: 'invite',
-      newState: { requested: size, total: res.total, sent: res.sent, mode: 'batch' },
+      newState: {
+        requested: size,
+        total: res.total,
+        sent: res.sent,
+        mode: 'batch',
+        emails: res.outcomes.filter((o) => o.sent).map((o) => o.email),
+      },
     });
     revalidatePath('/coach/invites');
     return {

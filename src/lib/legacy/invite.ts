@@ -24,6 +24,8 @@ export type LegacyContact = {
 };
 
 export type InviteOutcome = {
+  /** The contact this was about. audit_log.entity_id is a uuid, so the email cannot stand in. */
+  contactId: string;
   email: string;
   linked: boolean; // a link was minted
   sent: boolean; // an email actually went out (false in dryRun or without a key)
@@ -123,7 +125,7 @@ export async function inviteLegacyContact(
   // A dry run must confirm the CONTACT is invitable, which the caller's query has already done by
   // the time we are here: legacy, unclaimed, has an email, in this company. That is everything a
   // dry run can honestly check without causing the thing it is checking.
-  if (dryRun) return { email: contact.email, linked: true, sent: false };
+  if (dryRun) return { contactId: contact.id, email: contact.email, linked: true, sent: false };
 
   const { data, error } = await svc.auth.admin.generateLink({
     type: 'invite',
@@ -131,7 +133,7 @@ export async function inviteLegacyContact(
     options: { redirectTo: `${origin}/auth/callback?next=/claim` },
   });
   if (error || !data?.properties?.action_link) {
-    return { email: contact.email, linked: false, sent: false, error: error?.message ?? 'no_link' };
+    return { contactId: contact.id, email: contact.email, linked: false, sent: false, error: error?.message ?? 'no_link' };
   }
   const actionLink = data.properties.action_link;
   const locale = contact.language === 'es' ? 'es' : 'en';
@@ -146,7 +148,7 @@ export async function inviteLegacyContact(
     status: send.ok ? 'sent' : 'failed',
     provider_message_id: send.providerId,
   });
-  return { email: contact.email, linked: true, sent: send.ok };
+  return { contactId: contact.id, email: contact.email, linked: true, sent: send.ok };
 }
 
 // Invite the unclaimed legacy client contacts in a tenant. dryRun (default true) never sends.

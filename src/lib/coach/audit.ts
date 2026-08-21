@@ -39,18 +39,39 @@ export async function logCoachActionNow(
   await writeAudit(client, params);
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function writeAudit(
   client: ServiceClient,
   params: Parameters<typeof logCoachAction>[1],
 ): Promise<void> {
+  /**
+   * entity_id is a UUID COLUMN, and the parameter type is `string`.
+   *
+   * Passing anything else - an email address, "batch:50" - makes Postgres reject the whole INSERT,
+   * so the audit row for that action simply does not exist. That happened: an invite really sent an
+   * email to a real address and nothing recorded who sent it, while the database trigger's own rows
+   * from the same second landed fine.
+   *
+   * Losing the id is bad. Losing the ENTIRE RECORD of a launch action because the id was the wrong
+   * shape is much worse, so a non-uuid is dropped into new_state and the row is written anyway.
+   */
+  let entityId = params.entityId ?? null;
+  let extra = params.newState;
+  if (entityId != null && !UUID.test(entityId)) {
+    console.error(`[audit_log] entity_id is not a uuid (${entityId}); keeping it in new_state`);
+    extra = { ...(typeof extra === 'object' && extra ? extra : {}), entity_ref: entityId };
+    entityId = null;
+  }
+
   const { error } = await client.from('audit_log').insert({
     company_id: params.companyId,
     user_id: params.userId,
     entity_type: params.entityType,
-    entity_id: params.entityId ?? null,
+    entity_id: entityId,
     action: params.action,
     previous_state: params.previousState ?? null,
-    new_state: params.newState ?? null,
+    new_state: extra ?? null,
   });
   // Never throws. An audit write that fails must not take down the action it is recording; it must
   // be loud instead, which is the whole reason this is not swallowed silently.
