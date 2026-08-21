@@ -160,32 +160,39 @@ export async function inviteLegacyClients(
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 1000);
   const svc = createServiceClient();
 
-  const { data: contacts, error } = await svc
+  /**
+   * ONE NAMED PERSON, not the batch. Moving a single client across is the normal first move: you
+   * pick someone, you invite her, you watch it land.
+   *
+   * THE EMAIL IS FILTERED IN THE QUERY, and it has to be. It used to be matched in memory against
+   * the rows this query returned, AFTER .limit() had already been applied. So a single invite could
+   * only ever reach somebody inside the first page: with the screen's limit of 1 it fetched one
+   * contact, looked for the wanted address in that array of one, and reported "not one this can
+   * invite" for everybody else. Even at the default 50, client number 200 was uninvitable and the
+   * message blamed her for already having an account.
+   *
+   * Every other predicate stays on the same builder, so a single invite still cannot reach anyone
+   * the batch would refuse: already claimed, not a legacy client, no email, another tenant. Adding
+   * it here rather than in a separate query is what keeps that guarantee.
+   */
+  let query = svc
     .from('contacts')
     .select('id, company_id, email, first_name, language')
     .eq('company_id', companyId)
     .eq('type', 'client')
     .eq('is_legacy', true)
     .is('profile_id', null)
-    .not('email', 'is', null)
-    .limit(limit);
+    .not('email', 'is', null);
+  if (opts.email) query = query.ilike('email', opts.email.trim());
 
-  // ONE NAMED PERSON, not the batch. Moving a single client across is the normal first move: you
-  // pick someone, you invite her, you watch it land. Without this the only way in was a batch that
-  // emails up to a thousand people, which nobody sensible runs to test one.
-  //
-  // Applied as a filter on the SAME query rather than a separate path, so a single invite cannot
-  // reach anybody the batch would refuse: already claimed, not a legacy client, no email on file.
+  const { data: contacts, error } = await query.limit(opts.email ? 1 : limit);
+
   if (opts.email) {
-    const wanted = opts.email.trim().toLowerCase();
-    const match = ((contacts ?? []) as LegacyContact[]).filter(
-      (c) => (c.email ?? '').toLowerCase() === wanted,
-    );
-    const one = match.length > 0 ? match : null;
+    const one = ((contacts ?? []) as LegacyContact[])[0] ?? null;
     if (!one) {
       return { dryRun, total: 0, linked: 0, sent: 0, outcomes: [] };
     }
-    const outcome = await inviteLegacyContact(one[0], origin, dryRun);
+    const outcome = await inviteLegacyContact(one, origin, dryRun);
     return {
       dryRun,
       total: 1,
