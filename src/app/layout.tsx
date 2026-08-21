@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SwRegister } from "@/components/pwa/sw-register";
+import { StandaloneRedirect } from "@/components/pwa/standalone-redirect";
 import { IOSInstallBanner } from "@/components/pwa/ios-install-banner";
 import { AndroidInstallButton } from "@/components/pwa/android-install-button";
 import { NextIntlClientProvider } from "next-intl";
@@ -192,6 +193,7 @@ export default async function RootLayout({
           <AndroidInstallButton />
         </NextIntlClientProvider>
         <SwRegister />
+        <StandaloneRedirect />
       </body>
     </html>
   );

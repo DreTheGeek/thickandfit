@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Thick &amp; Fit</title>
+    <!--
+      The offline fallback for the installed app.
+
+      WHAT THIS REPLACED: the service worker precached "/" and served it for any failed navigation,
+      so opening the app on a bad connection handed a signed-in member the public MARKETING page,
+      complete with its pricing and its sign-up call to action. She is already a member. That is
+      also why the app appeared to "load the landing page" on launch.
+
+      Deliberately self-contained. No fonts, no images, no CSS file: this page exists precisely for
+      the moment nothing else can be fetched, so every asset it references is one more thing that
+      renders as a broken box. It also carries no marketing and no sign-up link, because the person
+      reading it has already signed up.
+    -->
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: #000;
+        color: #fff;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        display: flex; align-items: center; justify-content: center;
+        padding: 32px calc(24px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom))
+                 calc(24px + env(safe-area-inset-left));
+        text-align: center; line-height: 1.5;
+      }
+      .wrap { max-width: 340px; }
+      .mark {
+        font-size: 13px; font-weight: 700; letter-spacing: 3px;
+        text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 28px;
+      }
+      h1 { font-size: 26px; line-height: 1.2; margin: 0 0 10px; font-weight: 700; }
+      p { font-size: 14.5px; color: rgba(255,255,255,0.62); margin: 0 0 26px; }
+      button {
+        appearance: none; border: 0; cursor: pointer; width: 100%;
+        background: #fff; color: #000; border-radius: 999px;
+        padding: 14px 20px; font-size: 14px; font-weight: 700;
+        font-family: inherit; letter-spacing: 0.3px;
+      }
+      button:active { opacity: 0.75; }
+      .note { margin: 20px 0 0; font-size: 12.5px; color: rgba(255,255,255,0.38); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="mark">Thick &amp; Fit</div>
+      <h1>You&rsquo;re offline</h1>
+      <p>No connection right now. Everything you&rsquo;ve already logged is safe on this phone and will sync when you&rsquo;re back.</p>
+      <button type="button" onclick="location.replace('/dashboard')">Try again</button>
+      <!--
+        That sentence is true rather than reassuring: the workout player keeps its sets in
+        localStorage and reposts the whole session on the next save, so a set logged in a basement
+        genuinely survives. If that ever stops being true, this line has to change with it.
+      -->
+      <p class="note">Your workout is still on this device.</p>
+    </div>
+  </body>
+</html>

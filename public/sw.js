@@ -2,8 +2,20 @@
 // Network-first for navigations (HTML) so a new deploy is NEVER masked by a stale
 // cached page; cache-first (with background refresh) for hashed static assets only.
 // Authed HTML is never cached, so a shared device can't serve one user's page to another.
-const CACHE = 'tf-shell-v2';
-const OFFLINE_URL = '/';
+// v3: the offline fallback stopped being the marketing homepage. Bumping the name is what evicts
+// the old cache, which still holds "/" from every existing install.
+const CACHE = 'tf-shell-v3';
+/**
+ * The page shown when a navigation cannot reach the network.
+ *
+ * WAS '/' - the public MARKETING page, precached on install and served to anyone whose connection
+ * dropped. A signed-in member opening the app on a bad connection was handed pricing and a sign-up
+ * button, which is also why the installed app appeared to "load the landing page" on launch.
+ *
+ * A static file, not a Next route: this is served precisely when the server cannot be reached, so
+ * it has to be something the cache can hold whole.
+ */
+const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
