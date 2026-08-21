@@ -14,7 +14,7 @@ import { sendWelcomeEmail } from '@/lib/email/welcome';
 import { seedIntroMessage } from '@/lib/coach/intro-message';
 import { assignDefaultCheckin } from '@/lib/checkins/assign-default';
 import { autoAssignStarterProgram } from '@/lib/programs/auto-assign';
-import { matchStarterPlan } from '@/lib/programs/match-starter';
+import { matchStarterPlan, starterCandidates } from '@/lib/programs/match-starter';
 import { autoAssignStarterMealPlan } from '@/lib/meal-plans/auto-assign';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
 import { extractIntakeNotes, mergeSlugs } from '@/lib/onboarding/intake-notes';
@@ -323,24 +323,49 @@ async function POST_h(req: Request) {
    * rather than re-read from the profile: this is the copy on a screen, not a grant of access, and
    * the row was written moments ago from these exact values.
    */
-  let program: { name: string; daysPerWeek: number | null; compromised: boolean } | null = null;
+  let program: { id: string; name: string; daysPerWeek: number | null; compromised: boolean } | null = null;
+  /**
+   * The others she could have had, so the reveal can offer a choice rather than an announcement.
+   *
+   * "Why was that decided for me, and I didn't choose?" Naming the match answers half; this is the
+   * other half. Only starter candidates are listed, which is what stops a picker turning into a
+   * browse of another member's one-client programming.
+   */
+  let alternatives: {
+    id: string;
+    name: string;
+    daysPerWeek: number | null;
+    level: string | null;
+    location: string | null;
+  }[] = [];
   {
     const h = parsed.data.health;
-    const match = await matchStarterPlan(ctx.companyId, {
-      location: h?.trainingLocation ?? null,
-      experience: h?.trainingExperience ?? null,
-      daysPerWeek: h?.trainingDays ?? null,
-    });
+    const [match, pool] = await Promise.all([
+      matchStarterPlan(ctx.companyId, {
+        location: h?.trainingLocation ?? null,
+        experience: h?.trainingExperience ?? null,
+        daysPerWeek: h?.trainingDays ?? null,
+      }),
+      starterCandidates(ctx.companyId),
+    ]);
     if (match) {
       program = {
+        id: match.plan.id,
         name: match.plan.name_en,
         daysPerWeek: match.plan.days_per_week,
         compromised: match.compromised,
       };
     }
+    alternatives = pool.map((p) => ({
+      id: p.id,
+      name: p.name_en,
+      daysPerWeek: p.days_per_week,
+      level: p.level,
+      location: p.location,
+    }));
   }
 
-  return apiSuccess({ plan, program });
+  return apiSuccess({ plan, program, alternatives });
 }
 
 export const POST = withApiLog(POST_h);

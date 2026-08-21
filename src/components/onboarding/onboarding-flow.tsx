@@ -31,6 +31,7 @@ import {
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/ring';
 import { Icon } from '@/components/ui/icons';
+import { ProgramPicker, type PickerPlan } from '@/components/onboarding/program-picker';
 
 const LB_PER_KG = 2.20462;
 const TOTAL = 6;
@@ -58,7 +59,7 @@ type Activity = OnboardingInput['activity'];
 type Tier = 'self' | 'team' | 'steph';
 
 /** The program the matcher chose for her, returned by the submit route. */
-type MatchedProgram = { name: string; daysPerWeek: number | null; compromised: boolean };
+type MatchedProgram = { id: string; name: string; daysPerWeek: number | null; compromised: boolean };
 /**
  * Parse a numeric text field. An empty or half-typed box ("", "-", ".") reads as 0 here, which the
  * validity bounds below then reject, so Continue stays disabled rather than the field silently
@@ -215,6 +216,8 @@ export function OnboardingFlow({
   // Filled from the submit response. Null until then, and null is a valid end state: if nothing in
   // her library fits, a coach writes her plan by hand and the screen must not claim otherwise.
   const [program, setProgram] = useState<MatchedProgram | null>(null);
+  // Everything else she could have had, for the picker under the plan.
+  const [alternatives, setAlternatives] = useState<PickerPlan[]>([]);
   const safetyFlagged = safety.length > 0;
 
 // Functional updater, NOT `set(list.filter(...))`. React batches updates, so two chip taps inside
@@ -384,10 +387,14 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
       // plan, it just falls back to the generic line rather than blocking the last screen of signup
       // on a nicety.
       try {
-        const j = (await res.json()) as { data?: { program?: MatchedProgram | null } };
+        const j = (await res.json()) as {
+          data?: { program?: MatchedProgram | null; alternatives?: PickerPlan[] };
+        };
         setProgram(j?.data?.program ?? null);
+        setAlternatives(j?.data?.alternatives ?? []);
       } catch {
         setProgram(null);
+        setAlternatives([]);
       }
       setStep(S_PLAN);
     } catch {
@@ -858,6 +865,12 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
             <PlanRow label={t('planCheck')} value={t('planCheckV')} />
             {targetDate && <PlanRow label={t('planTarget')} value={prettyDate(targetDate, locale)} />}
           </div>
+          {/* AND THE OTHERS SHE COULD HAVE HAD.
+              A good default she can override beats a list of seven programs handed to somebody who
+              has just answered twenty questions. Collapsed; renders nothing when there is only one
+              option, because one option is not a choice. */}
+          <ProgramPicker chosenId={program?.id ?? null} plans={alternatives} />
+
           {/* Hand-off into the POST-paywall half of the intake: foods avoided, equipment, meds,
               sleep/stress, relationship with food.
               SECONDARY on purpose. This and the footer button were both size="block" primaries, which
