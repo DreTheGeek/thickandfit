@@ -6,6 +6,9 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { CONTEXTS, resolveSubstitutions } from '@/lib/substitutions/engine';
 import { BLOCKS, BLOCK_ORDER, type Block } from '@/lib/exercises/blocks';
+// Aliased: this module exports a `demoUrls` FIELD on ExercisesPage, and an unaliased import would
+// shadow it inside the builder below.
+import { demoUrls as demoUrls_ } from '@/lib/exercises/demo-url';
 
 export type ExerciseRow = {
   id: string;
@@ -52,27 +55,67 @@ export type ExerciseFilters = {
 
 export type Facet = { key: string; count: number };
 
+/**
+ * Which vocabulary the chips AND the section headings speak.
+ *
+ * THE MEASUREMENT THAT DECIDES THIS. Of 660 live movements, her 366 filmed ones carry a `block` on
+ * 364 of them (99%) and a `muscle_group` on 7 (2%). The 294 seed-catalog rows are the exact
+ * opposite: 1 has a block (0%), 247 have a muscle group (84%).
+ *
+ * The two halves of this library are tagged on completely different axes. That is why the old
+ * screen stacked a block chip row AND a muscle chip row AND an equipment chip row and felt broken:
+ * every one of them was blank for half the corpus. One axis at a time, chosen by what she is
+ * looking at, is the whole fix.
+ */
+export type FacetAxis = 'block' | 'muscle';
+
+export type ExerciseGroup = {
+  /** A block key, a muscle slug, or null for "Everything else". */
+  key: string | null;
+  /** The rows to render. Capped to a preview while browsing. */
+  rows: ExerciseRow[];
+  /** Rows in this group across the WHOLE filtered corpus, not just what is rendered. */
+  total: number;
+};
+
 export type ExercisesPage = {
   rows: ExerciseRow[];
   total: number;
   totalAll: number;
   page: number;
   pageSize: number;
-  facets: { muscle: Facet[]; equipment: Facet[] };
+  /** The vocabulary in play. Derived from `mine`; see FacetAxis. */
+  axis: FacetAxis;
+  /** The ONE chip row, already in display order for the axis. */
+  facets: Facet[];
+  /** Feeds the equipment select. Off the chip rows entirely: it is a narrowing, not a way in. */
+  equipmentOptions: Facet[];
   /** Counts for the ownership toggles, computed over everything the search box has narrowed to. */
   counts: { mine: number; fav: number; toFilm: number; hasDemo: number };
   /** Shoot progress across her whole library, independent of every filter on screen. */
   filming: { filmed: number; total: number };
   /**
-   * The page's rows split into her blocks, in her programming order.
+   * Sections, keyed by the current axis.
    *
-   * This is the organization fix. 367 movements in one A-Z grid ten pages deep is not a library a
-   * coach can programme a leg day from. `rows` is kept alongside for callers that want the flat
-   * list (the substitution candidate pool does).
+   * EMPTY unless she is browsing. A search result should not be grouped at all: the chip or the
+   * query already states the group, and grouping a filtered set is what produced the same heading
+   * on all ten pages. `rows` is kept alongside for callers that want the flat list (the
+   * substitution candidate pool does).
    */
-  groups: { block: Block | null; rows: ExerciseRow[] }[];
-  /** How many rows sit in each block across everything the other filters allow. */
-  blockFacets: Facet[];
+  groups: ExerciseGroup[];
+  /**
+   * True when nothing is narrowing the list, so it renders as a browsable set of sections with no
+   * pagination. False the moment she searches or taps a chip, which flips it to a flat paged grid.
+   */
+  browsing: boolean;
+  /**
+   * Signed playback URLs for the rendered rows, keyed by exercise id.
+   *
+   * The storage PATH is deliberately absent from ExerciseRow. That type crosses into a client
+   * component, so anything on it lands in the RSC payload, and the bucket is private: a path in the
+   * page source is an index of the library. Only minted when the caller asks (`signDemos`).
+   */
+  demoUrls: Record<string, string>;
 };
 
 const PAGE_SIZE = 40;
@@ -165,7 +208,11 @@ async function loadFavoriteIds(profileId: string | null): Promise<Set<string>> {
   return new Set(((data ?? []) as { exercise_id: string }[]).map((r) => r.exercise_id));
 }
 
-async function loadExercises(companyId: string, locale: string, profileId: string | null): Promise<ExerciseRow[]> {
+async function loadExercises(
+  companyId: string,
+  locale: string,
+  profileId: string | null,
+): Promise<{ rows: ExerciseRow[]; demoPathById: Map<string, string> }> {
   const sb = createServiceClient();
   const favorites = await loadFavoriteIds(profileId);
   // Shared-corpus pattern: the global seed (company_id IS NULL) plus this tenant's own exercises.
@@ -179,7 +226,13 @@ async function loadExercises(companyId: string, locale: string, profileId: strin
     .is('archived_at', null)
     .limit(2000);
   if (error) throw new Error(`loadExercises: ${error.message}`);
-  return ((data ?? []) as ExerciseRaw[]).map((r) => mapRow(r, locale, favorites));
+  const raw = (data ?? []) as ExerciseRaw[];
+  // The path is kept HERE, beside the query, and never on ExerciseRow. See ExercisesPage.demoUrls.
+  const demoPathById = new Map<string, string>();
+  for (const r of raw) {
+    if (r.demo_storage_path) demoPathById.set(r.id, r.demo_storage_path);
+  }
+  return { rows: raw.map((r) => mapRow(r, locale, favorites)), demoPathById };
 }
 
 type FacetKey = 'q' | 'muscle' | 'equipment' | 'own' | 'film' | 'demo' | 'block';
@@ -238,60 +291,143 @@ function tally(rows: ExerciseRow[], keyOf: (r: ExerciseRow) => string | null): F
   return [...m.entries()].map(([key, count]) => ({ key, count })).sort((a, b) => a.key.localeCompare(b.key));
 }
 
+/** How many rows a section shows before "See all N". Enough to scan, few enough to keep scrolling. */
+const SECTION_PREVIEW = 8;
+
 export async function getExercisesPage(
   companyId: string,
   filters: ExerciseFilters,
   locale: string,
   profileId: string | null = null,
+  opts: { signDemos?: boolean } = {},
 ): Promise<ExercisesPage> {
-  const all = await loadExercises(companyId, locale, profileId);
-  // Sort by BLOCK first, then name. Sorting by name alone scatters every block across every page,
-  // so "Hamstrings & glutes" would appear as a handful of rows on all ten pages instead of as one
-  // run she can read top to bottom. Unplaced rows sort last, with the "Everything else" heading.
-  const rank = (r: ExerciseRow): number => (r.block ? BLOCK_ORDER.indexOf(r.block) : BLOCK_ORDER.length);
+  const { rows: all, demoPathById } = await loadExercises(companyId, locale, profileId);
+
+  /**
+   * ONE AXIS, chosen by scope. `mine` is ON by default and her own rows are 99% blocked and 2%
+   * muscled, so blocks are the way into her library. Turning it off puts her in the seed catalog,
+   * which is the mirror image, so the vocabulary flips with her.
+   *
+   * The headings follow the same rule, not just the chips. Grouping the seed catalog by block would
+   * put all 294 rows under "Everything else", which is how you fix half a bug.
+   */
+  const axis: FacetAxis = filters.mine ? 'block' : 'muscle';
+  const keyOf = (r: ExerciseRow): string | null => (axis === 'block' ? r.block : r.muscleGroup);
+
+  // Sort by the axis first, then name. Sorting by name alone scatters every group across every
+  // page, so "Hamstrings & glutes" would appear as a handful of rows on all ten pages instead of as
+  // one run she can read top to bottom. Unplaced rows sort last, under "Everything else".
+  const axisOrder: string[] =
+    axis === 'block'
+      ? [...BLOCK_ORDER]
+      : [...new Set(all.map((r) => r.muscleGroup).filter((m): m is string => m != null))].sort((a, b) =>
+          a.localeCompare(b),
+        );
+  const rank = (r: ExerciseRow): number => {
+    const k = keyOf(r);
+    const i = k ? axisOrder.indexOf(k) : -1;
+    return i === -1 ? axisOrder.length : i;
+  };
   const filtered = all
     .filter((r) => matches(r, filters, null))
     .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
   const start = (filters.page - 1) * filters.pageSize;
+
+  /**
+   * Nothing is narrowing the list, so show her the shape of the library instead of page 1 of 10.
+   *
+   * The moment she searches or taps anything this goes false and the screen becomes a flat paged
+   * grid. That is deliberate: a search RESULT should not be grouped, because the query already
+   * states the group, and grouping a filtered set is exactly what printed the same heading on all
+   * ten pages.
+   */
+  const browsing =
+    !filters.q &&
+    !filters.fav &&
+    !filters.toFilm &&
+    !filters.hasDemo &&
+    filters.block.length === 0 &&
+    filters.muscle.length === 0 &&
+    filters.equipment.length === 0;
   // Toggle counts ignore the toggles themselves, so "My exercises 367" does not read 367 only while
   // it happens to be on. They DO respect the search box and the chips, which is the useful reading:
   // "of what you are looking at, this many are yours".
   const ownPool = all.filter((r) => matches(r, filters, 'own'));
   const filmPool = all.filter((r) => matches(r, filters, 'film'));
   const demoPool = all.filter((r) => matches(r, filters, 'demo'));
-  const blockPool = all.filter((r) => matches(r, filters, 'block'));
 
-  // Group the page she is actually looking at, in her programming order, with anything the
-  // classifier could not place last and visible rather than dropped.
+  /**
+   * Sections built over the WHOLE filtered corpus, not the page slice.
+   *
+   * The old version grouped `pageRows`, so a block spanning three pages printed its heading three
+   * times and the library looked fragmented rather than organised. Each section now knows its true
+   * total and shows a preview, with "See all N" writing the axis filter, which is also what flips
+   * `browsing` off and turns the screen into the flat paged grid for that one group.
+   */
   const pageRows = filtered.slice(start, start + filters.pageSize);
-  const byBlock = new Map<Block | null, ExerciseRow[]>();
-  for (const r of pageRows) {
-    const list = byBlock.get(r.block);
+  const byKey = new Map<string | null, ExerciseRow[]>();
+  for (const r of filtered) {
+    const k = keyOf(r);
+    const list = byKey.get(k);
     if (list) list.push(r);
-    else byBlock.set(r.block, [r]);
+    else byKey.set(k, [r]);
   }
-  const groups = [
-    ...BLOCK_ORDER.filter((b) => byBlock.has(b)).map((b) => ({ block: b as Block | null, rows: byBlock.get(b) ?? [] })),
-    ...(byBlock.has(null) ? [{ block: null, rows: byBlock.get(null) ?? [] }] : []),
-  ];
+  const groups: ExerciseGroup[] = !browsing
+    ? []
+    : [
+        ...axisOrder.filter((k) => byKey.has(k)),
+        // Anything the classifier could not place goes LAST and stays visible. Dropping it would
+        // hide 295 movements on the seed catalog and 2 of hers.
+        ...(byKey.has(null) ? [null] : []),
+      ].map((k) => {
+        const rows = byKey.get(k) ?? [];
+        return { key: k, rows: rows.slice(0, SECTION_PREVIEW), total: rows.length };
+      });
   // Her shoot progress is deliberately measured against the WHOLE library, not the filtered view.
   // "12 of 367" has to mean the same thing after she types in the search box, or the number is
   // useless for planning a shoot day.
   const hers = all.filter((r) => r.isCoachAuthored);
+
+  /**
+   * The one chip row, in axis order, using the SAME exclude-self faceting as before: a chip's count
+   * ignores its own selection, so "Glutes 71" does not read 71 only while glutes is on.
+   */
+  const facetPool = all.filter((r) => matches(r, filters, axis === 'block' ? 'block' : 'muscle'));
+  const facetCounts = new Map<string, number>();
+  for (const r of facetPool) {
+    const k = keyOf(r);
+    if (k) facetCounts.set(k, (facetCounts.get(k) ?? 0) + 1);
+  }
+  const facets: Facet[] = axisOrder
+    .map((key) => ({ key, count: facetCounts.get(key) ?? 0 }))
+    .filter((f) => f.count > 0);
+
+  // Signed only for what is actually rendered. The detail page passes no opts, so its 300- and
+  // 800-row candidate pools never mint a URL.
+  const shown = browsing ? groups.flatMap((g) => g.rows) : pageRows;
+  const demoUrls: Record<string, string> = {};
+  if (opts.signDemos) {
+    const paths = shown.map((r) => demoPathById.get(r.id)).filter((p): p is string => p != null);
+    const signed = await demoUrls_(paths);
+    for (const r of shown) {
+      const p = demoPathById.get(r.id);
+      const url = p ? signed.get(p) : undefined;
+      if (url) demoUrls[r.id] = url;
+    }
+  }
+
   return {
     rows: pageRows,
     total: filtered.length,
     totalAll: all.length,
     page: filters.page,
     pageSize: filters.pageSize,
-    facets: {
-      muscle: tally(all.filter((r) => matches(r, filters, 'muscle')), (r) => r.muscleGroup),
-      equipment: tally(all.filter((r) => matches(r, filters, 'equipment')), (r) => r.equipment),
-    },
+    axis,
+    facets,
+    equipmentOptions: tally(all.filter((r) => matches(r, filters, 'equipment')), (r) => r.equipment),
     groups,
-    blockFacets: BLOCK_ORDER.map((b) => ({ key: b, count: blockPool.filter((r) => r.block === b).length })).filter(
-      (f) => f.count > 0,
-    ),
+    browsing,
+    demoUrls,
     counts: {
       mine: ownPool.filter((r) => r.isCoachAuthored).length,
       fav: ownPool.filter((r) => r.isFavorite).length,

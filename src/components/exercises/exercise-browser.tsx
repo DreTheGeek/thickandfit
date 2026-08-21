@@ -3,6 +3,7 @@
 // Re-skinned to the design-handoff prototype (light monochrome list).
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { slugLabel, type LabelGroup, type SlugTranslator } from '@/lib/exercises/labels';
 import type { ReactElement } from 'react';
 import { Skeleton } from '@/components/states/skeleton';
 import { ErrorState } from '@/components/states/error-state';
@@ -30,18 +31,9 @@ const MUSCLES = [
 const EQUIPMENT = [
   'body only', 'barbell', 'dumbbell', 'machine', 'cable', 'kettlebells', 'bands',
 ];
-// slug -> i18n key ('body only' -> 'bodyOnly', 'e-z curl bar' -> 'eZCurlBar').
-const labelKey = (slug: string): string =>
-  slug
-    .split(/[\s-]+/)
-    .map((w, i) => (i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)))
-    .join('');
-
-// Title-case the raw slug as a last resort. The library carries 17 muscle groups, 13 equipment
-// types and 3 difficulty levels, and the catalog will always trail the data by a row or two, so an
-// unlabelled value must degrade to "Middle Back" rather than to a crash or a blank.
-const humanize = (slug: string): string =>
-  slug.replace(/[\s-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+// labelKey / humanize moved to lib/exercises/labels.ts so the COACH library shares them. It did
+// not, and printed raw slugs onto its chips: "middle back", "bodyonly", lower case, in English, on
+// a bilingual product. Two implementations of one job is how they drift apart.
 
 export function ExerciseBrowser({
   locale = 'en',
@@ -52,13 +44,8 @@ export function ExerciseBrowser({
   onlyFavorites?: boolean;
 }): ReactElement {
   const t = useTranslations('app.library');
-  // t() on a missing key renders the key path itself, which is how "library.muscles.neck" would end
-  // up printed on a card. t.has() is the guard, humanize() is the readable fallback.
-  const label = (slug: string | null | undefined, group: string): string => {
-    if (!slug) return '';
-    const key = `${group}.${labelKey(slug)}`;
-    return t.has(key as never) ? t(key as never) : humanize(slug);
-  };
+  const label = (slug: string | null | undefined, group: LabelGroup): string =>
+    slugLabel(t as unknown as SlugTranslator, slug, group);
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState('');
   const [equipment, setEquipment] = useState('');
@@ -112,7 +99,7 @@ export function ExerciseBrowser({
           <option value="">{t('allMuscles')}</option>
           {MUSCLES.map((m) => (
             <option key={m} value={m}>
-              {t(`muscles.${labelKey(m)}` as never)}
+              {label(m, 'muscles')}
             </option>
           ))}
         </select>
@@ -124,7 +111,7 @@ export function ExerciseBrowser({
           <option value="">{t('allEquipment')}</option>
           {EQUIPMENT.map((eq) => (
             <option key={eq} value={eq}>
-              {t(`equipmentTypes.${labelKey(eq)}` as never)}
+              {label(eq, 'equipmentTypes')}
             </option>
           ))}
         </select>

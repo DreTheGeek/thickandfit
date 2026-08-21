@@ -26,7 +26,12 @@ export default async function CoachExercisesPage({
 
   const filters = parseExerciseFilters(await searchParams);
   // profileId, not companyId: a favourite is the reading coach's own shortlist (0118).
-  const page = await getExercisesPage(ctx.companyId, filters, locale, ctx.userId);
+  const page = await getExercisesPage(ctx.companyId, filters, locale, ctx.userId, {
+    // Sign playback URLs for the rows this page renders, so a card can show a still from her own
+    // footage instead of an icon. One batched createSignedUrls call. The DETAIL page passes no
+    // opts, so its 300- and 800-row substitution pools never mint a URL.
+    signDemos: true,
+  });
 
   const sectionTabs = await trainingTabs();
 
