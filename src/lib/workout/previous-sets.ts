@@ -56,6 +56,10 @@ export async function getPreviousSets(
     .from('set_logs')
     .select('workout_log_id, exercise_id, set_number, reps, weight, completed')
     .in('exercise_id', exerciseIds)
+    // The Previous column is "N x W lb", which a timed set cannot fill. Reading one anyway would
+    // print "0 x 0" beside a 25-minute walk, and a zero on that column reads as a bad session
+    // rather than as a column that does not apply.
+    .not('reps', 'is', null)
     .in('workout_log_id', [...rank.keys()])
     .limit(20000);
   if (setErr) {

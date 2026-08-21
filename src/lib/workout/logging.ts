@@ -14,6 +14,9 @@ const setSchema = z.object({
   set_number: z.number().int().min(1),
   reps: z.number().int().optional(),
   weight: z.number().optional(),
+  // Seconds performed on a timed movement (a 25-minute incline walk, 5 on the Stairmaster). Absent
+  // on rep-based sets, where it stays null rather than 0. See lib/workout/exercise-kind.ts.
+  duration_sec: z.number().int().min(0).max(24 * 60 * 60).optional(),
   completed: z.boolean().default(true),
   difficulty: z.enum(['easy', 'moderate', 'hard', 'failed']).optional(),
 });
@@ -54,6 +57,7 @@ export async function saveWorkoutLog(
       set_number: s.set_number,
       reps: s.reps ?? null,
       weight: s.weight ?? null,
+      duration_sec: s.duration_sec ?? null,
       completed: s.completed,
       difficulty: s.difficulty ?? null,
     }));
@@ -118,6 +122,9 @@ export async function getExerciseHistory(
     .from('set_logs')
     .select('weight, reps, completed, difficulty, created_at')
     .eq('exercise_id', exerciseId)
+    // Rep-based sets only. A timed movement logs duration_sec with reps null, and a null read as a
+    // zero by the recommender looks like a set she failed: it would deload her off a walk.
+    .not('reps', 'is', null)
     .in('workout_log_id', logIds)
     .order('created_at', { ascending: true });
 
@@ -205,6 +212,8 @@ export async function recommendForSession(
       .from('set_logs')
       .select('exercise_id, weight, reps, completed, difficulty, created_at')
       .in('exercise_id', exerciseIds)
+      // Same reason as getExerciseHistory: a timed set has no reps and must not be scored as one.
+      .not('reps', 'is', null)
       .in('workout_log_id', logIds)
       .order('created_at', { ascending: true });
     for (const s of sets ?? []) {

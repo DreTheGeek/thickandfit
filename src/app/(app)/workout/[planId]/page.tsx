@@ -136,6 +136,10 @@ export default async function WorkoutPage({
       repsMin: e.reps_min,
       repsMax: e.reps_max,
       isAmrap: e.is_amrap === true,
+      // The two fields that decide whether this movement is counted, timed, or simply done. Without
+      // them the player fell back to `reps ?? 10` / `weight ?? 0` and put a rep count on a walk.
+      timeSec: e.time_sec,
+      equipment: meta?.equipment ?? null,
       groupKey: e.group_key,
       groupKind: e.group_kind,
       // "Include exercise instructions in client app" (coach settings). Dropped at the boundary

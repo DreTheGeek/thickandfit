@@ -24,6 +24,7 @@ import {
 import { normalizeRestSeconds } from '@/lib/workout/rest';
 import { PortalButton } from '@/components/portal/portal-chrome';
 import { epley1rm, beatsBest } from '@/lib/workout/epley';
+import { exerciseKind, isWeighted, formatDuration, type ExerciseKind } from '@/lib/workout/exercise-kind';
 
 export type OverloadHint = {
   action: 'increase_reps' | 'increase_weight' | 'hold' | 'deload';
@@ -86,6 +87,16 @@ export type PlayerExercise = {
    * Empty when this is the first time she has trained it.
    */
   previousSets: { setNumber: number; reps: number; weight: number }[];
+  /**
+   * Her prescribed DURATION, in seconds, for a movement she wrote as a time rather than a count.
+   *
+   * 270 of her 2,501 prescriptions are timed and 160 are untracked. Without this the player fell
+   * back to `reps ?? 10` and `weight ?? 0`, so a 25-minute incline walk was presented, and LOGGED,
+   * as ten reps at zero pounds. See lib/workout/exercise-kind.ts.
+   */
+  timeSec: number | null;
+  /** Decides whether a load is even askable: a banded squat has resistance but no pounds. */
+  equipment: string | null;
   overload: OverloadHint | null;
   // All-time bests for PR detection (Epley e1RM for weighted, max reps for bodyweight).
   bestE1rm: number | null;
@@ -95,11 +106,19 @@ type Substitute = {
   exercise: { id: string; name_en: string; name_es: string | null; demoUrl?: string | null } | null;
   reason_tag: string | null;
 };
+/**
+ * NULLABLE reps and weight, deliberately.
+ *
+ * A zero here is a claim: "she attempted this and moved nothing". A null is the truth for a
+ * movement that has no rep count, and the two must not be spelled the same way in a history that
+ * feeds progressive overload and the coach's console.
+ */
 type LoggedSet = {
   exercise_id: string;
   set_number: number;
-  reps: number;
-  weight: number;
+  reps: number | null;
+  weight: number | null;
+  durationSec: number | null;
   completed: boolean;
   difficulty: Difficulty;
 };
@@ -114,16 +133,22 @@ function detectPRs(exercises: PlayerExercise[], sets: LoggedSet[]): PR[] {
   const prs: PR[] = [];
   for (const ex of exercises) {
     if (ex.bestE1rm === null && ex.bestReps === null) continue;
-    const mine = sets.filter((s) => s.exercise_id === ex.exercise_id && s.completed);
+    // Only rep-based sets can beat a rep-based record. A timed movement logs no reps and no
+    // weight, and letting a null through here reads as zero and quietly loses to every record.
+    const mine = sets.filter(
+      (s) => s.exercise_id === ex.exercise_id && s.completed && s.reps != null,
+    );
     if (!mine.length) continue;
 
     let sesE1rm = 0;
     let bestWeighted: LoggedSet | null = null;
     let bestReps: LoggedSet | null = null;
     for (const s of mine) {
-      if (!bestReps || s.reps > bestReps.reps) bestReps = s;
-      if (s.weight > 0 && s.reps > 0) {
-        const e = epley1rm(s.weight, s.reps);
+      const reps = s.reps ?? 0;
+      const weight = s.weight ?? 0;
+      if (!bestReps || reps > (bestReps.reps ?? 0)) bestReps = s;
+      if (weight > 0 && reps > 0) {
+        const e = epley1rm(weight, reps);
         if (e > sesE1rm) {
           sesE1rm = e;
           bestWeighted = s;
@@ -132,9 +157,9 @@ function detectPRs(exercises: PlayerExercise[], sets: LoggedSet[]): PR[] {
     }
 
     if (ex.bestE1rm !== null && bestWeighted && beatsBest(sesE1rm, ex.bestE1rm)) {
-      prs.push({ exerciseId: ex.exercise_id, name: ex.name, weight: bestWeighted.weight, reps: bestWeighted.reps, bodyweight: false });
-    } else if (ex.bestE1rm === null && ex.bestReps !== null && bestReps && bestReps.reps > ex.bestReps) {
-      prs.push({ exerciseId: ex.exercise_id, name: ex.name, weight: 0, reps: bestReps.reps, bodyweight: true });
+      prs.push({ exerciseId: ex.exercise_id, name: ex.name, weight: bestWeighted.weight ?? 0, reps: bestWeighted.reps ?? 0, bodyweight: false });
+    } else if (ex.bestE1rm === null && ex.bestReps !== null && bestReps && (bestReps.reps ?? 0) > ex.bestReps) {
+      prs.push({ exerciseId: ex.exercise_id, name: ex.name, weight: 0, reps: bestReps.reps ?? 0, bodyweight: true });
     }
   }
   return prs;
@@ -164,11 +189,15 @@ function beep(): void {
 // string was written, possibly by an older build. Validate rather than cast: an unrecognised RPE
 // would otherwise flow into the log and out to the coach's console as a value nothing can read.
 function toLoggedSets(sets: DraftSet[]): LoggedSet[] {
+  const num = (v: unknown): number | null => (v == null || !Number.isFinite(Number(v)) ? null : Number(v));
   return sets.map((x) => ({
     exercise_id: String(x.exercise_id),
     set_number: Number(x.set_number),
-    reps: Number(x.reps),
-    weight: Number(x.weight),
+    // null survives the round trip. Number(null) is 0, which would resurrect the exact lie this
+    // whole change removes: a timed movement restored as "0 reps at 0 lb".
+    reps: num(x.reps),
+    weight: num(x.weight),
+    durationSec: num(x.durationSec),
     completed: Boolean(x.completed),
     difficulty: DIFFICULTIES.includes(x.difficulty as Difficulty)
       ? (x.difficulty as Difficulty)
@@ -216,6 +245,9 @@ export function WorkoutPlayer({
   const [setNum, setSetNum] = useState(draft?.setNum ?? 1);
   const [tab, setTab] = useState<'instructions' | 'muscles'>('instructions');
   const [rest, setRest] = useState<number | null>(null);
+  // What this rest STARTED at. The ring needs a denominator, and `rest` alone only says how much is
+  // left. Also what a "+15s" tap has to extend.
+  const [restTotal, setRestTotal] = useState(0);
   const [subsOpen, setSubsOpen] = useState(false);
   const [subs, setSubs] = useState<Substitute[] | null>(null);
   const [finished, setFinished] = useState(false);
@@ -224,6 +256,7 @@ export function WorkoutPlayer({
   const [elapsed, setElapsed] = useState(draft?.elapsed ?? 0); // total workout seconds, counts up from start
   const [difficulty, setDifficulty] = useState<Difficulty>('moderate'); // this set's RPE, resets each set
   const [showComplete, setShowComplete] = useState(false); // post-workout rating sheet
+  const [exitOpen, setExitOpen] = useState(false); // "save what you did?" on the way out
   const [setsCount, setSetsCount] = useState(0); // sets logged, snapshotted when the sheet opens
   const [prs, setPrs] = useState<PR[]>([]);
   // Exercise ids whose demo would not play. Keyed by id rather than a single boolean because the
@@ -245,6 +278,19 @@ export function WorkoutPlayer({
    */
   const [loggedView, setLoggedView] = useState<LoggedSet[]>(draft ? toLoggedSets(draft.sets) : []);
   const wakeRef = useRef<WakeLockSentinel | null>(null);
+  /**
+   * ONE video element for the whole session, never remounted.
+   *
+   * THE BUG: "I tried to go big screen on one of my workouts on the branded fire hydrants, and then
+   * it made me go back." The element carried `key={ex.exercise_id}`, so advancing a movement
+   * destroyed it and built a new one, and a browser drops fullscreen the instant the element
+   * holding it leaves the document. The elapsed clock re-renders this component every second, so
+   * any reconciliation wobble had a second to find her.
+   *
+   * The src is set imperatively below instead. The element's identity is now permanent, which is
+   * also what lets the demo keep playing across a rest without a flash of black.
+   */
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   // Substitutions, by exercise index. A ref rather than state: nothing renders from it, and it has
   // to be readable from saveDraft without adding a dependency that re-creates the callback.
   const swapsRef = useRef<Record<number, { exercise_id: string; name: string }>>(draft?.swaps ?? {});
@@ -302,6 +348,26 @@ export function WorkoutPlayer({
   const totalSets = ex?.sets ?? 1;
 
   /**
+   * WHAT THIS MOVEMENT IS, from the prescription she wrote. See lib/workout/exercise-kind.ts.
+   *
+   * Everything below branches on this instead of falling back to `reps ?? 10` and `weight ?? 0`,
+   * which is how a 25-minute incline walk came to be presented, and logged, as ten reps at zero
+   * pounds. 430 of her 2,501 prescribed movements are timed or untracked.
+   */
+  const kind: ExerciseKind = ex
+    ? exerciseKind({
+        reps: ex.reps,
+        repsMin: ex.repsMin,
+        repsMax: ex.repsMax,
+        isAmrap: ex.isAmrap,
+        timeSec: ex.timeSec,
+      })
+    : 'reps';
+  // A banded squat has resistance and no pounds; a machine stack has a number she reads off the pin.
+  const weighted = kind === 'reps' && isWeighted(ex?.equipment);
+  const hasDemo = Boolean(ex?.demoUrl) && !demoFailed.has(ex?.exercise_id ?? '');
+
+  /**
    * How far through the WHOLE session she is, as a percentage of prescribed sets.
    *
    * Counted in sets rather than in exercises, because exercises are not equal: a 5x5 and a single
@@ -322,6 +388,24 @@ export function WorkoutPlayer({
   // Prefill from the progressive-overload recommendation when we have one, else the plan target.
   const [reps, setReps] = useState(ex?.overload?.reps ?? ex?.reps ?? 10);
   const [weight, setWeight] = useState(ex?.overload?.weight ?? ex?.weight ?? 0);
+  /**
+   * Seconds elapsed on a TIMED movement, and whether her clock is running.
+   *
+   * Counts UP from zero rather than down from the prescription. She may walk for twenty minutes of
+   * a prescribed twenty-five, and a countdown that hits zero has no way to record that honestly;
+   * counting up records what she did either way, and the target sits beside it as the target.
+   */
+  const [work, setWork] = useState(0);
+  const [working, setWorking] = useState(false);
+
+  // The work clock for a timed movement. Separate from `elapsed`, which never stops: this one is
+  // hers to start and pause, and it is what gets logged.
+  useEffect(() => {
+    if (!working) return undefined;
+    const id = setInterval(() => setWork((w) => w + 1), 1000);
+    return () => clearInterval(id);
+  }, [working]);
+
 
   // A closing tab with unsaved sets gets the browser's own confirm. The draft already means she
   // would not LOSE them, but "are you sure" costs nothing and stops the reload before it happens,
@@ -359,6 +443,36 @@ export function WorkoutPlayer({
     };
   }, []);
 
+  /**
+   * Load and PLAY her demo whenever the movement changes.
+   *
+   * `muted` is what makes autoplay legal: every browser blocks sound-on autoplay, and these are
+   * silent form clips, so nothing is lost. The owner's ask was "as soon as we hit next, I need
+   * those videos playing" - which is only possible muted.
+   *
+   * `#t=0.1` seeks a tenth of a second in. Most encoders put a black frame at zero, so a paused
+   * demo showed a black rectangle under the play button rather than the movement. That is the
+   * "screenshot of the workout on top of the play button" - it is the real first frame, not a
+   * separate poster image somebody would have to generate for 367 clips.
+   */
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const src = ex?.demoUrl && !demoFailed.has(ex.exercise_id) ? ex.demoUrl : null;
+    if (!src) {
+      v.removeAttribute('src');
+      v.load();
+      return;
+    }
+    const withFrame = src.includes('#') ? src : `${src}#t=0.1`;
+    if (v.getAttribute('src') === withFrame) return;
+    v.setAttribute('src', withFrame);
+    v.load();
+    // A rejected play() is normal (a backgrounded tab, a strict autoplay policy). The controls are
+    // right there; refusing to render over it would be worse than a demo she has to tap.
+    void v.play().catch(() => {});
+  }, [ex?.exercise_id, ex?.demoUrl, demoFailed]);
+
   // Rest countdown with an audible cue at zero (setState only in the timer callback).
   useEffect(() => {
     if (rest === null || rest <= 0) return undefined;
@@ -366,6 +480,10 @@ export function WorkoutPlayer({
       if (rest <= 1) {
         beep();
         setRest(null);
+        // The next movement is already on screen behind the overlay (logSet advanced before the
+        // rest began). All that is left is to start its demo, so she looks up from the timer into a
+        // playing video rather than a paused one she has to tap.
+        void videoRef.current?.play().catch(() => {});
       } else {
         setRest(rest - 1);
       }
@@ -420,6 +538,77 @@ export function WorkoutPlayer({
     [idx, locale, setNum, saveDraft],
   );
 
+  /**
+   * The one write. Everything above this is memory and localStorage.
+   *
+   * `pct` is what makes a partial save possible: 100 from the completion sheet, and however far she
+   * actually got when she leaves early.
+   *
+   * Nulls are stripped rather than coerced. The API schema has reps and weight optional, and
+   * sending `weight: null` for a banded squat would be rejected by Zod; sending 0 would be worse,
+   * because it validates and then lies in the history forever.
+   */
+  const persist = useCallback(
+    async (pct: number): Promise<boolean> => {
+      setSaveFailed(false);
+      setSaving(true);
+      try {
+        const res = await fetch('/api/workouts/log', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId ?? undefined,
+            completion_pct: pct,
+            enjoyment: enjoyment ?? undefined,
+            effort: effort ?? undefined,
+            sets: logged.current.map((x) => ({
+              exercise_id: x.exercise_id,
+              set_number: x.set_number,
+              ...(x.reps == null ? {} : { reps: x.reps }),
+              ...(x.weight == null ? {} : { weight: x.weight }),
+              ...(x.durationSec == null ? {} : { duration_sec: x.durationSec }),
+              completed: x.completed,
+              difficulty: x.difficulty,
+            })),
+          }),
+        });
+        if (!res.ok) throw new Error(`save failed: ${res.status}`);
+        // Safely on the server now. Leaving the draft behind would offer to restore a workout she
+        // has already logged, and accepting that offer would log it twice.
+        clearDraft(sessionId);
+      } catch (e) {
+        console.error('workout persist:', e instanceof Error ? e.message : e);
+        setSaving(false);
+        setSaveFailed(true);
+        return false;
+      }
+      setSaving(false);
+      return true;
+    },
+    [sessionId, enjoyment, effort],
+  );
+
+  /**
+   * LEAVING EARLY IS THE NORMAL CASE, and until now it recorded nothing.
+   *
+   * Reported exactly as it happens: "I just went back, and I hit history, and none of my workouts
+   * that I did has been logged at all." workout_logs and set_logs were both empty. The sets were
+   * never lost - they sat in the draft - but nothing on any screen said so, and every write was
+   * gated behind reaching the last set of the last exercise and tapping through a rating sheet.
+   *
+   * Almost nobody finishes a twenty-movement session. She does eight, the gym closes, she leaves.
+   * That is eight real sets that happened, and an app that files them under nothing is telling her
+   * she did not train.
+   */
+  const saveAndExit = useCallback(async (): Promise<void> => {
+    if (logged.current.length === 0) {
+      router.push('/workouts');
+      return;
+    }
+    const ok = await persist(sessionPct);
+    if (ok) router.push('/workouts');
+  }, [persist, router, sessionPct]);
+
   // Persist the whole session (sets carry per-set difficulty; the sheet adds enjoyment/effort),
   // fire the celebration, and head back. Called from the completion sheet, not on the last set.
   const submitLog = useCallback(async (): Promise<void> => {
@@ -436,37 +625,14 @@ export function WorkoutPlayer({
     // Now the save is awaited and checked, and she only leaves this screen if it worked. A failure
     // keeps her here with her sets still in memory and a button that tries again, which is the only
     // moment they can still be rescued.
-    setSaveFailed(false);
-    setSaving(true);
-    try {
-      const res = await fetch('/api/workouts/log', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId ?? undefined,
-          completion_pct: 100,
-          enjoyment: enjoyment ?? undefined,
-          effort: effort ?? undefined,
-          sets: logged.current,
-        }),
-      });
-      if (!res.ok) throw new Error(`save failed: ${res.status}`);
-      // Safely on the server now. Leaving the draft behind would offer to restore a workout she has
-      // already logged, and accepting that offer would log it twice.
-      clearDraft(sessionId);
-    } catch (e) {
-      console.error('workout submitLog:', e instanceof Error ? e.message : e);
-      setSaving(false);
-      setSaveFailed(true);
-      return;
-    }
-    setSaving(false);
+    const ok = await persist(100);
+    if (!ok) return;
     // Celebrate only once it is actually hers. She earned the confetti by finishing; she has not
     // earned it while the work is still in a variable.
     setFinished(true);
     fire();
     setTimeout(() => router.push('/workouts'), 1300);
-  }, [fire, router, sessionId, enjoyment, effort]);
+  }, [fire, router, persist]);
 
   // The escape hatch for a restore she did not want — a plan changed, or she is genuinely starting
   // the day again. Everything else about recovery is automatic; this is the one tap that undoes it.
@@ -483,14 +649,37 @@ export function WorkoutPlayer({
   }, [sessionId, initialExercises]);
 
   const logSet = useCallback((): void => {
-    const entry: LoggedSet = {
-      exercise_id: ex.exercise_id,
-      set_number: setNum,
-      reps,
-      weight,
-      completed: true,
-      difficulty,
-    };
+    /**
+     * WHAT GETS RECORDED depends on what she was asked to do.
+     *
+     * A timed movement records seconds and nothing else. An untracked one records only that she did
+     * it. Writing `reps: 10, weight: 0` for either is the bug this whole change removes: those rows
+     * feed progressive overload, so a fabricated zero told the recommender she failed a lift she
+     * was never asked to perform.
+     */
+    const entry: LoggedSet =
+      kind === 'reps'
+        ? {
+            exercise_id: ex.exercise_id,
+            set_number: setNum,
+            reps,
+            // Bodyweight and banded movements have no pounds. Null, not 0.
+            weight: weighted ? weight : null,
+            durationSec: null,
+            completed: true,
+            difficulty,
+          }
+        : {
+            exercise_id: ex.exercise_id,
+            set_number: setNum,
+            reps: null,
+            weight: null,
+            // She may tap Done without ever starting the clock. Crediting the prescription is the
+            // honest reading of that: she says she did it, and the plan says how long it was.
+            durationSec: kind === 'timed' ? (work > 0 ? work : ex.timeSec) : null,
+            completed: true,
+            difficulty,
+          };
     logged.current.push(entry);
     setLoggedView((prev) => [...prev, entry]);
     setDifficulty('moderate'); // reset the RPE tap for the next set
@@ -500,11 +689,16 @@ export function WorkoutPlayer({
       // her at the next set, not make her redo the one she already logged.
       saveDraft(idx, setNum + 1);
       setSetNum((n) => n + 1);
+      setWork(0);
+      setWorking(false);
       {
         // Normalised: the column is named seconds and mostly holds milliseconds, so the raw
         // value started a five-hour countdown. See lib/workout/rest.ts.
         const r = normalizeRestSeconds(ex.rest_sec);
-        if (r) setRest(r);
+        if (r) {
+          setRest(r);
+          setRestTotal(r);
+        }
       }
     } else if (idx < exercises.length - 1) {
       const next = exercises[idx + 1];
@@ -513,12 +707,17 @@ export function WorkoutPlayer({
       setSetNum(1);
       setReps(next.overload?.reps ?? next.reps ?? 10);
       setWeight(next.overload?.weight ?? next.weight ?? 0);
+      setWork(0);
+      setWorking(false);
       setTab('instructions');
       {
         // Normalised: the column is named seconds and mostly holds milliseconds, so the raw
         // value started a five-hour countdown. See lib/workout/rest.ts.
         const r = normalizeRestSeconds(ex.rest_sec);
-        if (r) setRest(r);
+        if (r) {
+          setRest(r);
+          setRestTotal(r);
+        }
       }
     } else {
       // Last set of the last exercise: open the rating sheet (PRs + enjoyment/effort). Don't finish yet.
@@ -531,7 +730,7 @@ export function WorkoutPlayer({
       setShowComplete(true);
       if (found.length) fire();
     }
-  }, [ex, setNum, totalSets, idx, exercises, reps, weight, difficulty, fire, saveDraft]);
+  }, [ex, setNum, totalSets, idx, exercises, reps, weight, difficulty, fire, saveDraft, kind, weighted, work]);
 
   // SUPERSET CONTEXT. Everything sharing a group_key is performed back to back, so the member needs
   // to know before she starts the set, not after. Without this the app rendered her supersets as
@@ -581,7 +780,7 @@ export function WorkoutPlayer({
         <div className="absolute inset-x-4 top-3.5 z-10 flex items-center justify-between text-white">
           <button
             type="button"
-            onClick={() => router.push('/workouts')}
+            onClick={() => (logged.current.length > 0 ? setExitOpen(true) : router.push('/workouts'))}
             aria-label={t('back')}
             className="tf-press flex h-[34px] w-[34px] items-center justify-center rounded-full bg-black/40"
           >
@@ -646,32 +845,35 @@ export function WorkoutPlayer({
             accentColor="#5EBE62"
             className="absolute inset-0 h-full w-full"
           />
-        ) : ex.demoUrl && !demoFailed.has(ex.exercise_id) ? (
-          <video
-            key={ex.exercise_id}
-            controls
-            playsInline
-            loop
-            // metadata only: a form demo is opened glance-by-glance between sets, and pre-pulling
-            // every clip in a 12-movement session would cost megabytes on gym wifi for footage she
-            // may never open. Matches the coach page's demo for the same reason.
-            preload="metadata"
-            onError={() =>
-              setDemoFailed((prev) => {
-                const next = new Set(prev);
-                next.add(ex.exercise_id);
-                return next;
-              })
-            }
-            aria-label={ex.name}
-            className="absolute inset-0 h-full w-full bg-black object-contain"
-          >
-            <source src={ex.demoUrl} type="video/mp4" />
-          </video>
         ) : (
-          <div className="text-white/50">
-            <Icon name="dumbbell" size={90} strokeWidth={1.5} />
-          </div>
+          <>
+            {/* ALWAYS RENDERED, never keyed, hidden rather than unmounted when there is no footage.
+                Unmounting it is what dropped her out of fullscreen; see videoRef above. */}
+            <video
+              ref={videoRef}
+              controls
+              playsInline
+              loop
+              muted
+              preload="metadata"
+              onError={() =>
+                setDemoFailed((prev) => {
+                  const next = new Set(prev);
+                  next.add(ex.exercise_id);
+                  return next;
+                })
+              }
+              aria-label={ex.name}
+              className={`absolute inset-0 h-full w-full bg-black object-contain ${
+                hasDemo ? '' : 'hidden'
+              }`}
+            />
+            {!hasDemo && (
+              <div className="text-white/50">
+                <Icon name="dumbbell" size={90} strokeWidth={1.5} />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -731,41 +933,110 @@ export function WorkoutPlayer({
             <div className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
               {t('targetMuscle')}
             </div>
+            {/* TELL HER WHAT THIS IS FOR. The owner's note: "we should be telling them what we're
+                targeting with the workouts". 406 of 1,305 movements carry no muscle_group - they
+                came across from Lenus by name only - and this rendered a bare "-" for every one of
+                them, which is the app admitting it has nothing to say.
+
+                The prescription still knows something: a movement written as a duration is
+                conditioning, and one written with no numbers at all is a warm-up or a stretch.
+                Saying that is both true and useful. A hyphen is neither. */}
             <div className="mt-1 text-[16px] font-semibold capitalize">
-              {muscleLabel ?? '-'}
+              {muscleLabel ??
+                (kind === 'timed' ? t('focusConditioning') : kind === 'untracked' ? t('focusMobility') : t('focusFullBody'))}
             </div>
-            <div className="mt-4">
-              <MuscleMap muscleKey={ex.muscleKey} frontLabel={t('front')} backLabel={t('back')} />
-            </div>
+            {/* The map needs a key to highlight. Without one it is an unlabelled body outline, which
+                reads as a rendering failure rather than as missing data. */}
+            {ex.muscleKey ? (
+              <div className="mt-4">
+                <MuscleMap muscleKey={ex.muscleKey} frontLabel={t('front')} backLabel={t('back')} />
+              </div>
+            ) : (
+              <p className="mt-3 text-[13px] leading-relaxed text-muted">
+                {kind === 'timed'
+                  ? t('focusConditioningNote')
+                  : kind === 'untracked'
+                    ? t('focusMobilityNote')
+                    : t('focusUnknownNote')}
+              </p>
+            )}
           </div>
         )}
 
-        {/* Progressive overload: canonical "Last time / Target / +X" line (+ coach rationale on set 1) */}
-        {ex.overload && <ProgressionLine hint={ex.overload} showRationale={setNum === 1} />}
+        {/* Progressive overload: canonical "Last time / Target / +X" line (+ coach rationale on set 1).
+            Rep-based only. There is no load to progress on a 25-minute walk, and the recommender's
+            numbers come from set history that a timed movement deliberately does not write. */}
+        {kind === 'reps' && ex.overload && (
+          <ProgressionLine hint={ex.overload} showRationale={setNum === 1} />
+        )}
 
-        {/* Steppers */}
-        <div className="mt-[26px] flex items-center justify-between gap-3.5">
-          <Stepper
-            // Her prescription in the label, so the stepper is measured against what she wrote
-            // rather than floating free. "REPS 12-15" is the instruction; the number below is the
-            // attempt.
-            label={targetLabel ? `${t('reps')} ${targetLabel}` : t('reps')}
-            value={String(reps)}
-            onDec={() => setReps((r) => Math.max(0, r - 1))}
-            onInc={() => setReps((r) => r + 1)}
-            decAria={t('decrease')}
-            incAria={t('increase')}
-          />
-          <div className="h-16 w-px bg-line" />
-          <Stepper
-            label={t('weight')}
-            value={String(weight)}
-            onDec={() => setWeight((w) => Math.max(0, w - 5))}
-            onInc={() => setWeight((w) => w + 5)}
-            decAria={t('decrease')}
-            incAria={t('increase')}
-          />
-        </div>
+        {/* THE INPUT, decided by what she was asked to do rather than by a fallback.
+            Three shapes, and the wrong one is not a cosmetic slip: it writes a fabricated number
+            into the history that drives her progressions. */}
+        {kind === 'reps' ? (
+          <div className="mt-[26px] flex items-center justify-between gap-3.5">
+            <Stepper
+              // Her prescription in the label, so the stepper is measured against what she wrote
+              // rather than floating free. "REPS 12-15" is the instruction; the number below is the
+              // attempt.
+              label={targetLabel ? `${t('reps')} ${targetLabel}` : t('reps')}
+              value={String(reps)}
+              onDec={() => setReps((r) => Math.max(0, r - 1))}
+              onInc={() => setReps((r) => r + 1)}
+              decAria={t('decrease')}
+              incAria={t('increase')}
+            />
+            {/* No weight stepper on a bodyweight or banded movement. A 0 in that box is not a
+                reading, it is a shrug, and it lands in set_logs looking like a failed lift. */}
+            {weighted && (
+              <>
+                <div className="h-16 w-px bg-line" />
+                <Stepper
+                  label={t('weight')}
+                  value={String(weight)}
+                  onDec={() => setWeight((w) => Math.max(0, w - 5))}
+                  onInc={() => setWeight((w) => w + 5)}
+                  decAria={t('decrease')}
+                  incAria={t('increase')}
+                />
+              </>
+            )}
+            {!weighted && (
+              <div className="flex-1 text-center">
+                <div className="text-[10px] font-semibold uppercase tracking-[2px] text-faint">
+                  {t('load')}
+                </div>
+                <div className="mt-1.5 text-[15px] font-semibold text-muted">
+                  {t('bodyweightLoad')}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : kind === 'timed' ? (
+          /* A CLOCK, because she was given a duration. It counts UP: she may walk twenty of a
+             prescribed twenty-five, and a countdown that hits zero cannot record that. */
+          <div className="mt-[26px] rounded-[18px] border border-line bg-surface px-5 py-5 text-center">
+            <div className="text-[10px] font-semibold uppercase tracking-[2px] text-faint">
+              {t('timeTarget', { target: formatDuration(ex.timeSec ?? 0) })}
+            </div>
+            <div className="tf-display mt-1.5 text-[46px] leading-none tabular-nums">
+              {fmtClock(work)}
+            </div>
+            <button
+              type="button"
+              onClick={() => setWorking((v) => !v)}
+              className="tf-press mt-3.5 inline-flex items-center gap-2 rounded-full border border-line px-5 py-2 text-[12px] font-semibold uppercase tracking-[1px] text-ink"
+            >
+              <Icon name={working ? 'pause' : 'play'} size={14} />
+              {working ? t('timePause') : work > 0 ? t('timeResume') : t('timeStart')}
+            </button>
+          </div>
+        ) : (
+          /* Neither counted nor timed. She wrote no numbers here, so the app writes none either. */
+          <p className="mt-[26px] rounded-[18px] border border-line bg-surface px-5 py-4 text-center text-[13px] leading-relaxed text-muted">
+            {t('untrackedNote')}
+          </p>
+        )}
 
         {/* The handoff's `.set-table`, replacing five dots that said only "you are on set 3".
             Columns are what THIS app records: reps, weight, and what she managed last time. The
@@ -775,6 +1046,7 @@ export function WorkoutPlayer({
             `logged.current` is a ref, and reading a ref during render is normally wrong. It is
             correct here because logSet pushes to it and then immediately advances setNum or idx,
             so the render that follows always sees the push. Nothing else writes it. */}
+        {kind === 'reps' && (
         <div className="mt-5 overflow-hidden rounded-[14px] border border-line">
           <div className="grid grid-cols-[44px_1fr_1fr_1.2fr] border-b border-line bg-warm/40 px-3 py-2 text-[9px] font-extrabold uppercase tracking-[0.6px] text-faint">
             <span>{t('setCol')}</span>
@@ -816,26 +1088,6 @@ export function WorkoutPlayer({
             );
           })}
         </div>
-
-        {/* Rest banner */}
-        {rest !== null && (
-          // text-bg, not text-white. bg-ink resolves to #ffffff inside .tf-portal, so this rendered
-          // a white banner carrying white text: the rest countdown, the word REST and the skip
-          // control were all invisible, mid-set, on the one screen she is looking at with a timer
-          // running. Correct on the light palette, which is why it survived a year.
-          <div className="mt-4 flex items-center justify-between rounded-2xl bg-ink px-5 py-3 text-bg">
-            <span className="text-[12px] uppercase tracking-[2px] text-bg/70">
-              {t('rest')}
-            </span>
-            <span className="font-display text-[24px]">{rest}s</span>
-            <button
-              type="button"
-              onClick={() => setRest(null)}
-              className="tf-press text-[12px] uppercase tracking-[1px] text-bg/70"
-            >
-              {t('skipRest')}
-            </button>
-          </div>
         )}
 
         {/* What she goes straight into. Placed above the rest timer's territory on purpose: the
@@ -889,7 +1141,10 @@ export function WorkoutPlayer({
           </div>
         )}
 
-        {/* Per-set difficulty (RPE): the signal that drives progressive overload */}
+        {/* Per-set difficulty (RPE): the signal that drives progressive overload. Not asked on an
+            untracked movement: there is no set to rate, and a question with no purpose is the kind
+            of friction that gets a warm-up skipped. */}
+        {kind !== 'untracked' && (
         <div className="mt-5">
           <div className="mb-2 text-center text-[10px] font-medium uppercase tracking-[2px] text-faint">
             {t('feltTitle')}
@@ -913,13 +1168,134 @@ export function WorkoutPlayer({
             })}
           </div>
         </div>
+        )}
 
         {/* The handoff spends its one action colour on this button, and it is the right place for
             it: everything else on the screen is a reading, this is the thing she came to do. */}
         <PortalButton variant="action" className="mt-[18px]" onClick={logSet}>
-          {idx === exercises.length - 1 && setNum === totalSets ? t('finish') : t('logSet')}
+          {idx === exercises.length - 1 && setNum === totalSets
+            ? t('finish')
+            : kind === 'reps'
+              ? t('logSet')
+              : kind === 'timed'
+                ? t('timeDone')
+                : t('markComplete')}
         </PortalButton>
       </div>
+
+      {/* THE WAY OUT, and the thing that was missing entirely.
+          Backing out used to route away and record nothing, so a member who did eight movements
+          and left had trained, by the app's account, zero times. */}
+      {exitOpen && (
+        <div className="absolute inset-0 z-50 flex items-end bg-black/60 px-4 pb-6">
+          <div className="w-full rounded-[22px] bg-bg p-5">
+            <div className="text-[17px] font-semibold text-ink">{t('exitTitle')}</div>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted">
+              {t('exitBody', { count: loggedView.length })}
+            </p>
+            {saveFailed && (
+              <p role="alert" className="mt-3 rounded-xl bg-alert px-3 py-2 text-[13px] text-alert-ink">
+                {t('saveFailed')}
+              </p>
+            )}
+            <div className="mt-4 flex flex-col gap-2">
+              <PortalButton variant="action" onClick={() => void saveAndExit()}>
+                {saving ? t('saving') : saveFailed ? t('tryAgain') : t('exitSave')}
+              </PortalButton>
+              <button
+                type="button"
+                onClick={() => setExitOpen(false)}
+                className="tf-press rounded-full border border-line py-3 text-[13px] font-semibold text-ink"
+              >
+                {t('exitKeepGoing')}
+              </button>
+              {/* Discard is deliberately the quietest control on the sheet and says what it does.
+                  It is still here: a session started by mistake should not be a permanent row. */}
+              <button
+                type="button"
+                onClick={() => {
+                  clearDraft(sessionId);
+                  logged.current = [];
+                  router.push('/workouts');
+                }}
+                className="tf-press py-1.5 text-[12px] text-faint underline"
+              >
+                {t('exitDiscard')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REST, FULL SCREEN.
+          It used to be a strip under the set table: "I think that sixty second rest should be
+          popping up on the entire screen, not just like that. It should pop up on the entire screen
+          so my people know that they got sixty seconds, and there should be a countdown clock."
+
+          He is describing what a rest actually is. It is not a status line beside the next input,
+          it is a period of the session with a defined end, and the phone is on a bench four feet
+          away. A number that reads across a gym, a ring that shows the shape of the wait, and the
+          name of what she is walking back to. */}
+      {rest !== null && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#0b0b0c] px-8 text-center text-white">
+          <span className="text-[11px] font-semibold uppercase tracking-[4px] text-white/50">
+            {t('rest')}
+          </span>
+
+          <div className="relative mt-6 flex h-[230px] w-[230px] items-center justify-center">
+            <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full -rotate-90">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="5" />
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="#edff00"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 45}
+                // Drains as the rest runs down. restTotal can be 0 only if a rest somehow began
+                // without one, in which case a full ring is the safe reading.
+                strokeDashoffset={2 * Math.PI * 45 * (1 - (restTotal > 0 ? rest / restTotal : 1))}
+                style={{ transition: 'stroke-dashoffset 1s linear' }}
+              />
+            </svg>
+            <span className="tf-display text-[72px] leading-none tabular-nums">{rest}</span>
+          </div>
+
+          {/* What she is going back to. During a rest the screen behind has ALREADY advanced, so
+              naming it here is the difference between waiting and getting set up. */}
+          <div className="mt-7 min-h-[42px]">
+            <div className="text-[10px] font-semibold uppercase tracking-[3px] text-white/40">
+              {t('restNextUp')}
+            </div>
+            <div className="mt-1 text-[17px] font-semibold">{ex.name}</div>
+          </div>
+
+          <div className="mt-8 flex w-full max-w-[320px] items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setRest((r) => (r ?? 0) + 15);
+                setRestTotal((v) => v + 15);
+              }}
+              className="tf-press flex-1 rounded-full border border-white/25 py-3 text-[13px] font-semibold uppercase tracking-[1px] text-white/80"
+            >
+              {t('restPlus15')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRest(null);
+                void videoRef.current?.play().catch(() => {});
+              }}
+              className="tf-press flex-1 rounded-full bg-white py-3 text-[13px] font-semibold uppercase tracking-[1px] text-[#0b0b0c]"
+            >
+              {t('skipRest')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Post-workout rating sheet: PRs + enjoyment/effort before we persist and celebrate */}
       {showComplete && !finished && (

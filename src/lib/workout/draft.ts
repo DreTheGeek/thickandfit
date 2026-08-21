@@ -19,8 +19,10 @@
 export type DraftSet = {
   exercise_id: string;
   set_number: number;
-  reps: number;
-  weight: number;
+  /** Null on a timed or untracked movement. A 0 would restore as "she moved nothing". */
+  reps: number | null;
+  weight: number | null;
+  durationSec: number | null;
   completed: boolean;
   difficulty: string;
 };
@@ -37,7 +39,10 @@ export type WorkoutDraft = {
   swaps: Record<number, { exercise_id: string; name: string }>;
 };
 
-export const DRAFT_VERSION = 1;
+// 2: reps/weight became nullable and durationSec arrived, so a v1 draft read by this code would
+// restore a timed movement as 0 reps at 0 lb. readDraft rejects a mismatched version outright,
+// which is the whole point of the field: a 12-hour-lived object needs no migration, only a refusal.
+export const DRAFT_VERSION = 2;
 
 /**
  * Past this, it is a different day's workout.
