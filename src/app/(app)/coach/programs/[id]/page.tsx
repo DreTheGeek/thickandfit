@@ -5,15 +5,32 @@ import { requireCoach } from '@/lib/auth/guards';
 import { getProgram } from '@/lib/programs/engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { readCoachSettings } from '@/lib/coach/settings';
+import { demoUrls } from '@/lib/exercises/demo-url';
 import { ProgramBuilder, type BuilderInitial } from '@/components/coach/program-builder';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * EVERY column, not a convenient subset.
+ *
+ * saveProgram deletes and re-inserts, so a field this page fails to LOAD is a field the builder
+ * cannot send back, and one save erases it. See .qa-visual/program-roundtrip-test.mjs.
+ */
 type SessionExercise = {
   exercise_id: string;
+  format: 'straight' | 'circuit' | 'superset' | null;
   sets: number | null;
   reps: number | null;
+  reps_min: number | null;
+  reps_max: number | null;
+  is_amrap: boolean | null;
+  time_sec: number | null;
+  weight: number | null;
   rest_sec: number | null;
+  rounds: number | null;
+  notes: string | null;
+  group_key: string | null;
+  group_kind: string | null;
 };
 
 export default async function ProgramBuilderPage({
@@ -52,9 +69,25 @@ export default async function ProgramBuilderPage({
       if (program) {
         const allIds = program.sessions.flatMap((s) => (s.exercises as SessionExercise[]).map((e) => e.exercise_id));
         const { data: exs } = allIds.length
-          ? await supabase.from('exercises').select('id, name_en, name_es').in('id', allIds)
+          ? await supabase
+              .from('exercises')
+              .select('id, name_en, name_es, equipment, muscle_group, demo_storage_path')
+              .in('id', allIds)
           : { data: [] };
-        const nameById = new Map((exs ?? []).map((e) => [e.id, (locale === 'es' && e.name_es) || e.name_en]));
+        const metaById = new Map((exs ?? []).map((e) => [e.id, e]));
+
+        // ONE round trip for every demo in the program. "What these should be is the videos that go
+        // to these workouts": a builder that lists 22 movement NAMES is a spreadsheet, and the whole
+        // reason this app exists rather than a spreadsheet is that she filmed 366 of them.
+        //
+        // Signed URLs, because the bucket is private and a storage path in the DOM is an index of
+        // the library.
+        const demoSigned = await demoUrls(
+          (exs ?? [])
+            .map((e) => e.demo_storage_path)
+            .filter((p): p is string => typeof p === 'string' && p.length > 0),
+        );
+
         initial = {
           id: program.plan.id,
           nameEn: program.plan.name_en,
@@ -62,13 +95,31 @@ export default async function ProgramBuilderPage({
           weeks: program.plan.weeks,
           days: program.sessions.map((s) => ({
             label: s.day_label,
-            exercises: (s.exercises as SessionExercise[]).map((e) => ({
-              exercise_id: e.exercise_id,
-              name: nameById.get(e.exercise_id) ?? tEx('untitled'),
-              sets: e.sets ?? 3,
-              reps: e.reps ?? 10,
-              rest: e.rest_sec ?? 60,
-            })),
+            exercises: (s.exercises as SessionExercise[]).map((e) => {
+              const meta = metaById.get(e.exercise_id);
+              return {
+                exercise_id: e.exercise_id,
+                name: (locale === 'es' && meta?.name_es) || meta?.name_en || tEx('untitled'),
+                equipment: meta?.equipment ?? null,
+                muscle: meta?.muscle_group ?? null,
+                demoUrl: demoSigned.get(meta?.demo_storage_path ?? '') ?? null,
+                // Loaded as they are, nulls included. A `?? 3` here would turn "she prescribed no
+                // sets" into "she prescribed three" the moment anyone opened the plan.
+                format: e.format ?? 'straight',
+                sets: e.sets,
+                reps: e.reps,
+                repsMin: e.reps_min,
+                repsMax: e.reps_max,
+                isAmrap: e.is_amrap === true,
+                timeSec: e.time_sec,
+                weight: e.weight,
+                rest: e.rest_sec,
+                rounds: e.rounds,
+                notes: e.notes,
+                groupKey: e.group_key,
+                groupKind: e.group_kind,
+              };
+            }),
           })),
         };
       }

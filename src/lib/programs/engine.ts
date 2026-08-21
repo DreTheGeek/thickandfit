@@ -3,16 +3,46 @@ import 'server-only';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/service';
 
+/**
+ * EVERY column the builder round-trips, and the reason this list has to be complete.
+ *
+ * saveProgram DELETEs the plan's sessions and re-inserts them, so anything absent from this schema
+ * is not "left alone", it is DESTROYED on the next save. The builder used to send sets, reps and
+ * rest_sec only, which meant one tap of SAVE PROGRAM on any of Stephanie's 41 imported plans would
+ * have erased, across the library:
+ *
+ *     1,531 superset groupings (61% of all prescribed movements)
+ *     2,066 rep ranges         (83%)
+ *     2,438 coaching notes     (97%)
+ *       271 timed durations
+ *       209 prescribed weights
+ *
+ * silently, with a success toast. Nothing would have thrown. She would have found out weeks later
+ * from a member performing her supersets as straight sets.
+ *
+ * The rule for anyone adding a column to session_exercises: add it HERE in the same change, or the
+ * builder becomes a data-loss tool the first time a coach opens a plan that uses it.
+ */
 const exerciseSchema = z.object({
   exercise_id: z.string().uuid(),
   format: z.enum(['straight', 'circuit', 'superset']).default('straight'),
-  sets: z.number().int().optional(),
-  reps: z.number().int().optional(),
-  time_sec: z.number().int().optional(),
-  weight: z.number().optional(),
-  rest_sec: z.number().int().optional(),
-  rounds: z.number().int().optional(),
-  notes: z.string().optional(),
+  sets: z.number().int().nullable().optional(),
+  reps: z.number().int().nullable().optional(),
+  reps_min: z.number().int().nullable().optional(),
+  reps_max: z.number().int().nullable().optional(),
+  is_amrap: z.boolean().optional(),
+  time_sec: z.number().int().nullable().optional(),
+  weight: z.number().nullable().optional(),
+  rest_sec: z.number().int().nullable().optional(),
+  rounds: z.number().int().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  // Supersets. group_key ties the movements performed back to back; group_kind names the shape.
+  // Free text rather than an enum: the importer wrote whatever her Lenus export carried, and an
+  // enum here would reject her own data on the way back in.
+  group_key: z.string().nullable().optional(),
+  group_kind: z.string().nullable().optional(),
+  tempo: z.string().nullable().optional(),
+  pct_1rm: z.number().nullable().optional(),
 });
 const sessionSchema = z.object({ day_label: z.string().min(1), exercises: z.array(exerciseSchema) });
 
@@ -61,11 +91,18 @@ export async function saveProgram(companyId: string, createdBy: string, input: S
         format: e.format,
         sets: e.sets ?? null,
         reps: e.reps ?? null,
+        reps_min: e.reps_min ?? null,
+        reps_max: e.reps_max ?? null,
+        is_amrap: e.is_amrap ?? false,
         time_sec: e.time_sec ?? null,
         weight: e.weight ?? null,
         rest_sec: e.rest_sec ?? null,
         rounds: e.rounds ?? null,
         notes: e.notes ?? null,
+        group_key: e.group_key ?? null,
+        group_kind: e.group_kind ?? null,
+        tempo: e.tempo ?? null,
+        pct_1rm: e.pct_1rm ?? null,
         sort_order: ei,
       }));
       await supabase.from('session_exercises').insert(rows);

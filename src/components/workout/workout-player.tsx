@@ -916,7 +916,26 @@ export function WorkoutPlayer({
         />
 
         {tab === 'instructions' ? (
-          cueLines.length > 0 ? (
+          <>
+            {/* HER NOTE FOR THIS PRESCRIPTION, which had never been rendered anywhere.
+                session_exercises.notes is carried on 2,438 of her 2,501 prescribed movements (97%)
+                and is the difference between a generic movement and her programming of it: "the
+                goal is to hit 25 floors within this time frame". It was loaded into this component,
+                sat in the props, and was never put on screen in either console.
+
+                Above the cues, not below: the cues describe the movement in general, this describes
+                what she wants from it today. */}
+            {ex.notes && (
+              <div className="mb-4 rounded-[14px] border border-line bg-warm/40 px-4 py-3">
+                <div className="text-[10px] font-semibold uppercase tracking-[2px] text-faint">
+                  {t('coachNote')}
+                </div>
+                <p className="mt-1 whitespace-pre-line text-[13.5px] leading-relaxed text-soft">
+                  {ex.notes.trim()}
+                </p>
+              </div>
+            )}
+            {cueLines.length > 0 ? (
             <div className="text-[14px] leading-[1.9] text-soft">
               {cueLines.map((line, i) => (
                 <div key={i} className="mb-2 flex gap-3">
@@ -925,9 +944,10 @@ export function WorkoutPlayer({
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-[14px] leading-[1.7] text-muted">{t('noCues')}</p>
-          )
+            ) : ex.notes ? null : (
+              <p className="text-[14px] leading-[1.7] text-muted">{t('noCues')}</p>
+            )}
+          </>
         ) : (
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[2px] text-faint">
