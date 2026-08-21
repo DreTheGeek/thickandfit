@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import type { ReactElement, ReactNode } from 'react';
+import type { WeeklyTarget } from '@/lib/training/weekly-target-shared';
 import { Skeleton } from '@/components/states/skeleton';
 import { ErrorState } from '@/components/states/error-state';
 import { STEP_GOAL, SLEEP_GOAL_MIN, formatSleep } from '@/lib/dailymetrics/goals';
@@ -47,6 +48,7 @@ export function TodayScreen({
   coach,
   supportEmail,
   daily,
+  weekly,
   intelligence,
   tour,
 }: {
@@ -60,6 +62,8 @@ export function TodayScreen({
   coach: TodayCoach | null;
   supportEmail: string;
   daily: { steps: number | null; sleepMinutes: number | null };
+  /** Her training week against the days she said she can manage. Null when there is no read. */
+  weekly?: WeeklyTarget | null;
   /** K9: server-rendered intelligence strip, passed in as a slot. It is a SERVER component (all of
    *  its data is derived server-side and none of it is interactive), so it cannot be imported here
    *  in a 'use client' module and arrives as a prop instead. */
@@ -244,7 +248,24 @@ export function TodayScreen({
     {
       key: 'train',
       title: t('today.missionTrain'),
-      sub: summary.todaysWorkout?.name ?? t('activities.noProgram'),
+      // HER WEEK, in front of the session name.
+      //
+      // Nothing on this app has ever been able to tell a member following her programme correctly
+      // that she is on track. The streak cannot: it counts an any-activity union, so it says nothing
+      // about training. And training is not a daily act - by her own answer it happens 3, 4 or 5
+      // days out of 7 - so a daily ladder is the wrong instrument for it entirely.
+      //
+      // Falls back to the plan name alone when she has no target, rather than printing "0 of 3" at
+      // somebody who never set one.
+      sub: weekly
+        ? [
+            weekly.mode === 'target'
+              ? t('today.weekTarget', { done: weekly.done, target: weekly.target ?? 0 })
+              : t('today.weekCount', { done: weekly.done }),
+            summary.todaysWorkout?.name ?? t('activities.noProgram'),
+          ].join(' · ')
+        : (summary.todaysWorkout?.name ?? t('activities.noProgram')),
+      hit: weekly?.met === true,
       href: '/workouts',
       action: t('activities.startWorkout'),
     },

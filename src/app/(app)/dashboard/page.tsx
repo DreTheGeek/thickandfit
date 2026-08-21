@@ -7,6 +7,7 @@ import { weightGoalFromKg, type WeightGoal } from '@/lib/goals/weight-goal';
 import { createClient } from '@/lib/supabase/server';
 import { getCompanyCoach } from '@/lib/tenant/owner';
 import { getDashboardSummary, type DashboardSummary } from '@/lib/dashboard/summary';
+import { getWeeklyTarget } from '@/lib/training/weekly-target';
 import { getTodayHabits, localToday } from '@/lib/habits/habits';
 import { getDailyMetrics } from '@/lib/dailymetrics/daily';
 import { getDiary } from '@/lib/nutrition/diary';
@@ -187,6 +188,25 @@ export default async function DashboardPage(): Promise<ReactElement> {
   const startedAt =
     onbStartedAt ?? ((profile as { created_at?: string } | null)?.created_at ?? null);
 
+  /**
+   * Her training week. COSTS NO EXTRA QUERY on this screen.
+   *
+   * getDashboardSummary already runs recomputeGamification on every load, and that function already
+   * buckets her workout completions into local days. It threw the set away at the return; it now
+   * hands it back, so the only new read here is her target. Failing to null rather than to a number
+   * is the rule: a read that broke must not invent a goal she is then measured against.
+   */
+  const weekly =
+    ctx.companyId
+      ? await getWeeklyTarget(ctx.userId, ctx.companyId, {
+          workoutDays: summary?.workoutDays,
+          timezone: tz,
+        }).catch((e: unknown) => {
+          console.error('dashboard weekly target:', e instanceof Error ? e.message : e);
+          return null;
+        })
+      : null;
+
   return (
     <TodayScreen
       intelligence={<IntelligenceCard prediction={prediction} meals={meals} />}
@@ -201,6 +221,7 @@ export default async function DashboardPage(): Promise<ReactElement> {
       coach={coach}
       supportEmail={supportEmail}
       daily={daily}
+      weekly={weekly}
     />
   );
 }

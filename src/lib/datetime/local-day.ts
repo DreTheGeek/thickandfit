@@ -54,6 +54,23 @@ export function localDay(timeZone: string | null | undefined, at: Date = new Dat
 }
 
 /**
+ * The Sunday that starts this member's current local week (YYYY-MM-DD).
+ *
+ * Sunday-anchored because that is already this app's convention everywhere it matters: the Today
+ * week strip, the dashboard's week arithmetic, and `coach_settings.reminder_weekday`, which
+ * migration 0115 based on Sunday for exactly the reason spelled out under localWeekday below.
+ *
+ * Built by subtracting whole days from the instant and re-asking `localDay`, rather than by doing
+ * arithmetic on the date STRING. Subtracting from a string breaks across a month boundary, and
+ * doing it in UTC breaks for anybody west of it: at 23:00 Saturday in Guadalajara it is already
+ * Sunday in UTC, so a UTC-based week would roll her over a day early, every week.
+ */
+export function localWeekStart(timeZone: string | null | undefined, at: Date = new Date()): string {
+  const back = localWeekday(timeZone, at);
+  return localDay(timeZone, new Date(at.getTime() - back * 86_400_000));
+}
+
+/**
  * The local weekday (0 = Sunday .. 6 = Saturday) for an IANA timezone at a given instant.
  *
  * Zero-indexed from Sunday to match JS getDay(), Postgres extract(dow) AND

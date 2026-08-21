@@ -53,6 +53,11 @@ export type RecomputeResult = {
   // True when a workout was actually completed on the member's local TODAY (drives the dashboard
   // today's-workout check; streak>0 was a false signal since any food log kept it green).
   workoutToday: boolean;
+  // Distinct local ISO days a WORKOUT was completed, ascending. A strict subset of activeDays,
+  // which is the any-activity union. Surfaced because the weekly training target needs training
+  // days specifically, and this function already computes them: returning the set costs nothing and
+  // saves Today a second read of the same table. See lib/training/weekly-target.ts.
+  workoutDays: string[];
 };
 
 function toBadge(b: DbBadge): Badge {
@@ -363,5 +368,11 @@ export async function recomputeGamification(
 
   // workoutToday drives the dashboard's "today's workout" check: it must reflect an ACTUAL workout
   // completion today, not streak>0 (any food/weight log kept the old check green all day).
-  return { snapshot, newlyEarnedKeys, activeDays: activeAsc, workoutToday: workoutDays.has(today) };
+  return {
+    snapshot,
+    newlyEarnedKeys,
+    activeDays: activeAsc,
+    workoutToday: workoutDays.has(today),
+    workoutDays: [...workoutDays].sort(),
+  };
 }

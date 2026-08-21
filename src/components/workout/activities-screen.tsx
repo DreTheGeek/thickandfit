@@ -4,6 +4,7 @@
 // lists logged workouts. Re-skinned to the design-handoff prototype.
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import type { WeeklyTarget } from '@/lib/training/weekly-target-shared';
 import type { ReactElement } from 'react';
 import { PortalLabel } from '@/components/portal/today-cards';
 import { WorkoutBanner, UpNext, SplitOverview } from '@/components/portal/train-cards';
@@ -38,7 +39,7 @@ export type HistoryItem = {
   enjoyment: number | null;
   effort: number | null;
 };
-export type WorkoutStats = { thisWeek: number; total: number; volumeLb: number };
+export type WorkoutStats = { total: number; volumeLb: number };
 
 /**
  * The contract's three tabs come first and in its order: My Plan, Programs, Favorites.
@@ -57,6 +58,7 @@ export function ActivitiesScreen({
   program,
   history,
   stats,
+  weekly,
   locale,
   activation,
   hasStarterProgram = false,
@@ -65,6 +67,8 @@ export function ActivitiesScreen({
   program: ActivitiesProgram | null;
   history: HistoryItem[];
   stats: WorkoutStats | null;
+  /** Her week against the days she said she can train. Null when the read failed. */
+  weekly: WeeklyTarget | null;
   locale: string;
   activation: Activation;
   /** STARTER_PROGRAM_ID is set, so onboarding already assigned her a plan. */
@@ -121,7 +125,21 @@ export function ActivitiesScreen({
             {/* Canonical stats band: sessions this week / total / lifted volume */}
             {stats && (
               <div className="mt-4 flex border border-divider">
-                <StatCell value={String(stats.thisWeek)} label={t('statThisWeek')} divider />
+                {/* HER WEEK, against what she said she can manage.
+                    This cell used to be a rolling 7-day count with no denominator, so "3" meant
+                    nothing: three out of what? A member training three days a week BY DESIGN had no
+                    surface anywhere that could tell her she was on track. Falls back to a bare
+                    count when she has neither an answer nor a plan to measure against, because a
+                    target she never set is not a target she is failing. */}
+                <StatCell
+                  value={
+                    weekly && weekly.mode === 'target'
+                      ? `${weekly.done}/${weekly.target}`
+                      : String(weekly?.done ?? 0)
+                  }
+                  label={t('statThisWeek')}
+                  divider
+                />
                 <StatCell value={String(stats.total)} label={t('statTotal')} divider />
                 <StatCell value={fmtVolume(stats.volumeLb)} label={t('statVolume')} />
               </div>

@@ -2,6 +2,7 @@
 // + logged history, then the client screen switches Program / Library / History.
 import type { ReactElement } from 'react';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { getWeeklyTarget } from '@/lib/training/weekly-target';
 import { requireEntitledOrPaused } from '@/lib/auth/guards';
 import { getAssignedPlans, getProgram } from '@/lib/programs/engine';
 import { fetchHistory } from '@/lib/workout/logging';
@@ -205,9 +206,6 @@ export default async function WorkoutsPage({
     }));
 
     // Program stats band (This week / Total / Volume lb), computed from the logged history.
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekAgoISO = weekAgo.toISOString();
     const logIds = raw.map((r) => r.id);
     let volumeLb = 0;
     if (logIds.length) {
@@ -221,7 +219,10 @@ export default async function WorkoutsPage({
       );
     }
     stats = {
-      thisWeek: raw.filter((r) => String(r.performed_at) >= weekAgoISO).length,
+      // Was a ROLLING 7 DAYS off workout_logs.performed_at, which is two separate problems: it is a
+      // different number from the calendar week every other surface uses, and slicing that column
+      // gives a UTC day, so an evening session west of UTC counted as tomorrow. Now her actual
+      // week, in her timezone, against the days she said she can train.
       total: raw.length,
       volumeLb,
     };
@@ -229,6 +230,16 @@ export default async function WorkoutsPage({
 
   // Derived, never stored: the checklist ticks itself from her real rows.
   const activation = await getActivation(ctx.userId);
+
+  // Her week. Resolved here rather than inside the screen because it reads her health profile and
+  // her assignment, and because a clock read belongs in the page body, not in a render.
+  //
+  // Fails to NULL, never to a number: a read that broke must not be able to invent a goal she is
+  // then measured against. The stat cell falls back to a bare count.
+  const weekly = ctx.companyId ? await getWeeklyTarget(ctx.userId, ctx.companyId).catch((e: unknown) => {
+    console.error('workouts weekly target:', e instanceof Error ? e.message : e);
+    return null;
+  }) : null;
   return (
     // hasStarterProgram now answers "did a human choose any of this", read from assigned_by rather
     // than from an env var. The first-run copy has to move with the reality: "Steph writes your plan
@@ -238,6 +249,7 @@ export default async function WorkoutsPage({
       program={program}
       history={history}
       stats={stats}
+      weekly={weekly}
       locale={locale}
       activation={activation}
       hasStarterProgram={autoAssignedPlanIds.size > 0}
