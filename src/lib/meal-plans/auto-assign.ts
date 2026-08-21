@@ -12,9 +12,26 @@ import 'server-only';
 // the higher tiers are partly FOR, and handing one to a self-guided member both gives away the
 // upsell and tells her something about her purchase that is not true.
 //
-// SHIPPED OFF. Absent STARTER_MEAL_PLAN_ID = off, the same shape as STARTER_PROGRAM_ID and
-// NEXT_PUBLIC_SCAN_AUTO_ACCEPT. Turning it on changes what a paying member receives on day one, so
-// it is a decision someone makes on purpose, in Vercel, without a deploy.
+// IT IS GENERATED NOW, NOT COPIED, and the reason is that there was nothing to copy. This module
+// waited on somebody naming a STARTER_MEAL_PLAN_ID, and the answer to "which of her 248 meal plans
+// should a new member start on" turned out to be NONE OF THEM. All 248 came across from Lenus
+// written for one named client, at that client's calorie goal, with her name in the title. Exactly
+// one carried is_template and it was "Shelise - Meal Plan 2 (2200 kcal)": a real client's plan,
+// promoted by mistake. Handing a stranger a plan with another member's name on it is a privacy
+// problem rather than merely a wrong number, so that flag is cleared and the library now holds zero
+// templates, correctly.
+//
+// So the default path is lib/coach-ai/plan-gen.ts, which already existed and already does the right
+// thing: it reads HER intake, retrieves Stephanie's documented method from the knowledge base, and
+// writes a plan in her structure (kcal-budgeted slots, raw-weight ingredients, her free-veggie
+// note) at the calorie target this member's own onboarding computed. A generated plan is built for
+// her; a copied template is somebody else's plan with the name swapped.
+//
+// STARTER_MEAL_PLAN_ID SURVIVES AS AN OVERRIDE, for the day she writes real templates and wants
+// everybody on one. Same shape as STARTER_PROGRAM_ID.
+//
+// STILL OFF WITHOUT A KEY. generateMealPlan returns notConfigured with no OPENROUTER_API_KEY and
+// writes nothing, so this degrades to exactly its old behaviour rather than erroring.
 //
 // A COPY, NOT A POINTER. meal_plans rows carry their own content and a template is
 // (is_template: true, contact_id: null); an assignment is the same shape with contact_id set. That
@@ -23,6 +40,8 @@ import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
 import { ensureCrmContactFromProfile } from '@/lib/crm/ensure-contact';
 import { normalizeTier, tierGetsMealPlan, type CheckoutTier } from '@/lib/billing/tiers';
+import { generateMealPlan } from '@/lib/coach-ai/plan-gen';
+import { getCompanyCoach } from '@/lib/tenant/owner';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -30,6 +49,8 @@ export type AutoAssignMealPlanResult =
   | { status: 'off' }
   | { status: 'tier_excluded'; tier: CheckoutTier }
   | { status: 'assigned'; mealPlanId: string }
+  | { status: 'generated'; mealPlanId: string }
+  | { status: 'no_intake' }
   | { status: 'already_has_plan' }
   | { status: 'no_contact' }
   | { status: 'bad_config'; reason: string }
@@ -68,16 +89,20 @@ export async function autoAssignStarterMealPlan(
   companyId: string,
   profileId: string,
   tier: unknown,
+  /** Her language, so a Spanish-speaking member is not handed an English meal plan on day one. */
+  locale: 'en' | 'es' = 'en',
 ): Promise<AutoAssignMealPlanResult> {
+  // TIER FIRST, before any work at all. A self-guided member is not getting a meal plan whether or
+  // not one could be built, and the cheapest way to honour that is to never look.
+  if (!tierGetsMealPlan(tier)) return { status: 'tier_excluded', tier: normalizeTier(tier) };
+
   const templateId = (process.env.STARTER_MEAL_PLAN_ID ?? '').trim();
-  if (!templateId) return { status: 'off' };
-  if (!UUID.test(templateId)) {
+  if (templateId && !UUID.test(templateId)) {
     // Loud, because a typo means every paying member silently gets nothing and the failure looks
     // exactly like the feature being switched off.
     console.error('autoAssignStarterMealPlan: STARTER_MEAL_PLAN_ID is not a uuid, ignoring');
     return { status: 'bad_config', reason: 'not_a_uuid' };
   }
-  if (!tierGetsMealPlan(tier)) return { status: 'tier_excluded', tier: normalizeTier(tier) };
 
   const svc = createServiceClient();
 
@@ -97,6 +122,46 @@ export async function autoAssignStarterMealPlan(
   const contactId = (contact as { id: string } | null)?.id ?? null;
   if (!contactId) return { status: 'no_contact' };
 
+  // Checked BEFORE either path does its work. Generation is a flagship model call, and running one
+  // for a member who already has a plan would burn real money and, worse, race the coach's own.
+  const { data: existing, error: existingErr } = await svc
+    .from('meal_plans')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('contact_id', contactId)
+    .limit(1);
+  if (existingErr) {
+    console.error('autoAssignStarterMealPlan existing:', existingErr.message);
+    return { status: 'error' };
+  }
+  if ((existing ?? []).length > 0) return { status: 'already_has_plan' };
+
+  // ------------------------------------------------------------------ the default: build her one
+  if (!templateId) {
+    // generatedBy is the metering and attribution id, so it has to be a real person in this
+    // company. The owner, because this is the company acting rather than any individual coach.
+    const coach = await getCompanyCoach(companyId);
+    if (!coach) {
+      console.error('autoAssignStarterMealPlan: no company owner to attribute generation to');
+      return { status: 'error' };
+    }
+    const gen = await generateMealPlan({
+      companyId,
+      generatedBy: coach.id,
+      clientProfileId: profileId,
+      contactId,
+      locale,
+    });
+    if (gen.status === 'ok') return { status: 'generated', mealPlanId: gen.planId };
+    // notConfigured: no OPENROUTER_API_KEY, so this degrades to exactly the behaviour it had before
+    // generation existed rather than erroring. noData: she has no onboarding row to build from,
+    // which only a human can resolve.
+    if (gen.status === 'notConfigured') return { status: 'off' };
+    if (gen.status === 'noData') return { status: 'no_intake' };
+    return { status: 'error' };
+  }
+
+  // --------------------------------------------------------- the override: copy a real template
   // The template must exist AND belong to this company. The service client bypasses RLS and the
   // tenant predicate on several policies is weaker than it looks (.planning/RLS-TENANT-BOUNDARY.md),
   // so a mistyped id must not be able to hand a member another company's nutrition.
@@ -114,18 +179,6 @@ export async function autoAssignStarterMealPlan(
     console.error(`autoAssignStarterMealPlan: plan ${templateId} not found in company ${companyId}`);
     return { status: 'bad_config', reason: 'plan_not_in_company' };
   }
-
-  const { data: existing, error: existingErr } = await svc
-    .from('meal_plans')
-    .select('id')
-    .eq('company_id', companyId)
-    .eq('contact_id', contactId)
-    .limit(1);
-  if (existingErr) {
-    console.error('autoAssignStarterMealPlan existing:', existingErr.message);
-    return { status: 'error' };
-  }
-  if ((existing ?? []).length > 0) return { status: 'already_has_plan' };
 
   const t = template as unknown as TemplateRow;
   const { data: created, error } = await svc

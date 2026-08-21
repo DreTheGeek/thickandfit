@@ -56,6 +56,9 @@ type Activity = OnboardingInput['activity'];
  * screens that render its name.
  */
 type Tier = 'self' | 'team' | 'steph';
+
+/** The program the matcher chose for her, returned by the submit route. */
+type MatchedProgram = { name: string; daysPerWeek: number | null; compromised: boolean };
 /**
  * Parse a numeric text field. An empty or half-typed box ("", "-", ".") reads as 0 here, which the
  * validity bounds below then reject, so Continue stays disabled rather than the field silently
@@ -209,6 +212,9 @@ export function OnboardingFlow({
   // Defaults to 3, the lowest block she writes. A member who skips the question gets the plan with
   // the fewest sessions to miss, which is the direction that keeps somebody training.
   const [trainingDays, setTrainingDays] = useState<string>('3');
+  // Filled from the submit response. Null until then, and null is a valid end state: if nothing in
+  // her library fits, a coach writes her plan by hand and the screen must not claim otherwise.
+  const [program, setProgram] = useState<MatchedProgram | null>(null);
   const safetyFlagged = safety.length > 0;
 
 // Functional updater, NOT `set(list.filter(...))`. React batches updates, so two chip taps inside
@@ -372,6 +378,16 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
         // was never persisted and the dashboard re-prompts them to onboard (a confusing loop).
         setSaveError(true);
         return;
+      }
+      // The program the matcher picked from her answers, so the reveal can NAME it instead of
+      // saying "Personalized training". Optional on purpose: a response without it still shows the
+      // plan, it just falls back to the generic line rather than blocking the last screen of signup
+      // on a nicety.
+      try {
+        const j = (await res.json()) as { data?: { program?: MatchedProgram | null } };
+        setProgram(j?.data?.program ?? null);
+      } catch {
+        setProgram(null);
       }
       setStep(S_PLAN);
     } catch {
@@ -818,7 +834,21 @@ function toggle(set: Dispatch<SetStateAction<string[]>>, value: string): void {
             P{plan.macros.protein_g} · C{plan.macros.carbs_g} · F{plan.macros.fat_g} g
           </div>
           <div className="mt-5 flex flex-col gap-px overflow-hidden rounded-2xl border border-divider bg-divider">
-            <PlanRow label={t('planProgram')} value={t('planProgramV')} />
+            {/* HER ACTUAL PROGRAM, by name.
+                This row said "Personalized training" for every member regardless of what she
+                answered, which was true only in the sense that nothing had been personalised. Now
+                that onboarding asks how many days she can train and the matcher reads it, the row
+                can say which of Stephanie's programs she is on and how often it runs.
+
+                Falls back to the old line when nothing matched, because in that case a coach really
+                is going to write it and the generic sentence is the honest one. */}
+            <PlanRow
+              label={t('planProgram')}
+              value={program ? program.name : t('planProgramV')}
+            />
+            {program?.daysPerWeek != null && (
+              <PlanRow label={t('planDays')} value={t('planDaysV', { count: program.daysPerWeek })} />
+            )}
             {/* Was "2614 kcal · P208", repeating the headline directly above it and dropping carbs
                 and fat entirely. The full split is the part the headline does not already say. */}
             <PlanRow

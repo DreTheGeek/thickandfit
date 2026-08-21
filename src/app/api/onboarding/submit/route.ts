@@ -14,6 +14,7 @@ import { sendWelcomeEmail } from '@/lib/email/welcome';
 import { seedIntroMessage } from '@/lib/coach/intro-message';
 import { assignDefaultCheckin } from '@/lib/checkins/assign-default';
 import { autoAssignStarterProgram } from '@/lib/programs/auto-assign';
+import { matchStarterPlan } from '@/lib/programs/match-starter';
 import { autoAssignStarterMealPlan } from '@/lib/meal-plans/auto-assign';
 import { loadHealthProfile, saveHealthProfile } from '@/lib/health-profile/data';
 import { extractIntakeNotes, mergeSlugs } from '@/lib/onboarding/intake-notes';
@@ -279,7 +280,7 @@ async function POST_h(req: Request) {
       // And her meal plan, if her tier includes one. Everyone gets a program; a written meal plan is
       // part of what the higher tiers are FOR, so this is gated on tier where the program is not.
       // Same switch shape, same never-override-a-coach rule.
-      await autoAssignStarterMealPlan(companyId, userId, tier);
+      await autoAssignStarterMealPlan(companyId, userId, tier, language === 'es' ? 'es' : 'en');
 
       // goal:* tags use the same vocabulary as the waitlist quiz, so a lead who said "lose_fat" at the
       // giveaway lands in the same GHL segment after they become a member.
@@ -308,7 +309,38 @@ async function POST_h(req: Request) {
     store.set('content_locale', parsed.data.language, { path: '/', maxAge: ONE_YEAR, sameSite: 'lax' });
   }
 
-  return apiSuccess({ plan });
+  /**
+   * WHICH PROGRAM SHE IS ABOUT TO BE GIVEN, so the reveal screen can NAME it.
+   *
+   * The screen said "Program: Personalized training", a static string, which is exactly the kind of
+   * sentence a product writes when it has not decided anything. Now that onboarding asks how many
+   * days she can train and the matcher reads the answer, the honest version is the program's real
+   * name and the days it runs.
+   *
+   * READ-ONLY, and computed here rather than reusing the assignment's result because the assignment
+   * runs in after(), which is after this response has already gone. Same inputs, same deterministic
+   * matcher, so the name shown and the plan assigned cannot disagree. Taken from the request body
+   * rather than re-read from the profile: this is the copy on a screen, not a grant of access, and
+   * the row was written moments ago from these exact values.
+   */
+  let program: { name: string; daysPerWeek: number | null; compromised: boolean } | null = null;
+  {
+    const h = parsed.data.health;
+    const match = await matchStarterPlan(ctx.companyId, {
+      location: h?.trainingLocation ?? null,
+      experience: h?.trainingExperience ?? null,
+      daysPerWeek: h?.trainingDays ?? null,
+    });
+    if (match) {
+      program = {
+        name: match.plan.name_en,
+        daysPerWeek: match.plan.days_per_week,
+        compromised: match.compromised,
+      };
+    }
+  }
+
+  return apiSuccess({ plan, program });
 }
 
 export const POST = withApiLog(POST_h);
