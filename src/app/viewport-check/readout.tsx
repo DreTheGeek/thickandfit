@@ -59,16 +59,22 @@ function measure(): Readout {
       'safe-area-inset-top': inset('top'),
       'safe-area-inset-bottom': inset('bottom'),
       'display-mode standalone': String(standalone),
-      // CONTEXT FIRST. The first version of this line compared 100dvh against screen.height and
-      // called any shortfall a fault. In a BROWSER that is nonsense: Safari's own chrome legitimately
-      // owns 200-odd px, the insets report 0 because the page is not under any system UI, and the
-      // reading came back "209px SHORT of the screen" on a perfectly healthy layout. The verdict is
-      // only meaningful in the installed app, which is also the only place the gap was ever seen.
-      'THE ANSWER': !standalone
-        ? `browser, not the installed app. Chrome owns ${Math.round(window.screen.height - dvh)}px and the insets are 0, which is normal. Open this FROM the installed app to test the real case.`
-        : Math.round(dvh) >= window.screen.height - 2
-          ? '100dvh REACHES the bottom. Any gap is padding inside the bar, not the shell.'
-          : `100dvh is ${Math.round(window.screen.height - dvh)}px SHORT of the screen. The shell height is the fault.`,
+      // COMPARE AGAINST THE VIEWPORT, NEVER AGAINST screen.height.
+      //
+      // Both earlier versions of this line got that wrong and both produced a confident, false
+      // verdict. screen.height is the whole physical panel, and an app is not given all of it: in
+      // Safari the browser chrome takes ~209px, and in the installed PWA the STATUS BAR takes the
+      // top inset. The real reading from the installed app was 100dvh 879, innerHeight 879,
+      // screen.height 926, top inset 47 - and 926 - 879 is exactly 47, the status bar. The shell
+      // reached the bottom perfectly and this line called it "47px SHORT" and blamed the shell.
+      //
+      // innerHeight IS the viewport, so `dvh vs innerHeight` is the only comparison that answers
+      // "does the shell reach the bottom". The green-vs-red bars say the same thing visually, and
+      // they were right both times this line was wrong.
+      'THE ANSWER': Math.round(dvh) >= window.innerHeight - 1
+        ? `100dvh FILLS the viewport (${window.innerHeight}px). The shell reaches the bottom, so any gap is padding inside the bar.${standalone ? '' : ' Note: browser, not the installed app, so the insets are 0 and none of the safe-area handling is exercised here.'}`
+        : `100dvh is ${Math.round(window.innerHeight - dvh)}px short of the ${window.innerHeight}px viewport. The shell height IS the fault.`,
+      'screen vs viewport': `${window.screen.height - window.innerHeight}px of the panel is system chrome (${standalone ? 'status bar' : 'browser UI'}), which the app is never given. Not a gap.`,
     };
   }
 }
