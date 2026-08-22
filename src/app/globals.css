@@ -622,8 +622,21 @@ body {
    :has(.tf-portal) keeps this to the member portal. .tf-portal is applied in exactly one place
    (subscriber-shell.tsx), so this cannot reach a marketing page, where body background showing at
    all would be a different bug. */
+/* LITERALS, NOT var(--c-surface), AND THAT IS THE WHOLE POINT OF THIS RULE.
+   The first version of it used the token and painted the strip WHITE on a black screen, which is a
+   worse gap than the black one it was trying to remove. `body` is the ANCESTOR of `.tf-portal`, and
+   custom properties inherit DOWNWARD, so a token the portal re-points is not re-pointed here:
+   var(--c-surface) on body resolves against :root, which is the light marketing palette (#ffffff).
+   This is Trap 1 from the 8.0 notes, one level further out than the components it was written for.
+   These two values are the nav's own ground in each theme, taken from the .tf-portal blocks below,
+   and `pnpm exec node .qa-visual/portal-safe-area-test.mjs` measures them against what the bar
+   actually computes rather than trusting that they still match. */
 body:has(.tf-portal) {
-  background: var(--c-surface);
+  background: #ffffff;
+}
+
+[data-portal-theme='dark'] body:has(.tf-portal) {
+  background: #121214;
 }
 
 /* Marketing ticker strip. The track holds two identical runs, so translating it exactly -50% lands
