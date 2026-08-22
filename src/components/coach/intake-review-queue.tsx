@@ -74,7 +74,8 @@ export function IntakeReviewQueue({ items }: { items: ReviewItem[] }): ReactElem
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-[15px] font-semibold text-ink">{i.name}</h3>
-              <p className="text-[12px] text-faint">
+              {/* `since` is relative to now, so the two renders legitimately disagree. */}
+              <p suppressHydrationWarning className="text-[12px] text-faint">
                 {i.email ?? 'no email'} · {since(i.createdAt)}
               </p>
             </div>

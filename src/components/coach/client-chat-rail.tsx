@@ -80,7 +80,13 @@ export function ClientChatRail({ detail, locale }: { detail: ClientDetail; local
           return (
             <div key={`${head.id}-${gi}`} className="flex flex-col gap-1.5">
               <p className="text-center text-[11px] text-faint">
-                {stamp(head.sentAt)} · {who}
+                {/* An INSTANT with no timeZone, so the server renders it in UTC and her browser in
+                    hers. This threw React #418 on every visit to a client record: the rail is what
+                    renders from xl up, so it is the copy a coach on a laptop actually sees, and the
+                    tab version below it in client-detail-tabs.tsx had already been guarded while
+                    this one had not. Grouping is safe by contrast, because it subtracts two
+                    Date.parse values and a difference of instants carries no timezone. */}
+                <span suppressHydrationWarning>{stamp(head.sentAt)}</span> · {who}
               </p>
               {group.map((m) => (
                 <div key={m.id} className={`flex ${m.isFromCoach ? 'justify-end' : 'justify-start'}`}>

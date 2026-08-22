@@ -107,7 +107,9 @@ export function SupportBoard({ tickets }: { tickets: Ticket[] }): ReactElement {
                       <span aria-hidden className={`text-[10px] text-faint transition-transform ${isOpen ? 'rotate-90' : ''}`}>▶</span>
                       <span className="truncate">{t.subject}</span>
                     </div>
-                    <div className="mt-0.5 pl-4 text-[11px] text-faint">
+                    {/* formatWhen is relative to now: server and browser disagree by however
+                        long the response took, which is a hydration mismatch on a busy board. */}
+                    <div suppressHydrationWarning className="mt-0.5 pl-4 text-[11px] text-faint">
                       {t.email ?? 'no email'} · {t.priority}
                       {t.category ? ` · ${t.category}` : ''} · {formatWhen(t.createdAt)}
                       {t.piiFlagged ? ' · contains sensitive info' : ''}

@@ -93,7 +93,10 @@ export function NotificationList({
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-semibold text-ink">{n.title}</p>
                   <p className="mt-0.5 text-[13px] text-muted">{n.body}</p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.1em] text-faint">
+                  {/* Relative to NOW, which the server and the browser evaluate at different
+                      moments, so "2 minutes ago" can hydrate as "3 minutes ago". Same guard
+                      community-feed.tsx already carries for exactly this. */}
+                  <p suppressHydrationWarning className="mt-1 text-[11px] uppercase tracking-[0.1em] text-faint">
                     {timeAgo(n.createdAt, t)}
                   </p>
                 </div>
