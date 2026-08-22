@@ -26,6 +26,17 @@ function fmtDate(value: string | null, locale: string): string {
   return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' }).format(d);
 }
 
+/**
+ * An INSTANT, formatted with an hour and minute and no timeZone, so it renders in whatever zone the
+ * runtime is in. The server is UTC and her browser is not, which is a hydration mismatch on every
+ * value this touches. Both call sites carry suppressHydrationWarning, the same call lead-profile.tsx
+ * and message-thread.tsx make: the two renders are SUPPOSED to differ, and she should read her own
+ * timezone rather than the datacenter's.
+ *
+ * fmtDate above is safe by contrast, and the difference is worth seeing: it appends T00:00:00 to a
+ * date-only string, which parses as LOCAL midnight and therefore formats to the same calendar day
+ * everywhere. No time component, no drift.
+ */
 function fmtDateTime(value: string | null, locale: string): string {
   if (!value) return '-';
   const d = new Date(value);
@@ -460,7 +471,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
               /coach/subscribers/[id], the reply on the Messages tab here. */}
           {detail.latestCheckin && (
             <Section title={t('checkinLatest')}>
-              <p className="pb-1 text-[11px] text-faint">{fmtDateTime(detail.latestCheckin.submittedAt, locale)}</p>
+              <p suppressHydrationWarning className="pb-1 text-[11px] text-faint">{fmtDateTime(detail.latestCheckin.submittedAt, locale)}</p>
               {detail.latestCheckin.fields.map((f, i) => (
                 <Row key={i} label={f.label} value={<span className="whitespace-pre-wrap text-left">{f.value}</span>} />
               ))}
@@ -628,7 +639,7 @@ export function ClientDetailTabs({ detail, locale }: { detail: ClientDetail; loc
                 <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 xl:max-w-[620px] ${m.isFromCoach ? 'bg-bubble text-bubble-ink' : 'bg-warm text-ink'}`}>
                   <div className={`mb-0.5 flex items-center gap-2 text-[10px] ${m.isFromCoach ? 'text-surface/70' : 'text-faint'}`}>
                     <span className="font-semibold">{m.isFromCoach ? (m.senderName ?? t('messageCoach')) : detail.name}</span>
-                    <span>{fmtDateTime(m.sentAt, locale)}</span>
+                    <span suppressHydrationWarning>{fmtDateTime(m.sentAt, locale)}</span>
                     {m.type && m.type !== 'custom' && <span className="rounded-full bg-black/10 px-1.5 py-px capitalize">{m.type}</span>}
                   </div>
                   {m.body && <p className="whitespace-pre-wrap break-words text-[13px] leading-snug">{messageBodyText(m.body)}</p>}

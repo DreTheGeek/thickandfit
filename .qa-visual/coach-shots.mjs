@@ -159,7 +159,20 @@ const REPLACEMENT_CHAR = /�/;
 fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1 });
+/**
+ * A BROWSER TIMEZONE THAT IS NOT THE SERVER'S, pinned rather than inherited.
+ *
+ * Vercel runs in UTC. A checker that inherits the machine's zone therefore tests one thing against
+ * production and a different thing against `next start` on a developer's laptop, and the difference
+ * is an entire bug class: text formatted from an instant with no explicit timeZone renders one way
+ * on the server and another in the browser, which React counts as a failed hydration.
+ *
+ * This is not hypothetical. /coach/clients/[id] passed every local run of this sweep and threw React
+ * #418 on the first production run, because the local server and the local browser were both in
+ * America/New_York and agreed with each other. Pinning a zone that matches neither UTC nor this
+ * machine makes a local run tell the truth about production.
+ */
+const ctx = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, timezoneId: 'America/Los_Angeles' });
 const page = await ctx.newPage();
 
 let problems = [];

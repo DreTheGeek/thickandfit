@@ -86,7 +86,10 @@ const GATE_DESTINATIONS = [/\/soon$/, /\/join$/];
 if (SHOOT) fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1 });
+// Timezone pinned away from the server's (Vercel is UTC) for the reason coach-shots.mjs records:
+// inheriting the machine's zone makes a local run agree with a local server and disagree with
+// production, which is exactly where hydration mismatches hide.
+const ctx = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, timezoneId: 'America/Los_Angeles' });
 const page = await ctx.newPage();
 
 let problems = [];

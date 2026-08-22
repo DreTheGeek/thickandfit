@@ -71,7 +71,12 @@ const ERROR_MARKER = /something went wrong/i;
 fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: DESKTOP ? 1 : 2 });
+// Timezone PINNED, and not to the server's. Vercel is UTC, so a checker that inherits the machine's
+// zone agrees with a local `next start` and disagrees with production, which hides every hydration
+// mismatch coming from an instant formatted without an explicit timeZone. That class already cost
+// this portal once (/inbox, React #418 on every visit) and it cost the coach console again on
+// 2026-08-22, where /coach/clients/[id] passed locally and threw on the first production run.
+const ctx = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: DESKTOP ? 1 : 2, timezoneId: 'America/Los_Angeles' });
 const page = await ctx.newPage();
 
 // Console errors are worth having next to the pictures: a screen can look right and still be
