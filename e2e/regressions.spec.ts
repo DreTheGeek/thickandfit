@@ -10,18 +10,23 @@
 //   E2E_BASE_URL              target app (defaults to http://127.0.0.1:3000)
 //   SUPABASE_URL              project url (for REST asserts + cleanup)
 //   E2E_SUPABASE_ADMIN_KEY admin key for asserts + cleanup (map from your platform secret in CI; never shipped to the app)
-//   E2E_MEMBER_EMAIL/PASSWORD confirmed member test account (sample.sam)
-//   E2E_COACH_EMAIL/PASSWORD  coach test account (sample.casey)
+//   E2E_MEMBER_EMAIL/PASSWORD member test account (defaults in .qa-visual/qa-accounts.mjs)
+//   E2E_COACH_EMAIL/PASSWORD  coach test account  (defaults in .qa-visual/qa-accounts.mjs)
 //   E2E_STRIPE_LIVE=1         set once real billing is armed; skips the pre-launch billing spec
 import { test, expect, type Page } from '@playwright/test';
+// The accounts live in one file for the whole repo. This suite used to default the two PASSWORDS to
+// the empty string and the two emails to `sample.*@thickandfit.test`, which were later deleted. A
+// run without CI secrets therefore died at the login form, reporting five red product flows when
+// the only thing wrong was the credentials.
+import { MEMBER as MEMBER_ACCOUNT, COACH as COACH_ACCOUNT } from '../.qa-visual/qa-accounts.mjs';
 
 const BASE = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:3000';
 const SB = process.env.SUPABASE_URL ?? '';
 const SVC = process.env.E2E_SUPABASE_ADMIN_KEY ?? '';
-const MEMBER = process.env.E2E_MEMBER_EMAIL ?? 'sample.sam@thickandfit.test';
-const MEMBER_PW = process.env.E2E_MEMBER_PASSWORD ?? '';
-const COACH = process.env.E2E_COACH_EMAIL ?? 'sample.casey@thickandfit.test';
-const COACH_PW = process.env.E2E_COACH_PASSWORD ?? '';
+const MEMBER = MEMBER_ACCOUNT.email;
+const MEMBER_PW = MEMBER_ACCOUNT.password;
+const COACH = COACH_ACCOUNT.email;
+const COACH_PW = COACH_ACCOUNT.password;
 
 const REST = { apikey: SVC, Authorization: `Bearer ${SVC}` };
 const dbReady = Boolean(SB && SVC);

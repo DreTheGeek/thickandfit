@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
+import { MEMBER } from './qa-accounts.mjs';
 
 const args = process.argv.slice(2);
 const BASE = args.find((a) => a.startsWith('http')) ?? 'https://www.teamthickandfit.com';
@@ -32,8 +33,10 @@ const DESKTOP = args.includes('--desktop');
  * every screen in this re-skin was laid out against English copy.
  */
 const ES = args.includes('--es');
-const EMAIL = process.env.E2E_MEMBER_EMAIL ?? 'sample.sam@thickandfit.test';
-const PASSWORD = process.env.E2E_MEMBER_PASSWORD ?? 'TFSample2026!';
+// Credentials come from qa-accounts.mjs so a rotation is one edit, not four. This file used to
+// hold its own copy, the accounts were rotated, and this tool spent three portal releases failing
+// at the login form - see the note at the top of that file for what it was hiding.
+const { email: EMAIL, password: PASSWORD } = MEMBER;
 const OUT = path.join(process.cwd(), '.qa-visual', 'portal', `${DESKTOP ? 'desktop' : 'phone'}${ES ? '-es' : ''}`);
 
 // 390x844 is the handoff's own phone frame, so a shot here is directly comparable to the mock.
@@ -90,7 +93,11 @@ await Promise.all([
 await page.waitForTimeout(2500);
 
 if (page.url().includes('/auth/')) {
-  console.error(`FAILED to sign in as ${EMAIL} (still at ${page.url()})`);
+  console.error(
+    `FAILED to sign in as ${EMAIL} (still at ${page.url()}).\n` +
+      `That is a STALE CREDENTIAL, not a broken app. Fix it in .qa-visual/qa-accounts.mjs and\n` +
+      `check both accounts with: node .qa-visual/qa-accounts.mjs`,
+  );
   await browser.close();
   process.exit(1);
 }
@@ -99,7 +106,7 @@ console.log(`signed in, landed on ${new URL(page.url()).pathname}`);
 if (ES) {
   // AFTER sign-in, not before. The middleware only defaults ui_locale when it is absent, so a
   // pre-set cookie survives that, but the sign-in action then writes the locale from the member's
-  // PROFILE (lib/auth/actions.ts), and sample.sam's profile says en. Setting it first looked like
+  // PROFILE (lib/auth/actions.ts), and the QA member's profile says en. Setting it first looked like
   // it worked and produced an entirely English run.
   await ctx.addCookies([{ name: 'ui_locale', value: 'es', url: BASE }]);
   console.log('ui_locale cookie set to es (post-login)');

@@ -7,10 +7,10 @@
 //
 //   node .qa-visual/workout-log-repro.mjs
 import { chromium } from '@playwright/test';
+import { MEMBER } from './qa-accounts.mjs';
 
 const BASE = process.argv.find((a) => a.startsWith('http')) ?? 'https://www.teamthickandfit.com';
-const EMAIL = process.env.E2E_MEMBER_EMAIL ?? 'qa.member@teamthickandfit.com';
-const PASSWORD = process.env.E2E_MEMBER_PASSWORD ?? 'TFQaMember2026!';
+const { email: EMAIL, password: PASSWORD } = MEMBER;
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
