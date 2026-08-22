@@ -6,6 +6,7 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { macrosForGrams, foodStateFromName, type FoodLite, type MacroTotals } from '@/lib/nutrition/macros';
 import { groundFoodByName } from '@/lib/nutrition/external-foods';
+import { readPreparation, preparationAgreement, contradictsPreparation } from '@/lib/nutrition/preparation';
 
 export type PredictedItem = { name: string; grams: number; confidence: number; basis?: string };
 
@@ -76,10 +77,27 @@ function orSafe(term: string): string {
   return term.replace(/[,%*()"\\]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-// Rank candidate rows for a term instead of taking the first substring hit (arbitrary order made
-// "egg" able to land on "eggplant"): exact match, then whole-token match, then shortest (most
-// specific) search_text. Deterministic, zero extra round-trips.
-function bestRowForTerm(rows: FoodRowWithSearch[], term: string): FoodRowWithSearch | null {
+/**
+ * Rank candidate rows for a term instead of taking the first substring hit (arbitrary order made
+ * "egg" able to land on "eggplant"): exact match, then whole-token match, then best-scoring.
+ *
+ * SHORTEST NO LONGER WINS, and that change is the whole fix for a real incident. The tie-break used
+ * to be the shortest `search_text`, as a proxy for "the most generic row". For the keyword
+ * "chicken" the shortest row in the corpus is `chicken, feet, boiled`, so a member who
+ * photographed a KFC plate - which gpt-5 read correctly as "fried chicken thigh, cooked, breaded" -
+ * had chicken FEET logged to her diary. Shortest is a proxy for generic only when the rows are
+ * variations on one food; across a 400-row corpus it just finds the oddest short name.
+ *
+ * The row is now scored against the WHOLE predicted name rather than the single keyword that
+ * happened to hit, so a row covering "chicken" + "thigh" beats one covering "chicken" alone, and a
+ * row whose preparation contradicts the photo loses outright. Shortest survives only as the final
+ * tie-break, where it is still the right instinct.
+ */
+function bestRowForTerm(
+  rows: FoodRowWithSearch[],
+  term: string,
+  fullName: string,
+): FoodRowWithSearch | null {
   const hits = rows.filter((r) => (r.search_text ?? '').includes(term));
   if (!hits.length) return null;
   const exact = hits.find((r) => (r.search_text ?? '').trim() === term);
@@ -88,7 +106,66 @@ function bestRowForTerm(rows: FoodRowWithSearch[], term: string): FoodRowWithSea
   const token = new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`);
   const wordHits = hits.filter((r) => token.test(r.search_text ?? ''));
   const pool = wordHits.length ? wordHits : hits;
-  return pool.reduce((a, b) => ((a.search_text ?? '').length <= (b.search_text ?? '').length ? a : b));
+
+  const wanted = readPreparation(fullName);
+  // The identifying words of the predicted name, preparation words excluded: those are scored
+  // separately and far more carefully by preparationAgreement.
+  const contentWords = keywords(fullName);
+
+  let best: FoodRowWithSearch | null = null;
+  let bestScore = -Infinity;
+  for (const r of pool) {
+    const text = r.search_text ?? '';
+    const covered = contentWords.filter((w) => text.includes(w)).length;
+    const coverage = contentWords.length ? covered / contentWords.length : 0;
+    const agreement = preparationAgreement(wanted, readPreparation(text));
+    // Coverage dominates, preparation is a strong second, length only separates equals. A
+    // contradicting row can still win here if nothing else covers the food at all;
+    // `localMatchIsUsable` rejects that case afterwards, so the reason lives in one place.
+    const score = coverage * 2 + agreement - text.length / 400;
+    if (score > bestScore) {
+      bestScore = score;
+      best = r;
+    }
+  }
+  return best;
+}
+
+/**
+ * Is this local match good enough to log without asking USDA?
+ *
+ * A wrong match used to be indistinguishable from a right one, and because `resolvePredictedItems`
+ * only grounds against USDA when the local match is NULL, `chicken, feet, boiled` actively blocked
+ * the lookup that had the correct row (USDA carries KFC's own thigh at 309 kcal / 22.1g fat).
+ * Failing to a slower, better source beats logging something she did not eat.
+ */
+function localMatchIsUsable(row: FoodRowWithSearch, fullName: string): boolean {
+  const text = row.search_text ?? '';
+  const words = keywords(fullName);
+  if (words.length === 0) return true;
+  const covered = words.filter((w) => text.includes(w)).length;
+  // The head noun alone is not a match. "chicken" covering 1 of 3 words is how feet got logged.
+  if (covered / words.length < 0.5) return false;
+
+  const wanted = readPreparation(fullName);
+  const got = readPreparation(text);
+  if (contradictsPreparation(wanted, got)) return false;
+
+  // A FRIED OR BREADED ITEM NEEDS A ROW THAT SAYS SO.
+  //
+  // Silence is tolerable in general and not here. This corpus is ~400 rows of mostly generic and
+  // Latin foods and it holds no fried chicken at all, so the best it can offer for a KFC thigh is
+  // `Chicken thigh, cooked` at 11g of fat against the ~22g she actually ate. That is half the fat
+  // on the plate, still hidden, just less absurdly than chicken feet were.
+  //
+  // USDA has the row (`Fast Foods, Fried Chicken, Thigh, meat and skin and breading`, 18.1g, and
+  // KFC's own at 22.1g), and the ONLY way to reach it is for the local match to come back null. So
+  // for the one category where the corpus is known to be thin and the error is known to run in the
+  // direction that hides calories, prefer the slower, better source.
+  if ((wanted.fatClass === 'added-fat' || wanted.breaded) && got.fatClass !== 'added-fat' && !got.breaded) {
+    return false;
+  }
+  return true;
 }
 
 type FoodRowWithSearch = FoodRaw & { search_text: string | null };
@@ -118,12 +195,12 @@ async function matchFoodsBatch(
     for (let i = 0; i < names.length; i++) {
       const p = phrases[i];
       if (!p) continue;
-      const hit = bestRowForTerm(rows, p);
-      if (hit) results[i] = mapFood(hit, locale);
+      const hit = bestRowForTerm(rows, p, names[i]);
+      if (hit && localMatchIsUsable(hit, names[i])) results[i] = mapFood(hit, locale);
     }
   }
 
-  // Round 2: keywords for still-unresolved items, one query, longest-keyword-first per item.
+  // Round 2: keywords for still-unresolved items, one query, most-specific-keyword-first per item.
   const pending = names.map((n, i) => ({ i, words: keywords(n).map(orSafe).filter((w) => w.length > 2) }))
     .filter((x) => results[x.i] === null && x.words.length > 0);
   const kwTerms = [...new Set(pending.flatMap((x) => x.words))];
@@ -135,11 +212,24 @@ async function matchFoodsBatch(
       .limit(150);
     const rows = (data ?? []) as unknown as FoodRowWithSearch[];
     for (const x of pending) {
-      const ordered = [...x.words].sort((a, b) => b.length - a.length);
+      // RAREST WORD FIRST, not longest. Length was a proxy for specificity and it picked the head
+      // noun: for "fried chicken thigh, cooked, breaded" the order was [chicken, breaded, thigh],
+      // so the least specific word in the name decided the answer and "chicken" alone matched
+      // chicken feet. Rarity across the rows actually retrieved is what length was standing in for,
+      // and it costs one pass over data already in memory.
+      const rarity = new Map(
+        x.words.map((w) => [w, rows.filter((r) => (r.search_text ?? '').includes(w)).length]),
+      );
+      const ordered = [...x.words].sort(
+        (a, b) => (rarity.get(a) ?? 0) - (rarity.get(b) ?? 0) || b.length - a.length,
+      );
       for (const w of ordered) {
-        const hit = bestRowForTerm(rows, w);
+        const hit = bestRowForTerm(rows, w, names[x.i]);
+        // An unusable hit does NOT fall through to the next keyword: a vaguer word cannot produce a
+        // better row than the specific one just rejected, and letting it try is how the head noun
+        // wins anyway. Leaving it null is what hands the item to USDA grounding.
         if (hit) {
-          results[x.i] = mapFood(hit, locale);
+          if (localMatchIsUsable(hit, names[x.i])) results[x.i] = mapFood(hit, locale);
           break;
         }
       }
