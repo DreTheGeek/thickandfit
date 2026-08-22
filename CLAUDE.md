@@ -692,7 +692,7 @@ what EXISTS, not what it is set to. Absence is the useful signal.
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | the paywall is inert by design; 1 entitlement, 0 webhook events. THE launch blocker, and only Stephanie can generate it |
 | `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` | **zero production error observability.** `instrumentation.ts` returns early with no DSN. Nothing crashes; nothing is reported either. Every bug found in the 8.0 work was found by looking, because there was nothing to alert |
 | `NEXT_PUBLIC_POSTHOG_KEY` | no analytics |
-| `STARTER_PROGRAM_ID` | nobody gets a program at signup; a coach assigns by hand from `/coach/awaiting` |
+| `STARTER_PROGRAM_ID` | **no longer means "no program at signup".** See the correction below |
 | `STARTER_MEAL_PLAN_ID`, `COACH_AI_DAILY_LIMIT`, `STRIPE_TRIAL_DAYS` | the other inert flags, all documented above |
 | `TURNSTILE_SECRET_KEY` | Supabase-native captcha stays off on the AUTH endpoints |
 | `MUX_*` | fine. Her demos serve from Supabase storage; only 2 exercise rows carry a Mux id |
@@ -700,7 +700,30 @@ what EXISTS, not what it is set to. Absence is the useful signal.
 **The PRELAUNCH_* switches are absent, which means the site is fully public.** That matches the
 Site Visibility section: both gates off.
 
-### `STARTER_PROGRAM_ID` is now one command
+### CORRECTION (measured 2026-08-21): the starter program is ON, and the env var is not what turns it on
+
+Everything below this correction was written when a single env var was the only way a member could
+be given a program. Migration `0148` replaced it with a MATCHER, and the section under it is stale
+in the one way that matters: **absent `STARTER_PROGRAM_ID` no longer means "nobody gets a program".**
+
+`autoAssignStarterProgram` reads the override first; with no override it calls `matchStarterPlan`
+against her onboarding answers (days per week, level, home or gym). 0148 turned Stephanie's own
+naming axes into columns and marked 14 of her 41 plans `is_starter_candidate`. Measured against
+production today:
+
+    starter candidates: 14 of 41 plans, across 3/4/5 days x beginner_intermediate/advanced x home/gym
+    plan_assignments with assigned_by NULL (= chosen by the software): 3, newest 2026-08-21
+
+So the matcher is live and assigning. `STARTER_PROGRAM_ID` survives only as an OVERRIDE ("put
+everybody on this exact plan"), and it was deliberately REMOVED from Vercel production in `6c18001`.
+The real off switch now is `is_starter_candidate`: with nothing marked, `matchStarterPlan` returns
+null, she lands in `/coach/awaiting`, and a human writes it.
+
+`assigned_by` (migration 0149) is what the member-facing copy keys off: NULL means the software
+chose it. Do not go back to comparing the plan id against `STARTER_PROGRAM_ID`; that stopped
+working the moment the matcher could assign without the var being set.
+
+### `STARTER_PROGRAM_ID` as the override, and the three plans it used to point at
 
 The copy moves with the flag, which is what made this a product decision rather than a config
 change. `first-steps.tsx` takes `hasStarterProgram`, read server-side in `workouts/page.tsx`, and
@@ -720,6 +743,62 @@ The @HOME one is the safest default: it needs no gym, so it cannot fail for a me
 joined one yet.
 
     vercel env add STARTER_PROGRAM_ID production   # paste the uuid, then redeploy
+
+## Three surface sweeps, and the credential rot that had disabled one of them
+
+Added 2026-08-21. Every screen in this app is now opened by a checker that signs in, looks at what
+rendered, and exits non-zero. Before this there was one sweep, covering eleven of roughly a hundred
+and thirty screens, and it had been failing at the login form for three releases.
+
+| tool | covers | screens |
+|---|---|---|
+| `.qa-visual/portal-shots.mjs` | the member portal | 11 |
+| `.qa-visual/coach-shots.mjs` | the coach console, 31 static + 12 dynamic | 49 |
+| `.qa-visual/public-shots.mjs` | the marketing site, funnel, legal, auth, and every `/es` twin | 31 |
+
+Each takes `--desktop` and (the first two) `--es`; `public-shots` needs no sign-in. All six runs
+were green against a production build on 2026-08-21.
+
+**The credentials live in ONE file now: `.qa-visual/qa-accounts.mjs`.** The `sample.*@thickandfit.test`
+accounts were deleted and replaced by `qa.member@` / `qa.coach@teamthickandfit.com`, and only the
+tools written after that rotation were updated. `portal-shots.mjs` - the one this file already named
+as THE portal verification - kept the old defaults and never reached a screen again. `node
+.qa-visual/qa-accounts-check.mjs` signs both in against production and tells you which one is stale,
+so a red checker is never mistaken for a red app.
+
+**What the first green run of each found**, all of it live in production, none of it visible to tsc,
+eslint or `next build`:
+
+- `/progress`, the member's DEFAULT tab, rendered its weight chart with NaN in every coordinate for
+  anyone with no weight logged - twelve console errors and a blank card. On launch day that is every
+  member. `Math.min(...[])` is `Infinity`. Pinned by `.qa-visual/weight-chart-test.mts`.
+- `/coach/inbox` threw React #418 on every visit, in every timezone, on a production build only. The
+  thread preview was `body.slice(0, 120)` over a raw HTML message body: 37 of her 86 threads showed
+  their own markup, and ONE cut through an emoji, leaving a lone surrogate that the browser replaces
+  with U+FFFD. React then sees different text than it rendered. `slice` counts UTF-16 units;
+  `Array.from` counts code points.
+- `/coach/clients` threw #418 on the Joined column (an instant formatted with no timeZone) and had
+  NO keyboard path into a client record: the only way in was `<tr onClick>`, on the screen that
+  leads to 279 people. Every other row-click table in the console already had role/tabIndex/keydown.
+- `/coach/tool/meal-plans` rendered 248 rows and linked to none of them.
+
+**Two lessons the tools themselves taught, both worth keeping:**
+
+1. **Assert on the screen's own copy, never on the chrome.** `/coach/training` passed at 1440 and
+   failed at 390 because the marker word only existed in the sidebar. A page that throws still
+   renders the header and the nav.
+2. **A checker that fails on the LANGUAGE gets switched off.** The first `--es` run called eleven
+   perfectly good Spanish screens broken because the markers were English words. Spanish is the mode
+   that finds things, so every coach marker now carries its Spanish, taken from the rendered page
+   rather than from `es.json` (a key that exists but is never rendered must not satisfy a marker).
+   The `/es` MARKETING markers are the opposite: Spanish only, because an `/es` page rendering
+   English copy is a broken `/es` page.
+
+**The one surface still unswept is `/admin`.** Its layout requires the operator role AND the admin
+passcode, and all three operator accounts belong to real people. It needs a disposable
+`qa.operator@teamthickandfit.com` plus the passcode before a sweep can be written, and creating an
+account that can read all revenue and all member PII is a decision, not a chore. `qa-admin.cjs`
+currently signs in as a deleted COACH account, so it is doubly dead.
 
 ## Tier Caps (check monthly)
 Supabase edge invocations, Vercel function compute, Mux streaming minutes, OpenRouter spend,
