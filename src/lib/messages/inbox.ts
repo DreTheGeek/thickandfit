@@ -3,6 +3,7 @@
 // messages, keyed by CRM contact, so every client Stephanie has ever talked to shows up as a thread.
 import 'server-only';
 import { createServiceClient } from '@/lib/supabase/service';
+import { messageBodyText } from '@/lib/messages/body-text';
 
 export type InboxThread = {
   contactId: string;
@@ -20,6 +21,34 @@ export type InboxMessage = {
   at: string;
   channel: 'live' | 'archive';
 };
+
+/**
+ * One line of readable text for the thread list.
+ *
+ * This was `body.slice(0, 120)` on the RAW row, and her migrated Lenus messages are HTML. So every
+ * automated message in the coach inbox list previewed as its own source:
+ *
+ *   <p>Hi Thais 👋🏼</p><p><br></p><p></p><p>Check-in time! ⏰ Head to the app now and comple
+ *
+ * which is the exact bug lib/messages/body-text.ts was written for, fixed in the conversation pane
+ * and missed one file over in the list beside it. Down the whole rail, on the screen she opens most.
+ *
+ * STRIP BEFORE SLICING. Slicing first cuts a tag in half, and half a tag no longer matches the
+ * stripper's pattern, so `<p` survives into the preview. Newlines collapse to spaces because this
+ * renders in a single truncated line, where a literal line break just eats the rest of the row.
+ *
+ * AND SLICE BY CODE POINT, NOT BY CODE UNIT. `String.prototype.slice` counts UTF-16 units, so a cut
+ * that lands inside an emoji leaves a LONE SURROGATE in the string. Her messages open with 👋🏼 and
+ * 💗 constantly. A lone surrogate is not valid in an HTML document: React serialises it, the
+ * browser's parser replaces it with U+FFFD, and the text React rendered is therefore not the text
+ * in the DOM. React calls that a failed hydration, throws #418, and re-renders the route on the
+ * client - on the screen carrying 12,000 migrated messages. Array.from iterates code points, so a
+ * cut can never split one.
+ */
+const preview = (body: string): string =>
+  Array.from(messageBodyText(body).replace(/\s*\n+\s*/g, ' '))
+    .slice(0, 120)
+    .join('');
 
 // Thread list: newest activity first. Union the last message per contact from client_messages with
 // the last live message per claimed client, then keep the most recent per contact.
@@ -69,7 +98,7 @@ export async function getInboxThreads(companyId: string): Promise<InboxThread[]>
     .map(([contactId, e]) => {
       const c = byId.get(contactId);
       const name = c ? [c.first_name, c.last_name].filter(Boolean).join(' ').trim() || c.email || 'Client' : 'Client';
-      return { contactId, name, lastBody: e.body.slice(0, 120), lastAt: e.at, hasAccount: !!c?.profile_id };
+      return { contactId, name, lastBody: preview(e.body), lastAt: e.at, hasAccount: !!c?.profile_id };
     })
     .sort((a, b) => b.lastAt.localeCompare(a.lastAt));
 }
