@@ -132,6 +132,11 @@ export function ExerciseBrowser({
           {items.map((ex, i) => (
             <ListRow
               key={ex.id}
+              // THE ROW HAD NOWHERE TO GO. This list let a member search and filter 1,305 movements
+              // and then do nothing with any of them: no href, no onClick, and no member-facing
+              // exercise route to point at even if it had one. Her filmed demos reached the workout
+              // player and the coach console and never the library a member actually browses.
+              href={`/exercises/${ex.id}`}
               divider={i < items.length - 1}
               leading={
                 <div

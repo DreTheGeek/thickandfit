@@ -563,7 +563,10 @@
       "favorites": "Favorites",
       "current": "Current",
       "noPrograms": "Your programs appear here once Steph assigns one.",
-      "weeksN": "{n} weeks"
+      "weeksN": "{n} weeks",
+      "exerciseCues": "How to do it",
+      "demoNone": "Steph has not filmed this one yet.",
+      "demoFailed": "That video would not load. Try again in a moment."
     },
     "library": {
       "searchPlaceholder": "Search exercises",

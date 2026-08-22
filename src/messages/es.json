@@ -563,7 +563,10 @@
       "favorites": "Favoritos",
       "current": "Actual",
       "noPrograms": "Tus programas aparecen aquí cuando Steph te asigne uno.",
-      "weeksN": "{n} semanas"
+      "weeksN": "{n} semanas",
+      "exerciseCues": "Cómo se hace",
+      "demoNone": "Steph todavía no ha grabado este.",
+      "demoFailed": "Ese video no cargó. Inténtalo en un momento."
     },
     "library": {
       "searchPlaceholder": "Buscar ejercicios",
