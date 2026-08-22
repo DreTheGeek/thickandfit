@@ -94,8 +94,9 @@ supabase/.temp/*
 !supabase/.temp/cli-latest
 !supabase/.temp/linked-project.json
 
-# Screenshot output from portal-shots.mjs (regenerate, do not commit)
+# Screenshot output from portal-shots.mjs / coach-shots.mjs (regenerate, do not commit)
 .qa-visual/portal/
+.qa-visual/coach/
 
 # Dev server output (pnpm dev > dev-run.log)
 dev-run.log
