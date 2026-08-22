@@ -97,7 +97,12 @@ export function CoachConversation({
               <div className={['max-w-[75%] rounded-2xl px-3.5 py-2 xl:max-w-[620px]', m.fromCoach ? 'bg-bubble text-bubble-ink' : 'border border-line bg-surface text-ink'].join(' ')}>
                 <div className={['mb-0.5 flex items-center gap-2 text-[10px]', m.fromCoach ? 'text-surface/70' : 'text-faint'].join(' ')}>
                   <span className="font-semibold">{m.fromCoach ? m.senderName || 'Coach' : name}</span>
-                  <span>{fmt(m.at)}</span>
+                  {/* Timezone-dependent, so server and browser legitimately disagree. Without this
+                      the coach inbox threw React #418 on every visit: the server renders the time
+                      in UTC and her browser renders it in hers, React treats that as a failed
+                      hydration and re-renders the whole route on the client. Same cause and same
+                      answer as message-thread.tsx on the member side, which carries the long note. */}
+                  <span suppressHydrationWarning>{fmt(m.at)}</span>
                 </div>
                 <p className="whitespace-pre-wrap break-words text-[14px] leading-snug">{messageBodyText(m.body)}</p>
               </div>
