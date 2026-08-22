@@ -22,9 +22,11 @@ export function BottomNav(): ReactElement | null {
       //   54px   h-[54px] + items-center
       //   36px   this
       //
-      // 36 IS THE CONTENT BLOCK ITSELF (icon 18 + gap 3 + label 11 = 32, plus the 1px border and
-      // about 1.5px of air), which is why the links lost their py-0.5 in the same change: keeping it
-      // put a 36px block inside a 35px box and clipped the label descenders.
+      // 36 IS VERY NEARLY THE CONTENT BLOCK ITSELF (icon 20 + gap 3 + label 11 = 34, plus the 1px
+      // border), which is why the links lost their py-0.5: keeping it put the block inside a box
+      // smaller than itself and clipped the label descenders. It also means the icon size and this
+      // height are now coupled. 20 is the largest icon that fits; 21 overflows. Change one and
+      // re-measure the other.
       //
       // THE TWO COSTS, recorded once so neither reads as a bug later:
       //   1. There is no home-indicator clearance left at all. The labels sit over the pill, not
@@ -56,7 +58,11 @@ export function BottomNav(): ReactElement | null {
               active ? 'text-ink' : 'text-faint',
             ].join(' ')}
           >
-            <Icon name={tab.icon} size={18} />
+            {/* 20, up from 18, and 20 is the CEILING at a 36px bar rather than a preference.
+                The block is icon + 3px gap + an 11.3px label inside 35px of usable height, so 20
+                leaves 0.7px spare and 21 overflows and clips the label descenders. Anything larger
+                than this needs the bar taller. */}
+            <Icon name={tab.icon} size={20} />
             {/* 9px in the handoff. Six labels have to survive Spanish too, where "Comunidad" is
                 the longest, so the label wraps at the tab edge rather than pushing its neighbours. */}
             <span className="text-center text-[9px] font-semibold leading-tight">{t(tab.key)}</span>
