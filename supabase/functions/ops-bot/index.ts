@@ -34,8 +34,13 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-// deno-lint-ignore no-explicit-any
-async function resolveTenantId(svc: any): Promise<string> {
+// The client's real inferred type, rather than `any` with a lint suppression on top. It is the same
+// value `serviceClient()` returns three lines later in this file, so naming it costs nothing and
+// buys back the `.from(...)` chain's type checking - which is the only thing standing between a
+// renamed column and an edge function that fails silently at 9pm.
+type ServiceClient = ReturnType<typeof serviceClient>;
+
+async function resolveTenantId(svc: ServiceClient): Promise<string> {
   const { data } = await svc.from('companies').select('id').eq('slug', TENANT_SLUG).maybeSingle();
   if (!data) throw new Error('tenant: not configured');
   return data.id as string;
@@ -48,8 +53,7 @@ async function resolveTenantId(svc: any): Promise<string> {
  * trace: the thing that records the failure was downstream of the failure. Writing it here means a
  * run is logged even when everything outside Postgres is unreachable.
  */
-// deno-lint-ignore no-explicit-any
-async function logCronRun(svc: any, jobName: string, status: string, detail: unknown): Promise<void> {
+async function logCronRun(svc: ServiceClient, jobName: string, status: string, detail: unknown): Promise<void> {
   try {
     const { error } = await svc.from('cron_job_log').insert({ job_name: jobName, status, detail: detail ?? null });
     if (error) console.error(`[cron_job_log] ${jobName} insert failed: ${error.message}`);

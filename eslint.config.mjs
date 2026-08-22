@@ -18,8 +18,23 @@ const eslintConfig = defineConfig([
       "src/components/notifications/push-opt-in.tsx",
       "src/components/pwa/ios-install-banner.tsx",
       "src/components/ui/theme-toggle.tsx",
+      // Same shape again: `ready` means "the postMessage listener is attached", which is only ever
+      // true in a browser and only after mount. The effect IS the external subscription the rule's
+      // own documentation describes, and the setState is how the UI stops saying "Starting".
+      "src/components/dev/lenus-bridge.tsx",
     ],
     rules: { "react-hooks/set-state-in-effect": "off" },
+  },
+  // `.cjs` IS CommonJS. That is what the extension means, and `require` is the only way to import
+  // in it. The rule fired 174 times across .qa-visual's seed/inspect/capture scripts - 96% of every
+  // error `pnpm lint` reported - for code that is correct and cannot be written any other way.
+  //
+  // This matters more than tidiness: with lint red on 181 errors, the FOUR real findings under
+  // src/ and supabase/ were invisible, and nobody could use `pnpm lint` as a gate. It is the same
+  // failure the globalIgnores note below describes, one directory over.
+  {
+    files: ["**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
   },
   // Honor the `_`-prefix convention for intentionally-unused args/vars (already used across the
   // codebase, e.g. form-action `_prev`/`_formData` and unused defaults like `_locale`).
@@ -44,6 +59,14 @@ const eslintConfig = defineConfig([
     // lint nobody reads, which is how the handful of real findings under src/ stayed invisible.
     ".claude/**",
     ".claude-browser/**",
+    // Captured payloads from Stephanie's Lenus tab and their throwaway extract scripts. Git-ignored
+    // (/.capture/ in .gitignore) but eslint reads the filesystem, so they still count.
+    ".capture/**",
+    ".lenus-audit/**",
+    // The design handoffs are vendor HTML/JS exports read as a CONTRACT, not source we maintain.
+    // `support.js` is a bundled React 17 build: linting it reports ReactDOM.render as deprecated
+    // and `module` as reassigned, both true of the export and neither actionable here.
+    ".planning/design_handoff/**",
   ]),
 ]);
 
