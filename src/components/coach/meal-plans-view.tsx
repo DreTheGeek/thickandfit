@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, type ReactElement } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Icon } from '@/components/ui/icons';
@@ -23,9 +24,16 @@ export function MealPlansView({ page, filters }: { page: MealPlansPage; filters:
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setParam('q', v.trim() || null), 250);
   }
-  const open = (id: string): void => {
+  // Split from `open` so the row's destination can also be rendered as a real href. The row already
+  // handles Enter and Space, so this is not the keyboard fix that /coach/clients needed; it buys
+  // open-in-new-tab, prefetch, and a link for `coach-shots.mjs` to resolve the detail screen from -
+  // which is what stops "248 meal plans render, none of them opens" from passing as healthy.
+  const hrefFor = (id: string): string => {
     const from = sp.toString();
-    router.push(`/coach/tool/meal-plans/${id}${from ? `?from=${encodeURIComponent(from)}` : ''}`);
+    return `/coach/tool/meal-plans/${id}${from ? `?from=${encodeURIComponent(from)}` : ''}`;
+  };
+  const open = (id: string): void => {
+    router.push(hrefFor(id));
   };
 
   return (
@@ -83,7 +91,11 @@ export function MealPlansView({ page, filters }: { page: MealPlansPage; filters:
                   }}
                   className="tf-press cursor-pointer border-b border-divider last:border-0 hover:bg-warm/50"
                 >
-                  <td className="px-4 py-3 text-[13px] font-semibold">{r.clientName ?? (r.isTemplate ? t('template') : t('leadUnnamed'))}</td>
+                  <td className="px-4 py-3 text-[13px] font-semibold">
+                    <Link href={hrefFor(r.id)} onClick={(e) => e.stopPropagation()} className="block outline-none focus-visible:underline">
+                      {r.clientName ?? (r.isTemplate ? t('template') : t('leadUnnamed'))}
+                    </Link>
+                  </td>
                   <td className="hidden px-4 py-3 text-[13px] text-soft sm:table-cell">{r.name}</td>
                   <td className="px-4 py-3 text-right text-[13px] font-semibold tabular-nums">{r.calorieGoal ?? '-'}</td>
                   <td className="hidden px-4 py-3 text-[12px] tabular-nums text-soft md:table-cell">
