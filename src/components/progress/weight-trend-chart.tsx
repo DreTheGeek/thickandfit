@@ -11,7 +11,24 @@ export function WeightTrendChart({
   series: WeightPoint[];
   goalLb: number | null;
   goalLabel: string;
-}): ReactElement {
+}): ReactElement | null {
+  // AN EMPTY SERIES CANNOT REACH THE SCALE MATH BELOW.
+  //
+  // `Math.min(...[])` is `Infinity` and `Math.max(...[])` is `-Infinity`, so `(v - min) / (max -
+  // min)` is `-Infinity / -Infinity` = NaN, and every y coordinate in the chart is written as the
+  // string "NaN". The browser rejects each one: twelve `<line>/<text> attribute y: Expected length,
+  // "NaN"` errors, and a card containing the heading, the goal label and no chart.
+  //
+  // It shipped because two of the three callers guard the length themselves and the third does not,
+  // which is the argument for defending HERE: a guard the caller owns is a guard the next caller
+  // forgets. `/progress` is the screen it reached, on its default tab, for every member with no
+  // weight logged - which on launch day is every member.
+  //
+  // Returning null rather than an empty frame: the callers all sit inside a titled card, and an
+  // axis with nothing on it reads as a broken chart rather than as no data yet. Each caller shows
+  // its own "log your weight" line instead.
+  if (series.length === 0) return null;
+
   const W = 720;
   const H = 240;
   const padL = 40;

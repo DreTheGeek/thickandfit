@@ -143,8 +143,17 @@ function Overview({
         <div className="mt-3">
           {/* The goal line is drawn where she has one. The chart already knows how to include it in
               its own scale, so passing it also stops the trend filling the frame and hiding how far
-              there is left to go. */}
-          <WeightTrendChart series={series} goalLb={goal?.goalLb ?? null} goalLabel={t('goalWeight')} />
+              there is left to go.
+
+              The length check is the same one body-progress.tsx makes, and its absence here is what
+              put a NaN-coordinate chart on the default tab of /progress. The chart now refuses an
+              empty series on its own, so this line is the COPY rather than the guard: without it a
+              new member gets a titled card with nothing in it and no idea what to do about it. */}
+          {series.length > 0 ? (
+            <WeightTrendChart series={series} goalLb={goal?.goalLb ?? null} goalLabel={t('goalWeight')} />
+          ) : (
+            <p className="text-[13px] text-faint">{t('noWeightYet')}</p>
+          )}
         </div>
       </PortalCard>
 
