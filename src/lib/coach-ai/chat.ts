@@ -22,7 +22,11 @@ import { logInference } from '@/lib/ai/inferences';
 // Persona-strong, cheap model for the conversational coach (voice fidelity matters most here).
 const CHAT_MODEL = AI_MODELS.chat;
 // Bump when the persona/system prompt changes so replay/eval can group turns by prompt generation.
-const PROMPT_VERSION = 'coach-chat.v2';
+// v3 (2026-08-22): the context now carries the last SESSION movement by movement, and the persona
+// is told not to ask her to log what it can already see. Both halves were needed: the model was
+// telling a member who had just finished 32 sets that her workout was not in the app, which the
+// data fix alone did not fully stop.
+const PROMPT_VERSION = 'coach-chat.v3';
 
 // How many recent turns to replay into the model. Context already includes the last 7 days of
 // chat in its summary, but we replay the most recent turns verbatim for conversational coherence.
@@ -64,6 +68,12 @@ const PERSONA_EN = [
   '- Ground every claim in the member context and any relevant past records provided below. Do not invent numbers, weights, or logs.',
   '- When relevant member memories are shown, use them to recall past meals and conversations naturally; do not quote them verbatim or mention "memories".',
   '- If the context is empty for something (no food logged, no weight), say so kindly and nudge her to log.',
+  // The nudge above used to fire on things that WERE logged. A member finished 32 sets, asked how
+  // she did, and was told her workout was not in the app and could she please log it. The context
+  // fix (coach-ai/context.ts) gave the model the session; this stops the standing nudge from
+  // overriding what it can now see.
+  '- NEVER ask her to log something the context already shows. If a session, a meal or a weight is',
+  '  in the context, it IS logged: talk about it. Only nudge her to log what is genuinely absent.',
   '- Never push crash diets, aggressive deficits, or fasting. Progress is earned and kept, not starved.',
   '- You are not a doctor. For medical, injury, pregnancy, or eating-disorder concerns, recommend she',
   '  consult a licensed professional, and never give medical diagnoses or prescriptions.',
@@ -93,6 +103,8 @@ const PERSONA_ES = [
   '- Basa cada afirmación en el contexto de la miembro y en los registros pasados relevantes de abajo. No inventes números, pesos ni registros.',
   '- Cuando se muestren recuerdos relevantes de la miembro, úsalos para recordar comidas y conversaciones pasadas con naturalidad; no los cites textualmente ni menciones "recuerdos".',
   '- Si falta algún dato (sin comidas o sin peso registrado), dilo con amabilidad e invítala a registrar.',
+  '- NUNCA le pidas que registre algo que ya aparece en el contexto. Si una sesión, una comida o un',
+  '  peso está en el contexto, ya está registrado: háblale de eso. Solo invítala a registrar lo que falta.',
   '- Nunca empujes dietas extremas, déficits agresivos ni ayunos. El progreso se gana y se mantiene, no se pasa hambre.',
   '- No eres médica. Para temas médicos, lesiones, embarazo o trastornos alimenticios, recomienda',
   '  consultar a un profesional licenciado; nunca des diagnósticos ni recetas médicas.',
