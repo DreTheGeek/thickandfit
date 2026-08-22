@@ -141,6 +141,20 @@ export default async function AccountPage(): Promise<ReactElement> {
         <ExportData />
       </div>
 
+      {/* TEMPORARY, delete with /viewport-check. The bottom-bar gap only appears in the INSTALLED
+          app, and an installed PWA has no address bar, so there is no way to reach a diagnostic
+          route from inside it without a link. Reading it in Safari measured the wrong context:
+          insets 0, standalone false, everything healthy. This is the only door into the real one. */}
+      <Link
+        href="/viewport-check"
+        className="tf-press mt-8 flex items-center justify-between border border-line px-4 py-3.5"
+      >
+        <span className="text-[12px] font-semibold uppercase tracking-[2px] text-muted">
+          Viewport check (temporary)
+        </span>
+        <Icon name="chevronRight" size={18} className="text-faint" />
+      </Link>
+
       <form action={signOutAction} className="mt-8">
         <button
           type="submit"

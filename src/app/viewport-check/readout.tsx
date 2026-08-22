@@ -45,6 +45,10 @@ function measure(): Readout {
     };
 
     const dpr = window.devicePixelRatio || 1;
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      // iOS Safari's own flag for "added to home screen".
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     return {
       '100dvh': `${Math.round(dvh)} px`,
       'window.innerHeight': `${window.innerHeight} px`,
@@ -54,14 +58,17 @@ function measure(): Readout {
       'devicePixelRatio': String(dpr),
       'safe-area-inset-top': inset('top'),
       'safe-area-inset-bottom': inset('bottom'),
-      'display-mode standalone': String(
-        window.matchMedia('(display-mode: standalone)').matches ||
-          // iOS Safari's own flag for "added to home screen".
-          (window.navigator as unknown as { standalone?: boolean }).standalone === true,
-      ),
-      'THE ANSWER': Math.round(dvh) >= window.screen.height - 2
-        ? '100dvh REACHES the bottom'
-        : `100dvh is ${Math.round(window.screen.height - dvh)}px SHORT of the screen`,
+      'display-mode standalone': String(standalone),
+      // CONTEXT FIRST. The first version of this line compared 100dvh against screen.height and
+      // called any shortfall a fault. In a BROWSER that is nonsense: Safari's own chrome legitimately
+      // owns 200-odd px, the insets report 0 because the page is not under any system UI, and the
+      // reading came back "209px SHORT of the screen" on a perfectly healthy layout. The verdict is
+      // only meaningful in the installed app, which is also the only place the gap was ever seen.
+      'THE ANSWER': !standalone
+        ? `browser, not the installed app. Chrome owns ${Math.round(window.screen.height - dvh)}px and the insets are 0, which is normal. Open this FROM the installed app to test the real case.`
+        : Math.round(dvh) >= window.screen.height - 2
+          ? '100dvh REACHES the bottom. Any gap is padding inside the bar, not the shell.'
+          : `100dvh is ${Math.round(window.screen.height - dvh)}px SHORT of the screen. The shell height is the fault.`,
     };
   }
 }
