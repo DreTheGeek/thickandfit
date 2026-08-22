@@ -35,10 +35,46 @@ export type DayMacro = {
   fatG: number;
 };
 
+/** One movement out of the last session, as she actually performed it. */
+export type LoggedExercise = {
+  name: string;
+  sets: number;
+  reps: number[];
+  /** Heaviest completed set, in lb. Null for bodyweight or banded work, which is most of her plan. */
+  topWeightLb: number | null;
+  /** How the sets felt, if she tagged them: easy / moderate / hard / failed. */
+  hardest: string | null;
+};
+
+/**
+ * The last session in enough detail to talk about.
+ *
+ * WHY THIS EXISTS. The summary below used to be the coach's ENTIRE knowledge of her training: a
+ * count, a streak, and a missed-day tally. Asked "based on the data from my workout, how did I
+ * do?", the model had three numbers and no session, so it answered "I'm not seeing your workout
+ * logged in the app yet" and asked her to log the weights.
+ *
+ * She had logged them. 32 sets across 11 movements, at 100% completion, forty minutes earlier. The
+ * data was in `set_logs` the whole time and nothing ever read it into the prompt.
+ *
+ * That is the worst answer this product can give. It tells a member who did the work that she did
+ * not, in the coach's voice, and asks her to do the one thing she already did.
+ */
+export type LastSession = {
+  /** YYYY-MM-DD, in UTC, matching how completions are keyed everywhere else in this file. */
+  on: string;
+  completionPct: number | null;
+  effort: number | null;
+  enjoyment: number | null;
+  exercises: LoggedExercise[];
+};
+
 export type WorkoutSummary = {
   total: number; // completed workouts on record
   streak: number; // consecutive recent days with a completion
   missedDays7: number; // days in the last 7 with no completion
+  /** Null when she has never logged a session, which is the only time the coach may say so. */
+  lastSession: LastSession | null;
 };
 
 export type WeightSummary = {
@@ -107,6 +143,32 @@ export type CoachContext = {
 type FoodLogRow = { log_date: string; kcal: number; protein_g: number; carb_g: number; fat_g: number };
 type WeightRow = { recorded_on: string; weight_kg: number };
 type CompletionRow = { changed_at: string; status: string };
+/**
+ * A row out of set_logs with its movement name joined on.
+ *
+ * `exercises` is typed as an ARRAY because that is the shape the generated Supabase types give an
+ * embedded relation, even where the foreign key makes it at most one row. Both shapes are accepted
+ * and normalised at the read site rather than cast away, so a types regeneration cannot silently
+ * turn every movement name into undefined and leave the coach describing a session with no
+ * exercises in it.
+ */
+type SetLogRow = {
+  set_number: number | null;
+  reps: number | null;
+  weight: number | string | null;
+  completed: boolean | null;
+  difficulty: string | null;
+  exercises: { name_en: string | null } | { name_en: string | null }[] | null;
+};
+
+function exerciseName(row: SetLogRow): string {
+  const e = row.exercises;
+  if (!e) return '';
+  const one = Array.isArray(e) ? e[0] : e;
+  return (one?.name_en ?? '').trim();
+}
+/** Ordered worst-last, so "the hardest it got" is a max rather than a guess. */
+const DIFFICULTY_RANK: Record<string, number> = { easy: 0, moderate: 1, hard: 2, failed: 3 };
 type MessageRow = { role: 'user' | 'assistant'; content: string; created_at: string };
 
 function isoDaysAgo(days: number): string {
@@ -197,7 +259,7 @@ export async function buildCoachContext(
   const since14 = isoDaysAgo(14);
   const since7 = isoDaysAgo(7);
 
-  const [profileRes, onbRes, foodRes, weightRes, completionRes, insightRes, msgRes] =
+  const [profileRes, onbRes, foodRes, weightRes, completionRes, insightRes, msgRes, lastLogRes] =
     await Promise.all([
       sb.from('profiles').select('full_name, content_locale, ui_locale, email').eq('id', profileId).maybeSingle(),
       sb
@@ -234,6 +296,17 @@ export async function buildCoachContext(
         .gte('created_at', `${since7}T00:00:00Z`)
         .order('created_at', { ascending: true })
         .limit(40),
+      // The newest logged session. Its SETS need a second round trip (they key off this row's id),
+      // so only the header is fetched here and the detail is loaded below, once, and only when a
+      // session exists.
+      sb
+        .from('workout_logs')
+        .select('id, performed_at, completion_pct, effort, enjoyment')
+        .eq('company_id', companyId)
+        .eq('profile_id', profileId)
+        .order('performed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
   // Profile + locale + goal.
@@ -269,10 +342,57 @@ export async function buildCoachContext(
   for (let i = 0; i < 7; i += 1) last7.add(isoDaysAgo(i));
   let missedDays7 = 0;
   for (const d of last7) if (!completedDays.has(d)) missedDays7 += 1;
+  // The last session, in the detail a coach would actually ask about.
+  const lastLog = lastLogRes.data as
+    | { id: string; performed_at: string; completion_pct: number | null; effort: number | null; enjoyment: number | null }
+    | null;
+  let lastSession: LastSession | null = null;
+  if (lastLog) {
+    const { data: setRows } = await sb
+      .from('set_logs')
+      .select('set_number, reps, weight, completed, difficulty, exercises(name_en)')
+      .eq('workout_log_id', lastLog.id)
+      .order('set_number', { ascending: true })
+      .limit(200);
+
+    // Group by movement, in the order they were performed, because that is the order she did them
+    // and the order she will describe them in.
+    const byName = new Map<string, LoggedExercise>();
+    for (const r of (setRows ?? []) as SetLogRow[]) {
+      if (r.completed === false) continue; // a skipped set is not something she did
+      const name = exerciseName(r);
+      if (!name) continue;
+      const cur = byName.get(name) ?? { name, sets: 0, reps: [], topWeightLb: null, hardest: null };
+      cur.sets += 1;
+      if (typeof r.reps === 'number' && r.reps > 0) cur.reps.push(r.reps);
+      const w = r.weight == null ? null : Number(r.weight);
+      // 0 is what the player writes for bodyweight and banded work, and reporting "0 lb" as a top
+      // set reads as a data error. Null means "no external load", which is the truth.
+      if (w != null && Number.isFinite(w) && w > 0 && (cur.topWeightLb == null || w > cur.topWeightLb)) {
+        cur.topWeightLb = w;
+      }
+      if (r.difficulty && DIFFICULTY_RANK[r.difficulty] != null) {
+        const rank = DIFFICULTY_RANK[r.difficulty];
+        const curRank = cur.hardest ? (DIFFICULTY_RANK[cur.hardest] ?? -1) : -1;
+        if (rank > curRank) cur.hardest = r.difficulty;
+      }
+      byName.set(name, cur);
+    }
+
+    lastSession = {
+      on: lastLog.performed_at.slice(0, 10),
+      completionPct: lastLog.completion_pct,
+      effort: lastLog.effort,
+      enjoyment: lastLog.enjoyment,
+      exercises: [...byName.values()],
+    };
+  }
+
   const workouts: WorkoutSummary = {
     total: completions.length,
     streak: computeStreak(completedDays),
     missedDays7,
+    lastSession,
   };
 
   // Weight: latest + trend across the window.
@@ -435,6 +555,13 @@ export function renderContextBlock(ctx: CoachContext): string {
     streak: es ? 'racha' : 'streak',
     days: es ? 'dias' : 'days',
     missed: es ? 'faltados (7 dias)' : 'missed (7 days)',
+    lastSession: es ? 'Ultima sesion' : 'Last session',
+    sets: es ? 'series' : 'sets',
+    effort: es ? 'esfuerzo' : 'effort',
+    felt: es ? 'se sintio' : 'felt',
+    noSession: es
+      ? 'Ultima sesion: todavia no ha registrado ningun entrenamiento.'
+      : 'Last session: she has not logged a workout yet.',
     weight: es ? 'Peso' : 'Weight',
     trend: es ? 'tendencia' : 'trend',
     noWeight: es ? 'sin registros de peso' : 'no weight logged',
@@ -539,6 +666,48 @@ export function renderContextBlock(ctx: CoachContext): string {
   lines.push(
     `${L.workouts}: ${ctx.workouts.total} ${L.total}, ${L.streak} ${ctx.workouts.streak} ${L.days}, ${ctx.workouts.missedDays7} ${L.missed}`,
   );
+
+  /**
+   * THE SESSION ITSELF, movement by movement.
+   *
+   * Without this the three numbers above were everything the coach knew about her training, so
+   * "how did I do?" had no answer in the context and the model filled the gap by telling her she
+   * had not logged anything. She had: 32 sets across 11 movements at 100%, in `set_logs`, unread.
+   *
+   * The explicit no-session line matters as much as the detail. A silent absence is what let the
+   * model guess; a sentence saying she has genuinely never logged one is the ONLY case where
+   * "I don't see a workout" is a true thing to say, and now it is the only case where the model is
+   * told it.
+   *
+   * Weight is omitted per movement when there was no external load. Most of her programming is
+   * banded and bodyweight, the player writes 0 for those, and "0 lb" reads as a broken number
+   * rather than as a push-up.
+   */
+  const ls = ctx.workouts.lastSession;
+  if (!ls || ls.exercises.length === 0) {
+    lines.push(L.noSession);
+  } else {
+    const head = [
+      `${L.lastSession} (${ls.on})`,
+      ls.completionPct != null ? `${ls.completionPct}%` : null,
+      ls.effort != null ? `${L.effort} ${ls.effort}/5` : null,
+      ls.enjoyment != null ? `${L.felt} ${ls.enjoyment}/5` : null,
+    ]
+      .filter(Boolean)
+      .join(', ');
+    // Capped at 14 movements: a long session is real but a prompt is not the place for all of it,
+    // and the tail of a workout is the part she is least likely to be asking about.
+    const body = ls.exercises
+      .slice(0, 14)
+      .map((e) => {
+        const reps = e.reps.length ? e.reps.join('/') : '-';
+        const load = e.topWeightLb != null ? ` @ ${e.topWeightLb} lb` : '';
+        const felt = e.hardest ? ` (${e.hardest})` : '';
+        return `  ${e.name}: ${e.sets} ${L.sets} ${reps}${load}${felt}`;
+      })
+      .join('\n');
+    lines.push(`${head}\n${body}`);
+  }
 
   if (ctx.weight) {
     const trend =
