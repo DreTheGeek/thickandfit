@@ -12,6 +12,7 @@ import type { FoodLite } from '@/lib/nutrition/macros';
 // Pure matching rules live in their own module so they can be unit-tested without a network call or
 // a service-role client. See .qa-visual/usda-brand-guard-test.mjs.
 import { brandConflicts, isPlausiblePer100g, penaltyApplies, usdaBrandOf } from '@/lib/nutrition/usda-match';
+import { readPreparation, preparationAgreement } from '@/lib/nutrition/preparation';
 
 const USDA_KEY = process.env.USDA_API_KEY;
 const UA = 'ThickAndFit/1.0 (contact@teamthickandfit.com)';
@@ -105,6 +106,7 @@ const USDA_PENALTY = ['oil', 'supplement', 'infant', 'baby', 'formula', 'flavore
 function pickBestUsda(query: string, foods: UsdaFood[]): UsdaFood | null {
   const ql = query.toLowerCase();
   const qWords = ql.split(/\s+/).filter((w) => w.length > 2);
+  const wantedPrep = readPreparation(query);
   let best: UsdaFood | null = null;
   let bestScore = 0; // require a net-positive score (at least one real word match)
   for (const f of foods) {
@@ -130,6 +132,19 @@ function pickBestUsda(query: string, foods: UsdaFood[]): UsdaFood | null {
     // penaltyApplies, NOT desc.includes: the substring form matched "oil" inside "broiler" and
     // penalised every canonical USDA chicken row by -5. See usda-match.ts for the measurement.
     for (const b of USDA_PENALTY) if (penaltyApplies(desc, b) && !ql.includes(b)) s -= 5;
+    // PREPARATION, worth up to 6 points, because on a fried food it is worth more than the name.
+    //
+    // Measured against the live API for "fried chicken thigh, cooked, breaded", the old scoring
+    // returned `Chicken, broilers or fryers, thigh, meat ONLY, cooked, fried` at 218 kcal / 10.3g
+    // fat, beating `Fast Foods, Fried Chicken, Thigh, meat and skin and breading` at 274 / 18.1 and
+    // KFC's own row at 309 / 22.1. It won on two accidents: "meat only" is shorter, and it contains
+    // the word "cooked" while the better rows say "breading" where the query said "breaded".
+    //
+    // Nobody eats the meat only off a piece of fried chicken. Stripping the skin and the batter is
+    // most of the difference between 10g of fat and 22g, and it errs in the direction that hides
+    // calories from a member holding a deficit. Scaled x6 so it can actually overturn a two-word
+    // relevance edge, which is exactly what it has to do here.
+    s += preparationAgreement(wantedPrep, readPreparation(desc)) * 6;
     s -= desc.length / 200;
     // Prefer a generic row over a branded one at equal relevance. A member typing "chicken breast"
     // wants the food, not somebody's frozen entree that happens to share the words.
