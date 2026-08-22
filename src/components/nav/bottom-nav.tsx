@@ -14,20 +14,29 @@ export function BottomNav(): ReactElement | null {
 
   return (
     <nav
-      // pb clears the iPhone home indicator.
+      // 54px TALL, FLAT, and that is an owner decision rather than a derivation.
       //
-      // max(), NOT 16px + inset, and that arithmetic is the bug the owner photographed. ADDING the
-      // two stacks a 16px cushion on top of a 34pt band that is already almost entirely empty (the
-      // indicator itself is drawn about 5pt tall at the very bottom of it), so the bar carried 50pt
-      // of dead space under the labels and read as a huge empty slab. max() is the standard idiom:
-      // the inset REPLACES the base padding when there is one, and the base applies when there is
-      // not. On hardware without an indicator env() is 0, so this stays exactly 16px and nothing
-      // about the bar changes.
+      // How it got here. The bar was `pt-2 + content + calc(16px + env(safe-area-inset-bottom))`,
+      // which ADDS a 16px cushion to the 34pt home-indicator band and gave a 92pt bar with the icons
+      // crammed against its top edge. Switching the addition to `max(16px, env(...))` was the
+      // standard idiom and took it to 76pt, a shade under Apple's own 83pt tab bar. The owner looked
+      // at it and asked for 54.
+      //
+      // WHAT 54 COSTS, stated once so nobody re-derives it later as a bug: the content block is
+      // 36px, so a flat 54 leaves ~9px under the labels, and the home-indicator band is 34pt. The
+      // labels therefore sit INSIDE that band, clear of the indicator pill itself (which draws
+      // about 5pt from the bottom) but inside the space Apple reserves for it. That is a deliberate
+      // trade of platform clearance for a compact bar, made with the numbers in hand.
+      //
+      // A fixed height rather than a padding tweak because 54 is the thing being specified. The
+      // height holds even if a label wraps or an icon changes size, and `items-center` puts the
+      // block in the middle of it instead of hanging it from the top, which is what made the old
+      // bar read as icons stuck to the ceiling of an empty box.
       // bg-surface/95, not a hardcoded rgba(5,5,6). The handoff is a dark design and that literal was
       // its near-black bar; the moment the portal could be light it became a black slab under a
       // cream page, and the ACTIVE tab, which is text-ink, went black on black. The first tab simply
       // looked missing. A role follows the palette; a literal cannot.
-      className="flex flex-none border-t border-line bg-surface/95 px-2.5 pt-2 pb-[max(16px,env(safe-area-inset-bottom))] backdrop-blur-lg lg:hidden"
+      className="flex h-[54px] flex-none items-center border-t border-line bg-surface/95 px-2.5 backdrop-blur-lg lg:hidden"
       aria-label={t('today')}
     >
       {TABS.map((tab) => {
