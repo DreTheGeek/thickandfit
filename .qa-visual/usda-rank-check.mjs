@@ -19,11 +19,20 @@
 //
 //   node --env-file=.env.local .qa-visual/usda-rank-check.mjs
 //
-// USE A REAL KEY. It falls back to DEMO_KEY, which USDA throttles at roughly 30 requests an hour per
-// IP, so a second run inside the hour returns 429 for every case. `USDA_API_KEY` is set in Vercel
-// production but is NOT in .env.local, so pull it or paste it inline:
+// USE A REAL KEY. DEMO_KEY is a fallback for convenience and it will not carry this file: USDA caps
+// it per IP at roughly 30 requests an hour AND about 50 a DAY. Measured on 2026-08-22 while writing
+// this: the eight cases here plus the before/after measurements exhausted the daily allowance, and a
+// retry 45 minutes later still returned 429 for every query. The hourly window resets; the daily one
+// does not until tomorrow, which is a slow way to learn that the checker cannot self-verify.
+//
+// `USDA_API_KEY` is set in Vercel production but CANNOT be pulled: `vercel env pull` returns
+// encrypted values blank (re-confirmed 2026-08-22, same finding CLAUDE.md records for the ops-bot
+// secrets). It is not in .env.local either, so pass it inline:
 //
 //   USDA_API_KEY=<key> node .qa-visual/usda-rank-check.mjs
+//
+// Adding it to .env.local would make this runnable with the rest of the battery, and is the reason
+// this file is not in the default `run every *-test` sweep: it is a `-check`, run deliberately.
 //
 // A run where every case was skipped exits NON-ZERO on purpose. "Nothing was verified" must not be
 // able to read as a pass, which is the same rule the re-engagement ladder's 5,000-row cap follows.
@@ -123,7 +132,12 @@ for (const c of CASES) {
 }
 
 if (!checked) {
-  console.error('\nUSDA was unreachable for every case, so nothing was verified.');
+  console.error('\nUSDA was unreachable for every case, so NOTHING WAS VERIFIED.');
+  if (KEY === 'DEMO_KEY') {
+    console.error('You are on DEMO_KEY, which USDA caps at ~30 requests/hour and ~50/day per IP.');
+    console.error('That is almost certainly the cause. Re-run with the real key:');
+    console.error('  USDA_API_KEY=<key> node .qa-visual/usda-rank-check.mjs');
+  }
   process.exit(1);
 }
 if (fails.length) {
