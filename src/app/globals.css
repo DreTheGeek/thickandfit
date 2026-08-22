@@ -611,6 +611,21 @@ body {
   background: #000000;
 }
 
+/* THE HOME-INDICATOR STRIP TAKES THE BAR'S COLOUR, NOT THE PAGE'S.
+   The rules above stopped that strip rendering as the browser default, which was the pale band this
+   file already records. They left a second, quieter version of the same problem: the strip is
+   --c-bg (#000000 in the dark portal) while the bottom nav directly above it is --c-surface
+   (#121214). On a phone that reads as the tab bar floating a centimetre above the bottom of the
+   screen with a black gutter under it, which is not how an app looks.
+   The bar cannot simply grow into the strip: the strip is BELOW the 100dvh shell, outside it, and
+   the shell is overflow-hidden, so only body can paint there.
+   :has(.tf-portal) keeps this to the member portal. .tf-portal is applied in exactly one place
+   (subscriber-shell.tsx), so this cannot reach a marketing page, where body background showing at
+   all would be a different bug. */
+body:has(.tf-portal) {
+  background: var(--c-surface);
+}
+
 /* Marketing ticker strip. The track holds two identical runs, so translating it exactly -50% lands
    the second run where the first started and the loop is seamless. Paused for reduced motion:
    the phrases stay readable, they just stop moving. */
