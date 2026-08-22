@@ -14,14 +14,20 @@ export function BottomNav(): ReactElement | null {
 
   return (
     <nav
-      // pb clears the iPhone home indicator. 16px is right on a device without one; on an iPhone
-      // with a 34px indicator the bar sat underneath it and the labels were half-covered in the
-      // installed app. env() returns 0 where there is no inset, so the calc is correct on both.
+      // pb clears the iPhone home indicator.
+      //
+      // max(), NOT 16px + inset, and that arithmetic is the bug the owner photographed. ADDING the
+      // two stacks a 16px cushion on top of a 34pt band that is already almost entirely empty (the
+      // indicator itself is drawn about 5pt tall at the very bottom of it), so the bar carried 50pt
+      // of dead space under the labels and read as a huge empty slab. max() is the standard idiom:
+      // the inset REPLACES the base padding when there is one, and the base applies when there is
+      // not. On hardware without an indicator env() is 0, so this stays exactly 16px and nothing
+      // about the bar changes.
       // bg-surface/95, not a hardcoded rgba(5,5,6). The handoff is a dark design and that literal was
       // its near-black bar; the moment the portal could be light it became a black slab under a
       // cream page, and the ACTIVE tab, which is text-ink, went black on black. The first tab simply
       // looked missing. A role follows the palette; a literal cannot.
-      className="flex flex-none border-t border-line bg-surface/95 px-2.5 pt-2 pb-[calc(16px+env(safe-area-inset-bottom))] backdrop-blur-lg lg:hidden"
+      className="flex flex-none border-t border-line bg-surface/95 px-2.5 pt-2 pb-[max(16px,env(safe-area-inset-bottom))] backdrop-blur-lg lg:hidden"
       aria-label={t('today')}
     >
       {TABS.map((tab) => {
