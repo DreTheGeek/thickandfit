@@ -36,7 +36,15 @@ const SCAN_CHAIN = [AI_MODELS.smartScan, AI_MODELS.smartScanFallback];
 // own context so the member's specific edits remain the last word. Like K1 it only fires when ctx is
 // present, so a ctx-less eval run still exercises the untouched base prompt and the golden-set score
 // cannot move because of this wire.
-export const PROMPT_VERSION = 'smart-scan.v4';
+// v5 (2026-08-22): the preparation and the place. A member photographed a KFC plate; the model read
+// it correctly as "fried chicken thigh, cooked, breaded" and the app logged her Chicken, feet,
+// boiled. Most of that fault was downstream in the food matcher, but two parts were the prompt's:
+// "state cooked or raw when it matters" asks the wrong question (cooked-vs-raw barely moves a
+// protein, fried-vs-boiled roughly triples its fat), and nothing carried the RESTAURANT to the
+// lookup, because `brand` existed only on the product branch. Unlike v2-v4 this DOES change what the
+// model outputs, so golden-set scores can legitimately move; that is the point, and the bump also
+// invalidates every cached scan, which is correct because a cached v4 item name has no method on it.
+export const PROMPT_VERSION = 'smart-scan.v5';
 const FOOD_COLS = 'id, name_en, name_es, brand, category, kcal, protein_g, carb_g, fat_g, density_g_per_ml';
 
 export type SmartScanResult =
@@ -86,9 +94,19 @@ const PROMPT = [
   'It is EITHER (A) a MEAL: a plate/bowl/spread of one or more prepared foods, OR (B) a single packaged PRODUCT or its Nutrition Facts label (a bottle, can, box, wrapper).',
   'Return ONLY minified JSON, no prose, no markdown:',
   '{"kind":"meal"|"product",',
-  '"meal":{"reference":string,"items":[{"name":string,"grams":number,"confidence":number,"basis":string}]}|null,',
+  '"meal":{"reference":string,"place":string|null,"items":[{"name":string,"grams":number,"confidence":number,"basis":string}]}|null,',
   '"product":{"name":string,"brand":string|null,"label":{"kcal":number,"protein_g":number,"carb_g":number,"fat_g":number,"serving_grams":number|null,"serving_desc":string|null}|null,"clarify":string|null}|null}',
-  'MEAL rules: identify each distinct food; estimate edible weight in grams using a size reference (dinner plate ~26cm, fork ~19cm) via area x height x density; add a "cooking oil" item if it looks pan-fried/roasted; state cooked or raw in the name when it matters; use common searchable generic names. Do NOT output calories or macros for meal items - those are looked up.',
+  'MEAL rules: identify each distinct food; estimate edible weight in grams using a size reference (dinner plate ~26cm, fork ~19cm) via area x height x density; add a "cooking oil" item if it looks pan-fried/roasted; use common searchable generic names. Do NOT output calories or macros for meal items - those are looked up.',
+  // The preparation IS the macro, and it used to be one clause of the line above ("state cooked or
+  // raw in the name when it matters"), which asks the wrong question: cooked-vs-raw barely moves a
+  // protein while fried-vs-boiled roughly triples its fat. Named explicitly so the model states the
+  // thing the food lookup now scores on.
+  'PREPARATION: always name the COOKING METHOD in the item name when the food was cooked (fried, deep-fried, pan-fried, grilled, roasted, baked, boiled, steamed, stewed). Say "breaded" or "battered" when there is a coating, and "with skin" when the skin is on. These change the fat more than the food itself does, so never leave them out to keep a name short.',
+  // KFC was on the plate and nothing carried it to the lookup, because `brand` only existed on the
+  // product branch. USDA has KFC's own rows (a thigh at 309 kcal / 22.1g fat against 218 / 10.3 for
+  // the generic "meat only" one), and the brand guard in usda-match.ts will only consider them when
+  // the query names the chain.
+  'PLACE: set "place" to the restaurant or chain when the photo shows it, on packaging, a cup, a bucket, a wrapper, a tray liner or a logo (e.g. "KFC", "Chipotle"). Restaurant portions and restaurant fat are not homemade ones. Set it to null when nothing in the photo identifies a place; never guess it from the food alone.',
   'PRODUCT rules: if a Nutrition Facts panel is legible, TRANSCRIBE the printed per-serving Calories + protein/carbohydrate/fat grams and the serving size into "label" (serving_grams = the gram weight shown in parentheses, e.g. "1 cup (240g)" -> 240; serving_desc = the household measure). Read the printed numbers EXACTLY; never estimate label numbers. If no label is legible, set label=null and give the product name + brand from the packaging. If you cannot tell which specific product it is, put a short question in "clarify" (e.g. "Is this the original or the light version?").',
   // "clarify" is the ONLY field here shown to a member verbatim, so the house style rule has to reach
   // the model. Observed on prod 2026-07-31: "The image is unclear-can you retake or specify the
@@ -166,7 +184,7 @@ type Product = {
   clarify?: string | null;
 };
 type MealItem = { name?: string; grams?: number; confidence?: number; basis?: string };
-type VisionOut = { kind?: string; meal?: { items?: MealItem[] } | null; product?: Product | null };
+type VisionOut = { kind?: string; meal?: { items?: MealItem[]; place?: string | null } | null; product?: Product | null };
 
 function num(v: unknown, d = 0): number {
   const n = typeof v === 'number' ? v : Number(v);
@@ -222,12 +240,29 @@ async function resolveVisionOut(
     else result = { status: 'noFood' };
   } else {
     // --- MEAL --- (reuse the grounded resolve pipeline)
+    // The restaurant, if the photo showed one, prefixed onto every item name.
+    //
+    // The name is the ONLY thing that reaches the food lookups, so a place kept in its own field
+    // would be read by nothing. Prefixed, it does real work at both stages: USDA's brand guard
+    // (usda-match.ts) only considers a branded row when the query names that brand, so "KFC fried
+    // chicken thigh" can reach KFC's own row at 309 kcal / 22.1g fat where "fried chicken thigh"
+    // could only ever reach the generic one at 218 / 10.3.
+    //
+    // Length-capped and stripped of commas because PostgREST's .or() splits on them, which would
+    // break the batched query for the WHOLE plate rather than just this item (the same trap the
+    // `orSafe` note in photo.ts records).
+    const place = (out.meal?.place ?? '').trim().replace(/[,%*()"\\]/g, ' ').replace(/\s+/g, ' ').slice(0, 40);
     const items = (out.meal?.items ?? [])
       .map((it) => {
         const nm = (it.name ?? '').trim();
         if (!nm) return null;
+        // Never prefix the cooking oil the model adds for a pan-fried plate: "KFC cooking oil" is
+        // not a food, and the generic oil row is exactly what that item wants.
+        const named = place && !/\boil\b/i.test(nm) && !nm.toLowerCase().includes(place.toLowerCase())
+          ? `${place} ${nm}`
+          : nm;
         return {
-          name: nm,
+          name: named,
           grams: Math.min(5000, Math.max(1, Math.round(num(it.grams, 100)))),
           confidence: Math.min(1, Math.max(0, num(it.confidence, 0.5))),
           basis: typeof it.basis === 'string' && it.basis.trim() ? it.basis.trim() : undefined,
