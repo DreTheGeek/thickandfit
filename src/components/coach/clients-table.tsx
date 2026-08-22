@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactElement } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/ui/avatar';
@@ -82,9 +83,26 @@ export function ClientsTable({
   const t = useTranslations('app.coach');
   const router = useRouter();
   const { setSort, sp } = useClientFilterUrl();
-  const open = (id: string): void => {
+  /**
+   * The destination for one row, filters carried so Back returns to the list she was reading.
+   *
+   * Split out of `open` so the same URL can be rendered as a real href on the member's name. The
+   * row keeps its click - that is the fast path and it should stay - but a `<tr onClick>` alone was
+   * the ONLY way into a client record, and a div-with-a-handler is not a link: it cannot be tabbed
+   * to, cannot be activated with Enter, is announced as a plain table row, cannot be opened in a
+   * new tab, and dies with JavaScript. On the console's primary screen, into 279 people.
+   *
+   * It also made the screen unverifiable. `coach-shots.mjs` resolves detail routes by reading a
+   * link off the list that owns them, precisely so an empty list cannot pass as a working one; with
+   * no anchor anywhere, /coach/clients/[id] - the single richest screen in the console - was
+   * unreachable by any automated check.
+   */
+  const hrefFor = (id: string): string => {
     const qs = sp.toString();
-    router.push(qs ? `/coach/clients/${id}?from=${encodeURIComponent(qs)}` : `/coach/clients/${id}`);
+    return qs ? `/coach/clients/${id}?from=${encodeURIComponent(qs)}` : `/coach/clients/${id}`;
+  };
+  const open = (id: string): void => {
+    router.push(hrefFor(id));
   };
 
   return (
@@ -126,7 +144,17 @@ export function ClientsTable({
                   <div className="flex items-center gap-3">
                     <Avatar initials={r.initials} size={32} />
                     <div className="min-w-0">
-                      <div className="truncate text-[13px] font-semibold text-ink">{r.name}</div>
+                      {/* The real link. Styled to look exactly like the text it replaced, because
+                          the row already reads as clickable and a second blue affordance inside it
+                          would be noise. stopPropagation so a click here is one navigation, not the
+                          link's and the row's. */}
+                      <Link
+                        href={hrefFor(r.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="block truncate text-[13px] font-semibold text-ink outline-none focus-visible:underline"
+                      >
+                        {r.name}
+                      </Link>
                       <div className="truncate text-[12px] text-faint">{r.email ?? r.phone ?? '-'}</div>
                     </div>
                   </div>
@@ -178,7 +206,13 @@ export function ClientsTable({
                   {formatCents(r.lifetimeCents, r.currency, locale)}
                 </td>
                 <td className="hidden px-3 py-2.5 text-[13px] capitalize text-soft lg:table-cell">{r.owner ?? '-'}</td>
-                <td className="hidden whitespace-nowrap px-3 py-2.5 text-[13px] text-soft lg:table-cell">{fmtDate(r.startedAt, locale)}</td>
+                {/* suppressHydrationWarning because half the values reaching fmtDate are INSTANTS
+                    (a contact's created_at) rather than plain dates, and an instant formatted with
+                    no timeZone is rendered in UTC on the server and in her zone in the browser. Any
+                    member who signed up between midnight and 4am ET therefore rendered a different
+                    day on each side, React counted that as a failed hydration (#418) and re-rendered
+                    the whole 279-row table on the client. Same call as lead-profile.tsx. */}
+                <td suppressHydrationWarning className="hidden whitespace-nowrap px-3 py-2.5 text-[13px] text-soft lg:table-cell">{fmtDate(r.startedAt, locale)}</td>
               </tr>
             ))}
           </tbody>
