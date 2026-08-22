@@ -544,6 +544,7 @@
       "noProgram": "No program yet",
       "noProgramBody": "Your coach will assign your program soon.",
       "noHistory": "No workouts logged yet. Your first one’s waiting for you.",
+      "historySummary": "{moves} movements · {sets} sets",
       "startWorkout": "Start Workout",
       "statThisWeek": "This week",
       "statTotal": "Total",

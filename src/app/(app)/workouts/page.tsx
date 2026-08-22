@@ -11,6 +11,7 @@ import { getActivation } from '@/lib/member/activation';
 import {
   ActivitiesScreen,
   type ActivitiesProgram,
+  type HistoryExercise,
   type HistoryItem,
   type WorkoutStats,
 } from '@/components/workout/activities-screen';
@@ -51,6 +52,14 @@ export default async function WorkoutsPage({
   const tEx = await getTranslations('app.exercise');
 
   let program: ActivitiesProgram | null = null;
+  /** A set_logs row as this page selects it; `exercises` is an array in the generated types. */
+  type SetRow = {
+    workout_log_id: string | null;
+    weight: number | string | null;
+    reps: number | null;
+    completed: boolean | null;
+    exercises: { name_en: string | null } | { name_en: string | null }[] | null;
+  };
   let history: HistoryItem[] = [];
   let stats: WorkoutStats | null = null;
   // Hoisted: `plans` is scoped to the entitled branch, and the Programs tab needs it at render.
@@ -197,27 +206,71 @@ export default async function WorkoutsPage({
       month: 'short',
       day: 'numeric',
     });
-    history = raw.map((h) => ({
-      id: h.id,
-      date: fmt.format(new Date(h.performed_at)),
-      completionPct: h.completion_pct,
-      enjoyment: h.enjoyment,
-      effort: h.effort,
-    }));
 
-    // Program stats band (This week / Total / Volume lb), computed from the logged history.
+    /**
+     * THE SETS, per session. Same single query that already computed the volume band, widened.
+     *
+     * History used to render a date and a percentage, so a member who had just done 32 sets across
+     * 11 movements could not see one thing she had lifted. The rows were always here; this query
+     * was already reading them and throwing away everything except weight x reps.
+     *
+     * `exercises(name_en)` comes back as an ARRAY from the generated types even though the foreign
+     * key makes it at most one row, so it is normalised rather than cast.
+     */
     const logIds = raw.map((r) => r.id);
     let volumeLb = 0;
+    const detail = new Map<string, { setCount: number; volumeLb: number; moves: Map<string, HistoryExercise> }>();
     if (logIds.length) {
       const { data: sets } = await createServiceClient()
         .from('set_logs')
-        .select('weight, reps')
-        .in('workout_log_id', logIds);
-      volumeLb = (sets ?? []).reduce(
-        (a, s) => a + (Number(s.weight) || 0) * (Number(s.reps) || 0),
-        0,
-      );
+        .select('workout_log_id, weight, reps, completed, exercises(name_en)')
+        .in('workout_log_id', logIds)
+        .order('set_number', { ascending: true })
+        .limit(3000);
+
+      for (const row of (sets ?? []) as SetRow[]) {
+        const w = Number(row.weight) || 0;
+        const reps = Number(row.reps) || 0;
+        volumeLb += w * reps;
+
+        // A skipped set is not something she did, so it counts toward neither the movement list nor
+        // the set count. It still counts toward volume above, where the old behaviour is preserved
+        // rather than quietly changed: the stats band is a separate claim from this list.
+        if (row.completed === false) continue;
+        const logId = row.workout_log_id;
+        if (!logId) continue;
+        const embedded = row.exercises;
+        const one = Array.isArray(embedded) ? embedded[0] : embedded;
+        const name = (one?.name_en ?? '').trim();
+        if (!name) continue;
+
+        const d = detail.get(logId) ?? { setCount: 0, volumeLb: 0, moves: new Map() };
+        d.setCount += 1;
+        d.volumeLb += w * reps;
+        const mv = d.moves.get(name) ?? { name, sets: 0, reps: [], topWeightLb: null };
+        mv.sets += 1;
+        if (reps > 0) mv.reps.push(reps);
+        // 0 is what the player writes for banded and bodyweight work, and "0 lb" on screen reads as
+        // a data error rather than as a push-up. Null means no external load.
+        if (w > 0 && (mv.topWeightLb == null || w > mv.topWeightLb)) mv.topWeightLb = w;
+        d.moves.set(name, mv);
+        detail.set(logId, d);
+      }
     }
+
+    history = raw.map((h) => {
+      const d = detail.get(h.id);
+      return {
+        id: h.id,
+        date: fmt.format(new Date(h.performed_at)),
+        completionPct: h.completion_pct,
+        enjoyment: h.enjoyment,
+        effort: h.effort,
+        setCount: d?.setCount ?? 0,
+        volumeLb: Math.round(d?.volumeLb ?? 0),
+        exercises: d ? [...d.moves.values()] : [],
+      };
+    });
     stats = {
       // Was a ROLLING 7 DAYS off workout_logs.performed_at, which is two separate problems: it is a
       // different number from the calendar week every other surface uses, and slicing that column

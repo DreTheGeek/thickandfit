@@ -544,6 +544,7 @@
       "noProgram": "Aún no tienes plan",
       "noProgramBody": "Tu entrenadora te asignará tu programa pronto.",
       "noHistory": "Sin entrenamientos registrados aún. Tu primero te está esperando.",
+      "historySummary": "{moves} movimientos · {sets} series",
       "startWorkout": "Empezar entreno",
       "statThisWeek": "Esta semana",
       "statTotal": "Total",

@@ -15,7 +15,7 @@ import { CompletionCheck } from '@/components/ui/completion';
 import { EmptyState } from '@/components/states/empty-state';
 import { FirstSteps } from '@/components/states/first-steps';
 import type { Activation } from '@/lib/member/activation';
-import { PlayIcon } from '@/components/ui/icons';
+import { Icon, PlayIcon } from '@/components/ui/icons';
 import { ExerciseBrowser } from '@/components/exercises/exercise-browser';
 
 export type ActivitiesProgram = {
@@ -32,12 +32,33 @@ export type ActivitiesProgram = {
   /** She is on the auto-assigned starting week, not a plan anybody wrote for her yet. */
   isStarter?: boolean;
 };
+/** One movement inside a logged session, as she performed it. */
+export type HistoryExercise = {
+  name: string;
+  sets: number;
+  reps: number[];
+  /** Heaviest completed set in lb, or null for the banded and bodyweight work that is most of the plan. */
+  topWeightLb: number | null;
+};
+
+/**
+ * A row in History.
+ *
+ * IT USED TO BE A DATE AND A PERCENTAGE, and that is all. A member who had just finished 32 sets
+ * across 11 movements saw "Sat, Aug 22    100% . 2/5" and could not tell you a single thing she had
+ * lifted. The sets were in `set_logs` and no screen read them.
+ *
+ * "I can't see what I did as far as workouts" is the whole complaint, and it was accurate.
+ */
 export type HistoryItem = {
   id: string;
   date: string;
   completionPct: number | null;
   enjoyment: number | null;
   effort: number | null;
+  setCount: number;
+  volumeLb: number;
+  exercises: HistoryExercise[];
 };
 export type WorkoutStats = { total: number; volumeLb: number };
 
@@ -223,22 +244,87 @@ export function ActivitiesScreen({
         ) : (
           <div>
             {history.map((h, i) => (
-              <div
-                key={h.id}
-                className={[
-                  'flex items-center justify-between py-3.5',
-                  i < history.length - 1 ? 'border-b border-divider' : '',
-                ].join(' ')}
-              >
-                <span className="text-[14px] font-medium">{h.date}</span>
-                <span className="text-[12px] text-faint">
-                  {h.completionPct != null ? `${h.completionPct}%` : '-'}
-                  {h.enjoyment != null ? ` · ♥ ${h.enjoyment}/5` : ''}
-                </span>
-              </div>
+              <HistoryRow key={h.id} item={h} last={i === history.length - 1} t={t} />
             ))}
           </div>
         ))}
+    </div>
+  );
+}
+
+/**
+ * One session, openable.
+ *
+ * A summary line first, because "11 movements, 32 sets, 1.2k lb" answers "what did I do" at a
+ * glance and the old row answered nothing. Tapping opens the movements with the reps and the load
+ * she actually used, which is the part a member checks when she wants to beat last week.
+ *
+ * A real <button> rather than a div with a handler: this is the only way into the detail, and the
+ * client list in the coach console has already cost this repo one keyboard-inaccessible table.
+ */
+function HistoryRow({
+  item,
+  last,
+  t,
+}: {
+  item: HistoryItem;
+  last: boolean;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  const has = item.exercises.length > 0;
+
+  return (
+    <div className={last ? '' : 'border-b border-divider'}>
+      <button
+        type="button"
+        onClick={() => has && setOpen((v) => !v)}
+        aria-expanded={has ? open : undefined}
+        disabled={!has}
+        className="tf-press flex w-full items-center justify-between gap-3 py-3.5 text-left disabled:cursor-default"
+      >
+        <span className="min-w-0">
+          <span className="block text-[14px] font-medium">{item.date}</span>
+          {has && (
+            <span className="mt-0.5 block text-[12px] text-faint">
+              {t('historySummary', {
+                moves: item.exercises.length,
+                sets: item.setCount,
+              })}
+              {item.volumeLb > 0 ? ` · ${fmtVolume(item.volumeLb)} lb` : ''}
+            </span>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 text-[12px] text-faint">
+          <span>
+            {item.completionPct != null ? `${item.completionPct}%` : '-'}
+            {item.enjoyment != null ? ` · ♥ ${item.enjoyment}/5` : ''}
+          </span>
+          {has && (
+            <Icon
+              name="chevronRight"
+              size={14}
+              className={`transition-transform ${open ? 'rotate-90' : ''}`}
+            />
+          )}
+        </span>
+      </button>
+
+      {open && (
+        <ul className="pb-3.5">
+          {item.exercises.map((e) => (
+            <li key={e.name} className="flex items-baseline justify-between gap-3 py-1.5">
+              <span className="min-w-0 truncate text-[13px]">{e.name}</span>
+              <span className="shrink-0 text-[12px] tabular-nums text-faint">
+                {e.reps.length ? e.reps.join('/') : `${e.sets}x`}
+                {/* No load is printed for bodyweight and banded work. The player writes 0 for those
+                    and "0 lb" reads as a broken number rather than as a push-up. */}
+                {e.topWeightLb != null ? ` · ${e.topWeightLb} lb` : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
